@@ -2,8 +2,8 @@ classdef SubClass_1_1
     methods (Static)
         %% > Wrap up SubClass_1_1.
         function [inp,msh] = WrapUp_1_1()
-            %  ------------------------------------------------------------
-            % >> 0.   Add paths.
+            % >> ----------------------------------------------------------
+            % >> 0.   Add folders' path.
             % >> 1.   Set input structure.
             % >> 2.   Uniform mesh.
             % >> 3.   Non-uniform mesh.
@@ -11,11 +11,11 @@ classdef SubClass_1_1
             %  > 3.2. Bulk     clustered mesh (based on KS_X, KS_Y, Nf_X, Nf_Y).
             %  > 3.3. Wall     clustered mesh (based on KS_X, KS_Y).
             % >> 4.   Reshape arrays.
-            %  > ----------------------------------------------------------
+            % >> ----------------------------------------------------------
             
             % >> 1.
             inp = SubClass_1_1.Set_inp();
-            %  > Select...
+            %  > Select mesh type.
             if strcmpi(inp.msh.T_2.t,'Uniform')
                 % >> 2.
                 msh = SubClass_1_1.Uniform_mshGenerator(inp);
@@ -36,7 +36,6 @@ classdef SubClass_1_1
         
         %% > Tools.
         %% > 0.) ----------------------------------------------------------
-        % >> Add folders' path.
         function [] = Add_FolderPaths()
             addpath(genpath('[Tools - Data]'));
             addpath(genpath('[Tools - Numerical]'));
@@ -72,7 +71,7 @@ classdef SubClass_1_1
 
             %% > pr.
             % >> Problem setup.
-            %  > Flow conditions:     V(vx,vy) -> Convection parameter.
+            %  > Flow conditions    : V(vx,vy) -> Convection parameter.
             %                         G(gx,gy) -> Diffusion  parameter.
             [inp.pr.vx,inp.pr.vy,inp.pr.gx,inp.pr.gy] = ...
                 deal(0.1,0,1,0);
@@ -87,17 +86,17 @@ classdef SubClass_1_1
             
             %% > fr.
             % >> Flux reconstruction method.
-            %  > Integration method: st -> Simulation   type:  1.) Explicit.
+            %  > Integration method: st -> Simulation   type : 1.) Explicit.
             %                                                  2.) Implicit.
             %                                                  3.) Deferred-correction approach.
-            %                        nt -> Neighbouring type:  1.) Vertex (at least 1 common vertex).
+            %                        nt -> Neighbouring type : 1.) Vertex (at least 1 common vertex).
             %                                                  2.) Face   (at least 1 common face).
             %                        wf -> Weighting function: 1.) Weighted.
             %                                                  2.) Unweighted.
             %                        n  -> Method's order.
             %                        ng -> Number of Gauss points/per face.           
             [inp.fr.st,inp.fr.nt,inp.fr.wf,inp.fr.n,inp.fr.ng] = ...
-                deal('Implicit','Vertex','Unweighted',1,4); 
+                deal('Implicit','Face','Unweighted',2,5); 
         end
         
         %% > 2.) ----------------------------------------------------------
@@ -117,7 +116,7 @@ classdef SubClass_1_1
             %  > Generate grid.
             [Xd,Yd] = meshgrid(Xd_x,Yd_y);
             %  > (Xv,Yv).
-            msh.d.XY_v = SubClass_1_1.Reshape_Arrays(Xd,Yd);
+            msh.d.xy_v = SubClass_1_1.Reshape_Arrays(Xd,Yd);
         end
         
         %% > 3.) ----------------------------------------------------------
@@ -149,7 +148,7 @@ classdef SubClass_1_1
                 Yd = cat(1,ones(1,NX_v).*Yv_i,Yd,ones(1,NX_v).*Yv_f);
             end
             %  > (Xv,Yv).
-            msh.d.XY_v = SubClass_1_1.Reshape_Arrays(Xd,Yd);
+            msh.d.xy_v = SubClass_1_1.Reshape_Arrays(Xd,Yd);
         end
         % >> 3.2.) --------------------------------------------------------
         function [msh] = NonUniform_mshGenerator_2(inp)
@@ -192,27 +191,16 @@ classdef SubClass_1_1
             %  > Generate grid.
             [Xd,Yd] = meshgrid(Xd_p,Yd_p);
             %  > (Xv,Yv).
-            msh.d.XY_v = SubClass_1_1.Reshape_Arrays(Xd,Yd);
+            msh.d.xy_v = SubClass_1_1.Reshape_Arrays(Xd,Yd);
         end
         % >> 3.3.) --------------------------------------------------------
         function [msh] = NonUniform_mshGenerator_3(msh)
-            % >> Local variables (transformation parameters).
-            %  > Nf_Unf : Normalized computational domain coordinate (uniform distribution).
-            
-            %  > X.
-            Nf_Unf_X = linspace(0,1,NX_v);
-            Bp_X     = Ks_X+1;
-            Bm_X     = Ks_X-1;
-            %  > Y.
-            Nf_Unf_Y = linspace(0,1,NY_v);
-            Bp_Y     = Ks_Y+1;
-            Bm_Y     = Ks_Y-1;
         end 
         
         %% > 4.) ----------------------------------------------------------
-        function [XY_v] = Reshape_Arrays(Xd,Yd)
-            XY_v(:,1) = reshape(Xd,[],1);
-            XY_v(:,2) = reshape(Yd,[],1);
+        function [xy_v] = Reshape_Arrays(Xd,Yd)
+            xy_v(:,1) = reshape(Xd,[],1);
+            xy_v(:,2) = reshape(Yd,[],1);
         end
     end
 end

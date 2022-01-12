@@ -1,13 +1,13 @@
 classdef SubClass_1_3
     methods (Static)
         %% > Tools.
-        %  > --------------------------------------------------------------
+        % >> --------------------------------------------------------------
         % >> 1.   Set cells' neighbouring cells.
-        % >> 2.   Set domain faces (Main).
+        % >> 2.   Set domain faces.
         %  > 2.1. Pick_BlkFaces (Select     bulk faces).
         %  > 2.2. Pick_BndFaces (Select boundary faces).
         %  > 2.3. Match bulk faces' cells.
-        % >> 3.   Set face normals/identify to which boundary does it belong to based on its direction.
+        % >> 3.   Set face normals/identify to which boundary does it belong to (based on its direction).
         %  > 3.1. Compute face normals.
         %  > 3.2. Identify boundary -> 1) Nf = [ 1, 0] -> East (E) boundary.
         %                              2) Nf = [ 0, 1] -> North(N) boundary.
@@ -29,11 +29,11 @@ classdef SubClass_1_3
         function [msh] = Set_CellNeighbours(struct,msh)
             %  > Connectivity.
             Cn_c = struct.ConnectivityList;
-            %  > Initialize.
+            %  > Initialize x_ij.
             x_ij = zeros(size(Cn_c,1),size(Cn_c,1));
 
             %  > If any(A) belongs to B, then A and B are neighbours.
-            % -> Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
+            %    Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
             for i = 1:size(Cn_c,1)
                 for j = i+1:size(Cn_c,1)
                     x_ij(i,j) = SubClass_1_3.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
@@ -91,11 +91,22 @@ classdef SubClass_1_3
            
             %  > Number of faces.
             msh.f.NF = size(fin_f,1);
-            %  > "Unique" faces.
+            
+            % >> "Unique" faces.
+            %  > Initialize field.
+            msh.c.f.faces = cell(1,msh.c.NC); 
             for i = 1:msh.f.NF
                 %  > (Xv,Yv).
-                msh.f.XY_v{i}(1,:) = [struct.Points(fin_f{i,1},1),struct.Points(fin_f{i,1},2)];
-                msh.f.XY_v{i}(2,:) = [struct.Points(fin_f{i,2},1),struct.Points(fin_f{i,2},2)];
+                msh.f.xy_v{i}(1,:) = [struct.Points(fin_f{i,1},1),struct.Points(fin_f{i,1},2)];
+                msh.f.xy_v{i}(2,:) = [struct.Points(fin_f{i,2},1),struct.Points(fin_f{i,2},2)];
+                %  > Track faces that belong to a given cell, e.g. cell X is composed by faces A, B, C, ...
+                for j = 1:length(fin_f{i,3})
+                    if isempty(msh.c.f.faces{fin_f{i,3}(j)})
+                        msh.c.f.faces{fin_f{i,3}(j)}(1) = i;
+                    else
+                        msh.c.f.faces{fin_f{i,3}(j)}    = [msh.c.f.faces{fin_f{i,3}(j)},i];
+                    end
+                end
             end
             %  > Cell faces.
             dom_f = sortrows(dom_f,3);
@@ -104,25 +115,25 @@ classdef SubClass_1_3
                 if i == 1
                     for j = 1:n(i)
                         %  > (Xv,Yv).
-                        msh.c.f.XY_v{i}{j}(1,:) = [struct.Points(dom_f(j,1),1),struct.Points(dom_f(j,1),2)];
-                        msh.c.f.XY_v{i}{j}(2,:) = [struct.Points(dom_f(j,2),1),struct.Points(dom_f(j,2),2)];
+                        msh.c.f.xy_v{i}{j}(1,:) = [struct.Points(dom_f(j,1),1),struct.Points(dom_f(j,1),2)];
+                        msh.c.f.xy_v{i}{j}(2,:) = [struct.Points(dom_f(j,2),1),struct.Points(dom_f(j,2),2)];
                     end
                 else
                     for j = 1:n(i)
                         %  > (Xv,Yv).
-                        msh.c.f.XY_v{i}{j}(1,:) = [struct.Points(dom_f(sum(n(1:i-1))+j,1),1),struct.Points(dom_f(sum(n(1:i-1))+j,1),2)];
-                        msh.c.f.XY_v{i}{j}(2,:) = [struct.Points(dom_f(sum(n(1:i-1))+j,2),1),struct.Points(dom_f(sum(n(1:i-1))+j,2),2)];
+                        msh.c.f.xy_v{i}{j}(1,:) = [struct.Points(dom_f(sum(n(1:i-1))+j,1),1),struct.Points(dom_f(sum(n(1:i-1))+j,1),2)];
+                        msh.c.f.xy_v{i}{j}(2,:) = [struct.Points(dom_f(sum(n(1:i-1))+j,2),1),struct.Points(dom_f(sum(n(1:i-1))+j,2),2)];
                     end
                 end
             end
                        
             % >> Set neighbours.
             %  > Cells. 
-            % -> Remark: 1) Already done (see call of previous function on 3.2.1.) of SubClass_1_1.
+            %    Remark: 1) Already done (see call of previous function on 3.2.1.)/SubClass_1_1.
             %            2) That routine "triggers" the remaining routines coded in this SubClass.
             %  > Faces.
             for i = 1:msh.f.NF
-                msh.f.nb{i} = fin_f{i,3};
+                msh.f.cells{i} = fin_f{i,3};
             end
             
             % >> Set boundaries.
@@ -130,7 +141,7 @@ classdef SubClass_1_3
             uni_c = unique(bnd_f(:,3));
             for i = 1:length(uni_c)
                 %  > (Xv,Yv).
-                msh.bnd.c{1,i} = msh.c.f.XY_v{uni_c(i)};
+                msh.bnd.c{1,i} = msh.c.f.xy_v{uni_c(i)};
                 %  > Cell index.
                 msh.bnd.c{2,i} = uni_c(i);
                 %  > Type.
@@ -153,7 +164,7 @@ classdef SubClass_1_3
         % >> 2.1.) --------------------------------------------------------
         function [blk_ij] = Pick_BlkFaces(msh,Cn_c)
             % >> Find bulk faces (i.e. faces w/ 0/1 boundary vertices).
-            %  > Remark: Only neighbouring cells are evaluated.
+            %    Remark: Only neighbouring cells are evaluated.
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.nb{i},2)
                     blk_ij{i}(j,:) = SubClass_1_3.fft_ismember_2(Cn_c(i,:),Cn_c(msh.c.nb{i}(j),:));
@@ -255,16 +266,16 @@ classdef SubClass_1_3
         % >> 3.1.) --------------------------------------------------------
         function [msh] = Set_FaceNormals(msh)
             for i = 1:msh.c.NC
-                for j = 1:size(msh.c.XY_v{i},1)
+                for j = 1:size(msh.c.xy_v{i},1)
                     %  > Face centroid.
-                    msh.c.f.mean{i}(1,j) = mean(msh.c.f.XY_v{i}{j}(:,1));
-                    msh.c.f.mean{i}(2,j) = mean(msh.c.f.XY_v{i}{j}(:,2));
+                    msh.c.f.mean{i}(1,j) = mean(msh.c.f.xy_v{i}{j}(:,1));
+                    msh.c.f.mean{i}(2,j) = mean(msh.c.f.xy_v{i}{j}(:,2));
                     %  > \vec{FC}.
                     FC{i}(1,j) = msh.c.mean(1,i)-msh.c.f.mean{i}(1,j);
                     FC{i}(2,j) = msh.c.mean(2,i)-msh.c.f.mean{i}(2,j);
                     %  > \vec{Nf}.
-                    Nf{i}(2,j) = msh.c.f.XY_v{i}{j}(1,1)-msh.c.f.XY_v{i}{j}(2,1);
-                    Nf{i}(1,j) = msh.c.f.XY_v{i}{j}(2,2)-msh.c.f.XY_v{i}{j}(1,2);
+                    Nf{i}(2,j) = msh.c.f.xy_v{i}{j}(1,1)-msh.c.f.xy_v{i}{j}(2,1);
+                    Nf{i}(1,j) = msh.c.f.xy_v{i}{j}(2,2)-msh.c.f.xy_v{i}{j}(1,2);
                     %  > Normalize arrays.
                     FC{i}(:,j) = bsxfun(@rdivide,FC{i}(:,j),sqrt(sum(FC{i}(:,j).^2)));
                     Nf{i}(:,j) = bsxfun(@rdivide,Nf{i}(:,j),sqrt(sum(Nf{i}(:,j).^2)));
@@ -331,15 +342,15 @@ classdef SubClass_1_3
             % >> Cells to be evaluated (stencil 1).
             %  > Evaluate stencil for neighbours of neighbouring cells of face i (purely for code efficiency).
             for i = 1:msh.f.NF
-                j  = length(msh.f.nb{i});
-                ki = length(msh.c.nb{msh.f.nb{i}(1)});
+                j  = length(msh.f.cells{i});
+                ki = length(msh.c.nb{msh.f.cells{i}(1)});
                 if j == 1
-                    nb{i}(1)       = msh.f.nb{i};
-                    nb{i}(2:ki+1)  = msh.c.nb{msh.f.nb{i}};
+                    nb{i}(1)       = msh.f.cells{i};
+                    nb{i}(2:ki+1)  = msh.c.nb{msh.f.cells{i}};
                 elseif j == 2
-                    kj             = ki+length(msh.c.nb{msh.f.nb{i}(2)});
-                    nb{i}(1:ki)    = msh.c.nb{msh.f.nb{i}(1)};
-                    nb{i}(ki+1:kj) = msh.c.nb{msh.f.nb{i}(2)};
+                    kj             = ki+length(msh.c.nb{msh.f.cells{i}(2)});
+                    nb{i}(1:ki)    = msh.c.nb{msh.f.cells{i}(1)};
+                    nb{i}(ki+1:kj) = msh.c.nb{msh.f.cells{i}(2)};
                 end
                 nb{i} = unique(nb{i});
             end
@@ -350,12 +361,12 @@ classdef SubClass_1_3
                 % >> Level 1.
                 for j = 1:length(nb{i})
                     %  > 'Direct' face neighbouring cells.
-                    if SubClass_1_3.fft_ismember_1(nb{i}(j),msh.f.nb{i})
+                    if SubClass_1_3.fft_ismember_1(nb{i}(j),msh.f.cells{i})
                         ngh {1,i}(l) = nb{i}(j);
                         x_ij{1,i}(j) = 1;
                         l            = l+1;
                     else
-                        if SubClass_1_3.fft_isequal_1(msh.f.XY_v{i},msh.c.XY_v{nb{i}(j)})
+                        if SubClass_1_3.fft_isequal_1(msh.f.xy_v{i},msh.c.xy_v{nb{i}(j)})
                             ngh {1,i}(l) = nb{i}(j);
                             x_ij  {i}(j) = 1;
                             l            = l+1;
@@ -367,55 +378,49 @@ classdef SubClass_1_3
                 msh.s.st{1,i} = ngh{1,i};
                 
                 % >> Level N.
+                %  > Vertex type: Requires (at least) 1 common vertex (i.e. common vertex/face).
+                %  > Cell   type: Requires 2 common vertices (i.e. common face).
                 if Nlev > 1
                     for j = 2:Nlev
-                        % >> Select stencil type.
-                        %  > Vertex type: Requires (at least) 1 common vertex (i.e. common vertex/face).
-                        %  > Cell   type: Requires 2 common vertices (i.e. common face).
-                        if strcmpi(Type,'Vertex')
-                            for k = 1:length(msh.s.st{j-1,i})
-                                if k == 1
-                                    ngh{j,i} = msh.c.nb{msh.s.st{j-1,i}(k)};
-                                else
-                                    ngh{j,i} = [ngh{j,i},msh.c.nb{msh.s.st{j-1,i}(k)}];
-                                end
+                        %  > Vertex stencil elements.
+                        for k = 1:length(msh.s.st{j-1,i})
+                            if k == 1
+                                ngh{j,i} = msh.c.nb{msh.s.st{j-1,i}(k)};
+                            else
+                                ngh{j,i} = [ngh{j,i},msh.c.nb{msh.s.st{j-1,i}(k)}];
                             end
-                        elseif strcmpi(Type,'Face')
-%                             %  > For each (previous) stencil cell, select eligible neighbouring cells.
-%                             for k = 1:length(msh.s.st{j-1,i})
-%                                 %  > Check cell neighbours that do not belong to previous stencil.
-%                                 if j == 2
-%                                     elig_c{j-1,i}{k} = SubClass_1_3.fft_setdiff(msh.c.nb{msh.s.st{j-1,i}(k)},msh.s.st{1,i});
-%                                 else
-%                                     elig_c{j-1,i}{k} = SubClass_1_3.fft_setdiff(msh.c.nb{msh.s.st{j-1,i}(k)},exc{j-2,i});
-%                                 end
-%                             end
-%                             v_ijk{j-1,i} = elig_c{j-1,i}(~cellfun('isempty',elig_c{j-1,i})) ;
-%                             v_ijk{j-1,i} = [v_ijk{j-1,i}{:}];
-%                             
-%                             % >> Check if it is a boundary face. 
-%                             if ismembc(i,bnd_faces)
-%                                 for k = 1:length(v_ijk{j-1,i})
-%                                     numb{j-1,i}(k) = mcount(v_ijk{j-1,i},v_ijk{j-1,i}(k),'==');
-%                                 end
-%                                 %  > "ik" cells only share 1 face.
-%                                 ik{j-1,i} = find(numb{j-1,i} == 1);
-%                                 
-%                                 %  > Evaluate whether cells "ik" share common face with stencil (j-1) cells.
-%                                 for k = 1:length(ik{j-1,i})
-%                                     for l = 1:length(msh.s.st{j-1,i})
-%                                         i_Flag{j-1,i}(k,l) = SubClass_1_3.fft_isequal_2(msh.c.XY_v{v_ijk{j-1,i}(ik{j-1,i}(k))},msh.c.XY_v{msh.s.st{j-1,i}(l)});
-%                                     end
-%                                     if any(i_Flag{j-1,i}(k,:) == 1)
-%                                         v_ijk{j-1,i} = [v_ijk{j-1,i},v_ijk{j-1,i}(ik{j-1,i}(k))];
-%                                     end
-%                                 end
-%                             end
-%                             %  > Remove unique elements.
-%                             ngh{j,i} = find(accumarray(v_ijk{j-1,i}.',ones(size(v_ijk{j-1,i}))) > 1)';
                         end
                         %  > Exclude repeated cells.
                         ngh{j,i} = unique(ngh{j,i});
+                        
+                        if strcmpi(Type,'Vertex')
+                            %  > Do nothing...
+                        elseif strcmpi(Type,'Face')
+                            %  > Loop through previous stencil cells and select faces' index.
+                            for k = 1:length(msh.s.st{j-1,i})
+                                if k == 1
+                                    prev_f{j-1,i} = msh.c.f.faces{msh.s.st{j-1,i}(k)};
+                                else
+                                    prev_f{j-1,i} = [prev_f{j-1,i},msh.c.f.faces{msh.s.st{j-1,i}(k)}];
+                                end
+                            end
+                            %  > (Outer) faces of previous stencil.
+                            prev_f{j-1,i} = unique(prev_f{j-1,i});
+                            %  > Loop through 'ngh' cells and check whether cell k contains any element of 'prev_f'.
+                            l = 'T';
+                            for k = 1:length(ngh{j,i})
+                                if l == 'T' && any(ismembc(msh.c.f.faces{ngh{j,i}(k)},prev_f{j-1,i}))
+                                    v_ijk{j-1,i} = ngh{j,i}(k);
+                                    l            = 'F';
+                                else
+                                    if any(ismembc(msh.c.f.faces{ngh{j,i}(k)},prev_f{j-1,i}))
+                                        v_ijk{j-1,i} = [v_ijk{j-1,i},ngh{j,i}(k)];
+                                    end
+                                end
+                            end
+                            %  > Overwrite 'ngh'.
+                            ngh{j,i} = v_ijk{j-1,i};
+                        end
                         
                         %  > Exclude lower-order stencil cells.
                         if j == 2
@@ -432,26 +437,29 @@ classdef SubClass_1_3
         function [msh] = Set_Limits(msh)
             for i = 1:msh.f.NF
                 %  > (x,y)_min.
-                msh.s.xy_min(1,i) = min(msh.c.mean(1,msh.s.st{i}));
-                msh.s.xy_min(2,i) = min(msh.c.mean(2,msh.s.st{i}));
-                %  > (x,y)max.
-                msh.s.xy_max(1,i) = max(msh.c.mean(1,msh.s.st{i}));
-                msh.s.xy_max(2,i) = max(msh.c.mean(2,msh.s.st{i}));
+                msh.s.lim.xy_min(1,i) = min(msh.c.mean(1,msh.s.st{i}));
+                msh.s.lim.xy_min(2,i) = min(msh.c.mean(2,msh.s.st{i}));
+                %  > (x,y)_max.
+                msh.s.lim.xy_max(1,i) = max(msh.c.mean(1,msh.s.st{i}));
+                msh.s.lim.xy_max(2,i) = max(msh.c.mean(2,msh.s.st{i}));
             end
         end
         
         %% > 5.) ----------------------------------------------------------
         function [msh] = Set_ReferenceLength(msh)
             for i = 1:msh.c.NC
-                for j = 1:size(msh.c.f.XY_v{i},2)
+                for j = 1:size(msh.c.f.xy_v{i},2)
                     %  > Length.
-                    msh.c.f.len{i}(j) = pdist([msh.c.f.XY_v{i}{j}(:,1),msh.c.f.XY_v{i}{j}(:,2)],'euclidean');
+                    msh.c.f.len{i}(j) = pdist([msh.c.f.xy_v{i}{j}(:,1),msh.c.f.xy_v{i}{j}(:,2)],'euclidean');
                 end
-                N      (i) = size(msh.c.XY_v{i},1);
+                %  > Number of cell vertices.
+                N      (i) = size(msh.c.xy_v{i},1);
+                %  > Perimeter.
                 p      (i) = sum(msh.c.f.len{i});
-                msh.c.H(i) = N(i).*msh.c.Vol(i)./p(i);
+                %  > Cell reference length.
+                msh.c.h(i) = N(i).*msh.c.vol(i)./p(i);
             end
-            msh.c.H_ref = sum(msh.c.H)./msh.c.NC;
+            msh.c.h_ref = sum(msh.c.h)./msh.c.NC;
         end
         
         %% > 6.) ----------------------------------------------------------

@@ -2,7 +2,7 @@ classdef SubClass_2_1
     methods (Static)
         %% > Wrap up SubClass_2_1.
         function [fn,bnd,blk] = WrapUp_2_1(inp,msh)     
-            %  ------------------------------------------------------------
+            % >> ----------------------------------------------------------
             % >> 1.   Compute analytic expressions of f,df and d2f.
             % >> 2.   Compute analytic solution.
             % >> 3.   Compute source term.
@@ -11,7 +11,7 @@ classdef SubClass_2_1
             %  > 3.3. Isoparameteric mapping.
             %  > 3.4. Compute (individual) cell polygon integral (2D).
             %  > 3.5. Compute source term.
-            %  > ----------------------------------------------------------
+            % >> ----------------------------------------------------------
             % >> Local variables.
             Order = inp.fr.n;
             
@@ -19,8 +19,7 @@ classdef SubClass_2_1
             fn = SubClass_2_1.Set_fn(inp);
             % >> 2.
             [bnd,blk] = SubClass_2_1.Compute_f_df_d2f(fn,msh); 
-            % >> 3.
-            % -> NOT compute here.
+            % >> 3: NOT compute here.
         end
         
         %% > Tools.
@@ -132,8 +131,7 @@ classdef SubClass_2_1
                 I = I+det_J(i).*Qp.Weights(i).*func_p(i);
             end
         end
-                
-        % >> #2: Compute source term (2D cell integral).
+        % >> 3.5.) --------------------------------------------------------
         function [Qp,F_Vol] = Compute_SourceTerm(n,msh,func)
             %  > Cell mapping (computational domain).
             [Qc_T,N_T]          = SubClass_2_1.CD_Triangle     (n);

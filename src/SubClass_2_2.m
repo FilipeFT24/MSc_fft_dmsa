@@ -2,7 +2,7 @@ classdef SubClass_2_2
     methods (Static)
         %% > Wrap up SubClass_2_2.
         function [msh] = WrapUp_2_2(inp,msh,fn)
-            %  ------------------------------------------------------------
+            % >> ----------------------------------------------------------
             % >> 1.   Set stencil coordinates (gather face/cell centroids' coordinates).
             %  > 1.1. Wrap up '1.' and call '1.2.'
             %  > 1.2. Find neighbouring faces' centroid coordinates.
@@ -17,8 +17,7 @@ classdef SubClass_2_2
             % >> 3.   Assemble matrices A and B.
             %  > 3.1. Assemble matrix A.
             %  > 3.2. Assemble matrix B.
-            %
-            %  > ----------------------------------------------------------
+            % >> ----------------------------------------------------------
             % >> Local variables.
             wf = inp.fr.wf;
             ng = inp.fr.ng;
@@ -28,10 +27,9 @@ classdef SubClass_2_2
             % >> 1.
             msh = SubClass_2_2.WrapUp_1(msh);
             % >> 2.
-            [msh,Tf_C,Tf_D] = SubClass_2_2.WrapUp_2(msh,wf,ng);
+            msh = SubClass_2_2.WrapUp_2(msh,wf,ng);
             % >> 3.
             %[msh] = SubClass_2_2.WrapUp_3(V,G,Tf_C,Tf_D);
-            
         end
         
         %% > Tools.
@@ -65,14 +63,14 @@ classdef SubClass_2_2
                         %  > Call 1.2.)
                         st_v{is,i} = SubClass_2_2.Deal_FaceCoord(Flag{is,i},st_v{is,i},bnd_ff,bnd_fc,len_c{i}(is),msh.s.st{is,i},msh.f.mean);
                     end
-                    msh.s.XY_v{is,i} = st_v{is,i};
+                    msh.s.xy_v{is,i} = st_v{is,i};
                 end
             end
         end
         % >> 1.2.) --------------------------------------------------------
         function [st_v] = Deal_FaceCoord(Flag,st_v,bnd_ff,bnd_fc,len_c,st,mean_f)
             %  > Add respective boundary faces.
-            %  > Remark: a given boundary cell may contain more than 1 boundary face (see 3rd row of msh.bnd.f)
+            %    Remark: A given boundary cell may contain more than 1 boundary face (see 3rd row of msh.bnd.f)
             j = 1;
             for i = 1:length(Flag)
                 if Flag(i)
@@ -90,7 +88,7 @@ classdef SubClass_2_2
         
         %% > 2.) ----------------------------------------------------------
         % >> 2.1.) --------------------------------------------------------
-        function [msh,Tf_C,Tf_D] = WrapUp_2(msh,wf,ng)
+        function [msh] = WrapUp_2(msh,wf,ng)
             %% > Polynomial reconstruction.
             %  > Polynomial order.
             p = 2.*size(msh.s.st,1)-1;
@@ -102,17 +100,13 @@ classdef SubClass_2_2
             
             %% > Matrices Df and Dwf.
             % >> Df.
-            %  > Loop through faces.
+            %  > Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
             for i = 1:msh.f.NF
-                % >> Face centroid coordinates.
                 Face(i,:) = ...
                     [msh.f.mean(1,i),msh.f.mean(2,i)];
-                %  > Loop through stencil elements.
-                for j = 1:size(msh.s.XY_v{i},2)
-                    % >> Df     = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...]
-                    XY{i}(1,j)  = msh.s.XY_v{i}(1,j)-Face(i,1);
-                    XY{i}(2,j)  = msh.s.XY_v{i}(2,j)-Face(i,2);
-                    %  > Loop through number of polynomial coefficients/exponents.
+                for j = 1:size(msh.s.xy_v{i},2)
+                    XY{i}(1,j)  = msh.s.xy_v{i}(1,j)-Face(i,1);
+                    XY{i}(2,j)  = msh.s.xy_v{i}(2,j)-Face(i,2);
                     for k = 1:len_p
                         Df{i}(j,k) = Coeff_1(k).*(XY{i}(1,j).^Exp_1(1,k)).*(XY{i}(2,j).^Exp_1(2,k));
                     end
@@ -120,19 +114,18 @@ classdef SubClass_2_2
             end
             
             % >> Dwf.
+            %  > Dwf = w*Df.
             %  > Boundary faces' cell index.
             for i = 1:size(msh.bnd.f,2)
                 bnd_ff(i) = msh.bnd.f{2,i};
                 bnd_fc(i) = msh.bnd.f{3,i};
             end
-            %  > Loop through faces.
             for i = 1:msh.f.NF
-                %  > Loop through stencil elements.
-                for j = 1:size(msh.s.XY_v{i},2)
+                for j = 1:size(msh.s.xy_v{i},2)
                     %  > Point.
                     %  > Remark: If point=face, then face "i" belongs to a corner cell -> use cell centroid instead.
-                    if ~isequal(msh.s.XY_v{i}(:,j)',Face(i,:))
-                        Point{i}(j,:) = msh.s.XY_v{i}(:,j)';
+                    if ~isequal(msh.s.xy_v{i}(:,j)',Face(i,:))
+                        Point{i}(j,:) = msh.s.xy_v{i}(:,j)';
                     else
                         Point{i}(j,:) = msh.c.mean(:,bnd_fc(bnd_ff == i));
                     end
@@ -141,44 +134,45 @@ classdef SubClass_2_2
                 end
             end
             
-            %% > Matrices Pf and Tf.           
-            for i = 1:msh.f.NF
-                %  > Pf = inv(Dwf_T*Df)*Dwf_T.
-                Pf{i} = (transpose(Dwf{i})*Df{i})\transpose(Dwf{i});
-            end
-            % >> Tf     = ?
-            %  > C(1)   = P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)+...
-            %  > C(2)   = P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)+...
-            %  > C(3)   = P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)+...
-            %  > Phi_f  = C(1)+C(2)*(x-xf)+C(3)*(y-yf)+...
-            %  > Phi_f  = {P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)}+
-            %           + {P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)}*(x-xf)+
-            %           + {P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)}*(y-yf)+...
-            %  > Phi_f  = {P(1,1)+P(2,1)*(x-xf)+P(3,1)*(y-yf)+...}*Phi(1)+
-            %           + {P(1,2)+P(2,2)*(x-xf)+P(3,2)*(y-yf)+...}*Phi(2)+
-            %           + {P(1,3)+P(2,3)*(x-xf)+P(3,3)*(y-yf)+...}*Phi(3)+...
-            %           + {P(1,4)+P(2,4)*(x-xf)+P(3,4)*(y-yf)+...}*Phi(4)+...
-            %
-            %  > Tf    -> Equivalent to: [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
-            %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).
+%             %% > Matrices Pf and Tf. 
+%             % >> Pf.
+%             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
+%             for i = 1:msh.f.NF
+%                 Pf{i} = (transpose(Dwf{i})*Df{i})\transpose(Dwf{i});
+%             end
+%             % >> Tf     = ?
+%             %  > C(1)   = P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)+...
+%             %  > C(2)   = P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)+...
+%             %  > C(3)   = P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)+...
+%             %  > Phi_f  = C(1)+C(2)*(x-xf)+C(3)*(y-yf)+...
+%             %  > Phi_f  = {P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)}+
+%             %           + {P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)}*(x-xf)+
+%             %           + {P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)}*(y-yf)+...
+%             %  > Phi_f  = {P(1,1)+P(2,1)*(x-xf)+P(3,1)*(y-yf)+...}*Phi(1)+
+%             %           + {P(1,2)+P(2,2)*(x-xf)+P(3,2)*(y-yf)+...}*Phi(2)+
+%             %           + {P(1,3)+P(2,3)*(x-xf)+P(3,3)*(y-yf)+...}*Phi(3)+...
+%             %           + {P(1,4)+P(2,4)*(x-xf)+P(3,4)*(y-yf)+...}*Phi(4)+...
+%             %
+%             %  > Tf    -> Equivalent to: [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
+%             %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).
             
             % >> Face quadrature.
             %  > Function handle coordinate transformation.
             [xy_fg,j_fg] = SubClass_2_2.Create_FunctionHandle();
             for i = 1:msh.f.NF
-                msh.f.fg{i} = SubClass_2_2.GaussFace_Points(xy_fg,j_fg,ng,msh.f.XY_v{i});
+                msh.f.gq{i} = SubClass_2_2.GaussFace_Points(xy_fg,j_fg,ng,msh.f.xy_v{i});
             end
             
-            %  > Convection.
-            for i = 1:msh.f.NF
-                df  {i} = SubClass_2_2.Compute_df(1,Face(i,:),msh.f.fg{i},Coeff_1,Exp_1);
-                Tf_C{i} = df{i}*Pf{i};
-            end
-            %  > Diffusion.
-            for i = 1:msh.f.NF
-                grad_df{i} = SubClass_2_2.Compute_df(2,Face(i,:),msh.f.fg{i},Coeff_2,Exp_2);
-                Tf_D   {i} = grad_df{i}*Pf{i};
-            end
+%             %  > Convection.
+%             for i = 1:msh.f.NF
+%                 df  {i} = SubClass_2_2.Compute_df(1,Face(i,:),msh.f.gq{i},Coeff_1,Exp_1);
+%                 Tf_C{i} = df{i}*Pf{i};
+%             end
+%             %  > Diffusion.
+%             for i = 1:msh.f.NF
+%                 grad_df{i} = SubClass_2_2.Compute_df(2,Face(i,:),msh.f.gq{i},Coeff_2,Exp_2);
+%                 Tf_D   {i} = grad_df{i}*Pf{i};
+%             end
         end
         % >> 2.2.) --------------------------------------------------------
         function [Coeff_iD,Exp_iD] = Compute_PolTerms(iD,p,len_p)
