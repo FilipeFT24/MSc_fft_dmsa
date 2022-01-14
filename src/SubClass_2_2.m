@@ -6,36 +6,37 @@ classdef SubClass_2_2
             % >> 1.   Set stencil coordinates (gather face/cell centroids' coordinates).
             %  > 1.1. Wrap up '1.' and call '1.2.'
             %  > 1.2. Find neighbouring faces' centroid coordinates.
+            %  > 1.3. Gather stencil elements' coordinates. 
             % >> 2.   Assemble matrices Df, Dwf, Pf and Tf.
             %  > 2.1. Wrap up '2.' and call '2.2.'.
             %  > 2.2. Compute polynomial terms.
             %  > 2.3. Set weighting function.
-            %  > 2.4. Invert ill-conditioned matrix (from Filipe Diogo's thesis).
-            %  > 2.5. Quadrature abcissas/weights.
-            %  > 2.6. Coordinate transformation: csi->x/y.
-            %  > 2.7. Compute df array.
+            %  > 2.4. Quadrature abcissas/weights.
+            %  > 2.5. Coordinate transformation: csi->x/y.
+            %  > 2.6. Compute df array.
             % >> 3.   Assemble matrices A and B.
             %  > 3.1. Assemble matrix A.
             %  > 3.2. Assemble matrix B.
             % >> ----------------------------------------------------------
             % >> Local variables.
-            wf = inp.fr.wf;
-            ng = inp.fr.ng;
-            V  = [inp.pr.vx,inp.pr.vy];
-            G  = [inp.pr.gx,inp.pr.gy];
-            
+            wf    = inp.fr.wf;
+            ng    = inp.fr.ng;
+            Ext_1 = inp.fr.Ext_1;
+            V     = [inp.pr.vx,inp.pr.vy];
+            G     = [inp.pr.gx,inp.pr.gy];
+                        
             % >> 1.
-            msh = SubClass_2_2.WrapUp_1(msh);
+            [msh,st_xy] = SubClass_2_2.WrapUp_1(msh,Ext_1);
             % >> 2.
-            msh = SubClass_2_2.WrapUp_2(msh,wf,ng);
+            [msh,Tf_C,Tf_D] = SubClass_2_2.WrapUp_2(msh,st_xy,wf,ng);
             % >> 3.
-            %[msh] = SubClass_2_2.WrapUp_3(V,G,Tf_C,Tf_D);
+            [msh] = SubClass_2_2.WrapUp_3(msh,V,G,Tf_C,Tf_D);
         end
         
         %% > Tools.
         %% > 1.) ----------------------------------------------------------
         % >> 1.1.) --------------------------------------------------------
-        function [msh] = WrapUp_1(msh)
+        function [msh,st_xy_i] = WrapUp_1(msh,Ext_1)
             % >> iD's.
             %  > Boundary cells' index.
             for i = 1:size(msh.bnd.c,2)
@@ -49,23 +50,46 @@ classdef SubClass_2_2
             
             % >> Deal (Xv,Yv) coordinates of stencil elements.
             for i = 1:msh.f.NF
-                for is = 1:size(msh.s.st,1)
+                for j = 1:size(msh.s.st_i,1)
                     %  > Stencil cell centroids.
-                    len_c{i}(is) = length(msh.s.st{is,i});
-                    for j = 1:len_c{i}(is)
-                        st_v{is,i}(1,j) = msh.c.mean(1,msh.s.st{is,i}(j));
-                        st_v{is,i}(2,j) = msh.c.mean(2,msh.s.st{is,i}(j));
+                    len_c{i}(j) = length(msh.s.st_i{j,i});
+                    for k = 1:len_c{i}(j)
+                        st_v{j,i}(1,k) = msh.c.mean(1,msh.s.st_i{j,i}(k));
+                        st_v{j,i}(2,k) = msh.c.mean(2,msh.s.st_i{j,i}(k));
                     end
                     %  > Check whether face i's stencil cells belong to the boundary. If so, add the respective face to the stencil.
-                    Flag{is,i} = zeros(1,len_c{i}(is));
-                    Flag{is,i} = ismembc(msh.s.st{is,i},bnd_cc);
-                    if any(Flag{is,i} == 1)
+                    Flag{j,i} = zeros(1,len_c{i}(j));
+                    Flag{j,i} = ismembc(msh.s.st_i{j,i},bnd_cc);
+                    if any(Flag{j,i} == 1)
                         %  > Call 1.2.)
-                        st_v{is,i} = SubClass_2_2.Deal_FaceCoord(Flag{is,i},st_v{is,i},bnd_ff,bnd_fc,len_c{i}(is),msh.s.st{is,i},msh.f.mean);
+                        st_v{j,i} = SubClass_2_2.Deal_FaceCoord(Flag{j,i},st_v{j,i},bnd_ff,bnd_fc,len_c{i}(j),msh.s.st_i{j,i},msh.f.mean);
                     end
-                    msh.s.xy_v{is,i} = st_v{is,i};
+                    msh.s.xy_v{j,i} = st_v{j,i};
                 end
             end
+            %  > Gather stencil elements' coordinates.
+            st_xy_i = SubClass_2_2.Gather_Elements(msh);
+            
+%             % >> > Perform stencil extension?
+%             %  > Remark: Use functions on SubClass_1_3.
+%             msh = SubClass_1_3.Set_Limits(msh,st_xy_i);
+%             
+%             %  > Extension #1.
+%             if strcmpi(Ext_1,'T')
+%                 %  > Elements' index to be added to the stencil.
+%                 add_to = SubClass_1_3.StencilExt_1(msh);
+%                 %  > Add elements' coordinates...
+%                 for i = 1:msh.f.NF
+%                     if ~isempty(add_to{i})
+%                         msh.s.st_f{i} = add_to{i};
+%                         st_xy_i   {i} = [st_xy_i{i},msh.c.mean(:,msh.s.st_f{i})];
+%                     end
+%                 end
+%             end
+            
+            
+            
+            
         end
         % >> 1.2.) --------------------------------------------------------
         function [st_v] = Deal_FaceCoord(Flag,st_v,bnd_ff,bnd_fc,len_c,st,mean_f)
@@ -85,28 +109,37 @@ classdef SubClass_2_2
                 st_v(2,j+len_c) = mean_f(2,bnd_ff(f_add(j)));
             end
         end
-        
+        % >> 1.3.) --------------------------------------------------------
+        function [st_xy] = Gather_Elements(msh)
+            for i = 1:size(msh.s.st_i,2)
+                for j = 1:size(msh.s.st_i,1)
+                    st_xy{i}{j} = msh.s.xy_v{j,i};
+                end
+                st_xy{i} = cell2mat(st_xy{i});
+            end
+        end
+                
         %% > 2.) ----------------------------------------------------------
         % >> 2.1.) --------------------------------------------------------
-        function [msh] = WrapUp_2(msh,wf,ng)
+        function [msh,Tf_C,Tf_D] = WrapUp_2(msh,st_xy,wf,ng)
             %% > Polynomial reconstruction.
             %  > Polynomial order.
-            p = 2.*size(msh.s.st,1)-1;
+            p = 2.*size(msh.s.st_i,1)-1;
             %  > Number of terms.
             len_p = 1./2.*(p+1).*(p+2);
             %  > Polynomial terms.
             [Coeff_1,Exp_1] = SubClass_2_2.Compute_PolTerms(1,p,len_p);
             [Coeff_2,Exp_2] = SubClass_2_2.Compute_PolTerms(2,p,len_p);
-            
+                 
             %% > Matrices Df and Dwf.
             % >> Df.
             %  > Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
             for i = 1:msh.f.NF
                 Face(i,:) = ...
                     [msh.f.mean(1,i),msh.f.mean(2,i)];
-                for j = 1:size(msh.s.xy_v{i},2)
-                    XY{i}(1,j)  = msh.s.xy_v{i}(1,j)-Face(i,1);
-                    XY{i}(2,j)  = msh.s.xy_v{i}(2,j)-Face(i,2);
+                for j = 1:size(st_xy{i},2)
+                    XY{i}(1,j)  = st_xy{i}(1,j)-Face(i,1);
+                    XY{i}(2,j)  = st_xy{i}(2,j)-Face(i,2);
                     for k = 1:len_p
                         Df{i}(j,k) = Coeff_1(k).*(XY{i}(1,j).^Exp_1(1,k)).*(XY{i}(2,j).^Exp_1(2,k));
                     end
@@ -121,40 +154,43 @@ classdef SubClass_2_2
                 bnd_fc(i) = msh.bnd.f{3,i};
             end
             for i = 1:msh.f.NF
-                for j = 1:size(msh.s.xy_v{i},2)
+                for j = 1:size(st_xy{i},2)
                     %  > Point.
                     %  > Remark: If point=face, then face "i" belongs to a corner cell -> use cell centroid instead.
-                    if ~isequal(msh.s.xy_v{i}(:,j)',Face(i,:))
-                        Point{i}(j,:) = msh.s.xy_v{i}(:,j)';
+                    if ~isequal(st_xy{i}(:,j)',Face(i,:))
+                        Point{i}(j,:) = st_xy{i}(:,j)';
+                        w    {i}(j,1) = SubClass_2_2.W_Function(Point{i}(j,:),Face(i,:),wf,4,'F');
                     else
                         Point{i}(j,:) = msh.c.mean(:,bnd_fc(bnd_ff == i));
+                        w    {i}(j,1) = SubClass_2_2.W_Function(Point{i}(j,:),Face(i,:),wf,4,'T');
                     end
-                    w  {i}(j,1) = SubClass_2_2.W_Function(Point{i}(j,:),Face(i,:),wf);
                     Dwf{i}(j,:) = Df{i}(j,:).*w{i}(j,1);
                 end
             end
             
-%             %% > Matrices Pf and Tf. 
-%             % >> Pf.
-%             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
-%             for i = 1:msh.f.NF
-%                 Pf{i} = (transpose(Dwf{i})*Df{i})\transpose(Dwf{i});
-%             end
-%             % >> Tf     = ?
-%             %  > C(1)   = P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)+...
-%             %  > C(2)   = P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)+...
-%             %  > C(3)   = P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)+...
-%             %  > Phi_f  = C(1)+C(2)*(x-xf)+C(3)*(y-yf)+...
-%             %  > Phi_f  = {P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)}+
-%             %           + {P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)}*(x-xf)+
-%             %           + {P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)}*(y-yf)+...
-%             %  > Phi_f  = {P(1,1)+P(2,1)*(x-xf)+P(3,1)*(y-yf)+...}*Phi(1)+
-%             %           + {P(1,2)+P(2,2)*(x-xf)+P(3,2)*(y-yf)+...}*Phi(2)+
-%             %           + {P(1,3)+P(2,3)*(x-xf)+P(3,3)*(y-yf)+...}*Phi(3)+...
-%             %           + {P(1,4)+P(2,4)*(x-xf)+P(3,4)*(y-yf)+...}*Phi(4)+...
-%             %
-%             %  > Tf    -> Equivalent to: [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
-%             %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).
+            %% > Matrices Pf and Tf. 
+            % >> Pf.
+            %  > Pf = inv(Dwf_T*Df)*Dwf_T.
+            for i = 1:msh.f.NF
+                Inv          {i} = eMatrices(transpose(Dwf{i})*Df{i});
+                Pf           {i} = Inv{i}*transpose(Dwf{i});
+                msh.s.cond_Df(i) = cond(Df{i});
+            end           
+            % >> Tf     = ?
+            %  > C(1)   = P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)+...
+            %  > C(2)   = P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)+...
+            %  > C(3)   = P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)+...
+            %  > Phi_f  = C(1)+C(2)*(x-xf)+C(3)*(y-yf)+...
+            %  > Phi_f  = {P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)}+
+            %           + {P(2,1)*Phi(1)+P(2,2)*Phi(2)+P(2,3)*Phi(3)+P(2,4)*Phi(4)}*(x-xf)+
+            %           + {P(3,1)*Phi(1)+P(3,2)*Phi(2)+P(3,3)*Phi(3)+P(3,4)*Phi(4)}*(y-yf)+...
+            %  > Phi_f  = {P(1,1)+P(2,1)*(x-xf)+P(3,1)*(y-yf)+...}*Phi(1)+
+            %           + {P(1,2)+P(2,2)*(x-xf)+P(3,2)*(y-yf)+...}*Phi(2)+
+            %           + {P(1,3)+P(2,3)*(x-xf)+P(3,3)*(y-yf)+...}*Phi(3)+...
+            %           + {P(1,4)+P(2,4)*(x-xf)+P(3,4)*(y-yf)+...}*Phi(4)+...
+            %
+            %  > Tf    -> Equivalent to: [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
+            %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).
             
             % >> Face quadrature.
             %  > Function handle coordinate transformation.
@@ -163,16 +199,16 @@ classdef SubClass_2_2
                 msh.f.gq{i} = SubClass_2_2.GaussFace_Points(xy_fg,j_fg,ng,msh.f.xy_v{i});
             end
             
-%             %  > Convection.
-%             for i = 1:msh.f.NF
-%                 df  {i} = SubClass_2_2.Compute_df(1,Face(i,:),msh.f.gq{i},Coeff_1,Exp_1);
-%                 Tf_C{i} = df{i}*Pf{i};
-%             end
-%             %  > Diffusion.
-%             for i = 1:msh.f.NF
-%                 grad_df{i} = SubClass_2_2.Compute_df(2,Face(i,:),msh.f.gq{i},Coeff_2,Exp_2);
-%                 Tf_D   {i} = grad_df{i}*Pf{i};
-%             end
+            %  > Convection.
+            for i = 1:msh.f.NF
+                df  {i} = SubClass_2_2.Compute_df(1,Face(i,:),msh.f.gq{i},Coeff_1,Exp_1);
+                Tf_C{i} = df{i}*Pf{i};
+            end
+            %  > Diffusion.
+            for i = 1:msh.f.NF
+                grad_df{i} = SubClass_2_2.Compute_df(2,Face(i,:),msh.f.gq{i},Coeff_2,Exp_2);
+                Tf_D   {i} = grad_df{i}*Pf{i};
+            end
         end
         % >> 2.2.) --------------------------------------------------------
         function [Coeff_iD,Exp_iD] = Compute_PolTerms(iD,p,len_p)
@@ -274,7 +310,7 @@ classdef SubClass_2_2
             end
         end       
         % >> 2.3.) --------------------------------------------------------
-        function [W_func] = W_Function(Point,Face,wf)
+        function [W_func] = W_Function(Point,Face,wf,k,Flag)
             % >> Weighting functions: 1) Unweighted: wij = 1.
             %                         2) Weighted  : wij = 1/|xj-xi|^2 -> wij = 1/|dist(x_point-xf)|^k.
             %                         3) Weighted  : wij = (...).
@@ -283,57 +319,18 @@ classdef SubClass_2_2
                 W_func = 1;
             elseif strcmpi(wf,'Weighted')
                 %  > 2)
-                k      = 2;
-                W_func = 1./pdist([Point;Face],'euclidean').^k;
+                d = pdist([Point;Face],'euclidean');
+                if strcmpi(Flag,'F')
+                    W_func = 1./d.^k;
+                elseif strcmpi(Flag,'T')
+                    W_func = 1./(d./2).^k;
+                    A = 1-exp(-k.^2);
+                    W_func = 1;
+                end
             end
         end
-        % >> 2.4.) --------------------------------------------------------
-        function [X] = Invert_Matrix(Df,Dwf,Tol,iterMax)
-            %  > Divide each column of Df by its maximum absolute value.
-            for j = 1:size(Df,2)
-                Ff  (j) = max(abs(Df(:,j)));
-                Df(:,j) = Df(:,j)./Ff(j);
-            end
-            Af = sparse(transpose(Dwf)*Df);
-            %  > Preconditioning.
-            setup = struct('type','ilutp','droptol',1e-1);
-            [L,U] = ilu(Af,setup);
-            %  > Use bicgstabl solver for every column...
-            B = zeros(size(Af,1),1);
-            for j = 1:size(Af,2)
-                B (j,1)    = 1;
-                [X(:,j),~] = bicgstabl(Af,B,Tol,iterMax,L,U,[]);
-            end
-            %  > Divide each row of X by Ff(i).
-            for i = 1:size(X,1)
-                X(i,:) = X(i,:)./Ff(i);
-            end
-        end
-        % >> 2.5.) --------------------------------------------------------
-        function [fg] = GaussFace_Points(xy_fg,j_fg,ng,xy_f)
-            %  > Gauss-Legendre quadrature (available in [Tools - Numerical]/[QuadTools]).
-            Q_1D = quadGaussLegendre(ng);
-            
-            for i = 1:length(Q_1D.Points)
-                fg.Points(i,1) = xy_fg(xy_f(1,1),xy_f(2,1),Q_1D.Points(i));
-                fg.Points(i,2) = xy_fg(xy_f(1,2),xy_f(2,2),Q_1D.Points(i));    
-            end
-            fg.Weights = 1./2.*Q_1D.Weights;
-            fg.jac     = [j_fg(xy_f(1,1),xy_f(1,2)),j_fg(xy_f(2,1),xy_f(2,2))];
-        end
+        
         % >> 2.6.) --------------------------------------------------------
-        function [x,j] = Create_FunctionHandle()
-             % >> Symbolic variables.
-            syms a b csi;
-
-            %  > x(csi) = a*(1-csi)/2+b*(1+csi)/2.
-            x = a.*(1-csi)./2+b.*(1+csi)./2;
-            x = matlabFunction(x);
-            %  > j(csi) = d(x)/d(csi) = (b-a)/2.
-            j = (b-a)./2;
-            j = matlabFunction(j);
-        end
-        % >> 2.7.) --------------------------------------------------------
         function [df_ij] = Compute_df(iD,mean_f,fg,Coeff,Exp)
             if iD == 1
                 % >> Phi_f.
@@ -362,24 +359,17 @@ classdef SubClass_2_2
                        
         %% > 3.) ----------------------------------------------------------
         % >> 3.1.) --------------------------------------------------------
-        function [] = WrapUp_3(V,G,Tf_C,Tf_D)
+        function [msh] = WrapUp_3(msh,V,G,Tf_C,Tf_D)
             % >> Assemble matrices A and B.
             %  > A.
-            SubClass_2_2.Assemble(V,G,Tf_C,Tf_D);
+            SubClass_2_2.Assemble_A(V,G,Tf_C,Tf_D);
             %  > B.
-            SubClass_2_2.Assemble(V,G,Tf_C,Tf_D);
-            
-            
-            
-            
-            
+            SubClass_2_2.Assemble_B(V,G,Tf_C,Tf_D);
+
         end
         % >> 3.2.) --------------------------------------------------------
         function [] = Assemble_A(V,G,Tf_C,Tf_D)
-            
-            
-            
-            
+    
         end
         % >> 3.3.) --------------------------------------------------------
         function [] = Assemble_B(V,G,Tf_C,Tf_D)

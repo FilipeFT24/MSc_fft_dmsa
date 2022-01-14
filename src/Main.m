@@ -5,11 +5,11 @@ clear, clc, close all; format default; beep off;
 SubClass_1_1.Add_FolderPaths;
 
 tic;
-[inp,msh] = Class_1.Set_Inputs;
-[msh,bnd,blk] = Class_2.Compute_ErrorPDE(inp,msh);
+[inp,msh] = Class_1.WrapUp_1;
+%[msh,bnd,blk] = Class_2.Compute_ErrorPDE(inp,msh);
 toc;
 
-%Fig_0.WrapUp_Fig_0(1,inp.fr.n);
+%Fig_0.WrapUp_Fig_0(1,inp.fr.ng);
 Fig_1.WrapUp_Fig_1(2,inp,msh);
 %Fig_2.WrapUp_Fig_2(4,inp,msh,blk);
 

@@ -1,103 +1,139 @@
 classdef SubClass_1_2
     methods (Static)
-        %% > Wrap up SubClass_1_2.
-        function [msh] = WrapUp_1_2(inp,msh)
-            % >> ----------------------------------------------------------
-            % >> 1. Wrap up mesh (determine all necessary components).
-            % >> ----------------------------------------------------------
+        %% > Wrap-up SubClass_1_2.
+        % >> --------------------------------------------------------------
+        % >> 1.   Uniform grid.
+        % >> 2.   Non-uniform grid.
+        %  > 2.1. Grid: Randomly generated point cloud.
+        %  > 2.2. Grid: Blust clustering.
+        %  > 2.3. Grid: Wall  clustering.
+        % >> 3.   Reshape arrays.
+        % >> --------------------------------------------------------------
+        function [msh] = WrapUp_1_2(inp)
+            % >> Local variables.
+            T_2    = inp.msh.T_2.t;
+            T_2_st = inp.msh.T_2.st;
             
-            % >> 1.
-            msh = SubClass_1_2.WrapUp_msh(inp,msh);
+            %  > Select grid type.
+            if strcmpi(T_2,'Uniform')
+                % >> 1.
+                msh = SubClass_1_2.Uniform_mshGenerator(inp);
+            elseif strcmpi(T_2,'Non-uniform')
+                % >> 2.
+                if strcmpi(T_2_st,'Random')
+                    %  > 2.1.
+                    msh = SubClass_1_2.NonUniform_mshGenerator_1(inp);
+                elseif strcmpi(T_2_st,'Bulk')
+                    %  > 2.2.
+                    msh = SubClass_1_2.NonUniform_mshGenerator_2(inp);
+                elseif strcmpi(T_2_st,'Wall')
+                end
+            end
         end
         
-        %% > Tools.
-        %% > 1.) ----------------------------------------------------------
-        function [msh] = WrapUp_msh(inp,msh)
-            % >> ----------------------------------------------------------
-            % >> 1.   Generate mesh vertices/vertex connectivity (i.e. the indices of the vertices that belong to a given cell).
-            %  > 1.1. '^' -> Face polygon: triangle -> Delaunay triangulation.
-            %  > 1.2. 's' -> Face polygon: square   -> Cartesian.
-            % >> 2.   Determine mesh properties.
-            %  > 2.1. Wrap up cell (cell components).
-            %  > 2.2. Wrap up face (face components). 
-            %         Remark: 'WrapUp_Cell' is called first since some of the components of this field help setting up 'WrapUp_Face'.
-            %  > 2.3. Finalize... 
-            % >> ----------------------------------------------------------
+        %% > 1. -----------------------------------------------------------
+        function [msh] = Uniform_mshGenerator(inp)
             % >> Local variables.
-            NX_v  = inp.msh.Nv(1);
-            NY_v  = inp.msh.Nv(2);
-            NT    = inp.fr.nt;
-            Order = inp.fr.n;
-            T1    = inp.msh.T_1.t;
-                        
-            % >> 1.
-            if strcmpi(T1,'^')
-                struct = delaunayTriangulation(msh.d.xy_v(:,1),msh.d.xy_v(:,2));               
-            elseif strcmpi(T1,'s')
-                %  > Number of cells/vertices.
-                [numb_C,numb_V] = ...
-                    deal((NX_v-1).*(NY_v-1),NX_v.*NY_v);
-                %  > Connectivity list.
-                CList                        = reshape(1:numb_V,NY_v,NX_v);
-                struct.ConnectivityList(:,1) = reshape(CList(1:NY_v-1,1:NX_v-1),numb_C,1); % > SW.
-                struct.ConnectivityList(:,2) = reshape(CList(1:NY_v-1,2:NX_v  ),numb_C,1); % > SE.
-                struct.ConnectivityList(:,3) = reshape(CList(2:NY_v  ,2:NX_v  ),numb_C,1); % > NE.
-                struct.ConnectivityList(:,4) = reshape(CList(2:NY_v  ,1:NX_v-1),numb_C,1); % > NW.
-                %  > Points.
-                struct.Points(:,1) = msh.d.xy_v(:,1);
-                struct.Points(:,2) = msh.d.xy_v(:,2);
-            end
-            %  > ----------------------------------------------------------
-            %  > 3.2. 
-            %  > Number of cells.
-            msh.c.NC = size(struct.ConnectivityList,1);
-            %  > Cell vertices' coordinates.
-            for i = 1:msh.c.NC
-                msh.c.xy_v{i}(:,1) = struct.Points(struct.ConnectivityList(i,:),1);
-                msh.c.xy_v{i}(:,2) = struct.Points(struct.ConnectivityList(i,:),2);
-            end
-            msh = SubClass_1_2.WrapUp_Cell(struct,msh);
-            msh = SubClass_1_2.WrapUp_Face(struct,msh,NT,Order);
-            %  > ----------------------------------------------------------
-            %  > 3.3.
-            msh = SubClass_1_2.WrapUp_Finalize(msh);
-        end       
-        % >> 3.2.1.) ------------------------------------------------------
-        function [msh] = WrapUp_Cell(struct,msh)
-            for i = 1:msh.c.NC
-                %  > Volume.
-                msh.c.vol   (i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
-                %  > Centroid.
-                msh.c.mean(1,i) = mean(msh.c.xy_v{i}(:,1));
-                msh.c.mean(2,i) = mean(msh.c.xy_v{i}(:,2));
-            end
-            %  > Cell neighbours.
-            msh = SubClass_1_3.Set_CellNeighbours(struct,msh);
+            NX_v = inp.msh.Nv(1);
+            NY_v = inp.msh.Nv(2);
+            Xv_i = inp.msh.lim.Xv_i;
+            Xv_f = inp.msh.lim.Xv_f;
+            Yv_i = inp.msh.lim.Yv_i;
+            Yv_f = inp.msh.lim.Yv_f;
+            
+            % >> Domain vertices.
+            %  > (Xd,Yd).
+            Xd_x = linspace(Xv_i,Xv_f,NX_v);
+            Yd_y = linspace(Yv_i,Yv_f,NY_v);
+            %  > Generate grid.
+            [Xd,Yd] = meshgrid(Xd_x,Yd_y);
+            %  > (Xv,Yv).
+            msh.d.xy_v = SubClass_1_2.Reshape_Arrays(Xd,Yd);
         end
-        % >> 3.2.2.) ------------------------------------------------------
-        function [msh] = WrapUp_Face(struct,msh,NT,Order)
-            %  > Faces' coordinates.
-            msh = SubClass_1_3.Set_DomainFaces(struct,msh);
-
-            for j = 1:size(msh.f.xy_v,2)
-                %  > Centroid.
-                msh.f.mean(1,j) = mean(msh.f.xy_v{j}(:,1));
-                msh.f.mean(2,j) = mean(msh.f.xy_v{j}(:,2));
-                %  > Length.
-                msh.f.len   (j) = pdist2(msh.f.xy_v{j}(1,:),msh.f.xy_v{j}(2,:)); 
+        
+        %% > 2. -----------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
+        function [msh] = NonUniform_mshGenerator_1(inp)
+            % >> Local variables.
+            rng default;
+            NX_v = inp.msh.Nv(1);
+            NY_v = inp.msh.Nv(2);
+            Xv_i = inp.msh.lim.Xv_i;
+            Xv_f = inp.msh.lim.Xv_f;
+            Yv_i = inp.msh.lim.Yv_i;
+            Yv_f = inp.msh.lim.Yv_f;
+            T1   = inp.msh.T_1.t;
+            
+            % >> Domain vertices.
+            if strcmpi(T1,'s')
+                %  > (Xd,Yd).
+                Xd_p = sort((Xv_f-Xv_i).*rand(1,NX_v-2)+Xv_i,'ascend');
+                Xd_p = cat(2,Xv_i,Xd_p,Xv_f);
+                Yd_p = sort((Yv_f-Yv_i).*rand(1,NY_v-2)+Yv_i,'ascend');
+                Yd_p = cat(2,Yv_i,Yd_p,Yv_f);
+                %  > Generate grid.
+                [Xd,Yd] = meshgrid(Xd_p,Yd_p);
+            elseif strcmpi(T1,'^')
+                %  > (Xd,Yd).
+                Xd = sort((Xv_f-Xv_i).*rand(NY_v,NX_v-2)+Xv_i,2,'ascend');
+                Xd = cat(2,ones(NY_v,1).*Xv_i,Xd,ones(NY_v,1).*Xv_f);
+                Yd = sort((Yv_f-Yv_i).*rand(NY_v-2,NX_v)+Yv_i,1,'ascend');
+                Yd = cat(1,ones(1,NX_v).*Yv_i,Yd,ones(1,NX_v).*Yv_f);
             end
-            %  > Normals.
-            msh = SubClass_1_3.Set_FaceNormals(msh);
-            % >> Stencil.
-            %  > Stencil neighbours.
-            msh = SubClass_1_3.Set_FaceNeighbours(msh,NT,Order);
-            %  > Stencil limits.
-            msh = SubClass_1_3.Set_Limits(msh);
-        end        
-        % >> 3.2.3.) ------------------------------------------------------
-        function [msh] = WrapUp_Finalize(msh)
-            %  > Reference length.
-            msh = SubClass_1_3.Set_ReferenceLength(msh);
+            %  > (Xv,Yv).
+            msh.d.xy_v = SubClass_1_2.Reshape_Arrays(Xd,Yd);
+        end
+        % >> 2.2. ---------------------------------------------------------
+        function [msh] = NonUniform_mshGenerator_2(inp)
+            % >> Local variables.
+            %  > Nf_Unf: Normalized computational domain coordinate (uniform distribution).
+            %  > Pt    : Stretching location in "domain percentage".
+            %  > B     : Stretching parameter.
+            NX_v = inp.msh.Nv(1);
+            NY_v = inp.msh.Nv(2);
+            Xv_i = inp.msh.lim.Xv_i;
+            Xv_f = inp.msh.lim.Xv_f;
+            Yv_i = inp.msh.lim.Yv_i;
+            Yv_f = inp.msh.lim.Yv_f;
+            Nf_X = inp.msh.T_2.Nf_X;
+            Nf_Y = inp.msh.T_2.Nf_Y;
+            Ks_X = inp.msh.T_2.Ks_X;
+            Ks_Y = inp.msh.T_2.Ks_Y;
+            
+            % >> X.
+            Nf_Unf_X = linspace(0,1,NX_v);
+            Pt_X     = (Nf_X-0)./(1-0);
+            B_X      = 1./(2.*Ks_X).*log((1+(exp(Ks_X)-1).*(Pt_X))./(1+(exp(-Ks_X)-1).*(Pt_X)));
+            %  > NF_X.
+            i        = 1:NX_v;
+            NF_X     = (Nf_X-0).*(1+sinh(Ks_X.*(Nf_Unf_X(i)-B_X))./sinh(Ks_X.*B_X))+0;
+            % >> Y.
+            Nf_Unf_Y = linspace(0,1,NY_v);
+            Pt_Y     = (Nf_Y-0)./(1-0);
+            B_Y      = 1./(2.*Ks_Y).*log((1+(exp(Ks_Y)-1).*(Pt_Y))./(1+(exp(-Ks_Y)-1).*(Pt_Y)));
+            %  > NF_Y.
+            j        = 1:NY_v;
+            NF_Y     = (Nf_Y-0).*(1+sinh(Ks_Y.*(Nf_Unf_Y(j)-B_Y))./sinh(Ks_Y.*B_Y))+0;
+            
+            % >> Domain vertices.
+            %  > (Xd,Yd).
+            k    = 1:NX_v;
+            l    = 1:NY_v;
+            Xd_p = NF_X(k).*(Xv_f-Xv_i);
+            Yd_p = NF_Y(l).*(Yv_f-Yv_i);
+            %  > Generate grid.
+            [Xd,Yd] = meshgrid(Xd_p,Yd_p);
+            %  > (Xv,Yv).
+            msh.d.xy_v = SubClass_1_2.Reshape_Arrays(Xd,Yd);
+        end
+        % >> 2.3. ---------------------------------------------------------
+        function [msh] = NonUniform_mshGenerator_3(msh)
+        end
+        
+        %% > 3. -----------------------------------------------------------
+        function [xy_v] = Reshape_Arrays(Xd,Yd)
+            xy_v(:,1) = reshape(Xd,[],1);
+            xy_v(:,2) = reshape(Yd,[],1);
         end
     end
 end
