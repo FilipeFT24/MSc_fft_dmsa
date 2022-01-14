@@ -87,9 +87,8 @@ classdef SubClass_1_3
             end
             %  > Face normals.
             msh = SubClass_1_3_1.Set_FaceNormals(msh);
-            % >> Stencil.
-            %  > Neighbours.
-            msh = SubClass_1_3_2.Set_FaceNeighbours(msh,NT,Order);
+            %  > Stencil setup.
+            msh = SubClass_1_3_2.Stencil_Setup(msh,NT,Order);
         end
     end
 end

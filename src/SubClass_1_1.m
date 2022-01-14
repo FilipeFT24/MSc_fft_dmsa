@@ -29,8 +29,8 @@ classdef SubClass_1_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 5;
-            inp.msh.Nv(2) = 5;
+            inp.msh.Nv(1) = 6;
+            inp.msh.Nv(2) = 6;
             
             % >> 3. Grid types:
             %  > 1. Type #1.├- v.
@@ -45,7 +45,7 @@ classdef SubClass_1_1
             %                     ├- 1. Domain percentage: 0 < (Nf)_X,Y < 1.
             %                     ├- 2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                     └- 3. Location         : East(E)/West(W), North(N)/South(S).
-            inp.msh.T_1.t    = 'v';
+            inp.msh.T_1.t    = 's';
             inp.msh.T_2.t    = 'Uniform';
             inp.msh.T_2.st   = 'Random';
             inp.msh.T_2.Nf_X = 0.5;
@@ -83,15 +83,19 @@ classdef SubClass_1_1
             %                           3. Deferred-correction approach (DC).
             %  > 2. Neighbouring type : 1. Vertex (at least 1 common vertex).
             %                           2. Face   (at least 1 common face).
-            %  > 3. Weighting function: 1. Weighted.
+            %  > 3. Stencil extension : 1. Verifiy dimensionless length and extend stencil automatically.
+            %                           2. Check stencil limits and extend to the cells within it.
+            %  > 4. Weighting function: 1. Weighted.
             %                           2. Unweighted.
-            %  > 4. Face polynomial degree.
-            %  > 5. Number of Gauss points/per face.
-            inp.fr.st = 'Implicit';
-            inp.fr.nt = 'Vertex';
-            inp.fr.wf = 'Unweighted';
-            inp.fr.np = 3;
-            inp.fr.ng = 3;
+            %  > 5. Face polynomial degree.
+            %  > 6. Number of Gauss points/per face.
+            inp.fr.st    = 'Implicit';
+            inp.fr.nt    = 'Vertex';
+            inp.fr.ext_1 = 'T';
+            inp.fr.ext_2 = 'F';
+            inp.fr.wf    = 'Unweighted';
+            inp.fr.np    = 2;
+            inp.fr.ng    = 3;
         end
     end
 end
