@@ -2,17 +2,21 @@ classdef SubClass_2_1_1
     methods (Static)
         %% > Wrap-up SubClass_2_1_1.
         % >> --------------------------------------------------------------
-        % >> 1.   Compute analytic expressions of f,df and d2f.
-        % >> 2.   Compute analytic solution.
+        % >> 1.   Compute analytic solution.
+        %  > 1.1. Compute analytic expressions of f,df and d2f.
+        %  > 1.2. Compute values.
+        % >> 
         % >> --------------------------------------------------------------
-        function [fn,bnd,blk] = WrapUp_2_1_1(inp,msh)
+        function [bnd,blk] = WrapUp_2_1_1(inp,msh)
             % >> 1.
-            fn = SubClass_2_1.Set_fn(inp);
-            % >> 2.
-            [bnd,blk] = SubClass_2_1.Compute_f_df_d2f(fn,msh);
+            %  > 1.1.
+            fn = SubClass_2_1_1.Set_fn(inp);
+            % >> 1.2.
+            [bnd,blk] = SubClass_2_1_1.Compute_f_df_d2f(fn,msh);
         end
         
         %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
         function [fn] = Set_fn(inp)
             % >> Local variables.
             [vx,vy,gx,gy] = ...
@@ -35,8 +39,7 @@ classdef SubClass_2_1_1
             [fn.f,fn.df_x,fn.df_y,fn.d2f_x,fn.d2f_y,fn.func] = ...
                 deal(matlabFunction(fn.f),matlabFunction(fn.df_x),matlabFunction(fn.df_y),matlabFunction(fn.d2f_x),matlabFunction(fn.d2f_y),matlabFunction(fn.func));
         end
-        
-        %% > 2. -----------------------------------------------------------
+        % >> 1.2. ---------------------------------------------------------
         function [bnd,blk] = Compute_f_df_d2f(fn,msh)
             %  > Boundary faces.
             for i = 1:size(msh.bnd.f,2)

@@ -248,7 +248,7 @@ classdef SubClass_1_3_1
                     msh.c.f.mean{i}(1,j) = mean(msh.c.f.xy_v{i}{j}(:,1));
                     msh.c.f.mean{i}(2,j) = mean(msh.c.f.xy_v{i}{j}(:,2));
                     %  > Face normal.
-                    msh.c.f.Nf{i}(:,j) = SubClass_1_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.f.mean{i}(:,j));
+                    msh.c.f.Nf{i}(:,j) = SubClass_1_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
                 end
             end
         end
@@ -272,8 +272,8 @@ classdef SubClass_1_3_1
             
             % >> Arrays.
             %  > \vec{FC}.
-            FC(1) = if_mean(1)-ic_mean(1);
-            FC(2) = if_mean(2)-ic_mean(2);
+            FC(1) = ic_mean(1)-if_mean(1);
+            FC(2) = ic_mean(2)-if_mean(2);
             %  > \vec{Nf}.
             Nf(2) = fv(1,1)-fv(2,1);
             Nf(1) = fv(2,2)-fv(1,2);

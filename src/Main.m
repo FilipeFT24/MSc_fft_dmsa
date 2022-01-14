@@ -1,12 +1,10 @@
 %% > Clear memory, clean screen, close any figure.
 clear, clc, close all; format default; beep off;
 %% > Select test.
-%  > Add paths...
-SubClass_1_1.Add_FolderPaths;
 
 tic;
 [inp,msh] = Class_1.WrapUp_1;
-%[msh,bnd,blk] = Class_2.Compute_ErrorPDE(inp,msh);
+[bnd,blk] = Class_2.Compute_ErrorPDE(inp,msh);
 toc;
 
 %Fig_0.WrapUp_Fig_0(1,inp.fr.ng);

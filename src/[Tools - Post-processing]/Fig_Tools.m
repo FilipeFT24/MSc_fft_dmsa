@@ -1,13 +1,13 @@
 classdef Fig_Tools
     methods (Static)         
         %% > Tools.
-        %  > #1.
+        % >> 1. -----------------------------------------------------------
         function [] = ChangeLook_1(inp,len)
             % >> Local variables.
             x_Min = inp.msh.lim.Xv_i-1.5.*len;
             x_Max = inp.msh.lim.Xv_f+1.5.*len;
             y_Min = inp.msh.lim.Yv_i-1.5.*len;
-            y_Max = inp.msh.lim.Yv_f+1.5.*len;
+            y_Max = inp.msh.lim.Yv_f+1.5.*len; 
             
             %  > Other parameters.
             box on; 
@@ -25,7 +25,7 @@ classdef Fig_Tools
             xlabel('$\textrm{x}$','FontSize',10,'Interpreter','latex'); xlim([xlim_label(1),xlim_label(2)]);
             ylabel('$\textrm{y}$','FontSize',10,'Interpreter','latex'); ylim([ylim_label(1),ylim_label(2)]);
         end
-        %  > #2.
+        % >> 2. -----------------------------------------------------------
         function [] = ChangeLook_2(k,H)
             %  > Other parameters.
             box on; grid on; 
@@ -40,7 +40,7 @@ classdef Fig_Tools
             set(gca,'TickLabelInterpreter','latex'); 
             set(gca,'FontSize',10);
             
-            %  > x.
+            %  > X.
             Flag = 'F';
             for i = 1:size(H,2)
                 for j = 1:length(H{i})
@@ -54,7 +54,7 @@ classdef Fig_Tools
             if strcmpi(Flag,'F')
                 xlim([min(H_Mat(:,end)),max(H_Mat(:,1))]);
             end
-            %  > y.
+            %  > Y.
             if k == 1
                 ylabel('$|\!|\epsilon_{_{1}}|\!|$','FontSize',10,'Interpreter','latex');
             elseif k == 2
@@ -63,15 +63,15 @@ classdef Fig_Tools
                 ylabel('$|\!|\epsilon_{_{\infty}}|\!|$','FontSize',10,'Interpreter','latex');
             end
         end       
-        % >> #3.
+        % >> 3. -----------------------------------------------------------
         function [ToPatch] = ToPatch_Cell_Face(msh,wdt)
-            % >> XYv(1).
+            %  > XYv(1).
             for i = 1:msh.NC+1
                 XYv_1(1,i) =  msh.Xv(i);
                 XYv_1(2,i) =  wdt;
                 XYv_1(3,i) = -wdt;
             end
-            % >> XYv(2).           
+            %  > XYv(2).           
             XYv_2(1,1)        = 2.*msh.Xv(1)       -msh.Xc(1);
             XYv_2(1,msh.NC+2) = 2.*msh.Xv(msh.NC+1)-msh.Xc(msh.NC);
             for i = 2:msh.NC+1
@@ -106,7 +106,7 @@ classdef Fig_Tools
                 ToPatch.Face{i}(2,4) = XYv_2(2,i);
             end
         end
-        % >> #4.
+        % >> 4. -----------------------------------------------------------
         function [c] = Colormap_cmocean()           
             c = colorbar();
             c.Location             = 'Eastoutside';
@@ -116,7 +116,7 @@ classdef Fig_Tools
             c.AxisLocation         = 'out';
             cmocean('thermal');
         end
-        % >> #5.
+        % >> 5. -----------------------------------------------------------
         function [Marker] = Set_Markers()
             Marker{1} = '-s';
             Marker{2} = '-o';
@@ -133,9 +133,17 @@ classdef Fig_Tools
                 end
             end
         end
-        % >> #7.
-        function [X_o,Y_o] = Order_Clockwise(X_i,Y_i)
-            %  > Uunweighted mean of the vertices.
+        % >> 7. -----------------------------------------------------------
+        function [X_o,Y_o] = Order_Clockwise(Flag,Cell)
+            %  > Cell to matrix.
+            if strcmpi(Flag,'F')
+                Mat = Cell;
+            elseif strcmpi(Flag,'T')
+                Mat = unique(cell2mat(reshape(Cell,[size(Cell,2),1])),'rows','stable'); 
+            end
+            X_i = Mat(:,1);
+            Y_i = Mat(:,2);
+            %  > Unweighted mean.
             Cx = mean(X_i);
             Cy = mean(Y_i);
             %  > Angles.
@@ -147,13 +155,4 @@ classdef Fig_Tools
             Y_o = Y_i(Order);
         end
     end
-end
-        
-        
-        
-        
-        
-        
-        
-        
-        
+end     

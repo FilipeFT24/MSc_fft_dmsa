@@ -38,19 +38,14 @@ classdef Fig_1
 %             %  > Cells.
 %             hold on;
 %             for i = 1:size(msh.bnd.c,2)
-%                 %  > Test 1.
-%                 f{i} = unique(cell2mat(reshape(msh.bnd.c{1,i},[size(msh.bnd.c{1,i},2),1])),'rows','stable'); [f{i}(:,1),f{i}(:,2)] = Fig_Tools.Order_Clockwise(f{i}(:,1),f{i}(:,2));
+%                 [f{i}(:,1),f{i}(:,2)] = ...
+%                     Fig_Tools.Order_Clockwise(,'T',msh.bnd.c{1,i});
 %                 patch(f{i}(:,1),f{i}(:,2),'r','FaceAlpha',0.25);
-%                 %  > Test 2.
-%                 %  patch(msh.c.xy_v{msh.bnd.c{2,i}}(:,1),msh.c.xy_v{msh.bnd.c{2,i}}(:,2),'b','FaceAlpha',0.25);
 %             end
 %             %  > Faces.
 %             hold on;
 %             for i = 1:size(msh.bnd.f,2)
-%                 %  > Test 1.
-%                 %  plot(msh.bnd.f{1,i}(:,1),msh.bnd.f{1,i}(:,2),'-r','Linewidth',2.5);
-%                 %  > Test 2.
-%                 plot(msh.f.xy_v{msh.bnd.f{2,i}}(:,1),msh.f.xy_v{msh.bnd.f{2,i}}(:,2),'-r','Linewidth',2.5);
+%                 plot(msh.bnd.f{1,i}(:,1),msh.bnd.f{1,i}(:,2),'-r','Linewidth',2.5);
 %             end
             %% > Centroids.
             %  > Cells.
@@ -61,44 +56,45 @@ classdef Fig_1
 %             %  > Faces.
 %             hold on;
 %             for j = 1:msh.f.NF
-%                 plot(msh.f.mean(1,j),msh.f.mean(2,j),'ob','MarkerFaceColor','b','MarkerSize',2.5);
+%                 plot(msh.f.mean(1,j),msh.f.mean(2,j),'ob','MarkerFaceColor','b','MarkerSize',1.5);
 %             end
-            %% > Normals.
-            hold on;
-            for i = 1:msh.c.NC
-                for j = 1:size(msh.c.f.xy_v{i},2)
-                    quiver(msh.c.f.mean{i}(1,j),msh.c.f.mean{i}(2,j),msh.c.f.Nf{i}(1,j).*len,msh.c.f.Nf{i}(2,j).*len,'AutoScale','off','Color','b');
-                end
-            end
+%             %% > Normals.
+%             hold on;
+%             for i = 1:4%msh.c.NC
+%                 for j = 1:size(msh.c.f.xy_v{i},2)
+%                     quiver(msh.c.f.mean{i}(1,j),msh.c.f.mean{i}(2,j),msh.c.f.Nf{i}(1,j).*len,msh.c.f.Nf{i}(2,j).*len,'AutoScale','off','Color','b');
+%                 end
+%             end
 %             %% > Neighbours(iD).
 %             %  > Cell(iD).
 %             hold on;
 %             for i = 1:length(msh.c.nb{iD})
-%                 [f{i}(:,1),f{i}(:,2)] = Fig_Tools.Order_Clockwise(msh.c.xy_v{msh.c.nb{iD}(i)}(:,1),msh.c.xy_v{msh.c.nb{iD}(i)}(:,2));
+%                 [f{i}(:,1),f{i}(:,2)] = ...
+%                     Fig_Tools.Order_Clockwise('F',msh.c.xy_v{msh.c.nb{iD}(i)});
 %                 patch(f{i}(:,1),f{i}(:,2),'b','FaceAlpha',0.25);
 %             end
             %% > Stencil.
             % >> Stencil representation.
-            hold on;
-            plot(msh.f.xy_v{fD}(:,1),msh.f.xy_v{fD}(:,2),'-b','Linewidth',2.0);
-            for i = 1:size_1
-                %  > Cells.
-                for j = 1:length(msh.s.st_i{i,fD})
-                    %  > To patch...
-                    f_1{i,j} = unique(cell2mat(reshape(msh.c.f.xy_v{msh.s.st_i{i,fD}(j)},[size(msh.c.f.xy_v{msh.s.st_i{i,fD}(j)},2),1])),'rows','stable'); [f_1{i,j}(:,1),f_1{i,j}(:,2)] = Fig_Tools.Order_Clockwise(f_1{i,j}(:,1),f_1{i,j}(:,2));
-                    %  > Pacth cell(s).
-                    patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(i,:),'FaceAlpha',0.25);
-                end
+%             hold on;
+%             plot(msh.f.xy_v{fD}(:,1),msh.f.xy_v{fD}(:,2),'-b','Linewidth',2.0);
+%             for i = 1:size_1
+%                 %  > Cells.
+%                 for j = 1:length(msh.s.st_i{i,fD})
+%                     %  > To patch...
+%                     f_1{i,j} = unique(cell2mat(reshape(msh.c.f.xy_v{msh.s.st_i{i,fD}(j)},[size(msh.c.f.xy_v{msh.s.st_i{i,fD}(j)},2),1])),'rows','stable'); [f_1{i,j}(:,1),f_1{i,j}(:,2)] = Fig_Tools.Order_Clockwise(f_1{i,j}(:,1),f_1{i,j}(:,2));
+%                     %  > Pacth cell(s).
+%                     patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(i,:),'FaceAlpha',0.25);
+%                 end
 %                 %  > Points.
 %                 for j = 1:length(msh.s.xy_v{i,fD})
 %                     p_leg(i) = plot(msh.s.xy_v{i,fD}(1,j),msh.s.xy_v{i,fD}(2,j),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
 %                 end
-                leg(i) = convertCharsToStrings(num2str(i));
+%                 leg(i) = convertCharsToStrings(num2str(i));
 %                 %  > Gauss integration points.
 %                 for j = 1:size(msh.f.gq{fD}.Points,1)
 %                     scatter(msh.f.gq{fD}.Points(j,1),msh.f.gq{fD}.Points(j,2),50.*msh.f.gq{fD}.Weights(j),'Marker','o','MarkerEdgeColor','r','MarkerFaceColor','r');
 %                 end
-            end
+%             end
 %             %  > Stencil limits.
 %             xline(msh.s.lim.x_min(fD),'-.r','Linewidth',0.75);
 %             xline(msh.s.lim.x_max(fD),'-.r','Linewidth',0.75);
