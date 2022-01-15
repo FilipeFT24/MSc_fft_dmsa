@@ -107,14 +107,14 @@ classdef Fig_Tools
             end
         end
         % >> 4. -----------------------------------------------------------
-        function [c] = Colormap_cmocean()           
-            c = colorbar();
+        function [c] = Colormap_cmocean(str)           
+            c                      = colorbar();
             c.Location             = 'Eastoutside';
             c.Label.Interpreter    = 'latex';
             c.TickLabelInterpreter = 'latex';
             c.FontSize             =  10;
             c.AxisLocation         = 'out';
-            cmocean('thermal');
+            AdvancedColormap(str);
         end
         % >> 5. -----------------------------------------------------------
         function [Marker] = Set_Markers()

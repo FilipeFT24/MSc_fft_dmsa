@@ -5,7 +5,7 @@ classdef SubClass_2_1_1
         % >> 1.   Compute analytic solution.
         %  > 1.1. Compute analytic expressions of f,df and d2f.
         %  > 1.2. Compute values.
-        % >> 
+        % >>
         % >> --------------------------------------------------------------
         function [bnd,blk] = WrapUp_2_1_1(inp,msh)
             % >> 1.

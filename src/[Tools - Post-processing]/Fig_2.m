@@ -14,11 +14,17 @@ classdef Fig_2
             %  > NOTE: Add "'Linestyle','None'" to remove cell border.
             hold on;
             for i = 1:msh.c.NC
-                patch(msh.c.xy_v{1,i}(:,1),msh.c.xy_v{1,i}(:,2),blk.f(i));
+                patch(msh.c.xy_v{1,i}(:,1),msh.c.xy_v{1,i}(:,2),blk.f(i),'Linestyle','None');
             end
-            c = Fig_Tools.Colormap_cmocean();
+            c = Fig_Tools.Colormap_cmocean('thermal');
             c.Label.String = '$\phi$';
             Fig_Tools.ChangeLook_1(inp,len);
+            AdvancedColormap('thermal');
+            % >> Options:
+            %  > AdvancedColormap('cool');
+            %  > AdvancedColormap('hot');
+            %  > AdvancedColormap('hsv');
+            %  > AdvancedColormap('spring');            
         end
     end
 end

@@ -26,7 +26,7 @@ classdef SubClass_1_3
             NX_v = inp.msh.Nv(1);
             NY_v = inp.msh.Nv(2);
             T1   = inp.msh.T_1.t;
-                        
+            
             if strcmpi(T1,'v')
                 % >> Triangles.
                 struct = delaunayTriangulation(msh.d.xy_v(:,1),msh.d.xy_v(:,2));
@@ -52,8 +52,8 @@ classdef SubClass_1_3
                 msh.c.xy_v{i}(:,1) = struct.Points(struct.ConnectivityList(i,:),1);
                 msh.c.xy_v{i}(:,2) = struct.Points(struct.ConnectivityList(i,:),2);
             end
-        end      
-               
+        end
+        
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         function [msh] = WrapUp_Cell(struct,msh)
@@ -70,8 +70,9 @@ classdef SubClass_1_3
         % >> 2.2. ---------------------------------------------------------
         function [msh] = WrapUp_Face(inp,msh,struct)
             % >> Local variables.
-            NT    = inp.fr.nt;
-            Order = inp.fr.np;
+            Type = inp.fr.nt;
+            p    = inp.fr.np;
+            NLay = 1./2.*(p+1);
             
             %  > Face coordinates.
             msh = SubClass_1_3_1.Set_DomainFaces(struct,msh);
@@ -88,7 +89,7 @@ classdef SubClass_1_3
             %  > Face normals.
             msh = SubClass_1_3_1.Set_FaceNormals(msh);
             %  > Stencil setup.
-            msh = SubClass_1_3_2.Stencil_Setup(msh,NT,Order);
+            msh = SubClass_1_3_2.Stencil_Setup(msh,Type,p,NLay);
         end
     end
 end

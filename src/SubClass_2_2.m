@@ -3,44 +3,31 @@ classdef SubClass_2_2
         %% > Wrap up SubClass_2_2.
         function [msh] = WrapUp_2_2(inp,msh,fn)
             % >> ----------------------------------------------------------
-            % >> 1.   Set stencil coordinates (gather face/cell centroids' coordinates).
-            %  > 1.1. Wrap up '1.' and call '1.2.'
-            %  > 1.2. Find neighbouring faces' centroid coordinates.
-            %  > 1.3. Gather stencil elements' coordinates. 
-            % >> 2.   Assemble matrices Df, Dwf, Pf and Tf.
-            %  > 2.1. Wrap up '2.' and call '2.2.'.
-            %  > 2.2. Compute polynomial terms.
-            %  > 2.3. Set weighting function.
-            %  > 2.4. Quadrature abcissas/weights.
-            %  > 2.5. Coordinate transformation: csi->x/y.
-            %  > 2.6. Compute df array.
-            % >> 3.   Assemble matrices A and B.
-            %  > 3.1. Assemble matrix A.
-            %  > 3.2. Assemble matrix B.
+            % >> 1.   Assemble matrices Df, Dwf, Pf and Tf.
+            %  > 1.1. Wrap up '2.' and call '2.2.'.
+            %  > 1.2. Compute polynomial terms.
+            %  > 1.3. Set weighting function.
+            %  > 1.4. Compute df array.
+            % >> 2.   Assemble matrices A and B.
+            %  > 2.1. Assemble matrix A.
+            %  > 2.2. Assemble matrix B.
             % >> ----------------------------------------------------------
             % >> Local variables.
             wf    = inp.fr.wf;
             ng    = inp.fr.ng;
-            Ext_1 = inp.fr.Ext_1;
             V     = [inp.pr.vx,inp.pr.vy];
             G     = [inp.pr.gx,inp.pr.gy];
                         
-            % >> 1.
-            [msh,st_xy] = SubClass_2_2.WrapUp_1(msh,Ext_1);
-            % >> 2.
-            [msh,Tf_C,Tf_D] = SubClass_2_2.WrapUp_2(msh,st_xy,wf,ng);
-            % >> 3.
+            [msh,Tf_C,Tf_D] = SubClass_2_2.WrapUp_2(msh,msh.s.xy_v,wf,ng);
             [msh] = SubClass_2_2.WrapUp_3(msh,V,G,Tf_C,Tf_D);
-        end
-        
- 
+        end       
                 
-        %% > 2.) ----------------------------------------------------------
-        % >> 2.1.) --------------------------------------------------------
+        %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
         function [msh,Tf_C,Tf_D] = WrapUp_2(msh,st_xy,wf,ng)
             %% > Polynomial reconstruction.
             %  > Polynomial order.
-            p = 2.*size(msh.s.st_i,1)-1;
+            p = 2.*size(msh.s.st,1)-1;
             %  > Number of terms.
             len_p = 1./2.*(p+1).*(p+2);
             %  > Polynomial terms.
@@ -126,7 +113,7 @@ classdef SubClass_2_2
                 Tf_D   {i} = grad_df{i}*Pf{i};
             end
         end
-        % >> 2.2.) --------------------------------------------------------
+        % >> 2.2. ---------------------------------------------------------
         function [Coeff_iD,Exp_iD] = Compute_PolTerms(iD,p,len_p)
             %                |------------------------------------------------------------------------------------------------|
             %  > Term      = | 1 | x | y | x^2 | xy  | y^2 | x^3  | x^2y | xy^2 | y^3  | x^4  | x^3y  | x^2y^2 | xy^3  | y^4  | (...)
@@ -225,7 +212,7 @@ classdef SubClass_2_2
                 Exp_iD{2}(2,:) = Exp_dY(2,:);
             end
         end       
-        % >> 2.3.) --------------------------------------------------------
+        % >> 2.3. ---------------------------------------------------------
         function [W_func] = W_Function(Point,Face,wf,k,Flag)
             % >> Weighting functions: 1) Unweighted: wij = 1.
             %                         2) Weighted  : wij = 1/|xj-xi|^2 -> wij = 1/|dist(x_point-xf)|^k.
@@ -245,8 +232,7 @@ classdef SubClass_2_2
                 end
             end
         end
-        
-        % >> 2.6.) --------------------------------------------------------
+        % >> 2.4. ---------------------------------------------------------
         function [df_ij] = Compute_df(iD,mean_f,fg,Coeff,Exp)
             if iD == 1
                 % >> Phi_f.
@@ -271,24 +257,6 @@ classdef SubClass_2_2
                 %  > Reshape cell array.
                 df_ij = cell2mat(reshape(df_ij,[2,1]));
             end
-        end
-                       
-        %% > 3.) ----------------------------------------------------------
-        % >> 3.1.) --------------------------------------------------------
-        function [msh] = WrapUp_3(msh,V,G,Tf_C,Tf_D)
-            % >> Assemble matrices A and B.
-            %  > A.
-            SubClass_2_2.Assemble_A(V,G,Tf_C,Tf_D);
-            %  > B.
-            SubClass_2_2.Assemble_B(V,G,Tf_C,Tf_D);
-
-        end
-        % >> 3.2.) --------------------------------------------------------
-        function [] = Assemble_A(V,G,Tf_C,Tf_D)
-    
-        end
-        % >> 3.3.) --------------------------------------------------------
-        function [] = Assemble_B(V,G,Tf_C,Tf_D)
-        end
+        end                      
     end
 end

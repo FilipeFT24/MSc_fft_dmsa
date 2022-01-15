@@ -8,21 +8,30 @@ classdef SubClass_1_3_2
         %  > 1.2.1. Add boundary faces #1 (check faces to be added).
         %  > 1.2.2. Add boundary faces #2 (reshape cell array).
         %  > 1.3.   Compute stencil limits.
-        %  > 1.4.   Perform stencil extension(s)/re-compute stencil limits.
+        %  > 1.4.   Perform stencil extension.
+        %  > 1.4.1. Check extension #1.
+        %  > 1.4.2. Check extension #2.
+        %  > 1.5.   Re-compute stencil coordinates/limits.
         % >> --------------------------------------------------------------
-  
+        
         %% > 1. -----------------------------------------------------------
-        function [msh] = Stencil_Setup(msh,Type,Nlev)
+        function [msh] = Stencil_Setup(msh,Type,p,NLay)
             % >> 1.
             %  > 1.1.
-            msh = SubClass_1_3_2.Set_Neighbours(msh,Type,Nlev);
+            msh = SubClass_1_3_2.Set_Neighbours(msh,Type,NLay);
             %  > 1.2.
             msh = SubClass_1_3_2.Compute_StencilCoord(msh);
             %  > 1.3.
             msh = SubClass_1_3_2.Compute_Limits(msh,msh.s.xy_v);
+            %  > 1.4.
+            msh = SubClass_1_3_2.Perform_Extension(msh,p);
+            %  > 1.5.
+            if ~all(cellfun(@isempty,msh.s.ext))
+                msh = SubClass_1_3_2.Re_Compute(msh);
+            end
         end
         % >> 1.1. ---------------------------------------------------------
-        function [msh] = Set_Neighbours(msh,Type,Nlev)
+        function [msh] = Set_Neighbours(msh,Type,NLay)
             %  > Auxiliary arrays.
             for i = 1:size(msh.bnd.f,2)
                 bnd_faces(i) = msh.bnd.f{2,i};
@@ -30,7 +39,7 @@ classdef SubClass_1_3_2
             for j = 1:size(msh.bnd.c,2)
                 bnd_cells(j) = msh.bnd.c{2,j};
             end
-                       
+            
             % >> Cells to be evaluated (stencil 1).
             %  > Evaluate stencil for neighbours of neighbouring cells of face i (purely for code efficiency).
             for i = 1:msh.f.NF
@@ -72,8 +81,12 @@ classdef SubClass_1_3_2
                 % >> Level N.
                 %  > Vertex type: Requires (at least) 1 common vertex (i.e. common vertex/face).
                 %  > Cell   type: Requires 2 common vertices (i.e. common face).
-                if Nlev > 1
-                    for j = 2:Nlev
+                if strcmpi(Type,'Face')
+                    %  > Initialize.
+                    prev_f = cell(NLay-1,msh.f.NF);
+                end
+                if NLay > 1
+                    for j = 2:NLay
                         %  > Vertex stencil elements.
                         for k = 1:length(msh.s.st{j-1,i})
                             if k == 1
@@ -90,14 +103,11 @@ classdef SubClass_1_3_2
                         elseif strcmpi(Type,'Face')
                             %  > Loop through previous stencil cells and select faces' index.
                             for k = 1:length(msh.s.st{j-1,i})
-                                if k == 1
-                                    prev_f{j-1,i} = msh.c.f.faces{msh.s.st{j-1,i}(k)};
-                                else
-                                    prev_f{j-1,i} = [prev_f{j-1,i},msh.c.f.faces{msh.s.st{j-1,i}(k)}];
-                                end
+                                prev_f{j-1,i} = [prev_f{j-1,i},msh.c.f.faces{msh.s.st{j-1,i}(k)}];
                             end
                             %  > (Outer) faces of previous stencil.
                             prev_f{j-1,i} = unique(prev_f{j-1,i});
+                            
                             %  > Loop through 'ngh' cells and check whether cell k contains any element of 'prev_f'.
                             l = 'T';
                             for k = 1:length(ngh{j,i})
@@ -157,7 +167,7 @@ classdef SubClass_1_3_2
                 end
             end
             %  > Reshape cell array.
-            msh.s.xy_v = SubClass_1_3_2.Add_bnd_2(msh);            
+            msh.s.xy_v = SubClass_1_3_2.Add_bnd_2(msh.f.NF,1:size(msh.s.st,1),msh.s.xy_st);
         end
         %  > 1.2.1. -------------------------------------------------------
         function [st_v] = Add_bnd_1(Flag,st_v,bnd_ff,bnd_fc,len_c,st,mean_f)
@@ -178,16 +188,16 @@ classdef SubClass_1_3_2
             end
         end
         %  > 1.2.2. -------------------------------------------------------
-        function [st_xy] = Add_bnd_2(msh)
-            for i = 1:size(msh.s.st,2)
-                for j = 1:size(msh.s.st,1)
-                    st_xy{i}{j} = msh.s.xy_st{j,i};
+        function [st_xy] = Add_bnd_2(NF,Sz,st)
+            for i = 1:NF
+                for j = Sz
+                    st_xy{i}{j} = st{j,i};
                 end
                 st_xy{i} = cell2mat(st_xy{i});
             end
         end
         % >> 1.3. ---------------------------------------------------------
-        function [msh] = Compute_Limits(msh,st_xy)                       
+        function [msh] = Compute_Limits(msh,st_xy)
             for i = 1:msh.f.NF
                 % >> Stencil limits.
                 %  > (x,y)_min.
@@ -196,7 +206,7 @@ classdef SubClass_1_3_2
                 %  > (x,y)_max.
                 msh.s.lim.x_max(i) = max(st_xy{i}(1,:));
                 msh.s.lim.y_max(i) = max(st_xy{i}(2,:));
-
+                
                 % >> Stencil dimensionless length.
                 for j = 1:size(msh.s.st,1)
                     %  > Initialize local variables.
@@ -217,38 +227,108 @@ classdef SubClass_1_3_2
                 msh.s.hy_ref(i) = hy_i(i)./nt(i);
                 msh.s.nx    (i) = Ls_x(i)./msh.s.hx_ref(i);
                 msh.s.ny    (i) = Ls_y(i)./msh.s.hy_ref(i);
-            end            
+            end
         end
         % >> 1.4. ---------------------------------------------------------
-        function [] = Perform_StencilExtension()
+        function [msh] = Perform_Extension(msh,p)
+            %  > Initialize.
+            k = 0;
+            msh.s.ext = cell(1,msh.f.NF);
+            for i = 1:msh.f.NF
+                %  > Stencil elements.
+                if msh.s.nx(i) < p-1./2 || msh.s.ny(i) < p-1./2
+                    k   = k+1;
+                    len = size(msh.s.st(:,i),1);
+                    Lst = msh.s.st{len,i};
+                    for j = 1:len
+                        st{k,j} = msh.s.st{j,i};
+                    end
+                    st{k} = cell2mat(st(k,:));
+                end
+                if msh.s.nx(i) < p-1./2
+                    % > Stencil limits.
+                    y_min = msh.s.lim.y_min(i);
+                    y_max = msh.s.lim.y_max(i);
+                    %  > Cells to be added.
+                    Ext_X = SubClass_1_3_2.Extension_1(msh,Lst,st{k},'x',y_min,y_max);
+                    %  > Add...
+                    msh.s.st {len,i} = [msh.s.st{len,i},Ext_X];
+                    msh.s.ext{i}     = Ext_X;
+                end
+                if msh.s.ny(i) < p-1./2
+                    % > Stencil limits.
+                    x_min = msh.s.lim.x_min(i);
+                    x_max = msh.s.lim.x_max(i);
+                    %  > Cells to be added.
+                    Ext_Y = SubClass_1_3_2.Extension_1(msh,Lst,st{k},'y',x_min,x_max);
+                    %  > Add...
+                    msh.s.st {len,i} = [msh.s.st{len,i},Ext_Y];
+                    msh.s.ext{i}     = Ext_Y;
+                end
+            end
+        end
+        %  > 1.4.1. -------------------------------------------------------
+        function [add_to] = Extension_1(msh,Lst,st,Dir,v_min,v_max)
+            % >> Outer cells.
+            %  > Stencil (outer) cells.
+            outer_c = Lst;
+            %  > ...neighbours.
+            for i = 1:length(outer_c)
+                nb_c_out{i} = msh.c.nb{outer_c(i)};
+            end
+            %  > Outer cells (NOT in the stencil).
+            nb_diff = setdiff(unique(cell2mat(nb_c_out)),st);
+            
+            %  > Select direction.
+            if strcmpi(Dir,'x')
+                k = 2;
+            elseif strcmpi(Dir,'y')
+                k = 1;
+            end
+            %  > Select cells within stencil limits.
+            j = 1;
+            for i = 1:length(nb_diff)
+                if msh.c.mean(k,nb_diff(i)) >= v_min && msh.c.mean(k,nb_diff(i)) <= v_max
+                    add_to(j) = nb_diff(i);
+                    j         = j+1;
+                end
+            end
+        end
+        %  > 1.4.2. -------------------------------------------------------
+        function [msh] = Extension_2(msh)
+        end
+        %  > 1.5. ---------------------------------------------------------
+        function [msh] = Re_Compute(msh)
+            %  > Re-compute stencil coordinates.
+            msh = SubClass_1_3_2.Compute_StencilCoord(msh);
+            %  > Re-compute stencil limits.
+            msh = SubClass_1_3_2.Compute_Limits(msh,msh.s.xy_v);
         end
         
         
-    
-
         
-%         % >> 1.4. ---------------------------------------------------------
-%         function [add_to] = StencilExt_1(msh)
-%             % >> Stencil indices.
-%             for i = 1:size(msh.s.st,2)
-%                 for j = 1:size(msh.s.st,1)
-%                     st_i{i}{j} = msh.s.st{j,i};
-%                 end
-%                 st_i{i} = cell2mat(st_i{i});
-%             end
-%             % >> Add elements to stencil...
-%             %  > Initialize.
-%             add_to = cell(1,msh.f.NF);
-%             for i = 1:msh.f.NF
-%                 k = 1;
-%                 for j = 1:msh.c.NC
-%                     if (msh.c.mean(1,j) >= msh.s.lim.x_min(i) && msh.c.mean(1,j) <= msh.s.lim.x_max(i)) && ...
-%                             (msh.c.mean(2,j) >= msh.s.lim.y_min(i) && msh.c.mean(2,j) <= msh.s.lim.y_max(i)) && ~ismembc(j,sort(st_i{i}))
-%                         add_to{i}(k) = j;
-%                         k = k+1;
-%                     end
-%                 end
-%             end
-%         end        
+        %         % >> 1.4. ---------------------------------------------------------
+        %         function [add_to] = StencilExt_1(msh)
+        %             % >> Stencil indices.
+        %             for i = 1:size(msh.s.st,2)
+        %                 for j = 1:size(msh.s.st,1)
+        %                     st_i{i}{j} = msh.s.st{j,i};
+        %                 end
+        %                 st_i{i} = cell2mat(st_i{i});
+        %             end
+        %             % >> Add elements to stencil...
+        %             %  > Initialize.
+        %             add_to = cell(1,msh.f.NF);
+        %             for i = 1:msh.f.NF
+        %                 k = 1;
+        %                 for j = 1:msh.c.NC
+        %                     if (msh.c.mean(1,j) >= msh.s.lim.x_min(i) && msh.c.mean(1,j) <= msh.s.lim.x_max(i)) && ...
+        %                             (msh.c.mean(2,j) >= msh.s.lim.y_min(i) && msh.c.mean(2,j) <= msh.s.lim.y_max(i)) && ~ismembc(j,sort(st_i{i}))
+        %                         add_to{i}(k) = j;
+        %                         k = k+1;
+        %                     end
+        %                 end
+        %             end
+        %         end
     end
 end

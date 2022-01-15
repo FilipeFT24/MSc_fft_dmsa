@@ -55,7 +55,6 @@ classdef SubClass_1_2
         % >> 2.1. ---------------------------------------------------------
         function [msh] = NonUniform_mshGenerator_1(inp)
             % >> Local variables.
-            rng default;
             NX_v = inp.msh.Nv(1);
             NY_v = inp.msh.Nv(2);
             Xv_i = inp.msh.lim.Xv_i;
@@ -73,7 +72,7 @@ classdef SubClass_1_2
                 Yd_p = cat(2,Yv_i,Yd_p,Yv_f);
                 %  > Generate grid.
                 [Xd,Yd] = meshgrid(Xd_p,Yd_p);
-            elseif strcmpi(T1,'^')
+            elseif strcmpi(T1,'v')
                 %  > (Xd,Yd).
                 Xd = sort((Xv_f-Xv_i).*rand(NY_v,NX_v-2)+Xv_i,2,'ascend');
                 Xd = cat(2,ones(NY_v,1).*Xv_i,Xd,ones(NY_v,1).*Xv_f);

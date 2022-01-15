@@ -84,18 +84,17 @@ classdef SubClass_1_1
             %  > 2. Neighbouring type : 1. Vertex (at least 1 common vertex).
             %                           2. Face   (at least 1 common face).
             %  > 3. Stencil extension : 1. Verifiy dimensionless length and extend stencil automatically.
-            %                           2. Check stencil limits and extend to the cells within it.
+            %                           2. Check stencil limits and extend to the cells within it (Optional).
             %  > 4. Weighting function: 1. Weighted.
             %                           2. Unweighted.
             %  > 5. Face polynomial degree.
             %  > 6. Number of Gauss points/per face.
-            inp.fr.st    = 'Implicit';
-            inp.fr.nt    = 'Vertex';
-            inp.fr.ext_1 = 'T';
-            inp.fr.ext_2 = 'F';
-            inp.fr.wf    = 'Unweighted';
-            inp.fr.np    = 2;
-            inp.fr.ng    = 3;
+            inp.fr.st  = 'Implicit';
+            inp.fr.nt  = 'Vertex';
+            inp.fr.ext = 'F';
+            inp.fr.wf  = 'Unweighted';
+            inp.fr.np  = 3;
+            inp.fr.ng  = 3;
         end
     end
 end

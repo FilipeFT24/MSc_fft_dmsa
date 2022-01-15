@@ -9,7 +9,7 @@ classdef SubClass_1_3_3
         %  > 1.4. Modified version(#2) of isequal: Compare matrix  B w/ matrix A.
         %  > 1.5. Modified version(#1) of setdiff.
         % >> --------------------------------------------------------------
-
+        
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         function [Flag] = fft_ismember_1(A,B)
@@ -22,7 +22,7 @@ classdef SubClass_1_3_3
                 Flag = zeros(1,2);
             else
                 Flag = B(Array);
-            end  
+            end
         end
         % >> 1.3. ---------------------------------------------------------
         function [i_Flag] = fft_isequal_1(A,B)
