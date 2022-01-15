@@ -95,11 +95,23 @@ msh
 |                                └── 2. length(c{i}) = 2: Bulk face.
 |
 └── s                # >>> Field: Stencil.
+    ├── c            #   > Face 'i' stencil cell indices.                           
+    ├── f            #   > Face 'i' stencil face indices.
+    |                            └──  c{j,i}: Layer 'j' of face 'i' stencil.
+    ├── c_e          #   > Face 'i' extended stencil cell indices.                           
+    ├── f_e          #   > Face 'i' extended stencil face indices.
+    |                            └──  c{j,i}: (Extension) layer 'j' of face 'i' stencil.
+    ├── xy_v_l       #   > Face 'i' (level) stencil points (cell/face centroid): [Xv(:),Yv(:)] = [xy_v_l{j,i}(1,:),xy_v_l{j,i}(2,:)]. 
+    ├── xy_v_t       #   > Face 'i' (total) stencil points (cell/face centroid): [Xv(:),Yv(:)] = [xy_v_t  {i}(1,:),xy_v_t  {i}(2,:)]. 
+    └── p            #  >> Face 'i' stencil parameters.
+        ├── n_e      #   > Face 'i' number of extensions.
+        |                        ├── ne(1,i): number of extensions (x-direction).
+        |                        └── ne(2,i): number of extensions (y-direction)
+        ├── n_x      #   > Adimensional length (x-direction).
+        ├── n_y      #   > Adimensional length (y-direction).
+        ├── h_x      #   > Reference    length (x-direction).
+        ├── h_y      #   > Reference    length (y-direction). 
+        ├── l_x      #   > Limit               (x-direction).
+        └── l_y      #   > Limit               (y-direction).             ​
 ```
-
-
-
-
-
-
 

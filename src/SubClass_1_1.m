@@ -29,8 +29,8 @@ classdef SubClass_1_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 6;
-            inp.msh.Nv(2) = 6;
+            inp.msh.Nv(1) = 9;
+            inp.msh.Nv(2) = 9;
             
             % >> 3. Grid types:
             %  > 1. Type #1.├- v.
@@ -90,10 +90,10 @@ classdef SubClass_1_1
             %  > 5. Face polynomial degree.
             %  > 6. Number of Gauss points/per face.
             inp.fr.st  = 'Implicit';
-            inp.fr.nt  = 'Vertex';
+            inp.fr.nt  = 'Face';
             inp.fr.ext = 'F';
             inp.fr.wf  = 'Unweighted';
-            inp.fr.np  = 3;
+            inp.fr.np  = 5;
             inp.fr.ng  = 3;
         end
     end

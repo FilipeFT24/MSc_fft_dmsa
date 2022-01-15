@@ -49,7 +49,7 @@ classdef Fig_1
             %  > Cells.
             hold on;
             for i = 1:msh.c.NC
-                plot(msh.c.mean(1,i),msh.c.mean(2,i),'ok','MarkerFaceColor','k','MarkerSize',1.5); fD = 30;
+                plot(msh.c.mean(1,i),msh.c.mean(2,i),'ok','MarkerFaceColor','k','MarkerSize',1.5);
             end
 %             %  > Faces.
 %             hold on;
