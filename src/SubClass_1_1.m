@@ -90,7 +90,7 @@ classdef SubClass_1_1
             %  > 5. Face polynomial degree.
             %  > 6. Number of Gauss points/per face.
             inp.fr.st  = 'Implicit';
-            inp.fr.nt  = 'Face';
+            inp.fr.nt  = 'Vertex';
             inp.fr.ext = 'F';
             inp.fr.wf  = 'Unweighted';
             inp.fr.np  = 5;

@@ -67,7 +67,7 @@ msh
 |       ├── f{4,i}   #   > Boundary (char). 
 |       └── f{5,i}   #   > Outer normal of boundary face 'i'.                  
 |
-├── c
+├── c                # >>> Field: Cell.
 |   ├── NC           #   > Number of cells.
 |   ├── xy_v         #   > Cell 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
 |   ├── vol          #   > Cell 'i' volume.
@@ -103,7 +103,7 @@ msh
     |                            └──  c{j,i}: (Extension) layer 'j' of face 'i' stencil.
     ├── xy_v_l       #   > Face 'i' (level) stencil points (cell/face centroid): [Xv(:),Yv(:)] = [xy_v_l{j,i}(1,:),xy_v_l{j,i}(2,:)]. 
     ├── xy_v_t       #   > Face 'i' (total) stencil points (cell/face centroid): [Xv(:),Yv(:)] = [xy_v_t  {i}(1,:),xy_v_t  {i}(2,:)]. 
-    └── p            #  >> Face 'i' stencil parameters.
+    └── par          #  >> Face 'i' stencil parameters.
         ├── n_e      #   > Face 'i' number of extensions.
         |                        ├── ne(1,i): number of extensions (x-direction).
         |                        └── ne(2,i): number of extensions (y-direction)
@@ -111,7 +111,7 @@ msh
         ├── n_y      #   > Adimensional length (y-direction).
         ├── h_x      #   > Reference    length (x-direction).
         ├── h_y      #   > Reference    length (y-direction). 
-        ├── l_x      #   > Limit               (x-direction).
-        └── l_y      #   > Limit               (y-direction).             ​
+        ├── l_x      #   > Limit               (x-direction): [l_x_min(i),l_x_max(i)] = [l_x(i,1),l_x(i,2)].
+        └── l_y      #   > Limit               (y-direction): [l_y_min(i),l_y_max(i)] = [l_y(i,1),l_y(i,2)].             ​
 ```
 

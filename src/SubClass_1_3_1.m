@@ -122,7 +122,7 @@ classdef SubClass_1_3_1
             %            2. That routine "triggers" the remaining routines coded in this SubClass.
             %  > Faces.
             for i = 1:msh.f.NF
-                msh.f.cells{i} = fin_f{i,3};
+                msh.f.c{i} = fin_f{i,3};
             end
             
             % >> Set boundaries.

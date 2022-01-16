@@ -1,5 +1,5 @@
 %% > Clear memory, clean screen, close any figure.
-clear, clc, close all; format default; beep off;
+clear, clc, close all; format default;
 %% > Select test.
 
 tic;

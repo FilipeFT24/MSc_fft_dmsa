@@ -124,7 +124,7 @@ classdef Fig_Tools
             Marker{4} = '-v';
             Marker{5} = '->';
         end
-        % >> #6.
+        % >> 6. -----------------------------------------------------------
         function [H_av,CR] = Compute_ConvergenceRate(H,X)
             for i = 1:size(X,2)-1
                 for j = 1:3
