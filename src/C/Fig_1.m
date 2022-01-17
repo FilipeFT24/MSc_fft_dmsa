@@ -1,7 +1,7 @@
 classdef Fig_1
     methods (Static)
         %% > Wrap up Fig_1.
-        function [] = WrapUp_Fig_1(Fig,inp,msh,str,len)
+        function [] = WrapUp_Fig_1(Fig,inp,msh,pde,str,len)
             %  > Auxiliary arrays.
             bnd_f = cell2mat(msh.bnd.f(2,:));
             bnd_c = cell2mat(msh.bnd.f(3,:));
@@ -15,18 +15,32 @@ classdef Fig_1
                 iF  = blk(iX);
             end
             figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-            Fig_1.Plot_1(inp,msh,iF,len);
+            Fig_1.Plot_1(inp,msh,pde,iF,len);
         end
         
         %% > Auxiliary functions.
         % >> Plot 1.
-        function [] = Plot_1(inp,msh,iF,len)
+        function [] = Plot_1(inp,msh,pde,iF,len)
+            % >> Local variables.
+            Xv_i = inp.msh.lim.Xv_i;
+            Xv_f = inp.msh.lim.Xv_f;
+            Yv_i = inp.msh.lim.Yv_i;
+            Yv_f = inp.msh.lim.Yv_f;
+            p    = inp.fr.np;
+            NLay = 1./2.*(p+1);
+            %  > Outer boundary.
+            NE   = [Xv_f,Yv_f];
+            NW   = [Xv_i,Yv_f];
+            SW   = [Xv_i,Yv_i];
+            SE   = [Xv_f,Yv_i];
+            
             %% > Face selection.
             Sz = nnz(~cellfun(@isempty,msh.s.c(:,iF)));
-            C  = linspecer(9,'qualitative');
-            
+            C  = linspecer(9,'qualitative');            
             %% > Cell borders.
             %  > NOTE: Add "'Linestyle','None'" to remove cell border.
+            hold on;
+            patch([NE(1),NW(1),SW(1),SE(1)],[NE(2),NW(2),SW(2),SE(2)],'w');
             hold on;
             for i = 1:msh.c.NC
                 if ismembc(i,msh.f.c{iF})
@@ -71,9 +85,7 @@ classdef Fig_1
             %     [f{i}(:,1),f{i}(:,2)] = Fig_Tools.Order_Clockwise('F',msh.c.xy_v{msh.f.c{iF}(i)});
             %     patch(f{i}(:,1),f{i}(:,2),'b','FaceAlpha',0.10);
             % end
-            %% > Stencil.
-            p    = inp.fr.np;
-            NLay = 1./2.*(p+1);
+            %% > Stencil.           
             hold on;
             for i = 1:Sz
                 if i <= NLay
@@ -102,6 +114,7 @@ classdef Fig_1
             end
             %  > Face.
             plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',1.5);
+            scatter(pde.f.gq{iF}.Points(:,1),pde.f.gq{iF}.Points(:,2),50.*pde.f.gq{iF}.Weights./sum(pde.f.gq{iF}.Weights),'Marker','o','MarkerEdgeColor','r','MarkerFaceColor','r');
             %  > Limits.
             Fig_Tools.Plot_Limits(inp,msh,iF);
             %  > Other stuff.

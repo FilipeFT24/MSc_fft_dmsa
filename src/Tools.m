@@ -1,10 +1,8 @@
-classdef Other_stuff
+classdef Tools
     methods (Static)
         %% > Set directories.
-        function [] = Add_ABC()
-            addpath(genpath('A'));
-            addpath(genpath('B'));
-            addpath(genpath('C'));
+        function [] = Set_Directory(str)
+            addpath(genpath(str));
         end
         %% > Measure elapsed time.
         function [TA,TB] = Time_AB(inp,msh)

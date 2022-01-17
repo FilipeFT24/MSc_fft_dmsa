@@ -6,12 +6,12 @@ classdef B_1_1
         %  > 1.1. Compute analytic expressions of f,df and d2f.
         %  > 1.2. Compute values.
         % >> --------------------------------------------------------------
-        function [bnd,blk] = WrapUp_B_1_1(inp,msh)
+        function [pde] = WrapUp_B_1_1(inp,msh)
             % >> 1.
             %  > 1.1.
-            fn = B_1_1.Set_fn(inp);
+            pde.fn = B_1_1.Set_fn(inp);
             %  > 1.2.
-            [bnd,blk] = B_1_1.Compute_f_df_d2f(fn,msh);
+            [pde.bnd,pde.blk] = B_1_1.Compute_f_df_d2f(msh,pde.fn);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -39,7 +39,7 @@ classdef B_1_1
                 deal(matlabFunction(fn.f),matlabFunction(fn.df_x),matlabFunction(fn.df_y),matlabFunction(fn.d2f_x),matlabFunction(fn.d2f_y),matlabFunction(fn.func));
         end
         % >> 1.2. ---------------------------------------------------------
-        function [bnd,blk] = Compute_f_df_d2f(fn,msh)
+        function [bnd,blk] = Compute_f_df_d2f(msh,fn)
             %  > Boundary faces.
             for i = 1:size(msh.bnd.f,2)
                 bnd.f    (i) = fn.f    (msh.f.mean(1,msh.bnd.f{2,i}),msh.f.mean(2,msh.bnd.f{2,i}));

@@ -8,6 +8,8 @@ classdef A
         % >> 4. Sort 'msh' fields.
         % >> --------------------------------------------------------------
         function [inp,msh] = WrapUp_A()
+            %  > Working directory.
+            Tools.Set_Directory('A');
             %  > 1.
             inp = A_1.WrapUp_A_1();
             %  > 2.
