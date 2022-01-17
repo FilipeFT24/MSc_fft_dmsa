@@ -56,11 +56,11 @@ msh
 │
 ├── c                # >>> Field: Cell.
 │   ├── NC           #   > Number of cells.
+│   ├── h_ref        #   > Reference length/hydraulic diameter.  
 │   ├── xy_v         #   > Cell 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
-│   ├── vol          #   > Cell 'i' volume.
 │   ├── mean         #   > Cell 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
-│   ├── h            #   > Cell 'i' reference length/hydraulic diameter. 
-│   ├── h_ref        #   > Reference length/hydraulic diameter. 
+│   ├── vol          #   > Cell 'i' volume.
+│   ├── h            #   > Cell 'i' reference length/hydraulic diameter.
 │   ├── nb           #   > Cell 'i' neighbouring cell indices. 
 │   └── f            #  >> Field: Face.
 │       ├── faces    #   > Face indices of cell 'i'.
