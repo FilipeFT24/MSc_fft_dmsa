@@ -1,6 +1,6 @@
-classdef SubClass_2_1_2
+classdef B_1_2
     methods (Static)
-        %% > SubClass_2_1.
+        %% > B_1_2.
         % >> --------------------------------------------------------------
         % >> 1.   1D quadrature.
         %  > 1.1. Face mapping.
@@ -106,10 +106,10 @@ classdef SubClass_2_1_2
         % >> 2.5. ---------------------------------------------------------
         function [Qp,F_Vol] = Compute_SourceTerm(n,msh,func)
             %  > Cell mapping (computational domain).
-            [Qc_T,N_T]          = SubClass_2_1.CD_Triangle     (n);
-            [xx_T,yy_T,det_j_T] = SubClass_2_1.IsoMapping      (N_T);
-            [Qc_S,N_S]          = SubClass_2_1.CD_Quadrilateral(n);
-            [xx_S,yy_S,det_j_S] = SubClass_2_1.IsoMapping      (N_S);
+            [Qc_T,N_T]          = B_1_2.CD_Triangle     (n);
+            [xx_T,yy_T,det_j_T] = B_1_2.IsoMapping      (N_T);
+            [Qc_S,N_S]          = B_1_2.CD_Quadrilateral(n);
+            [xx_S,yy_S,det_j_S] = B_1_2.IsoMapping      (N_S);
             
             %  > Compute source term (based on cell polygon).
             for i = 1:msh.c.NC
@@ -137,7 +137,7 @@ classdef SubClass_2_1_2
                     det_J{i} = det_j_S(X{i}{1},X{i}{2},X{i}{3},X{i}{4},Y{i}{1},Y{i}{2},Y{i}{3},Y{i}{4},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                 end
                 %  > 2D Quadrature/cell source term.
-                [Qp{i},F_Vol(i)] = SubClass_2_1.Compute_Integral_2D(Qc{i},xx{i},yy{i},det_J{i},func);
+                [Qp{i},F_Vol(i)] = B_1_2.Compute_Integral_2D(Qc{i},xx{i},yy{i},det_J{i},func);
             end
         end
     end

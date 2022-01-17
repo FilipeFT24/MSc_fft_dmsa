@@ -1,6 +1,6 @@
-classdef SubClass_2_2
+classdef B_2
     methods (Static)
-        %% > Wrap up SubClass_2_2.
+        %% > B_2.
         function [msh] = WrapUp_2_2(inp,msh,fn)
             % >> ----------------------------------------------------------
             % >> 1.   Assemble matrices Df, Dwf, Pf and Tf.
@@ -18,13 +18,13 @@ classdef SubClass_2_2
             V     = [inp.pr.vx,inp.pr.vy];
             G     = [inp.pr.gx,inp.pr.gy];
                         
-            [msh,Tf_C,Tf_D] = SubClass_2_2.WrapUp_2(msh,msh.s.xy_v,wf,ng);
+            [msh,Tf_C,Tf_D] = B_2.WrapUp_2(msh,msh.s.xy_v,wf,ng);
             [msh] = SubClass_2_2.WrapUp_3(msh,V,G,Tf_C,Tf_D);
         end       
                 
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [msh,Tf_C,Tf_D] = WrapUp_2(msh,st_xy,wf,ng)
+        function [msh,Tf_C,Tf_D] = WrapUp_B_2(msh,st_xy,wf,ng)
             %% > Polynomial reconstruction.
             %  > Polynomial order.
             p = 2.*size(msh.s.st,1)-1;

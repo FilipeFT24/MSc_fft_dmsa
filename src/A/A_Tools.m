@@ -1,6 +1,6 @@
-classdef SubClass_1_3_3
+classdef A_Tools
     methods (Static)
-        %% > SubClass_1_3_3.
+        %% > A_Tools.
         % >> --------------------------------------------------------------
         % >> 1.   Tools.
         %  > 1.1. Modified version(#1) of ismember/ismembc: Compare array  B w/ sorted array  A.
@@ -8,6 +8,7 @@ classdef SubClass_1_3_3
         %  > 1.3. Modified version(#1) of isequal: Compare array   B w/ matrix A.
         %  > 1.4. Modified version(#2) of isequal: Compare matrix  B w/ matrix A.
         %  > 1.5. Modified version(#1) of setdiff.
+        % >> 2.   Sort 'msh' fields.
         % >> --------------------------------------------------------------
         
         %% > 1. -----------------------------------------------------------
@@ -60,6 +61,16 @@ classdef SubClass_1_3_3
             else
                 Z = X;
             end
+        end
+        
+        %% > 2. -----------------------------------------------------------      
+        % >> 2.2. ---------------------------------------------------------
+        function [msh] = Sort_msh(msh)
+            % >> #1.
+            msh   = orderfields(msh  ,{'d','c','f','bnd','s'});
+            % >> #2.
+            msh.c = orderfields(msh.c,{'NC','h_ref','xy_v','mean','vol','h','nb','f'});
+            
         end
     end
 end

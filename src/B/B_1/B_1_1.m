@@ -1,18 +1,18 @@
-classdef SubClass_2_1_1
+classdef B_1_1
     methods (Static)
-        %% > Wrap-up SubClass_2_1_1.
+        %% > Wrap-up B_1_1.
         % >> --------------------------------------------------------------
         % >> 1.   Compute analytic solution.
         %  > 1.1. Compute analytic expressions of f,df and d2f.
         %  > 1.2. Compute values.
         % >>
         % >> --------------------------------------------------------------
-        function [bnd,blk] = WrapUp_2_1_1(inp,msh)
+        function [bnd,blk] = WrapUp_B_1_1(inp,msh)
             % >> 1.
             %  > 1.1.
-            fn = SubClass_2_1_1.Set_fn(inp);
+            fn = B_1_1.Set_fn(inp);
             % >> 1.2.
-            [bnd,blk] = SubClass_2_1_1.Compute_f_df_d2f(fn,msh);
+            [bnd,blk] = B_1_1.Compute_f_df_d2f(fn,msh);
         end
         
         %% > 1. -----------------------------------------------------------

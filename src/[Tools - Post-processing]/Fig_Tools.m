@@ -154,5 +154,30 @@ classdef Fig_Tools
             X_o = X_i(Order);
             Y_o = Y_i(Order);
         end
+        %
+        function [] = Plot_Limits(inp,msh,iF)
+            % >> Local variables.
+            Xv_i = inp.msh.lim.Xv_i;
+            Xv_f = inp.msh.lim.Xv_f;
+            Yv_i = inp.msh.lim.Yv_i;
+            Yv_f = inp.msh.lim.Yv_f;
+            
+            %  > x_min.
+            if msh.s.par.l_x(1,iF) ~= Xv_i
+                xline(msh.s.par.l_x(1,iF),'-.r','Linewidth',0.5);
+            end
+            %  > x_max.
+            if msh.s.par.l_x(2,iF) ~= Xv_f
+                xline(msh.s.par.l_x(2,iF),'-.r','Linewidth',0.5);
+            end
+            %  > y_min.
+            if msh.s.par.l_y(1,iF) ~= Yv_i
+                yline(msh.s.par.l_y(1,iF),'-.r','Linewidth',0.5);
+            end
+            %  > y_max.
+            if msh.s.par.l_y(2,iF) ~= Yv_f
+                yline(msh.s.par.l_y(2,iF),'-.r','Linewidth',0.5);
+            end
+        end
     end
 end     

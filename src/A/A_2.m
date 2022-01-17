@@ -1,6 +1,6 @@
-classdef SubClass_1_2
+classdef A_2
     methods (Static)
-        %% > Wrap-up SubClass_1_2.
+        %% > Wrap-up A_2.
         % >> --------------------------------------------------------------
         % >> 1.   Uniform grid.
         % >> 2.   Non-uniform grid.
@@ -9,7 +9,7 @@ classdef SubClass_1_2
         %  > 2.3. Grid: Wall  clustering.
         % >> 3.   Reshape arrays.
         % >> --------------------------------------------------------------
-        function [msh] = WrapUp_1_2(inp)
+        function [msh] = WrapUp_A_2(inp)
             % >> Local variables.
             T_2    = inp.msh.T_2.t;
             T_2_st = inp.msh.T_2.st;
@@ -17,15 +17,15 @@ classdef SubClass_1_2
             %  > Select grid type.
             if strcmpi(T_2,'Uniform')
                 % >> 1.
-                msh = SubClass_1_2.Uniform_mshGenerator(inp);
+                msh = A_2.Uniform_mshGenerator(inp);
             elseif strcmpi(T_2,'Non-uniform')
                 % >> 2.
                 if strcmpi(T_2_st,'Random')
                     %  > 2.1.
-                    msh = SubClass_1_2.NonUniform_mshGenerator_1(inp);
+                    msh = A_2.NonUniform_mshGenerator_1(inp);
                 elseif strcmpi(T_2_st,'Bulk')
                     %  > 2.2.
-                    msh = SubClass_1_2.NonUniform_mshGenerator_2(inp);
+                    msh = A_2.NonUniform_mshGenerator_2(inp);
                 elseif strcmpi(T_2_st,'Wall')
                 end
             end
@@ -48,7 +48,7 @@ classdef SubClass_1_2
             %  > Generate grid.
             [Xd,Yd] = meshgrid(Xd_x,Yd_y);
             %  > (Xv,Yv).
-            msh.d.xy_v = SubClass_1_2.Reshape_Arrays(Xd,Yd);
+            msh.d.xy_v = A_2.Reshape_Arrays(Xd,Yd);
         end
         
         %% > 2. -----------------------------------------------------------
@@ -80,7 +80,7 @@ classdef SubClass_1_2
                 Yd = cat(1,ones(1,NX_v).*Yv_i,Yd,ones(1,NX_v).*Yv_f);
             end
             %  > (Xv,Yv).
-            msh.d.xy_v = SubClass_1_2.Reshape_Arrays(Xd,Yd);
+            msh.d.xy_v = A_2.Reshape_Arrays(Xd,Yd);
         end
         % >> 2.2. ---------------------------------------------------------
         function [msh] = NonUniform_mshGenerator_2(inp)
@@ -123,7 +123,7 @@ classdef SubClass_1_2
             %  > Generate grid.
             [Xd,Yd] = meshgrid(Xd_p,Yd_p);
             %  > (Xv,Yv).
-            msh.d.xy_v = SubClass_1_2.Reshape_Arrays(Xd,Yd);
+            msh.d.xy_v = A_2.Reshape_Arrays(Xd,Yd);
         end
         % >> 2.3. ---------------------------------------------------------
         function [msh] = NonUniform_mshGenerator_3(msh)

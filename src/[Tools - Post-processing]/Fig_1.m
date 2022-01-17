@@ -15,7 +15,7 @@ classdef Fig_1
                 iF  = blk(iX);
             end
             figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-            Fig_1.Plot_1(inp,msh,3,len);
+            Fig_1.Plot_1(inp,msh,1,len);
         end
         
         %% > Auxiliary functions.
@@ -69,11 +69,9 @@ classdef Fig_1
             %     patch(f{i}(:,1),f{i}(:,2),'b','FaceAlpha',0.10);
             % end
             %% > Stencil.
-            % >> Stencil representation.
-            hold on;
-            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-b','Linewidth',2.0);
             p    = inp.fr.np;
             NLay = 1./2.*(p+1);
+            hold on;
             for i = 1:Sz
                 if i <= NLay
                     for j = 1:length(msh.s.c{i,iF})
@@ -94,11 +92,38 @@ classdef Fig_1
                     c  (NLay+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
                     leg(NLay+1) = '*';
                     %  > Faces.
-                    % if ~isempty(msh.s.f{i,iF})
-                    %     plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
-                    % end
+                    %if ~isempty(msh.s.f{i,iF})
+                    %    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
+                    %end
                 end
             end
+            
+            
+            for i = 6:6
+                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
+            end
+            for i = 14:14
+                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
+            end
+            for i = 22:22
+                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
+            end
+            for i = 30:30
+                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
+            end
+            for i = 38:38
+                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
+            end
+%             for i = 41:45
+%                 patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
+%             end
+            
+            
+            
+            %  > Face.
+            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.5);
+            %  > Limits.
+            Fig_Tools.Plot_Limits(inp,msh,iF);
             %  > Other stuff.
             legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',10);
             Fig_Tools.ChangeLook_1(inp,len);

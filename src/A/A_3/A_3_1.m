@@ -1,6 +1,6 @@
-classdef SubClass_1_3_1
+classdef A_3_1
     methods (Static)
-        %% > SubClass_1_3_1.
+        %% > Wrap-up A_3_1.
         % >> 1.   Set domain faces.
         % >> 2.   Set grid properties.
         %  > 2.1. Set cell neighbouring cells.
@@ -17,7 +17,39 @@ classdef SubClass_1_3_1
         %  > 3.4. Boundary iD.
         % >> 4.   Compute reference length.
         % >> --------------------------------------------------------------
-        
+        function [msh] = WrapUp_A_3_1(struct,msh)
+            % >> 1. Wrap up cell (cell components).
+            % >> 2. Wrap up face (face components).
+            %         Remark: 'WrapUp_Cell' is called first since some of the components of this field help setting up 'WrapUp_Face'.
+            
+            % >> 1.
+            for i = 1:msh.c.NC
+                %  > Cell volume.
+                msh.c.vol   (i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
+                %  > Cell centroid.
+                msh.c.mean(1,i) = mean(msh.c.xy_v{i}(:,1));
+                msh.c.mean(2,i) = mean(msh.c.xy_v{i}(:,2));
+            end
+            %  > Cell neighbouring cells.
+            msh = A_3_1.Set_CellNeighbours(struct,msh);
+            
+            % >> 2.
+            %  > Face coordinates.
+            msh = A_3_1.Set_DomainFaces(struct,msh);
+            %  > Cell reference length.
+            msh = A_3_1.Set_ReferenceLength(msh);
+            
+            for j = 1:size(msh.f.xy_v,2)
+                %  > Face centroid.
+                msh.f.mean(1,j) = mean(msh.f.xy_v{j}(:,1));
+                msh.f.mean(2,j) = mean(msh.f.xy_v{j}(:,2));
+                %  > Face length.
+                msh.f.len   (j) = pdist2(msh.f.xy_v{j}(1,:),msh.f.xy_v{j}(2,:));
+            end
+            %  > Face normals.
+            msh = A_3_1.Set_FaceNormals(msh);
+        end
+                                      
         %% > 1. -----------------------------------------------------------
         function [msh] = Set_CellNeighbours(struct,msh)
             %  > Connectivity list.
@@ -29,7 +61,7 @@ classdef SubClass_1_3_1
             %   Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
             for i = 1:size(Cn_c,1)
                 for j = i+1:size(Cn_c,1)
-                    x_ij(i,j) = SubClass_1_3_3.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
+                    x_ij(i,j) = A_Tools.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
                     x_ij(j,i) = x_ij(i,j);
                 end
                 msh.c.nb{i} = find(x_ij(i,:));
@@ -43,14 +75,14 @@ classdef SubClass_1_3_1
             
             % >> Domain faces.
             %  > Bulk faces (contains duplicates).
-            blk_ij = SubClass_1_3_1.Pick_BlkFaces(msh,Cn_c);
+            blk_ij = A_3_1.Pick_BlkFaces(msh,Cn_c);
             %  > Boundary faces.
-            bnd_ij = SubClass_1_3_1.Pick_BndFaces(msh,Cn_c,blk_ij);
+            bnd_ij = A_3_1.Pick_BndFaces(msh,Cn_c,blk_ij);
             
             % >> Process faces...
             %  > blk.
             blk_f = cell2mat(reshape(blk_ij,[msh.c.NC,1]));
-            shr_f = SubClass_1_3_1.Match_blkFaces(blk_f);
+            shr_f = A_3_1.Match_blkFaces(blk_f);
             %  > bnd.
             bnd_f = cell2mat(reshape(bnd_ij,[size(bnd_ij,2),1]));
             %  > Concatenate arrays.
@@ -118,7 +150,7 @@ classdef SubClass_1_3_1
             
             % >> Set neighbours.
             %  > Cells.
-            %    Remark: 1. Already done (see call of previous function on 2.1.(SubClass_1_3).
+            %    Remark: 1. Already done (see call of previous function on 2.1.(A_3).
             %            2. That routine "triggers" the remaining routines coded in this SubClass.
             %  > Faces.
             for i = 1:msh.f.NF
@@ -145,7 +177,7 @@ classdef SubClass_1_3_1
                 msh.bnd.f{3,i}      = fin_f{jj+i,3};
                 %  > Boundary identification.
                 [msh.bnd.f{4,i},...
-                    msh.bnd.f{5,i}] = SubClass_1_3_1.Identify_bnd(msh.bnd.f{1,i},msh.c.mean(:,msh.bnd.f{3,i}));
+                    msh.bnd.f{5,i}] = A_3_1.Identify_bnd(msh.bnd.f{1,i},msh.c.mean(:,msh.bnd.f{3,i}));
             end
         end
         % >> 2.1. ---------------------------------------------------------
@@ -154,7 +186,7 @@ classdef SubClass_1_3_1
             %    Remark: Only neighbouring cells are evaluated.
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.nb{i},2)
-                    blk_ij{i}(j,:) = SubClass_1_3_3.fft_ismember_2(Cn_c(i,:),Cn_c(msh.c.nb{i}(j),:));
+                    blk_ij{i}(j,:) = A_Tools.fft_ismember_2(Cn_c(i,:),Cn_c(msh.c.nb{i}(j),:));
                 end
                 %  > Remove '0' rows.
                 blk_ij{i}(all(~blk_ij{i},2),:) = [];
@@ -248,16 +280,16 @@ classdef SubClass_1_3_1
                     msh.c.f.mean{i}(1,j) = mean(msh.c.f.xy_v{i}{j}(:,1));
                     msh.c.f.mean{i}(2,j) = mean(msh.c.f.xy_v{i}{j}(:,2));
                     %  > Face normal.
-                    msh.c.f.Nf{i}(:,j) = SubClass_1_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
+                    msh.c.f.Nf{i}(:,j) = A_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
                 end
             end
         end
         % >> 3.2. ---------------------------------------------------------
         function [i_bnd,Nf] = Identify_bnd(fv,mean_ic)
             %  > Face normal.
-            Nf = SubClass_1_3_1.Tools_FaceNormals(fv,mean_ic);
+            Nf = A_3_1.Tools_FaceNormals(fv,mean_ic);
             %  > Boundary identification.
-            i_bnd = SubClass_1_3_1.Identify_Boundary(Nf);
+            i_bnd = A_3_1.Identify_Boundary(Nf);
         end
         
         % >> 3.3. ---------------------------------------------------------

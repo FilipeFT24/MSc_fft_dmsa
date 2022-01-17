@@ -1,15 +1,15 @@
-classdef SubClass_1_1
+classdef A_1
     methods (Static)
-        %% > Wrap-up SubClass_1_1.
+        %% > Wrap-up A_1.
         % >> ----------------------------------------------------------
         % >> 1. Add folders' path.
         % >> 2. Set 'inp' structure.
         % >> ----------------------------------------------------------
-        function [inp] = WrapUp_1_1()
+        function [inp] = WrapUp_A_1()
             % >> 1.
-            SubClass_1_1.Add_FolderPaths;
+            A_1.Add_FolderPaths;
             % >> 2.
-            inp = SubClass_1_1.Set_inp();
+            inp = A_1.Set_inp();
         end
         
         %% > 1. -----------------------------------------------------------
@@ -93,7 +93,7 @@ classdef SubClass_1_1
             inp.fr.nt  = 'Vertex';
             inp.fr.ext = 'F';
             inp.fr.wf  = 'Unweighted';
-            inp.fr.np  = 5;
+            inp.fr.np  = 7;
             inp.fr.ng  = 3;
         end
     end
