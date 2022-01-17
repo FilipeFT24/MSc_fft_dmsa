@@ -18,7 +18,7 @@ classdef A_3_2_2
             %  > 1.1.
             for i = 1:msh.f.NF
                 [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
+                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
             end
             %  > 1.2.
             %  > Extend stencil until it is incomplete and domain limits have not been reached...
@@ -32,22 +32,24 @@ classdef A_3_2_2
                 else
                     while (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2) && Continue
                         %% > x-direction.
+                        Continue_X = false;
                         if par.n_x(i) < p-1./2
                             %  > Add/update...
                             [msh,Continue_X] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i));
                             [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
+                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
                             %  > Number of extensions (x-direction).
                             msh.s.par.n_e(1,i) = msh.s.par.n_e(1,i)+1;
                         end
                         %% > y-direction.
+                        Continue_Y = false;
                         if par.n_y(i) < p-1./2
                             %  > Add/update...
                             [msh,Continue_Y] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i));
                             [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
+                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
                             %  > Number of extensions (y-direction).
                             msh.s.par.n_e(2,i) = msh.s.par.n_e(2,i)+1;
                         end
@@ -64,9 +66,9 @@ classdef A_3_2_2
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [n_x,n_y,l_x,l_y] = Compute_Parameters(i,msh,st_c,st_f)
+        function [n_x,n_y,l_x,l_y] = Compute_Parameters(i,msh,st_c)
             % >> Deal elements.
-            [arr_c,~] = A_3_2_1.Deal_StencilElem(st_c,st_f);
+            arr_c = A_3_2_1.Deal_StencilElem(st_c);
             
             % >> Compute/re-compute 'par' fields.
             %  > (x,y)_min.

@@ -107,11 +107,12 @@ classdef A_3_2_1
                 % >> Stencil face indices.
                 for j = 1:size(msh.s.c,1)
                     %  > Initialize.
-                    Flag {j,i}  = zeros(1,length(msh.s.c{j,i}));
+                    Flag {j,i}   = false(1,length(msh.s.c{j,i}));
+                    msh.s.f(j,i) = cell (1,1);
                     
                     %  > Check whether face i's stencil cells belong to the boundary. If so, add the respective face to the stencil.
                     Flag {j,i}  = ismembc(msh.s.c{j,i},bnd_cc);
-                    if any(Flag{j,i} == 1)
+                    if any(Flag{j,i})
                         msh.s.f{j,i} = A_3_2_1.Add_Face(Flag{j,i},msh,msh.s.c{j,i});
                     end
                 end
@@ -121,7 +122,7 @@ classdef A_3_2_1
         end
         
         %% > 2. -----------------------------------------------------------
-        %  > 2.1. ---------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
         function [add_f] = Add_Face(Flag,msh,c)
             %  > Auxiliary arrays.
             for i = 1:size(msh.bnd.f,2)
@@ -141,46 +142,38 @@ classdef A_3_2_1
             %  > Faces to be added to the stencil.
             add_f = bnd_ff(cell2mat(cf));
         end
-        %  > 2.2. ---------------------------------------------------------
-        function [arr_c,arr_f] = Deal_StencilElem(st_c,st_f)
+        % >> 2.2. ---------------------------------------------------------
+        function [arr] = Deal_StencilElem(st)
             %  > Initialize.
-            ijk_c = 1;
-            ijk_f = 1;
+            ijk = 1;
             
             %  > Cell(s).
-            for i = 1:size(st_c,1)
-                if isempty(st_c{i})
+            for i = 1:size(st,1)
+                if isempty(st{i})
                     continue;
                 else
-                    if ijk_c == 1
-                        arr_c = st_c{i};
-                        ijk_c = ijk_c+1;
+                    if ijk == 1
+                        arr = st{i};
+                        ijk = ijk+1;
                     else
-                        arr_c = [arr_c,st_c{i}];
-                        ijk_c = ijk_c+1;
-                    end
-                end
-            end
-            %  > Face(s).
-            for i = 1:size(st_f,1)
-                if isempty(st_f{i})
-                    continue;
-                else
-                    if ijk_f == 1
-                        arr_f = st_f{i};
-                        ijk_f = ijk_f+1;
-                    else
-                        arr_f = [arr_f,st_f{i}];
-                        ijk_f = ijk_c+1;
+                        arr = [arr,st{i}];
+                        ijk = ijk+1;
                     end
                 end
             end
         end
-        %  > 2.3. ---------------------------------------------------------
+        % >> 2.3. ---------------------------------------------------------
         function [xy_v] = Compute_Coordinates(msh,st_c,st_f)
-            %  > Deal elements.
-            [arr_c,arr_f] = A_3_2_1.Deal_StencilElem(st_c,st_f);
-
+            % >> Deal elements.
+            %  > Cell(s).
+            arr_c = A_3_2_1.Deal_StencilElem(st_c);
+            %  > Face(s).
+            Flag_f = false;
+            if any(~cellfun(@isempty,st_f))
+                Flag_f = true;
+                arr_f  = A_3_2_1.Deal_StencilElem(st_f);
+            end
+            
             %  > Cell(s).
             len_c = length(arr_c);
             for i = 1:len_c
@@ -188,10 +181,12 @@ classdef A_3_2_1
                 xy_v(2,i) = msh.c.mean(2,arr_c(i));
             end
             %  > Face(s).
-            len_f = length(arr_f);
-            for i = len_c+1:len_c+len_f
-                xy_v(1,i) = msh.f.mean(1,arr_f(i-len_c));
-                xy_v(2,i) = msh.f.mean(2,arr_f(i-len_c));
+            if Flag_f
+                len_f = length(arr_f);
+                for i = len_c+1:len_c+len_f
+                    xy_v(1,i) = msh.f.mean(1,arr_f(i-len_c));
+                    xy_v(2,i) = msh.f.mean(2,arr_f(i-len_c));
+                end
             end
         end
     end

@@ -15,7 +15,7 @@ classdef Fig_1
                 iF  = blk(iX);
             end
             figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-            Fig_1.Plot_1(inp,msh,1,len);
+            Fig_1.Plot_1(inp,msh,iF,len);
         end
         
         %% > Auxiliary functions.
@@ -29,6 +29,9 @@ classdef Fig_1
             %  > NOTE: Add "'Linestyle','None'" to remove cell border.
             hold on;
             for i = 1:msh.c.NC
+                if ismembc(i,msh.f.c{iF})
+                    continue;
+                end
                 patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'w');
             end
             % %% > Boundaries.
@@ -76,29 +79,29 @@ classdef Fig_1
                 if i <= NLay
                     for j = 1:length(msh.s.c{i,iF})
                         [f_1{i,j}(:,1),f_1{i,j}(:,2)] = Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
-                        patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(i,:),'FaceAlpha',0.25);
+                        patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(i,:),'FaceAlpha',0.25,'Linestyle','None');
                     end
                     %  > Cells.
                     c  (i) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
                     leg(i) = convertCharsToStrings(num2str(i));
                     %  > Faces.
-                    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);                
+                    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
                 else
                     for j = 1:length(msh.s.c{i,iF})
                         [f_1{i,j}(:,1),f_1{i,j}(:,2)] = Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
-                        patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(NLay+1,:),'FaceAlpha',0.25);
+                        patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(NLay+1,:),'FaceAlpha',0.25,'Linestyle','None');
                     end
                     %  > Cells.
                     c  (NLay+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
                     leg(NLay+1) = '$*$';
                     %  > Faces.
-                    %if ~isempty(msh.s.f{i,iF})
-                    %    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
-                    %end
+                    if ~isempty(msh.s.f{i,iF})
+                        plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
+                    end
                 end
-            end     
+            end
             %  > Face.
-            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.5);
+            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',1.5);
             %  > Limits.
             Fig_Tools.Plot_Limits(inp,msh,iF);
             %  > Other stuff.
