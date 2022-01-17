@@ -11,7 +11,7 @@ classdef C
             %  > Figure 1.
             Fig_1.WrapUp_Fig_1(2,inp,msh,dt,len);
             %  > Figure 2.
-            Fig_2.WrapUp_Fig_2(3,inp,msh,blk);
+            %  Fig_2.WrapUp_Fig_2(3,inp,msh,blk);
         end
     end
 end

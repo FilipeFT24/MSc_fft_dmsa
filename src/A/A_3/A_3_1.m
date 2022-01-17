@@ -1,6 +1,7 @@
 classdef A_3_1
     methods (Static)
         %% > Wrap-up A_3_1.
+        % >> --------------------------------------------------------------
         % >> 1.   Set domain faces.
         % >> 2.   Set grid properties.
         %  > 2.1. Set cell neighbouring cells.
@@ -18,10 +19,11 @@ classdef A_3_1
         % >> 4.   Compute reference length.
         % >> --------------------------------------------------------------
         function [msh] = WrapUp_A_3_1(struct,msh)
+            % >> ----------------------------------------------------------
             % >> 1. Wrap up cell (cell components).
             % >> 2. Wrap up face (face components).
-            %         Remark: 'WrapUp_Cell' is called first since some of the components of this field help setting up 'WrapUp_Face'.
-            
+            %       Remark: 'WrapUp_Cell' is called first since some of the components of this field help setting up 'WrapUp_Face'.
+            % >> ----------------------------------------------------------
             % >> 1.
             for i = 1:msh.c.NC
                 %  > Cell volume.
@@ -290,8 +292,7 @@ classdef A_3_1
             Nf = A_3_1.Tools_FaceNormals(fv,mean_ic);
             %  > Boundary identification.
             i_bnd = A_3_1.Identify_Boundary(Nf);
-        end
-        
+        end       
         % >> 3.3. ---------------------------------------------------------
         function [Nf] = Tools_FaceNormals(fv,mean_ic)
             % >> Centroids.

@@ -3,41 +3,56 @@ classdef A_3_2_2
         %% > A_3_2_2.
         % >> --------------------------------------------------------------
         % >> 1.     Compute stencil limits and check if and extension is required.
-        % >> 2.     Tools.
-        %  > 2.1.   Compute parameters.
-        %  > 2.2.   Perform extension.
-        %  > 2.2.1. Extension #1.
-        %  > 2.2.2. Extension #2.
+        %  > 1.1.   Compute parameters.
+        %  > 1.2.   Perform extension.
+        %  > 1.2.1. Extension #1.
+        %  > 1.2.2. Extension #2.
         % >> --------------------------------------------------------------
-                
-        %% > 1. -----------------------------------------------------------
         function [msh] = Extend_Stencil(msh,bnd_cc,p)
-            % >> 2.1.
-            for i = 1:msh.f.NF
-                [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
-            end
-            % >> 2.2.
             %  > Initialize.
             msh.s.par.n_e = zeros(2,msh.f.NF);
             msh.s.c_e     = cell (1,msh.f.NF);
             msh.s.c_f     = cell (1,msh.f.NF);
-            %  > Extend stencil until...
+            
+            % >> 1.
+            %  > 1.1.
             for i = 1:msh.f.NF
+                [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
+                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
+            end
+            %  > 1.2.
+            %  > Extend stencil until it is incomplete and domain limits have not been reached...
+            for i = 1:msh.f.NF
+                %  > Initialize.
+                Continue = true;
+                
+                %  > Check...
                 if par.n_x(i) >= p-1./2 && par.n_y(i) >= p-1./2
                     continue;
                 else
-                    %  > Do while stencil is incomplete and domain limits have not been reached...
-                    Continue_X = 1;
-                    %while par.n_x(i) < p-1./2 || Continue_X 
-                        [msh,Continue_X] = ...
-                            A_3_2_2.Perform_Extension(i,msh,bnd_cc,par,p);
-                        [par.n_x(i),par.l_x(:,i)] = ...
-                            A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
-                    %end
-%                     Continue_Y = 1;
-%                     while par.n_y(i) < p-1./2 || Continue_Y 
-%                     end
+                    while (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2) && Continue
+                        %% > x-direction.
+                        if par.n_x(i) < p-1./2
+                            %  > Add/update...
+                            [msh,Continue_X] = ...
+                                A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i));
+                            [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
+                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
+                            %  > Number of extensions (x-direction).
+                            msh.s.par.n_e(1,i) = msh.s.par.n_e(1,i)+1;
+                        end
+                        %% > y-direction.
+                        if par.n_y(i) < p-1./2
+                            %  > Add/update...
+                            [msh,Continue_Y] = ...
+                                A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i));
+                            [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
+                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),msh.s.f(:,i));
+                            %  > Number of extensions (y-direction).
+                            msh.s.par.n_e(2,i) = msh.s.par.n_e(2,i)+1;
+                        end
+                        Continue = any([Continue_X,Continue_Y]);
+                    end
                 end
             end
             %  > Deal fields...
@@ -61,91 +76,60 @@ classdef A_3_2_2
             l_x(2) = max(msh.s.xy_v_t{i}(1,:));
             l_y(2) = max(msh.s.xy_v_t{i}(2,:));
             %  > (n_x,n_y).
-            for j = 1:length(arr_c)
+            len_c = length(arr_c);
+            for j = 1:len_c
                 h_x(j) = max(msh.c.xy_v{arr_c(j)}(:,1))-min(msh.c.xy_v{arr_c(j)}(:,1));
                 h_y(j) = max(msh.c.xy_v{arr_c(j)}(:,2))-min(msh.c.xy_v{arr_c(j)}(:,2));
             end
-            h_x = sum(h_x)./length(arr_c);
-            h_y = sum(h_y)./length(arr_c);
+            h_x = sum(h_x)./len_c;
+            h_y = sum(h_y)./len_c;
             n_x = (l_x(2)-l_x(1))./h_x;
             n_y = (l_y(2)-l_y(1))./h_y;
         end
         % >> 2.2. ---------------------------------------------------------
-        function [msh,Continue] = Perform_Extension(i,msh,bnd_cc,par,p)
+        function [msh,Flag] = Perform_Extension(i,msh,bnd_cc,Dir,v_min,v_max)
             %  > Initialize.
-            Ext_Flag = 0;
-            Continue = 0;
-            k        = 1;
-            len      = nnz(~cellfun(@isempty,msh.s.c(:,i)));
+            Flag = false;
+            len  = nnz(~cellfun(@isempty,msh.s.c(:,i)));
             
             %  > Previous layers' stencil elements.
-            Lst = msh.s.c{len,i};
             for j = 1:len
-                st{j} = msh.s.c{j,i};
+                st_el{j} = msh.s.c{j,i};
             end
-            st = cell2mat(st);
-                        
-            
-            
-            
-            if par.n_x(i) < p-1./2
-                % >> Add cell indices.
-                %  > Stencil limits.
-                y_min = par.l_y(1,i);
-                y_max = par.l_y(2,i);
-                Ext_X = A_3_2_2.Extension_1(msh,Lst,st,'x',y_min,y_max);
-                
-                % >> Update/add...
-                %  > Number of extensions (y-direction).
-                msh.s.par.n_e(1,i) = msh.s.par.n_e(1,i)+1;
-                %  > Cell indices.
-                msh.s.c{len+1,i} = Ext_X;
-                msh.s.c_e    {i} = [msh.s.c_e{i},Ext_X];
-                %  > Face indices.
-                Flag = ismembc(Ext_X,bnd_cc) == 1;
-                if any(Flag)
-                    msh.s.c_f{i}       = A_3_2_1.Add_Face(Flag,msh,Ext_X);
-                    msh.s.f  {len+1,i} = msh.s.c_f{i};
-                end
-                Ext_Flag(1) = length(Ext_X);
+            st_el = cell2mat(st_el);
+            %  > Select direction.
+            if strcmpi(Dir,'x')
+                Add = A_3_2_2.Extension_1(msh,st_el,Dir,v_min,v_max);
+            elseif strcmpi(Dir,'y')
+                Add = A_3_2_2.Extension_1(msh,st_el,Dir,v_min,v_max);
             end
-            if par.n_y(i) < p-1./2
-                % >> Add cell indices.
-                % > Stencil limits.
-                x_min = par.l_x(1,i);
-                x_max = par.l_x(2,i);
-                Ext_Y = A_3_2_2.Extension_1(msh,Lst,st,'y',x_min,x_max);
-                
-                % >> Update/add...
-                %  > Number of extensions (y-direction).
-                msh.s.par.n_e(2,i) = msh.s.par.n_e(2,i)+1;
-                %  > Cell indices.
-                msh.s.c{len+1,i} = Ext_Y;
-                msh.s.c_e    {i} = [msh.s.c_e{i},Ext_Y];
-                %  > Face indices.
-                Flag = ismembc(Ext_Y,bnd_cc) == 1;
-                if any(Flag)
-                    msh.s.c_f{i}       = A_3_2_1.Add_Face(Flag,msh,Ext_Y);
-                    msh.s.f  {len+1,i} = msh.s.c_f{i};
-                end
-                Ext_Flag(2) = length(Ext_Y);
+            
+            % >> Update/add...
+            %  > Cell indices.
+            msh.s.c{len+1,i} = Add;
+            msh.s.c_e    {i} = [msh.s.c_e{i},Add];
+            %  > Face indices.
+            i_face = ismembc(Add,bnd_cc) == true;
+            if any(i_face)
+                msh.s.c_f{i}       = A_3_2_1.Add_Face(i_face,msh,Add);
+                msh.s.f  {len+1,i} = msh.s.c_f{i};
             end
-            Continue = any(Ext_Flag);
-            if Continue
+            Flag = ~isempty(Add);
+            
+            if Flag
                 msh.s.xy_v_t{i} = A_3_2_1.Compute_Coordinates(msh,msh.s.c(:,i),msh.s.f(:,i));
             end
         end
         %  > 2.2.1. -------------------------------------------------------
-        function [add_to] = Extension_1(msh,Lst,st,Dir,v_min,v_max)
-            % >> Outer cells.
-            %  > Stencil (outer) cells.
-            outer_c = Lst;
-            %  > ...neighbours.
-            for i = 1:length(outer_c)
-                nb_c_out{i} = msh.c.nb{outer_c(i)};
+        function [add_to] = Extension_1(msh,st_el,Dir,v_min,v_max)
+            % >> Stencil cell neighbours.
+            for i = 1:length(st_el)
+                nb_c{i} = msh.c.nb{st_el(i)};
             end
+            nb_c    = cell2mat(nb_c);
+            nb_c_un = unique(nb_c);
             %  > Outer cells (NOT in the stencil).
-            nb_diff = setdiff(unique(cell2mat(nb_c_out)),st);
+            nb_diff = setdiff(nb_c_un,st_el);
             
             %  > Select direction.
             if strcmpi(Dir,'x')

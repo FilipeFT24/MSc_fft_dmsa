@@ -90,36 +90,13 @@ classdef Fig_1
                     end
                     %  > Cells.
                     c  (NLay+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
-                    leg(NLay+1) = '*';
+                    leg(NLay+1) = '$*$';
                     %  > Faces.
                     %if ~isempty(msh.s.f{i,iF})
                     %    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
                     %end
                 end
-            end
-            
-            
-            for i = 6:6
-                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
-            end
-            for i = 14:14
-                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
-            end
-            for i = 22:22
-                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
-            end
-            for i = 30:30
-                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
-            end
-            for i = 38:38
-                patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
-            end
-%             for i = 41:45
-%                 patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'m');
-%             end
-            
-            
-            
+            end     
             %  > Face.
             plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.5);
             %  > Limits.
