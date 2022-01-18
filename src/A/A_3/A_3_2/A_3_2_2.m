@@ -8,7 +8,7 @@ classdef A_3_2_2
         %  > 1.2.1. Extension #1.
         %  > 1.2.2. Extension #2.
         % >> --------------------------------------------------------------
-        function [msh] = Extend_Stencil(msh,bnd_cc,p,et)            
+        function [msh] = Extend_Stencil(msh,bnd_cc,p,et)
             %  > Initialize.
             msh.s.par.n_e = zeros(2,msh.f.NF);
             msh.s.c_e     = cell (1,msh.f.NF);
@@ -27,15 +27,16 @@ classdef A_3_2_2
                 Continue = true;
                 
                 %  > Check...
-                if (~et && par.n_x(i) >= p-1./2 && par.n_y(i) >= p-1./2) || ...
-                        (et && par.n_x(i) >= p-1./2 && par.n_y(i) >= p-1./2 && par.ng_x(i) >= p-1./2 && par.ng_y(i) >= p-1./2)
+                if (~et && single(par.n_x(i)) >= p-1./2 && single(par.n_y(i)) >= p-1./2) || ...
+                        (et && single(par.n_x(i)) >= p-1./2 && single(par.n_y(i)) >= p-1./2 && single(par.ng_x(i)) >= p-1./2 && single(par.ng_y(i)) >= p-1./2)
                     continue;
                 else
-                    while ((~et && (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2)) || ...
-                            (et && (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2 || par.ng_x(i) < p-1./2 || par.ng_y(i) < p-1./2))) && Continue
+                    while ((~et && (single(par.n_x(i)) < p-1./2 || single(par.n_y(i)) < p-1./2)) || ...
+                            (et && (single(par.n_x(i)) < p-1./2 || single(par.n_y(i)) < p-1./2 || single(par.ng_x(i)) < p-1./2 || single(par.ng_y(i)) < p-1./2))) && Continue
                         %% > x-direction.
                         Continue_X = false;
-                        if (~et && par.n_x(i) < p-1./2) || (et && (par.n_x(i) < p-1./2 || par.ng_x(i) < p-1./2))
+                        if (~et && single(par.n_x(i)) < p-1./2) || ...
+                                (et && (single(par.n_x(i)) < p-1./2 || single(par.ng_x(i)) < p-1./2))
                             %  > Add/update...
                             [msh,Continue_X] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i));
@@ -46,7 +47,8 @@ classdef A_3_2_2
                         end
                         %% > y-direction.
                         Continue_Y = false;
-                        if (~et && par.n_y(i) < p-1./2) || (et && (par.n_y(i) < p-1./2 || par.ng_y(i) < p-1./2))
+                        if (~et && single(par.n_y(i)) < p-1./2) || ...
+                                (et && (single(par.n_y(i)) < p-1./2 || single(par.ng_y(i)) < p-1./2))
                             %  > Add/update...
                             [msh,Continue_Y] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i));
@@ -65,7 +67,7 @@ classdef A_3_2_2
             msh.s.par.ng_x = par.ng_x;
             msh.s.par.ng_y = par.ng_y;
             msh.s.par.l_x  = par.l_x;
-            msh.s.par.l_y  = par.l_y;            
+            msh.s.par.l_y  = par.l_y;
         end
         
         %% > 1. -----------------------------------------------------------

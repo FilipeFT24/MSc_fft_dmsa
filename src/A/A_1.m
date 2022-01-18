@@ -29,8 +29,8 @@ classdef A_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 15;
-            inp.msh.Nv(2) = 15;
+            inp.msh.Nv(1) = 6;
+            inp.msh.Nv(2) = 6;
             
             % >> 3. Grid types:
             %  > 1. Type #1.├- v.
@@ -46,7 +46,7 @@ classdef A_1
             %                     ├- 2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                     └- 3. Location         : East(E)/West(W), North(N)/South(S).
             inp.msh.T_1.t    = 's';
-            inp.msh.T_2.t    = 'Non-uniform';
+            inp.msh.T_2.t    = 'Uniform';
             inp.msh.T_2.st   = 'Bulk';
             inp.msh.T_2.Nf_X = 0.5;
             inp.msh.T_2.Nf_Y = 0.5;
@@ -94,7 +94,7 @@ classdef A_1
             inp.fr.nt  = 'Vertex';
             inp.fr.ext = 'F';
             inp.fr.wf  = 'Weighted';
-            inp.fr.np  = 5;
+            inp.fr.np  = 3;
             inp.fr.ng  = 3;
             inp.fr.et  = true;
         end

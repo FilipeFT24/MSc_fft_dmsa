@@ -15,7 +15,7 @@ classdef Fig_1
                 iF  = blk(iX);
             end
             figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-            Fig_1.Plot_1(inp,msh,pde,65,len);
+            Fig_1.Plot_1(inp,msh,pde,51,len);
         end
         
         %% > Auxiliary functions.

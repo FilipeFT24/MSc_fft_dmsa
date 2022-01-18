@@ -6,7 +6,6 @@ classdef B_2_1
             % >> 1.   Compute polynomial terms for phi and grad(phi).
             %  > 1.1. Auxiliary function (based on 'iD' input).
             % >> 2.   Set weighting function.
-            % >> 3.   Compute df array.
             % >> ----------------------------------------------------------
             % >> Local variables.
             wf = inp.fr.wf;
@@ -147,33 +146,6 @@ classdef B_2_1
                 wf_1 = @(d,k) 1./(d).^k;
                 wf_2 = @(d,k) 1./(d./2).^k;
             end
-        end
-        
-        %% > 3. -----------------------------------------------------------
-        function [df_ij] = Compute_df(iD,mean_f,fg,Coeff,Exp)
-            if iD == 1
-                % >> Phi_f.
-                for i = 1:size(fg.Points,1)
-                    for j = 1:length(Coeff)
-                        df_ij(i,j) = Coeff(j).*fg.Weights(i).*((mean_f(1)-fg.Points(i,1)).^Exp(1,j)).*((mean_f(2)-fg.Points(i,2)).^Exp(2,j));
-                    end
-                end
-                df_ij = sum(df_ij,1);
-            elseif iD == 2
-                % >> grad(Phi_f).
-                for i = 1:size(Coeff,1)
-                    %  > i=1: X.
-                    %  > i=2: Y.
-                    for j = 1:size(fg.Points,1)
-                        for k = 1:size(Coeff,2)
-                            df_ij{i}(j,k) = Coeff(i,k).*fg.Weights(j).*((mean_f(1)-fg.Points(j,1)).^Exp{i}(1,k)).*((mean_f(2)-fg.Points(j,2)).^Exp{i}(2,k));
-                        end
-                    end
-                    df_ij{i} = sum(df_ij{i},1);
-                end
-                %  > Reshape cell array.
-                df_ij = cell2mat(reshape(df_ij,[2,1]));
-            end
-        end                      
+        end                  
     end
 end

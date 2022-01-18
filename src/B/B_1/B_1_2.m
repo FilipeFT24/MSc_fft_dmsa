@@ -1,6 +1,6 @@
 classdef B_1_2
     methods (Static)
-        %% > B_1_2.
+        %% > Wrap-up B_1_2.
         % >> --------------------------------------------------------------
         % >> 1.   1D quadrature.
         %  > 1.1. Face mapping.
