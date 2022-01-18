@@ -6,7 +6,7 @@ clear, clc, close all; format default;
 %  > Class B.
 [pde] = B.WrapUp_B(inp,msh);
 %  > Class C.
-C.WrapUp_C(inp,msh,pde,'bnd',0);
+C.WrapUp_C(inp,msh,pde,'blk',0);
 
 %  > Measure elapsed time.
 % [TA,TB] = Other_stuff.Time_AB(inp,msh);

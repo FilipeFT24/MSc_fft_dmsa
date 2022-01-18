@@ -70,9 +70,10 @@ classdef B_2_2
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Inv          {i} = eMatrices(transpose(Dwf{i})*Df{i});
-                Pf           {i} = Inv{i}*transpose(Dwf{i});
-                pde.mat.cd_Df(i) = cond(Df{i});
+                Inv           {i} = eMatrices(transpose(Dwf{i})*Df{i});
+                Pf            {i} = Inv{i}*transpose(Dwf{i});
+                pde.mat.cd_Df (i) = cond(Df {i});
+                pde.mat.cd_Dwf(i) = cond(Dwf{i});
             end
             % >> Tf     = ?
             %  > C(1)   = P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)+...

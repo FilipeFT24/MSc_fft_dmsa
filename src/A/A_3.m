@@ -10,14 +10,15 @@ classdef A_3
             % >> Local variables.
             Type = inp.fr.nt;
             p    = inp.fr.np;
-            NLay = 1./2.*(p+1);
+            et   = inp.fr.et;
+            NLay = 1./2.*(p+1);           
                         
             % >> 1.
             [struct,msh] = A_3.Set_struct(inp,msh);
             % >> 2.
             msh = A_3_1.WrapUp_A_3_1(struct,msh);
             % >> 3.
-            msh = A_3_2.WrapUp_A_3_2(msh,Type,NLay,p);
+            msh = A_3_2.WrapUp_A_3_2(msh,Type,NLay,p,et);
         end
         
         %% > 1. -----------------------------------------------------------

@@ -8,7 +8,7 @@ classdef A_3_2_2
         %  > 1.2.1. Extension #1.
         %  > 1.2.2. Extension #2.
         % >> --------------------------------------------------------------
-        function [msh] = Extend_Stencil(msh,bnd_cc,p)
+        function [msh] = Extend_Stencil(msh,bnd_cc,p,et)            
             %  > Initialize.
             msh.s.par.n_e = zeros(2,msh.f.NF);
             msh.s.c_e     = cell (1,msh.f.NF);
@@ -17,7 +17,7 @@ classdef A_3_2_2
             % >> 1.
             %  > 1.1.
             for i = 1:msh.f.NF
-                [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
+                [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
                     A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
             end
             %  > 1.2.
@@ -27,28 +27,30 @@ classdef A_3_2_2
                 Continue = true;
                 
                 %  > Check...
-                if par.n_x(i) >= p-1./2 && par.n_y(i) >= p-1./2
+                if (~et && par.n_x(i) >= p-1./2 && par.n_y(i) >= p-1./2) || ...
+                        (et && par.n_x(i) >= p-1./2 && par.n_y(i) >= p-1./2 && par.ng_x(i) >= p-1./2 && par.ng_y(i) >= p-1./2)
                     continue;
                 else
-                    while (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2) && Continue
+                    while ((~et && (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2)) || ...
+                            (et && (par.n_x(i) < p-1./2 || par.n_y(i) < p-1./2 || par.ng_x(i) < p-1./2 || par.ng_y(i) < p-1./2))) && Continue
                         %% > x-direction.
                         Continue_X = false;
-                        if par.n_x(i) < p-1./2
+                        if (~et && par.n_x(i) < p-1./2) || (et && (par.n_x(i) < p-1./2 || par.ng_x(i) < p-1./2))
                             %  > Add/update...
                             [msh,Continue_X] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i));
-                            [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
+                            [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
                                 A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
                             %  > Number of extensions (x-direction).
                             msh.s.par.n_e(1,i) = msh.s.par.n_e(1,i)+1;
                         end
                         %% > y-direction.
                         Continue_Y = false;
-                        if par.n_y(i) < p-1./2
+                        if (~et && par.n_y(i) < p-1./2) || (et && (par.n_y(i) < p-1./2 || par.ng_y(i) < p-1./2))
                             %  > Add/update...
                             [msh,Continue_Y] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i));
-                            [par.n_x(i),par.n_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
+                            [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
                                 A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
                             %  > Number of extensions (y-direction).
                             msh.s.par.n_e(2,i) = msh.s.par.n_e(2,i)+1;
@@ -58,15 +60,17 @@ classdef A_3_2_2
                 end
             end
             %  > Deal fields...
-            msh.s.par.l_x = par.l_x;
-            msh.s.par.l_y = par.l_y;
-            msh.s.par.n_x = par.n_x;
-            msh.s.par.n_y = par.n_y;
+            msh.s.par.n_x  = par.n_x;
+            msh.s.par.n_y  = par.n_y;
+            msh.s.par.ng_x = par.ng_x;
+            msh.s.par.ng_y = par.ng_y;
+            msh.s.par.l_x  = par.l_x;
+            msh.s.par.l_y  = par.l_y;            
         end
         
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        function [n_x,n_y,l_x,l_y] = Compute_Parameters(i,msh,st_c)
+        %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
+        function [n_x,n_y,ng_x,ng_y,l_x,l_y] = Compute_Parameters(i,msh,st_c)
             % >> Deal elements.
             arr_c = A_3_2_1.Deal_StencilElem(st_c);
             
@@ -87,8 +91,17 @@ classdef A_3_2_2
             h_y = sum(h_y)./len_c;
             n_x = (l_x(2)-l_x(1))./h_x;
             n_y = (l_y(2)-l_y(1))./h_y;
+            %  > (ng_x,ng_y).
+            for j = 1:msh.c.NC
+                hg_x(j) = max(msh.c.xy_v{j}(:,1))-min(msh.c.xy_v{j}(:,1));
+                hg_y(j) = max(msh.c.xy_v{j}(:,2))-min(msh.c.xy_v{j}(:,2));
+            end
+            hg_x = sum(hg_x)./msh.c.NC;
+            hg_y = sum(hg_y)./msh.c.NC;
+            ng_x = (l_x(2)-l_x(1))./hg_x;
+            ng_y = (l_y(2)-l_y(1))./hg_y;
         end
-        % >> 2.2. ---------------------------------------------------------
+        % >> 1.2. ---------------------------------------------------------
         function [msh,Flag] = Perform_Extension(i,msh,bnd_cc,Dir,v_min,v_max)
             %  > Initialize.
             Flag = false;
@@ -122,7 +135,7 @@ classdef A_3_2_2
                 msh.s.xy_v_t{i} = A_3_2_1.Compute_Coordinates(msh,msh.s.c(:,i),msh.s.f(:,i));
             end
         end
-        %  > 2.2.1. -------------------------------------------------------
+        %  > 1.2.1. -------------------------------------------------------
         function [add_to] = Extension_1(msh,st_el,Dir,v_min,v_max)
             % >> Stencil cell neighbours.
             for i = 1:length(st_el)
@@ -151,7 +164,7 @@ classdef A_3_2_2
                 add_to = [];
             end
         end
-        %  > 2.2.2. -------------------------------------------------------
+        %  > 1.2.2. -------------------------------------------------------
         function [msh] = Extension_2(msh)
         end
     end

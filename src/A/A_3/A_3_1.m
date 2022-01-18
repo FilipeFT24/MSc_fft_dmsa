@@ -121,14 +121,14 @@ classdef A_3_1
             
             % >> 'Unique' faces.
             %  > Initialize field.
-            msh.c.f.faces = cell(1,msh.c.NC);
+            msh.c.f.f = cell(1,msh.c.NC);
             for i = 1:msh.f.NF
                 %  > (Xv,Yv).
                 msh.f.xy_v{i}(1,:) = [struct.Points(fin_f{i,1},1),struct.Points(fin_f{i,1},2)];
                 msh.f.xy_v{i}(2,:) = [struct.Points(fin_f{i,2},1),struct.Points(fin_f{i,2},2)];
                 %  > Track faces that belong to a given cell, e.g.: cell X is composed by faces A, B, C, ...
                 for j = 1:length(fin_f{i,3})
-                    msh.c.f.faces{fin_f{i,3}(j)} = [msh.c.f.faces{fin_f{i,3}(j)},i];
+                    msh.c.f.f{fin_f{i,3}(j)} = [msh.c.f.f{fin_f{i,3}(j)},i];
                 end
             end
             %  > Cell faces.

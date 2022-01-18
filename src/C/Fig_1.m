@@ -15,12 +15,12 @@ classdef Fig_1
                 iF  = blk(iX);
             end
             figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-            Fig_1.Plot_1(inp,msh,pde,iF,len);
+            Fig_1.Plot_1(inp,msh,pde,65,len);
         end
         
         %% > Auxiliary functions.
         % >> Plot 1.
-        function [] = Plot_1(inp,msh,pde,iF,len)
+        function [] = Plot_1(inp,msh,pde,iF,len) %#ok<INUSL>
             % >> Local variables.
             Xv_i = inp.msh.lim.Xv_i;
             Xv_f = inp.msh.lim.Xv_f;
@@ -28,6 +28,7 @@ classdef Fig_1
             Yv_f = inp.msh.lim.Yv_f;
             p    = inp.fr.np;
             NLay = 1./2.*(p+1);
+            gq   = false;
             %  > Outer boundary.
             NE   = [Xv_f,Yv_f];
             NW   = [Xv_i,Yv_f];
@@ -113,10 +114,11 @@ classdef Fig_1
                 end
             end
             %  > Face.
-            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',1.5);
-            scatter(pde.f.gq{iF}.Points(:,1),pde.f.gq{iF}.Points(:,2),50.*pde.f.gq{iF}.Weights./sum(pde.f.gq{iF}.Weights),'Marker','o','MarkerEdgeColor','r','MarkerFaceColor','r');
+            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.0);
+            %  scatter(pde.f.gq{iF}.Points(:,1),pde.f.gq{iF}.Points(:,2),100.*pde.f.gq{iF}.Weights./sum(pde.f.gq{iF}.Weights),'Marker','o','MarkerEdgeColor','k');
             %  > Limits.
             Fig_Tools.Plot_Limits(inp,msh,iF);
+            
             %  > Other stuff.
             legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',10);
             Fig_Tools.ChangeLook_1(inp,len);
