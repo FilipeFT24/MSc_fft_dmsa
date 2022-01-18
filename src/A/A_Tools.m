@@ -71,6 +71,9 @@ classdef A_Tools
             % >> #2.
             msh.c = orderfields(msh.c,{'NC','h_ref','xy_v','mean','vol','h','nb','f'});
             
+            %  > s.
+            msh.s     = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
+            msh.s.par = orderfields(msh.s.par,{'n_e','n_x','n_y','ng_x','ng_y','l_x','l_y'});
         end
     end
 end

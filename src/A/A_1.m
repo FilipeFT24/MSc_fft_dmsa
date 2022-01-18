@@ -29,8 +29,8 @@ classdef A_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 6;
-            inp.msh.Nv(2) = 6;
+            inp.msh.Nv(1) = 11;
+            inp.msh.Nv(2) = 11;
             
             % >> 3. Grid types:
             %  > 1. Type #1.├- v.
@@ -59,7 +59,7 @@ classdef A_1
             inp.pr.vx = 0.1;
             inp.pr.vy = 0.0;
             inp.pr.gx = 1.0;
-            inp.pr.gy = 1.0;
+            inp.pr.gy = 0.0;
             
             % >> 5. Boundary conditions: 1. EB/EV -> East  boundary type/value.
             %                            2. WB/WV -> West  boundary type/value.

@@ -2,11 +2,13 @@ classdef A_3_2_1
     methods (Static)
         %% > A_3_2_1.
         % >> --------------------------------------------------------------
-        % >> 1.   Set stencil cell/face indices.
-        % >> 2.   Tools.
-        %  > 2.1. Check face index (i.e. check whether a given stencil cell is a boundary cell).
-        %  > 2.2. Reshape element array.
-        %  > 2.3. Compute stencil elements' coordinates.
+        % >> 1.     Set stencil cell/face indices.
+        % >> 2.     Tools.
+        %  > 2.1.   Check face index (i.e. check whether a given stencil cell is a boundary cell).
+        %  > 2.2.   Reshape element array.
+        %  > 2.3.   Compute stencil coordinates.
+        %  > 2.3.1. Compute stencil coordinates (cells).
+        %  > 2.3.2. Compute stencil coordinates (faces).
         % >> --------------------------------------------------------------
         
         %% > 1. -----------------------------------------------------------
@@ -116,8 +118,14 @@ classdef A_3_2_1
                         msh.s.f{j,i} = A_3_2_1.Add_Face(Flag{j,i},msh,msh.s.c{j,i});
                     end
                 end
+                
                 % >> Stencil coordinates.
-                msh.s.xy_v_t{i} = A_3_2_1.Compute_Coordinates(msh,msh.s.c(:,i),msh.s.f(:,i));
+                %  > Cells.
+                msh.s.xy_v_c{i} = A_3_2_1.Compute_Coordinates_c(msh.s.c(:,i),msh.c.mean);
+                %  > Faces.
+                if any(~cellfun(@isempty,msh.s.f(:,i)))
+                    msh.s.xy_v_f{i} = A_3_2_1.Compute_Coordinates_f(msh.s.f(:,i),msh.f.mean);
+                end
             end
         end
         
@@ -163,31 +171,31 @@ classdef A_3_2_1
             end
         end
         % >> 2.3. ---------------------------------------------------------
-        function [xy_v] = Compute_Coordinates(msh,st_c,st_f)
-            % >> Deal elements.
-            %  > Cell(s).
+        %  > 2.3.1. -------------------------------------------------------
+        function [xy_v_c] = Compute_Coordinates_c(st_c,mean_c)
+            %  > Deal elements.
             arr_c = A_3_2_1.Deal_StencilElem(st_c);
-            %  > Face(s).
-            Flag_f = false;
-            if any(~cellfun(@isempty,st_f))
-                Flag_f = true;
-                arr_f  = A_3_2_1.Deal_StencilElem(st_f);
-            end
             
-            %  > Cell(s).
             len_c = length(arr_c);
             for i = 1:len_c
-                xy_v(1,i) = msh.c.mean(1,arr_c(i));
-                xy_v(2,i) = msh.c.mean(2,arr_c(i));
+                xy_v_c(1,i) = mean_c(1,arr_c(i));
+                xy_v_c(2,i) = mean_c(2,arr_c(i));
             end
-            %  > Face(s).
-            if Flag_f
-                len_f = length(arr_f);
-                for i = len_c+1:len_c+len_f
-                    xy_v(1,i) = msh.f.mean(1,arr_f(i-len_c));
-                    xy_v(2,i) = msh.f.mean(2,arr_f(i-len_c));
-                end
+        end
+        %  > 2.3.2. -------------------------------------------------------
+        function [xy_v_f] = Compute_Coordinates_f(st_f,mean_f)
+            %  > Deal elements.
+            arr_f = A_3_2_1.Deal_StencilElem(st_f);
+            
+            len_f = length(arr_f);
+            for i = 1:len_f
+                xy_v_f(1,i) = mean_f(1,arr_f(i));
+                xy_v_f(2,i) = mean_f(2,arr_f(i));
             end
+        end
+        %  > 2.3.3. -------------------------------------------------------
+        function [xy_v_t] = Compute_Coordinates_t(st_c,st_f)
+            xy_v_t = cat(2,st_c,st_f);
         end
     end
 end

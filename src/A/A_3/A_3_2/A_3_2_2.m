@@ -12,7 +12,7 @@ classdef A_3_2_2
             %  > Initialize.
             msh.s.par.n_e = zeros(2,msh.f.NF);
             msh.s.c_e     = cell (1,msh.f.NF);
-            msh.s.c_f     = cell (1,msh.f.NF);
+            msh.s.f_e     = cell (1,msh.f.NF);
             
             % >> 1.
             %  > 1.1.
@@ -68,6 +68,10 @@ classdef A_3_2_2
             msh.s.par.ng_y = par.ng_y;
             msh.s.par.l_x  = par.l_x;
             msh.s.par.l_y  = par.l_y;
+            %  > Total stencil points.
+            for i = 1:msh.f.NF
+                msh.s.xy_v_t{i} = A_3_2_1.Compute_Coordinates_t(msh.s.xy_v_c{i},msh.s.xy_v_f{i});
+            end
         end
         
         %% > 1. -----------------------------------------------------------
@@ -77,12 +81,27 @@ classdef A_3_2_2
             arr_c = A_3_2_1.Deal_StencilElem(st_c);
             
             % >> Compute/re-compute 'par' fields.
-            %  > (x,y)_min.
-            l_x(1) = min(msh.s.xy_v_t{i}(1,:));
-            l_y(1) = min(msh.s.xy_v_t{i}(2,:));
-            %  > (x,y)_max.
-            l_x(2) = max(msh.s.xy_v_t{i}(1,:));
-            l_y(2) = max(msh.s.xy_v_t{i}(2,:));
+            %  > (x,y)_min, (x,y)_max.
+            lc_x(1) = min(msh.s.xy_v_c{i}(1,:));
+            lc_y(1) = min(msh.s.xy_v_c{i}(2,:));
+            lc_x(2) = max(msh.s.xy_v_c{i}(1,:));
+            lc_y(2) = max(msh.s.xy_v_c{i}(2,:));
+            %  > .. for face w/o boundary faces.
+            if ~isempty(msh.s.xy_v_f{i})
+                lf_x(1) = min(msh.s.xy_v_f{i}(1,:));
+                lf_y(1) = min(msh.s.xy_v_f{i}(2,:));
+                lf_x(2) = max(msh.s.xy_v_f{i}(1,:));
+                lf_y(2) = max(msh.s.xy_v_f{i}(2,:));
+                l_x (1) = min(lc_x(1),lf_x(1));
+                l_y (1) = min(lc_y(1),lf_y(1));
+                l_x (2) = max(lc_x(2),lf_x(2));
+                l_y (2) = max(lc_y(2),lf_y(2));
+            else
+                l_x(1) = lc_x(1);
+                l_y(1) = lc_y(1);
+                l_x(2) = lc_x(2);
+                l_y(2) = lc_y(2);
+            end
             %  > (n_x,n_y).
             len_c = length(arr_c);
             for j = 1:len_c
@@ -128,13 +147,18 @@ classdef A_3_2_2
             %  > Face indices.
             i_face = ismembc(Add,bnd_cc) == true;
             if any(i_face)
-                msh.s.c_f{i}       = A_3_2_1.Add_Face(i_face,msh,Add);
-                msh.s.f  {len+1,i} = msh.s.c_f{i};
+                msh.s.f_e{i}       = A_3_2_1.Add_Face(i_face,msh,Add);
+                msh.s.f  {len+1,i} = msh.s.f_e{i};
             end
             Flag = ~isempty(Add);
             
             if Flag
-                msh.s.xy_v_t{i} = A_3_2_1.Compute_Coordinates(msh,msh.s.c(:,i),msh.s.f(:,i));
+                %  > Cells.
+                msh.s.xy_v_c{i} = A_3_2_1.Compute_Coordinates_c(msh.s.c(:,i),msh.c.mean);
+                %  > Faces.
+                if any(~cellfun(@isempty,msh.s.f(:,i)))
+                    msh.s.xy_v_f{i} = A_3_2_1.Compute_Coordinates_f(msh.s.f(:,i),msh.f.mean);
+                end
             end
         end
         %  > 1.2.1. -------------------------------------------------------

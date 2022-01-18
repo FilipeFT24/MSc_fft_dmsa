@@ -102,7 +102,7 @@ classdef B_2_2
                 grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.Coeff_2,pde.pr.Exp_2);
                 Tf_D    {i} = grad_df{i}*Pf{i};
             end
-
+            
             % >> Deal...
             %  > Df.
             pde.f.Df   = Df;
@@ -144,20 +144,45 @@ classdef B_2_2
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         function [pde] = Assemble_Mat_2(msh,pde,V,G)
-            % >> Tf.
-            %  > V*Tf_C.
-            VxTf_C = cellfun(@(x) x*V(1),pde.f.Tf_C,'un',0);
-            VyTf_C = cellfun(@(x) x*V(2),pde.f.Tf_C,'un',0);
-            %  > G*Tf_D.
-            GxTf_D = cellfun(@(x) x*G(1),pde.f.Tf_D,'un',0);
-            GyTf_D = cellfun(@(x) x*G(2),pde.f.Tf_D,'un',0);
-            
-            % >> Phi_s.
+            % >> X*Tf.
+            %    Remark: Tf: [A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
+            %                                                  Face dependent coefficients: H,i,J,...,(...).               
             for i = 1:msh.f.NF
-                Phi_s{i} = A_3_2_1.Deal_StencilElem(msh.s.c(:,i));
+                %  > V*Tf_C.
+                V_Tf_C{i}(1,:) = V(1).*pde.f.Tf_C{i};
+                V_Tf_C{i}(2,:) = V(2).*pde.f.Tf_C{i};
+                %  > G*Tf_D.
+                G_Tf_C{i}(1,:) = G(1).*pde.f.Tf_D{i}(1,:);
+                G_Tf_C{i}(2,:) = G(2).*pde.f.Tf_D{i}(2,:);
             end
-            
-       
+            % >> Sentil elements.
+            %  > X*Tf*Nf.
+%             for i = 1:msh.f.NF
+%                 for j = 1:size(msh.c.f.Nf{i},2)
+%                     %V_Tf_C_Nf
+%                 end
+%             end
+                
+                
+                
+%                 
+%                 Phi_s{i} = A_3_2_1.Deal_StencilElem(msh.s.c(:,i));
+%                 if any(~cellfun(@isempty,msh.s.f(:,i)))
+%                     Phi_f{i} = A_3_2_1.Deal_StencilElem(msh.s.f(:,i));
+%                 end
+%             end
+%             %  > Phi_c: (1,:)->face #1.
+%             %           (2,:)->face #2.
+%             %           (3,:)->face #3.
+%             %           (N,:)->face #N.
+%             for i = 1:msh.c.NC
+%                 for j = 1:size(msh.c.f.Nf{i},2)
+% 
+%                     
+%                 end
+%             end
+%             
+%             s=1;
             
             
             
