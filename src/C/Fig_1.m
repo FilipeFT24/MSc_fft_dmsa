@@ -14,7 +14,7 @@ classdef Fig_1
                 iX  = randperm(length(blk),1);
                 iF  = blk(iX);
             end
-            figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
+            figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
             Fig_1.Plot_1(inp,msh,pde,iF,len);
         end
         
@@ -118,8 +118,6 @@ classdef Fig_1
             %  scatter(pde.f.gq{iF}.Points(:,1),pde.f.gq{iF}.Points(:,2),100.*pde.f.gq{iF}.Weights./sum(pde.f.gq{iF}.Weights),'Marker','o','MarkerEdgeColor','k');
             %  > Limits.
             Fig_Tools.Plot_Limits(inp,msh,iF);
-            
-            %  > Other stuff.
             legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',10);
             Fig_Tools.ChangeLook_1(inp,len);
         end

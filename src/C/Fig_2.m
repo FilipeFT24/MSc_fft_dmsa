@@ -2,7 +2,8 @@ classdef Fig_2
     methods (Static)
         %% > Wrap up Fig_2.
         function [] = WrapUp_Fig_2(Fig,inp,msh,pde,len)
-            figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
+            %  > Figure.
+            figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
             %  > #1.
             subplot(1,3,1);
             Fig_2.Plot_1(inp,msh,pde,len);
@@ -62,8 +63,6 @@ classdef Fig_2
                     plot(msh.f.xy_v{i}(:,1),msh.f.xy_v{i}(:,2),'-r','Linewidth',2.0);
                 end
             end
-
-            %  > Other stuff.
             c = Fig_Tools.Colormap_cmocean('thermal');
             c.Label.String = '$\textrm{cond}\left(D_{wf}\right)$';
             Fig_Tools.ChangeLook_1(inp,len);
@@ -89,8 +88,6 @@ classdef Fig_2
                     plot(msh.f.xy_v{i}(:,1),msh.f.xy_v{i}(:,2),'-r','Linewidth',2.0);
                 end
             end
-
-            %  > Other stuff.
             c = Fig_Tools.Colormap_cmocean('thermal');
             c.Label.String = '$\textrm{cond}\left(P_{f}\right)$';
             Fig_Tools.ChangeLook_1(inp,len);

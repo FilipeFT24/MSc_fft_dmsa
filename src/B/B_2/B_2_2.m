@@ -3,19 +3,21 @@ classdef B_2_2
         %% > Wrap-up B_2_2.
         function [pde] = WrapUp_B_2_2(msh,pde,ng,vx,vy,gx,gy)
             % >> ----------------------------------------------------------
-            % >> 1.   Assemble matrices Df, Dwf, Pf and Tf.
-            %  > 1.1. Compute df array.
-            % >> 2.   Assemble matrices A and B.
-            %  > 2.1. Assemble matrix A.
-            %  > 2.2. Assemble matrix B.
+            % >> 1.   Assemble matrices.
+            %  > 1.1. Assemble matrices Df, Dwf, Pf and Tf.
+            %  > 1.2. Compute df array.
+            %  > 1.3. Assemble matrices A and B.
+            %  > 1.4. Solver setup.
             % >> ----------------------------------------------------------
             % >> 1.
+            %  > 1.1.
             pde = B_2_2.Assemble_Mat_1(msh,pde,ng);
-            % >> 2.
+            %  > 1.3.
             pde = B_2_2.Assemble_Mat_2(msh,pde,vx,vy,gx,gy);
         end
         
         %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
         function [pde] = Assemble_Mat_1(msh,pde,ng)
             %% > Matrices Df and Dwf.
             % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
@@ -82,7 +84,7 @@ classdef B_2_2
             %           + {P(1,4)+P(2,4)*(x-xf)+P(3,4)*(y-yf)+...}*Phi(4)+...
             %
             %  > Tf    -> Equivalent to: [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
-            %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).          
+            %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).
             for i = 1:msh.f.NF
                 %  > Face quadrature.
                 pde.f.gq{i} = B_1_2.GaussFace_Points(pde.f.xy_fg,pde.f.j_fg,ng,msh.f.xy_v{i});
@@ -105,7 +107,7 @@ classdef B_2_2
             pde.f.Tf_C = Tf_C;
             pde.f.Tf_D = Tf_D;
         end
-        % >> 1.1. ---------------------------------------------------------
+        % >> 1.2. ---------------------------------------------------------
         function [df_ij] = Compute_df(iD,mean_f,fg,Coeff,Exp)
             if iD == 1
                 % >> Phi_f.
@@ -131,13 +133,16 @@ classdef B_2_2
                 df_ij = cell2mat(reshape(df_ij,[2,1]));
             end
         end
-        
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
+        % >> 1.3. ---------------------------------------------------------
         function [pde] = Assemble_Mat_2(msh,pde,vx,vy,gx,gy)
+            %  > Auxiliary arrays.
+            for i = 1:size(msh.bnd.f,2)
+                bnd_ff(i) = msh.bnd.f{2,i};
+            end
+            
             % >> X*Tf.
-            %    Remark: Tf: [A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
-            %                                                  Face dependent coefficients: H,i,J,...,(...).               
+            %    Remark: Tf=[A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
+            %                                                 Face dependent coefficients: H,i,J,...,(...).
             for i = 1:msh.f.NF
                 %  > V*Tf_C (face 'i').
                 V_Tf_C{i}(1,:) = vx.*pde.f.Tf_C{i};
@@ -145,6 +150,12 @@ classdef B_2_2
                 %  > G*Tf_D (face 'i').
                 G_Tf_D{i}(1,:) = gx.*pde.f.Tf_D{i}(1,:);
                 G_Tf_D{i}(2,:) = gy.*pde.f.Tf_D{i}(2,:);
+                %  > Phi_c.
+                Phi_fc{i}      = A_3_2_1.Deal_StencilElem(msh.s.c(:,i));
+                %  > Phi_f.
+                if ~isempty(msh.s.xy_v_f{i})
+                    Phi_ff{i}  = A_3_2_1.Deal_StencilElem(msh.s.f(:,i));
+                end
             end
             % >> Sentil elements.
             %  > X*Tf*Sf.
@@ -152,14 +163,72 @@ classdef B_2_2
                 for j = 1:size(msh.c.f.Sf{i},2)
                     face     {i}(j) = msh.c.f.f {i}(j);
                     V_Tf_C_Sf{i}{j} = msh.c.f.Sf{i}(:,j)'*V_Tf_C{face{i}(j)};
-                    V_Tf_D_Sf{i}{j} = msh.c.f.Sf{i}(:,j)'*G_Tf_D{face{i}(j)};
+                    G_Tf_D_Sf{i}{j} = msh.c.f.Sf{i}(:,j)'*G_Tf_D{face{i}(j)};
                 end
             end
             
+            % >> A (Cell dependent coefficients).
+            %  > Initialize.
+            A = zeros(msh.c.NC,msh.c.NC);
+            for i = 1:msh.c.NC
+                %  > ... for cell #i: Phi_f(j_1)=A*Phi(X)+B*Phi(Y)+C*Phi(Z)+...
+                %                     Phi_f(j_2)=D*Phi(M)+E*Phi(N)+F*Phi(O)+...
+                %                     Phi_f(...)=...
+                for j = 1:length(face{i})
+                    %  > Number of cells used in the stencil.
+                    numb_c{i}(j) = length(Phi_fc{face{i}(j)});
+                    %  > (k_ini,k_fin).
+                    k_ini {i}(j) = 1;
+                    k_fin {i}(j) = numb_c{i}(j);
+                    
+                    for k = k_ini{i}(j):k_fin{i}(j)
+                        %  > Index in the j-direction.
+                        ijk = Phi_fc{face{i}(j)}(k);
+                        
+                        % >> Convection-diffusion.
+                        %  > Convection.
+                        A(i,ijk) = A(i,ijk)+V_Tf_C_Sf{i}{j}(k);
+                        %  > Diffusion.
+                        A(i,ijk) = A(i,ijk)-G_Tf_D_Sf{i}{j}(k);
+                    end
+                end
+            end
+            A = sparse(A);
             
+            % >> B (Face dependent coefficients).
+            %  > Initialize.
+            B = zeros(msh.c.NC,1);
+            for i = 1:msh.c.NC
+                for j = 1:length(face{i})
+                    %  > Number of faces used in the stencil.
+                    numb_f{i}(j) = length(Phi_ff{face{i}(j)});
+                    %  > (k_ini,k_fin).
+                    k_ini {i}(j) = numb_c{i}(j)+1;
+                    k_fin {i}(j) = numb_c{i}(j)+numb_f{i}(j);
+                    
+                    for k = k_ini{i}(j):k_fin{i}(j)
+                        % >> Convection-diffusion.
+                        %  > Convection.
+                        B(i,1) = B(i,1)+0;
+                        %  > Diffusion.
+                        B(i,1) = B(i,1)+0;
+                    end
+                end
+            end
+            %  > Add source term.
+            for i = 1:msh.c.NC
+                B(i,1) = B(i,1)+pde.c.F_Vol(i);
+            end
+            B = sparse(B);
             
-            
+            % >> Solve: AX=B.
+            pde.Phi = B_2_2.SetUp_bicgstabl(A,B,10e-12,10e3)';
         end
-        % >> 2.2. ---------------------------------------------------------
+        % >> 1.4. ---------------------------------------------------------
+        function [X] = SetUp_bicgstabl(A,B,Tol,iterMax)
+            setup = struct('type','ilutp','droptol',1e-6);
+            [L,U] = ilu(A,setup);
+            [X,~] = bicgstabl(A,B,Tol,iterMax,L,U,[]);
+        end
     end
 end

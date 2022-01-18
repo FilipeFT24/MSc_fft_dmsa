@@ -7,7 +7,7 @@ classdef Fig_0
                 deal([-0.5,0.0],[0.5,0.0],[0.0,sqrt(3)./2]);
             
             %  > Figure.
-            figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
+            figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
             Fig_0.Plot_1(n,xy_T);
             Fig_0.Plot_2(n);
         end
