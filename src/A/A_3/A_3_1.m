@@ -26,8 +26,6 @@ classdef A_3_1
             % >> ----------------------------------------------------------
             % >> 1.
             for i = 1:msh.c.NC
-                %  > Cell volume.
-                msh.c.vol   (i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
                 %  > Cell centroid.
                 msh.c.mean(1,i) = mean(msh.c.xy_v{i}(:,1));
                 msh.c.mean(2,i) = mean(msh.c.xy_v{i}(:,2));
@@ -45,8 +43,6 @@ classdef A_3_1
                 %  > Face centroid.
                 msh.f.mean(1,j) = mean(msh.f.xy_v{j}(:,1));
                 msh.f.mean(2,j) = mean(msh.f.xy_v{j}(:,2));
-                %  > Face length.
-                msh.f.len   (j) = pdist2(msh.f.xy_v{j}(1,:),msh.f.xy_v{j}(2,:));
             end
             %  > Face normals.
             msh = A_3_1.Set_FaceNormals(msh);
@@ -66,7 +62,7 @@ classdef A_3_1
                     x_ij(i,j) = A_Tools.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
                     x_ij(j,i) = x_ij(i,j);
                 end
-                msh.c.nb{i} = find(x_ij(i,:));
+                msh.c.c{i} = find(x_ij(i,:));
             end
         end
         
@@ -187,8 +183,8 @@ classdef A_3_1
             %  > Find bulk faces (i.e. faces w/ 0/1 boundary vertices).
             %    Remark: Only neighbouring cells are evaluated.
             for i = 1:msh.c.NC
-                for j = 1:size(msh.c.nb{i},2)
-                    blk_ij{i}(j,:) = A_Tools.fft_ismember_2(Cn_c(i,:),Cn_c(msh.c.nb{i}(j),:));
+                for j = 1:size(msh.c.c{i},2)
+                    blk_ij{i}(j,:) = A_Tools.fft_ismember_2(Cn_c(i,:),Cn_c(msh.c.c{i}(j),:));
                 end
                 %  > Remove '0' rows.
                 blk_ij{i}(all(~blk_ij{i},2),:) = [];
@@ -209,9 +205,8 @@ classdef A_3_1
                 %  > Check for any '0s'/'1s'.
                 if ~all(Cn_n(i,:) == 2)
                     if mcount(Cn_n(i,:),0,'==')
-                        %  > Get indices of '0'.
+                        %  > Get indices of '0s'/'1s'.
                         i_0 = find(Cn_n(i,:) == 0);
-                        %  > Get indices of '1s'.
                         i_1 = find(Cn_n(i,:) == 1);
                         %  > Fill f_ij.
                         bnd_jk{i}(1,:) = [Cn_c(i,i_0),Cn_c(i,i_1(1))];
@@ -245,8 +240,8 @@ classdef A_3_1
             Array_o      = zeros(2,len./2);
             Array_v      = zeros(1,len./2);
             
-            j = 1; %  > Growth of Array_o(1,:).
-            k = 1; %  > Growth of Array_o(2,:).
+            j = 1; % -> Growth of Array_o(1,:).
+            k = 1; % -> Growth of Array_o(2,:).
             for i = 1:len
                 if j <= len./2
                     if (i == 1 || ~ismembc(id_f(i),sort(Array_v(1,1:j)))) && j <= len./2
@@ -278,23 +273,21 @@ classdef A_3_1
         function [msh] = Set_FaceNormals(msh)
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.xy_v{i},1)
-                    %  > Face centroid.
-                    msh.c.f.mean{i}(1,j) = mean(msh.c.f.xy_v{i}{j}(:,1));
-                    msh.c.f.mean{i}(2,j) = mean(msh.c.f.xy_v{i}{j}(:,2));
-                    %  > Face normal.
-                    msh.c.f.Nf{i}(:,j) = A_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
+                    %  > Outer (unit)/(face) normal.
+                    [msh.c.f.Nf{i}(:,j),msh.c.f.Sf{i}(:,j)] = ...
+                        A_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
                 end
             end
         end
         % >> 3.2. ---------------------------------------------------------
         function [i_bnd,Nf] = Identify_bnd(fv,mean_ic)
-            %  > Face normal.
-            Nf = A_3_1.Tools_FaceNormals(fv,mean_ic);
+            %  > Outer (unit) normal.
+            [Nf,~] = A_3_1.Tools_FaceNormals(fv,mean_ic);
             %  > Boundary identification.
-            i_bnd = A_3_1.Identify_Boundary(Nf);
+            i_bnd  = A_3_1.Identify_Boundary(Nf);
         end       
         % >> 3.3. ---------------------------------------------------------
-        function [Nf] = Tools_FaceNormals(fv,mean_ic)
+        function [Nf,Sf] = Tools_FaceNormals(fv,mean_ic)
             % >> Centroids.
             %  > Face centroid.
             if_mean(1) = mean(fv(:,1));
@@ -308,14 +301,15 @@ classdef A_3_1
             FC(1) = ic_mean(1)-if_mean(1);
             FC(2) = ic_mean(2)-if_mean(2);
             %  > \vec{Nf}.
-            Nf(2) = fv(1,1)-fv(2,1);
-            Nf(1) = fv(2,2)-fv(1,2);
+            Sf(2) = fv(1,1)-fv(2,1);
+            Sf(1) = fv(2,2)-fv(1,2);
             %  > Normalize arrays.
             FC = bsxfun(@rdivide,FC,sqrt(sum(FC.^2)));
-            Nf = bsxfun(@rdivide,Nf,sqrt(sum(Nf.^2)));
+            Nf = bsxfun(@rdivide,Sf,sqrt(sum(Sf.^2)));
             %  > Check...
             if dot(FC,Nf) > 0
                 Nf = -Nf;
+                Sf = -Sf;
             end
         end
         % >> 3.4. ---------------------------------------------------------
@@ -335,17 +329,19 @@ classdef A_3_1
         %% > 4. -----------------------------------------------------------
         function [msh] = Set_ReferenceLength(msh)
             for i = 1:msh.c.NC
+                %  > Cell volume.
+                vol(i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
                 for j = 1:size(msh.c.f.xy_v{i},2)
                     %  > Face length (for each cell).
                     msh.c.f.len{i}(j) = pdist([msh.c.f.xy_v{i}{j}(:,1),msh.c.f.xy_v{i}{j}(:,2)],'euclidean');
                 end
                 %  > Cell perimeter.
-                p      (i) = sum(msh.c.f.len{i});
+                p(i) = sum(msh.c.f.len{i});
                 %  > Cell hydraulic diameter.
-                msh.c.h(i) = 4.*msh.c.vol(i)./p(i);
+                msh.c.h(i) = 4.*vol(i)./p(i);
             end
             %  > Reference length.
-            msh.c.h_ref = sum(msh.c.h)./msh.c.NC;
+            msh.d.h_ref = sum(msh.c.h)./msh.c.NC;
         end
     end
 end

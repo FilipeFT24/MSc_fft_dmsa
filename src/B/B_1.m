@@ -1,20 +1,18 @@
-classdef B_2
+classdef B_1
     methods (Static)
-        %% > Wrap-up B_2.
-        function [pde] = WrapUp_B_2(inp,msh,pde)
+        %% > Wrap-up B_1.
+        function [pde] = WrapUp_B_1(inp,msh)
             % >> Local variables.
             vx = inp.pr.vx;
             vy = inp.pr.vy;
             gx = inp.pr.gx;
             gy = inp.pr.gy;
-            np = inp.fr.np;
             ng = inp.fr.ng;
-            wf = inp.fr.wf;
             
             % >> 1.
-            pde = B_2_1.WrapUp_B_2_1(pde,np,wf);
+            pde = B_1_1.WrapUp_B_1_1(msh,vx,vy,gx,gy);
             % >> 2.
-            pde = B_2_2.WrapUp_B_2_2(msh,pde,ng,vx,vy,gx,gy);
+            pde = B_1_2.WrapUp_B_1_2(msh,pde,ng);
         end            
     end
 end

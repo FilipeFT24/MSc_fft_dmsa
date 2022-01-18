@@ -1,24 +1,17 @@
 classdef B_2_1
     methods (Static)
         %% > Wrap-up B_2_1.
-        function [pde] = WrapUp_B_2_1(inp,pde)
+        function [pde] = WrapUp_B_2_1(pde,np,wf)
             % >> ----------------------------------------------------------
             % >> 1.   Compute polynomial terms for phi and grad(phi).
             %  > 1.1. Auxiliary function (based on 'iD' input).
             % >> 2.   Set weighting function.
             % >> ----------------------------------------------------------
-            % >> Local variables.
-            wf = inp.fr.wf;
-            p  = inp.fr.np;
-
             % >> 1.
             [pde.pr.numb,pde.pr.Coeff_1,pde.pr.Coeff_2,pde.pr.Exp_1,pde.pr.Exp_2] = ...
-                B_2_1.Polynomial_Reconstruction(p);
+                B_2_1.Polynomial_Reconstruction(np);
             % >> 2.
-            [pde.wf.wf_1,pde.wf.wf_2] = ...
-                B_2_1.W_Function(wf);
-            % >> 3.
-            %  > NOT used here.
+            [pde.wf.wf_1,pde.wf.wf_2] = B_2_1.W_Function(wf);
         end       
                 
         %% > 1. -----------------------------------------------------------

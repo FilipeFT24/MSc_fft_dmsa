@@ -1,7 +1,7 @@
 classdef B_2_2
     methods (Static)
         %% > Wrap-up B_2_2.
-        function [pde] = WrapUp_B_2_2(inp,msh,pde)
+        function [pde] = WrapUp_B_2_2(msh,pde,ng,vx,vy,gx,gy)
             % >> ----------------------------------------------------------
             % >> 1.   Assemble matrices Df, Dwf, Pf and Tf.
             %  > 1.1. Compute df array.
@@ -9,15 +9,10 @@ classdef B_2_2
             %  > 2.1. Assemble matrix A.
             %  > 2.2. Assemble matrix B.
             % >> ----------------------------------------------------------
-            % >> Local variables.
-            ng = inp.fr.ng;
-            V  = [inp.pr.vx,inp.pr.vy];
-            G  = [inp.pr.gx,inp.pr.gy];
-            
             % >> 1.
             pde = B_2_2.Assemble_Mat_1(msh,pde,ng);
             % >> 2.
-            pde = B_2_2.Assemble_Mat_2(msh,pde,V,G);
+            pde = B_2_2.Assemble_Mat_2(msh,pde,vx,vy,gx,gy);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -87,14 +82,10 @@ classdef B_2_2
             %           + {P(1,4)+P(2,4)*(x-xf)+P(3,4)*(y-yf)+...}*Phi(4)+...
             %
             %  > Tf    -> Equivalent to: [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
-            %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).
-            
-            %  > Coordinate transformation function handle.
-            [xy_fg,j_fg] = B_1_2.CD_1D();
-            
+            %    e.g.:    p=1 w/ ns = 8 -> (1x3)*(3x8)*(8x1) = (1x8)*(8x1) = (1x1).          
             for i = 1:msh.f.NF
                 %  > Face quadrature.
-                pde.f.gq{i} = B_1_2.GaussFace_Points(xy_fg,j_fg,ng,msh.f.xy_v{i});
+                pde.f.gq{i} = B_1_2.GaussFace_Points(pde.f.xy_fg,pde.f.j_fg,ng,msh.f.xy_v{i});
                 %  > Convection.
                 df      {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.Coeff_1,pde.pr.Exp_1);
                 Tf_C    {i} = df{i}*Pf{i};
@@ -143,46 +134,27 @@ classdef B_2_2
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_2(msh,pde,V,G)
+        function [pde] = Assemble_Mat_2(msh,pde,vx,vy,gx,gy)
             % >> X*Tf.
             %    Remark: Tf: [A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
             %                                                  Face dependent coefficients: H,i,J,...,(...).               
             for i = 1:msh.f.NF
-                %  > V*Tf_C.
-                V_Tf_C{i}(1,:) = V(1).*pde.f.Tf_C{i};
-                V_Tf_C{i}(2,:) = V(2).*pde.f.Tf_C{i};
-                %  > G*Tf_D.
-                G_Tf_C{i}(1,:) = G(1).*pde.f.Tf_D{i}(1,:);
-                G_Tf_C{i}(2,:) = G(2).*pde.f.Tf_D{i}(2,:);
+                %  > V*Tf_C (face 'i').
+                V_Tf_C{i}(1,:) = vx.*pde.f.Tf_C{i};
+                V_Tf_C{i}(2,:) = vy.*pde.f.Tf_C{i};
+                %  > G*Tf_D (face 'i').
+                G_Tf_D{i}(1,:) = gx.*pde.f.Tf_D{i}(1,:);
+                G_Tf_D{i}(2,:) = gy.*pde.f.Tf_D{i}(2,:);
             end
             % >> Sentil elements.
-            %  > X*Tf*Nf.
-%             for i = 1:msh.f.NF
-%                 for j = 1:size(msh.c.f.Nf{i},2)
-%                     %V_Tf_C_Nf
-%                 end
-%             end
-                
-                
-                
-%                 
-%                 Phi_s{i} = A_3_2_1.Deal_StencilElem(msh.s.c(:,i));
-%                 if any(~cellfun(@isempty,msh.s.f(:,i)))
-%                     Phi_f{i} = A_3_2_1.Deal_StencilElem(msh.s.f(:,i));
-%                 end
-%             end
-%             %  > Phi_c: (1,:)->face #1.
-%             %           (2,:)->face #2.
-%             %           (3,:)->face #3.
-%             %           (N,:)->face #N.
-%             for i = 1:msh.c.NC
-%                 for j = 1:size(msh.c.f.Nf{i},2)
-% 
-%                     
-%                 end
-%             end
-%             
-%             s=1;
+            %  > X*Tf*Sf.
+            for i = 1:msh.c.NC
+                for j = 1:size(msh.c.f.Sf{i},2)
+                    face     {i}(j) = msh.c.f.f {i}(j);
+                    V_Tf_C_Sf{i}{j} = msh.c.f.Sf{i}(:,j)'*V_Tf_C{face{i}(j)};
+                    V_Tf_D_Sf{i}{j} = msh.c.f.Sf{i}(:,j)'*G_Tf_D{face{i}(j)};
+                end
+            end
             
             
             

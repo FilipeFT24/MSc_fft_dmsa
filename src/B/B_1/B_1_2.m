@@ -4,7 +4,7 @@ classdef B_1_2
         % >> --------------------------------------------------------------
         % >> 1.   1D quadrature.
         %  > 1.1. Face mapping.
-        %  > 1.2  Gauss points/weights per face.
+        %  > 1.2  Gauss points/weights per face (NOT used here -> see B_2_2(1)).
         % >> 2.   2D quadrature.
         %  > 2.1. Cell mapping (computational domain): Triangle.
         %  > 2.2. Cell mapping (computational domain): Square.
@@ -12,6 +12,13 @@ classdef B_1_2
         %  > 2.4. Compute (individual) cell polygon integral (2D).
         %  > 2.5. Compute source term.
         % >> --------------------------------------------------------------
+        function [pde] = WrapUp_B_1_2(msh,pde,ng)
+            % >> 1.
+            %  > 1.1.
+            [pde.f.xy_fg,pde.f.j_fg] = B_1_2.CD_1D();
+            % >> 2.
+            [pde.c.Qp,pde.c.F_Vol] = B_1_2.Compute_SourceTerm(msh,pde.fn.func,ng);
+        end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1 ----------------------------------------------------------
@@ -104,32 +111,32 @@ classdef B_1_2
             end
         end
         % >> 2.5. ---------------------------------------------------------
-        function [Qp,F_Vol] = Compute_SourceTerm(n,msh,func)
+        function [Qp,F_Vol] = Compute_SourceTerm(msh,func,ng)
             %  > Cell mapping (computational domain).
-            [Qc_T,N_T]          = B_1_2.CD_Triangle     (n);
+            [Qc_T,N_T]          = B_1_2.CD_Triangle     (ng);
             [xx_T,yy_T,det_j_T] = B_1_2.IsoMapping      (N_T);
-            [Qc_S,N_S]          = B_1_2.CD_Quadrilateral(n);
+            [Qc_S,N_S]          = B_1_2.CD_Quadrilateral(ng);
             [xx_S,yy_S,det_j_S] = B_1_2.IsoMapping      (N_S);
             
             %  > Compute source term (based on cell polygon).
             for i = 1:msh.c.NC
-                if size(msh.c.XY_v{i},1) == 3
+                if size(msh.c.xy_v{i},1) == 3
                     % >> (xx,yy,det_J,Qc).
                     %  > (X1,X2,X3):
                     for j = 1:size(N_T,2)
-                        X{i}{j} = msh.c.XY_v{i}(j,1);
-                        Y{i}{j} = msh.c.XY_v{i}(j,2);
+                        X{i}{j} = msh.c.xy_v{i}(j,1);
+                        Y{i}{j} = msh.c.xy_v{i}(j,2);
                     end
                     Qc   {i} = Qc_T;
                     xx   {i} = xx_T   (X{i}{1},X{i}{2},X{i}{3},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                     yy   {i} = yy_T   (Y{i}{1},Y{i}{2},Y{i}{3},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                     det_J{i} = det_j_T(X{i}{1},X{i}{2},X{i}{3},Y{i}{1},Y{i}{2},Y{i}{3});
-                elseif size(msh.c.XY_v{i},1) == 4
+                elseif size(msh.c.xy_v{i},1) == 4
                     % >> (xx,yy,det_J,Qc).
                     %  > (X1,X2,X3):
                     for j = 1:size(N_S,2)
-                        X{i}{j} = msh.c.XY_v{i}(j,1);
-                        Y{i}{j} = msh.c.XY_v{i}(j,2);
+                        X{i}{j} = msh.c.xy_v{i}(j,1);
+                        Y{i}{j} = msh.c.xy_v{i}(j,2);
                     end
                     Qc   {i} = Qc_S;
                     xx   {i} = xx_S   (X{i}{1},X{i}{2},X{i}{3},X{i}{4},Qc{i}.Points(:,1),Qc{i}.Points(:,2));

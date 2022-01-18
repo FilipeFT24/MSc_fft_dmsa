@@ -6,20 +6,17 @@ classdef B_1_1
         %  > 1.1. Compute analytic expressions of f,df and d2f.
         %  > 1.2. Compute values.
         % >> --------------------------------------------------------------
-        function [pde] = WrapUp_B_1_1(inp,msh)
+        function [pde] = WrapUp_B_1_1(msh,vx,vy,gx,gy)
             % >> 1.
             %  > 1.1.
-            pde.fn = B_1_1.Set_fn(inp);
+            pde.fn = B_1_1.Set_fn(vx,vy,gx,gy);
             %  > 1.2.
             [pde.bnd,pde.blk] = B_1_1.Compute_f_df_d2f(msh,pde.fn);
         end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [fn] = Set_fn(inp)
-            % >> Local variables.
-            [vx,vy,gx,gy] = ...
-                deal(inp.pr.vx,inp.pr.vy,inp.pr.gx,inp.pr.gy);
+        function [fn] = Set_fn(vx,vy,gx,gy)
             % >> Symbolic variables.
             syms x y;
             

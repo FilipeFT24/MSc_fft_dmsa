@@ -14,11 +14,14 @@ classdef A_3_2_2
             msh.s.c_e     = cell (1,msh.f.NF);
             msh.s.f_e     = cell (1,msh.f.NF);
             
+            %  > hg_x,hg_y.
+            [hg_x,hg_y] = A_3_2_2.Compute_hgx_hgy(msh);
+            
             % >> 1.
             %  > 1.1.
             for i = 1:msh.f.NF
                 [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
+                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),hg_x,hg_y);
             end
             %  > 1.2.
             %  > Extend stencil until it is incomplete and domain limits have not been reached...
@@ -41,7 +44,7 @@ classdef A_3_2_2
                             [msh,Continue_X] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i));
                             [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
+                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),hg_x,hg_y);
                             %  > Number of extensions (x-direction).
                             msh.s.par.n_e(1,i) = msh.s.par.n_e(1,i)+1;
                         end
@@ -53,7 +56,7 @@ classdef A_3_2_2
                             [msh,Continue_Y] = ...
                                 A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i));
                             [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
-                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i));
+                                A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),hg_x,hg_y);
                             %  > Number of extensions (y-direction).
                             msh.s.par.n_e(2,i) = msh.s.par.n_e(2,i)+1;
                         end
@@ -76,26 +79,22 @@ classdef A_3_2_2
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [n_x,n_y,ng_x,ng_y,l_x,l_y] = Compute_Parameters(i,msh,st_c)
+        function [n_x,n_y,ng_x,ng_y,l_x,l_y] = Compute_Parameters(i,msh,st_c,hg_x,hg_y)
             % >> Deal elements.
             arr_c = A_3_2_1.Deal_StencilElem(st_c);
             
             % >> Compute/re-compute 'par' fields.
             %  > (x,y)_min, (x,y)_max.
-            lc_x(1) = min(msh.s.xy_v_c{i}(1,:));
-            lc_y(1) = min(msh.s.xy_v_c{i}(2,:));
-            lc_x(2) = max(msh.s.xy_v_c{i}(1,:));
-            lc_y(2) = max(msh.s.xy_v_c{i}(2,:));
+            [lc_x(1),lc_x(2)] = MinMaxElem(msh.s.xy_v_c{i}(1,:));
+            [lc_y(1),lc_y(2)] = MinMaxElem(msh.s.xy_v_c{i}(2,:));
             %  > .. for face w/o boundary faces.
             if ~isempty(msh.s.xy_v_f{i})
-                lf_x(1) = min(msh.s.xy_v_f{i}(1,:));
-                lf_y(1) = min(msh.s.xy_v_f{i}(2,:));
-                lf_x(2) = max(msh.s.xy_v_f{i}(1,:));
-                lf_y(2) = max(msh.s.xy_v_f{i}(2,:));
-                l_x (1) = min(lc_x(1),lf_x(1));
-                l_y (1) = min(lc_y(1),lf_y(1));
-                l_x (2) = max(lc_x(2),lf_x(2));
-                l_y (2) = max(lc_y(2),lf_y(2));
+                [lf_x(1),lf_x(2)] = MinMaxElem(msh.s.xy_v_f{i}(1,:));
+                [lf_y(1),lf_y(2)] = MinMaxElem(msh.s.xy_v_f{i}(2,:));
+                [ l_x(1),~      ] = MinMaxElem([lc_x(1),lf_x(1)]);
+                [      ~, l_x(2)] = MinMaxElem([lc_x(2),lf_x(2)]);
+                [ l_y(1),~      ] = MinMaxElem([lc_y(1),lf_y(1)]);
+                [      ~, l_y(2)] = MinMaxElem([lc_y(2),lf_y(2)]);
             else
                 l_x(1) = lc_x(1);
                 l_y(1) = lc_y(1);
@@ -105,23 +104,31 @@ classdef A_3_2_2
             %  > (n_x,n_y).
             len_c = length(arr_c);
             for j = 1:len_c
-                h_x(j) = max(msh.c.xy_v{arr_c(j)}(:,1))-min(msh.c.xy_v{arr_c(j)}(:,1));
-                h_y(j) = max(msh.c.xy_v{arr_c(j)}(:,2))-min(msh.c.xy_v{arr_c(j)}(:,2));
+                [A_x(j),B_x(j)] = MinMaxElem(msh.c.xy_v{arr_c(j)}(:,1));
+                [A_y(j),B_y(j)] = MinMaxElem(msh.c.xy_v{arr_c(j)}(:,2));
+                h_x(j)          = B_x(j)-A_x(j);
+                h_y(j)          = B_y(j)-A_y(j);
             end
             h_x = sum(h_x)./len_c;
             h_y = sum(h_y)./len_c;
             n_x = (l_x(2)-l_x(1))./h_x;
             n_y = (l_y(2)-l_y(1))./h_y;
             %  > (ng_x,ng_y).
-            for j = 1:msh.c.NC
-                hg_x(j) = max(msh.c.xy_v{j}(:,1))-min(msh.c.xy_v{j}(:,1));
-                hg_y(j) = max(msh.c.xy_v{j}(:,2))-min(msh.c.xy_v{j}(:,2));
-            end
-            hg_x = sum(hg_x)./msh.c.NC;
-            hg_y = sum(hg_y)./msh.c.NC;
             ng_x = (l_x(2)-l_x(1))./hg_x;
             ng_y = (l_y(2)-l_y(1))./hg_y;
         end
+        % >> 1.1.1. -------------------------------------------------------
+        function [hg_x,hg_y] = Compute_hgx_hgy(msh)
+            for j = 1:msh.c.NC
+                [C_x(j),D_x(j)] = MinMaxElem(msh.c.xy_v{j}(:,1));
+                [C_y(j),D_y(j)] = MinMaxElem(msh.c.xy_v{j}(:,2));
+                hg_x(j)         = D_x(j)-C_x(j);
+                hg_y(j)         = D_y(j)-C_y(j);
+            end
+            hg_x = sum(hg_x)./msh.c.NC;
+            hg_y = sum(hg_y)./msh.c.NC;
+        end
+        
         % >> 1.2. ---------------------------------------------------------
         function [msh,Flag] = Perform_Extension(i,msh,bnd_cc,Dir,v_min,v_max)
             %  > Initialize.
@@ -165,7 +172,7 @@ classdef A_3_2_2
         function [add_to] = Extension_1(msh,st_el,Dir,v_min,v_max)
             % >> Stencil cell neighbours.
             for i = 1:length(st_el)
-                nb_c{i} = msh.c.nb{st_el(i)};
+                nb_c{i} = msh.c.c{st_el(i)};
             end
             nb_c    = cell2mat(nb_c);
             nb_c_un = unique(nb_c);

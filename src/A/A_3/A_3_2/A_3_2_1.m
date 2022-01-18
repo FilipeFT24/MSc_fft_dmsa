@@ -17,14 +17,14 @@ classdef A_3_2_1
             %  > Evaluate stencil for neighbours of neighbouring cells of face i (purely for code efficiency).
             for i = 1:msh.f.NF
                 j  = length(msh.f.c{i});
-                ki = length(msh.c.nb{msh.f.c{i}(1)});
+                ki = length(msh.c.c{msh.f.c{i}(1)});
                 if j == 1
                     nb{i}(1)       = msh.f.c{i};
-                    nb{i}(2:ki+1)  = msh.c.nb{msh.f.c{i}};
+                    nb{i}(2:ki+1)  = msh.c.c{msh.f.c{i}};
                 elseif j == 2
-                    kj             = ki+length(msh.c.nb{msh.f.c{i}(2)});
-                    nb{i}(1:ki)    = msh.c.nb{msh.f.c{i}(1)};
-                    nb{i}(ki+1:kj) = msh.c.nb{msh.f.c{i}(2)};
+                    kj             = ki+length(msh.c.c{msh.f.c{i}(2)});
+                    nb{i}(1:ki)    = msh.c.c{msh.f.c{i}(1)};
+                    nb{i}(ki+1:kj) = msh.c.c{msh.f.c{i}(2)};
                 end
                 nb{i} = unique(nb{i});
             end
@@ -63,9 +63,9 @@ classdef A_3_2_1
                         %  > Vertex stencil elements.
                         for k = 1:length(msh.s.c{j-1,i})
                             if k == 1
-                                ngh{j,i} = msh.c.nb{msh.s.c{j-1,i}(k)};
+                                ngh{j,i} = msh.c.c{msh.s.c{j-1,i}(k)};
                             else
-                                ngh{j,i} = [ngh{j,i},msh.c.nb{msh.s.c{j-1,i}(k)}];
+                                ngh{j,i} = [ngh{j,i},msh.c.c{msh.s.c{j-1,i}(k)}];
                             end
                         end
                         %  > Exclude repeated cells.
