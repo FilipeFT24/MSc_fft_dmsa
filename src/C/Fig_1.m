@@ -1,7 +1,7 @@
 classdef Fig_1
     methods (Static)
         %% > Wrap-up Fig_1.
-        function [] = WrapUp_Fig_1(Plot_1,Fig,inp,msh,pde,str,len)
+        function [] = WrapUp_Fig_1(Plot_1,Exp_1,Fig,inp,msh,str,len)
             if Plot_1
                 %  > Auxiliary arrays.
                 bnd_f = cell2mat(msh.bnd.f(2,:));
@@ -17,13 +17,17 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot_1(inp,msh,pde,iF,len);
+                Fig_1.Plot_1(inp,msh,iF,len);
+                %  > Export as .pdf.
+                if Exp_1
+                    Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
+                end
             end
         end
         
         %% > Auxiliary functions.
         % >> Plot 1.
-        function [] = Plot_1(inp,msh,pde,iF,len) %#ok<INUSL>
+        function [] = Plot_1(inp,msh,iF,len)
             % >> Local variables.
             Xv_i = inp.msh.lim.Xv_i;
             Xv_f = inp.msh.lim.Xv_f;
@@ -57,12 +61,12 @@ classdef Fig_1
             hold on;
             for i = 1:size(msh.bnd.c,2)
                 [f{i}(:,1),f{i}(:,2)] = Fig_Tools.Order_Clockwise('T',msh.bnd.c{1,i});
-                patch(f{i}(:,1),f{i}(:,2),'r','FaceAlpha',0.10);
+                patch(f{i}(:,1),f{i}(:,2),'r');
             end
             %  > Faces.
             hold on;
             for i = 1:size(msh.bnd.f,2)
-                plot(msh.bnd.f{1,i}(:,1),msh.bnd.f{1,i}(:,2),'-r','Linewidth',2.5);
+                plot(msh.bnd.f{1,i}(:,1),msh.bnd.f{1,i}(:,2),'-b','Linewidth',1.5);
             end
 %             %% > Centroids.
 %             %  > Cells.

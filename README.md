@@ -1,6 +1,18 @@
 # 2D Code structure
 ## Top-level directory layout
 
+## Grid generation
+<p align="center">
+  <img src="/[Figures]/Fig_1/Fig_11_1.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_11_2.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_11_3.png" width="250" />
+</p>
+<p align="center">
+  <img src="/[Figures]/Fig_1/Fig_12_1.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_12_2.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_12_3.png" width="250" />
+</p>
+
 ## 2D Quadrature
 <p align="center">
   <img src="/[Figures]/Fig_0/Fig_01_1.png" width="250" />
@@ -12,7 +24,6 @@
   <img src="/[Figures]/Fig_0/Fig_02_5.png" width="250" />
   <img src="/[Figures]/Fig_0/Fig_02_9.png" width="250" />
 </p>
-
 
 ```
 '

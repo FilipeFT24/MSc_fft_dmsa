@@ -6,7 +6,7 @@ tic;
 %  > Class A.
 [inp,msh] = A.WrapUp_A;
 %  > Class B.
-[pde] = B.WrapUp_B(inp,msh);
+[pde] = 0;%B.WrapUp_B(inp,msh);
 %  > ----------------------------------------------------------------------
 toc;
 tic;

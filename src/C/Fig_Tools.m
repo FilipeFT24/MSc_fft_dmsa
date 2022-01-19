@@ -16,11 +16,11 @@ classdef Fig_Tools
             set(gca,'Layer','bottom');
             set(gca,'XAxisLocation','bottom');
             set(gca,'YAxisLocation','left');
-            set(gca,'TickLabelInterpreter','latex'); set(gca,'FontSize',10);
+            set(gca,'TickLabelInterpreter','latex'); set(gca,'FontSize',12);
                        
             %  > X-Axis,Y-Axis label.
-            xlabel('$\textrm{x}$','FontSize',10,'Interpreter','latex'); 
-            ylabel('$\textrm{y}$','FontSize',10,'Interpreter','latex');
+            xlabel('$\textrm{x}$','FontSize',12,'Interpreter','latex'); 
+            ylabel('$\textrm{y}$','FontSize',12,'Interpreter','latex');
             set(gca,'XLim',[x_Min,x_Max],'XTick',x_Min:x_Min+(x_Max-x_Min)./10:x_Max);
             set(gca,'YLim',[y_Min,y_Max],'YTick',y_Min:y_Min+(y_Max-y_Min)./10:y_Max);
         end
