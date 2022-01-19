@@ -29,8 +29,8 @@ classdef A_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 7;
-            inp.msh.Nv(2) = 7;
+            inp.msh.Nv(1) = 16;
+            inp.msh.Nv(2) = 16;
             
             % >> 3. Grid types:
             %  > 1. Type #1.├- v.
@@ -56,10 +56,10 @@ classdef A_1
             %% > pr.
             % >> 4. Flow conditions: 1. Convection parameter: V=[vx,vy].
             %                        2. Diffusion  parameter: G=[gx,gy].
-            inp.pr.vx = 0.1;
+            inp.pr.vx = 0.0;
             inp.pr.vy = 0.0;
             inp.pr.gx = 1.0;
-            inp.pr.gy = 0.0;
+            inp.pr.gy = 1.0;
             
             % >> 5. Boundary conditions: 1. EB/EV -> East  boundary type/value.
             %                            2. WB/WV -> West  boundary type/value.
@@ -93,9 +93,9 @@ classdef A_1
             inp.fr.st  = 'Implicit';
             inp.fr.nt  = 'Vertex';
             inp.fr.ext = 'F';
-            inp.fr.wf  = 'Weighted';
-            inp.fr.np  = 3;
-            inp.fr.ng  = 3;
+            inp.fr.wf  = 'Unweighted';
+            inp.fr.np  = 5;
+            inp.fr.ng  = 5;
             inp.fr.et  = true;
         end
     end

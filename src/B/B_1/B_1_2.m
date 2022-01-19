@@ -124,24 +124,25 @@ classdef B_1_2
                     % >> (xx,yy,det_J,Qc).
                     %  > (X1,X2,X3):
                     for j = 1:size(N_T,2)
-                        X{i}{j} = msh.c.xy_v{i}(j,1);
-                        Y{i}{j} = msh.c.xy_v{i}(j,2);
+                        X{i}(j) = msh.c.xy_v{i}(j,1);
+                        Y{i}(j) = msh.c.xy_v{i}(j,2);
                     end
                     Qc   {i} = Qc_T;
-                    xx   {i} = xx_T   (X{i}{1},X{i}{2},X{i}{3},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
-                    yy   {i} = yy_T   (Y{i}{1},Y{i}{2},Y{i}{3},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
-                    det_J{i} = det_j_T(X{i}{1},X{i}{2},X{i}{3},Y{i}{1},Y{i}{2},Y{i}{3});
+                    xx   {i} = xx_T   (X{i}(1),X{i}(2),X{i}(3),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
+                    yy   {i} = yy_T   (Y{i}(1),Y{i}(2),Y{i}(3),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
+                    det_J{i} = det_j_T(X{i}(1),X{i}(2),X{i}(3),Y{i}(1),Y{i}(2),Y{i}(3));
+                    det_J{i} = repelem(det_J{i},size(xx{i},1))';
                 elseif size(msh.c.xy_v{i},1) == 4
                     % >> (xx,yy,det_J,Qc).
-                    %  > (X1,X2,X3):
+                    %  > (X1,X2,X3,X4):
                     for j = 1:size(N_S,2)
-                        X{i}{j} = msh.c.xy_v{i}(j,1);
-                        Y{i}{j} = msh.c.xy_v{i}(j,2);
+                        X{i}(j) = msh.c.xy_v{i}(j,1);
+                        Y{i}(j) = msh.c.xy_v{i}(j,2);
                     end
                     Qc   {i} = Qc_S;
-                    xx   {i} = xx_S   (X{i}{1},X{i}{2},X{i}{3},X{i}{4},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
-                    yy   {i} = yy_S   (Y{i}{1},Y{i}{2},Y{i}{3},Y{i}{4},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
-                    det_J{i} = det_j_S(X{i}{1},X{i}{2},X{i}{3},X{i}{4},Y{i}{1},Y{i}{2},Y{i}{3},Y{i}{4},Qc{i}.Points(:,1),Qc{i}.Points(:,2));
+                    xx   {i} = xx_S   (X{i}(1),X{i}(2),X{i}(3),X{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
+                    yy   {i} = yy_S   (Y{i}(1),Y{i}(2),Y{i}(3),Y{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
+                    det_J{i} = det_j_S(X{i}(1),X{i}(2),X{i}(3),X{i}(4),Y{i}(1),Y{i}(2),Y{i}(3),Y{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                 end
                 %  > 2D Quadrature/cell source term.
                 [Qp{i},F_Vol(i)] = B_1_2.Compute_Integral_2D(Qc{i},xx{i},yy{i},det_J{i},func);
