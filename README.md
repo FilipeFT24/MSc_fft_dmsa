@@ -1,6 +1,14 @@
 # 2D Code structure
 ## Top-level directory layout
 
+## 2D Quadrature
+<p float="left">
+  <img src="/[Figures]/Fig_0/Fig_01_1.pdf" width="100" />
+  <img src="/[Figures]/Fig_0/Fig_01_5.pdf" width="100" />
+  <img src="/[Figures]/Fig_0/Fig_01_9.pdf" width="100" />
+</p>
+
+
 ```
 '
 ├── [Tools - Data]
