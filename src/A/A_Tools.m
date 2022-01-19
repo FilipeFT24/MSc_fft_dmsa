@@ -65,21 +65,28 @@ classdef A_Tools
         
         %% > 2. -----------------------------------------------------------      
         % >> 2.2. ---------------------------------------------------------
-        function [msh] = Sort_msh(msh)
+        function [msh] = Sort_msh(inp,msh)
+            % >> Local variables.
+            et = inp.fr.et;
+            
             % >> msh.
-            msh       = orderfields(msh      ,{'d','c','f','bnd','s'});
+            msh     = orderfields(msh      ,{'d','c','f','bnd','s'});
             %  > d.
-            msh.d     = orderfields(msh.d    ,{'xy_v','h_ref'});
+            msh.d   = orderfields(msh.d    ,{'xy_v','h_ref'});
             %  > c.
-            msh.c     = orderfields(msh.c    ,{'NC','xy_v','mean','h','c','f'});
-            msh.c.f   = orderfields(msh.c.f  ,{'f','xy_v','mean','len','Nf','Sf'});
+            msh.c   = orderfields(msh.c    ,{'NC','xy_v','mean','h','c','f'});
+            msh.c.f = orderfields(msh.c.f  ,{'f','xy_v','mean','len','Nf','Sf'});
             %  > f.
-            msh.f     = orderfields(msh.f    ,{'NF','xy_v','mean','c'});
+            msh.f   = orderfields(msh.f    ,{'NF','xy_v','mean','c'});
             %  > bnd.
-            msh.bnd   = orderfields(msh.bnd  ,{'c','f'});
+            msh.bnd = orderfields(msh.bnd  ,{'c','f'});
             %  > s.
-            msh.s     = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
-            msh.s.par = orderfields(msh.s.par,{'n_e','n_x','n_y','ng_x','ng_y','l_x','l_y'});
+            msh.s   = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
+            if ~et
+                msh.s.par = orderfields(msh.s.par,{'n_e','n_x','n_y','l_x','l_y'});
+            else
+                msh.s.par = orderfields(msh.s.par,{'n_e','n_x','n_y','ng_x','ng_y','l_x','l_y'});
+            end
         end
     end
 end

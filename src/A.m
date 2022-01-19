@@ -17,7 +17,7 @@ classdef A
             %  > 3.
             msh = A_3.WrapUp_A_3(inp,msh);
             %  > 4.
-            msh = A_Tools.Sort_msh(msh);
+            msh = A_Tools.Sort_msh(inp,msh);
         end
     end
 end
