@@ -76,7 +76,7 @@ classdef A_3_2_1
                         elseif strcmpi(Type,'Face')
                             %  > Loop through previous stencil cells and select faces' index.
                             for k = 1:length(msh.s.c{j-1,i})
-                                prev_f{j-1,i} = [prev_f{j-1,i},msh.c.f.faces{msh.s.c{j-1,i}(k)}];
+                                prev_f{j-1,i} = [prev_f{j-1,i},msh.c.f.f{msh.s.c{j-1,i}(k)}];
                             end
                             %  > (Outer) faces of previous stencil.
                             prev_f{j-1,i} = unique(prev_f{j-1,i});
@@ -84,11 +84,11 @@ classdef A_3_2_1
                             %  > Loop through 'ngh' cells and check whether cell k contains any element of 'prev_f'.
                             m = true;
                             for k = 1:length(ngh{j,i})
-                                if m && any(ismembc(msh.c.f.faces{ngh{j,i}(k)},prev_f{j-1,i}))
+                                if m && any(ismembc(msh.c.f.f{ngh{j,i}(k)},prev_f{j-1,i}))
                                     v_ijk{j-1,i} = ngh{j,i}(k);
                                     m            = false;
                                 else
-                                    if any(ismembc(msh.c.f.faces{ngh{j,i}(k)},prev_f{j-1,i}))
+                                    if any(ismembc(msh.c.f.f{ngh{j,i}(k)},prev_f{j-1,i}))
                                         v_ijk{j-1,i} = [v_ijk{j-1,i},ngh{j,i}(k)];
                                     end
                                 end

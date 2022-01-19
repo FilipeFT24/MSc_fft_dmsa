@@ -14,7 +14,7 @@ classdef A_3_2
             % >> 1.
             msh = A_3_2_1.Set_Stencil(msh,bnd_cc,Type,NLay);           
             % >> 2.
-            msh = A_3_2_2.Extend_Stencil(msh,bnd_cc,p,et);
+            msh = A_3_2_2.Extend_Stencil(msh,bnd_cc,Type,p,et);
         end
     end
 end

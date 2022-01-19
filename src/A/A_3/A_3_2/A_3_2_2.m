@@ -8,7 +8,7 @@ classdef A_3_2_2
         %  > 1.2.1. Extension #1.
         %  > 1.2.2. Extension #2.
         % >> --------------------------------------------------------------
-        function [msh] = Extend_Stencil(msh,bnd_cc,p,et)
+        function [msh] = Extend_Stencil(msh,bnd_cc,Type,p,et)
             %  > Initialize.
             msh.s.par.n_e = zeros(2,msh.f.NF);
             msh.s.c_e     = cell (1,msh.f.NF);
@@ -42,7 +42,7 @@ classdef A_3_2_2
                                 (et && (single(par.n_x(i)) < p-1./2 || single(par.ng_x(i)) < p-1./2))
                             %  > Add/update...
                             [msh,Continue_X] = ...
-                                A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i));
+                                A_3_2_2.Perform_Extension(i,msh,bnd_cc,'x',par.l_y(1,i),par.l_y(2,i),Type);
                             [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
                                 A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),hg_x,hg_y);
                             %  > Number of extensions (x-direction).
@@ -54,7 +54,7 @@ classdef A_3_2_2
                                 (et && (single(par.n_y(i)) < p-1./2 || single(par.ng_y(i)) < p-1./2))
                             %  > Add/update...
                             [msh,Continue_Y] = ...
-                                A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i));
+                                A_3_2_2.Perform_Extension(i,msh,bnd_cc,'y',par.l_x(1,i),par.l_x(2,i),Type);
                             [par.n_x(i),par.n_y(i),par.ng_x(i),par.ng_y(i),par.l_x(:,i),par.l_y(:,i)] = ...
                                 A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),hg_x,hg_y);
                             %  > Number of extensions (y-direction).
@@ -130,7 +130,7 @@ classdef A_3_2_2
         end
         
         % >> 1.2. ---------------------------------------------------------
-        function [msh,Flag] = Perform_Extension(i,msh,bnd_cc,Dir,v_min,v_max)
+        function [msh,Flag] = Perform_Extension(i,msh,bnd_cc,Dir,v_min,v_max,Type)
             %  > Initialize.
             Flag = false;
             len  = nnz(~cellfun(@isempty,msh.s.c(:,i)));
@@ -142,9 +142,9 @@ classdef A_3_2_2
             st_el = cell2mat(st_el);
             %  > Select direction.
             if strcmpi(Dir,'x')
-                Add = A_3_2_2.Extension_1(msh,st_el,Dir,v_min,v_max);
+                Add = A_3_2_2.Extension_1(msh,st_el,Dir,v_min,v_max,Type);
             elseif strcmpi(Dir,'y')
-                Add = A_3_2_2.Extension_1(msh,st_el,Dir,v_min,v_max);
+                Add = A_3_2_2.Extension_1(msh,st_el,Dir,v_min,v_max,Type);
             end
             
             % >> Update/add...
@@ -169,7 +169,7 @@ classdef A_3_2_2
             end
         end
         %  > 1.2.1. -------------------------------------------------------
-        function [add_to] = Extension_1(msh,st_el,Dir,v_min,v_max)
+        function [add_to] = Extension_1(msh,st_el,Dir,v_min,v_max,Type)
             % >> Stencil cell neighbours.
             for i = 1:length(st_el)
                 nb_c{i} = msh.c.c{st_el(i)};
@@ -189,11 +189,35 @@ classdef A_3_2_2
             j = 1;
             for i = 1:length(nb_diff)
                 if msh.c.mean(k,nb_diff(i)) >= v_min && msh.c.mean(k,nb_diff(i)) <= v_max
-                    add_to(j) = nb_diff(i);
+                    add_to_v(j) = nb_diff(i);
                     j         = j+1;
                 end
             end
-            if j == 1
+            if strcmpi(Type,'Vertex')
+                %  > Do nothing...
+            elseif strcmpi(Type,'Face')
+                if j == 1
+                    %  > Continue...
+                else
+                    %  > Outer cell layer's faces.
+                    for i = 1:length(st_el)
+                        out_f{i} = msh.c.f.f{st_el(i)};
+                    end
+                    out_f = unique(cell2mat(out_f));
+                    
+                    %  > Add cell to extended stencil if it has a common face with the previous stencil layer.
+                    k = 1;
+                    for i = 1:length(add_to_v)
+                        if any(ismembc(msh.c.f.f{add_to_v(i)},out_f))
+                            add_to(k) = add_to_v(i);
+                            k         = k+1;
+                        end
+                    end
+                end
+            end
+                        
+            %  > No added elements...
+            if j == 1 || (k == 1 && strcmpi(Type,'Face'))
                 add_to = [];
             end
         end

@@ -19,6 +19,21 @@
   <img src="/[Figures]/Fig_1/Fig_ST9_2.png" width="250" />
   <img src="/[Figures]/Fig_1/Fig_ST9_3.png" width="250" />
 </p>
+<p align="center">
+  <img src="/[Figures]/Fig_1/Fig_ST9_4.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_5.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_6.png" width="250" />
+</p>
+<p align="center">
+  <img src="/[Figures]/Fig_1/Fig_ST9_7.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_8.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_9.png" width="250" />
+</p>
+<p align="center">
+  <img src="/[Figures]/Fig_1/Fig_ST9_10.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_11.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_12.png" width="250" />
+</p>
 
 ## 2D quadrature
 <p align="center">

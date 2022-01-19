@@ -17,7 +17,7 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot_1(inp,msh,190,len);
+                Fig_1.Plot_1(inp,msh,1762,len);
                 %  > Export as .pdf.
                 if Exp_1
                     Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
