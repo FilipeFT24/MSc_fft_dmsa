@@ -29,8 +29,8 @@ classdef A_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 25;
-            inp.msh.Nv(2) = 25;
+            inp.msh.Nv(1) = 18;
+            inp.msh.Nv(2) = 18;
             
             % >> 3. Grid types:
             %  > 1. Type #1.├- v.
