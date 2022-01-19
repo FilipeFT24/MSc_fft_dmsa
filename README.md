@@ -14,7 +14,6 @@
 </p>
 
 ## Stencil generation
-
 <p align="center">
   <img src="/[Figures]/Fig_1/Fig_ST9_1.png" width="250" />
   <img src="/[Figures]/Fig_1/Fig_ST9_2.png" width="250" />
