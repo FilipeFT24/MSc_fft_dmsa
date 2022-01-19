@@ -3,9 +3,14 @@
 
 ## 2D Quadrature
 <p align="center">
-  <img src="/[Figures]/Fig_0/Fig_01_1.png" width="265" />
-  <img src="/[Figures]/Fig_0/Fig_01_5.png" width="265" />
-  <img src="/[Figures]/Fig_0/Fig_01_9.png" width="265" />
+  <img src="/[Figures]/Fig_0/Fig_01_1.png" width="250" />
+  <img src="/[Figures]/Fig_0/Fig_01_5.png" width="250" />
+  <img src="/[Figures]/Fig_0/Fig_01_9.png" width="250" />
+</p>
+<p align="center">
+  <img src="/[Figures]/Fig_0/Fig_02_1.png" width="250" />
+  <img src="/[Figures]/Fig_0/Fig_02_5.png" width="250" />
+  <img src="/[Figures]/Fig_0/Fig_02_9.png" width="250" />
 </p>
 
 
