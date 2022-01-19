@@ -1,18 +1,20 @@
 classdef Fig_2
     methods (Static)
-        %% > Wrap up Fig_2.
-        function [] = WrapUp_Fig_2(Fig,inp,msh,pde,len)
-            %  > Figure.
-            figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-            %  > #1.
-            subplot(1,3,1);
-            Fig_2.Plot_1(inp,msh,pde,len);
-            %  > #2.
-            subplot(1,3,2);
-            Fig_2.Plot_2(inp,msh,pde,len);
-            %  > #3.
-            subplot(1,3,3);
-            Fig_2.Plot_3(inp,msh,pde,len);
+        %% > Wrap-up Fig_2.
+        function [] = WrapUp_Fig_2(Plot_2,Fig,inp,msh,pde,len)
+            if Plot_2
+                %  > Figure.
+                figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
+                %  > #1.
+                subplot(1,3,1);
+                Fig_2.Plot_1(inp,msh,pde,len);
+                %  > #2.
+                subplot(1,3,2);
+                Fig_2.Plot_2(inp,msh,pde,len);
+                %  > #3.
+                subplot(1,3,3);
+                Fig_2.Plot_3(inp,msh,pde,len);
+            end
         end
         
         %% > Auxiliary functions.

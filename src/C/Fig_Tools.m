@@ -10,20 +10,19 @@ classdef Fig_Tools
             y_Max = inp.msh.lim.Yv_f+1.5.*len; 
             
             %  > Other parameters.
-            box on; 
+            box on; axis equal;
             set(gcf,'color','w');
             set(gca,'Clipping','on');
             set(gca,'Layer','bottom');
             set(gca,'XAxisLocation','bottom');
             set(gca,'YAxisLocation','left');
-            axis equal;
-            
-            %  > X-Axis,Y-Axis label.
-            xlim_label = [x_Min,x_Max];
-            ylim_label = [y_Min,y_Max];
             set(gca,'TickLabelInterpreter','latex'); set(gca,'FontSize',10);
-            xlabel('$\textrm{x}$','FontSize',10,'Interpreter','latex'); xlim([xlim_label(1),xlim_label(2)]);
-            ylabel('$\textrm{y}$','FontSize',10,'Interpreter','latex'); ylim([ylim_label(1),ylim_label(2)]);
+                       
+            %  > X-Axis,Y-Axis label.
+            xlabel('$\textrm{x}$','FontSize',10,'Interpreter','latex'); 
+            ylabel('$\textrm{y}$','FontSize',10,'Interpreter','latex');
+            set(gca,'XLim',[x_Min,x_Max],'XTick',x_Min:x_Min+(x_Max-x_Min)./10:x_Max);
+            set(gca,'YLim',[y_Min,y_Max],'YTick',y_Min:y_Min+(y_Max-y_Min)./10:y_Max);
         end
         % >> 2. -----------------------------------------------------------
         function [] = ChangeLook_2(k,H)
@@ -115,6 +114,8 @@ classdef Fig_Tools
             c.FontSize             =  10;
             c.AxisLocation         = 'out';
             AdvancedColormap(str);
+            %  > Colorbar format.
+            %  set(c,'xticklabel',cellfun(@(x)sprintf('% .3f',x),num2cell(get(c,'xtick')),'Un',0))
         end
         % >> 5. -----------------------------------------------------------
         function [Marker] = Set_Markers()
@@ -178,6 +179,12 @@ classdef Fig_Tools
             if msh.s.par.l_y(2,iF) ~= Yv_f
                 yline(msh.s.par.l_y(2,iF),'-.r','Linewidth',0.5);
             end
+        end
+        %
+        function [] = Export_PDF(Filename,Directory)
+            set     (gcf,'PaperSize',[29.7,21.0],'PaperPosition',[0,0,29.7,21.0]);
+            print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r375');
+            movefile(strcat(Filename,'.pdf'),Directory); 
         end
     end
 end     
