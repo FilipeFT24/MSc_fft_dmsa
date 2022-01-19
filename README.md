@@ -3,9 +3,9 @@
 
 ## 2D Quadrature
 <p float="left">
-  <img src="/[Figures]/Fig_0/Fig_01_1.pdf" width="10" />
-  <img src="/[Figures]/Fig_0/Fig_01_5.pdf" width="10" />
-  <img src="/[Figures]/Fig_0/Fig_01_9.pdf" width="10" />
+  <img src="/[Figures]/Fig_0/Fig_01_1.png" width="100" />
+  <img src="/[Figures]/Fig_0/Fig_01_5.png" width="100" />
+  <img src="/[Figures]/Fig_0/Fig_01_9.png" width="100" />
 </p>
 
 
