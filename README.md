@@ -2,7 +2,7 @@
 ## Top-level directory layout
 
 ## 2D Quadrature
-<p float="left">
+align="center">
   <img src="/[Figures]/Fig_0/Fig_01_1.png" width="265" />
   <img src="/[Figures]/Fig_0/Fig_01_5.png" width="265" />
   <img src="/[Figures]/Fig_0/Fig_01_9.png" width="265" />
