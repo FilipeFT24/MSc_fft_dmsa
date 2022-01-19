@@ -4,10 +4,14 @@ classdef Fig_Tools
         % >> 1. -----------------------------------------------------------
         function [] = ChangeLook_1(inp,len)
             % >> Local variables.
-            x_Min = inp.msh.lim.Xv_i-1.5.*len;
-            x_Max = inp.msh.lim.Xv_f+1.5.*len;
-            y_Min = inp.msh.lim.Yv_i-1.5.*len;
-            y_Max = inp.msh.lim.Yv_f+1.5.*len; 
+            Xv_i  = inp.msh.lim.Xv_i;
+            Xv_f  = inp.msh.lim.Xv_f;
+            Yv_i  = inp.msh.lim.Yv_i;
+            Yv_f  = inp.msh.lim.Yv_f;
+            x_Min = Xv_i-len;
+            x_Max = Xv_f+len;
+            y_Min = Yv_i-len;
+            y_Max = Yv_f+len; 
             
             %  > Other parameters.
             box on; axis equal;
@@ -21,8 +25,8 @@ classdef Fig_Tools
             %  > X-Axis,Y-Axis label.
             xlabel('$\textrm{x}$','FontSize',12,'Interpreter','latex'); 
             ylabel('$\textrm{y}$','FontSize',12,'Interpreter','latex');
-            set(gca,'XLim',[x_Min,x_Max],'XTick',x_Min:x_Min+(x_Max-x_Min)./10:x_Max);
-            set(gca,'YLim',[y_Min,y_Max],'YTick',y_Min:y_Min+(y_Max-y_Min)./10:y_Max);
+            set(gca,'XLim',[x_Min,x_Max],'XTick',x_Min:(Xv_f-Xv_i)./10:x_Max);
+            set(gca,'YLim',[y_Min,y_Max],'YTick',y_Min:(Yv_f-Yv_i)./10:y_Max);
         end
         % >> 2. -----------------------------------------------------------
         function [] = ChangeLook_2(k,H)
@@ -49,7 +53,7 @@ classdef Fig_Tools
                     Flag = 'T';
                 end
             end
-            xlabel('$\Delta\mathrm{x}$','FontSize',10,'Interpreter','latex');
+            xlabel('$\Delta\mathrm{x}$','FontSize',12,'Interpreter','latex');
             if strcmpi(Flag,'F')
                 xlim([min(H_Mat(:,end)),max(H_Mat(:,1))]);
             end

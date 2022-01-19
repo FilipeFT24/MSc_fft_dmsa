@@ -13,7 +13,15 @@
   <img src="/[Figures]/Fig_1/Fig_12_3.png" width="250" />
 </p>
 
-## 2D Quadrature
+## Stencil generation
+
+<p align="center">
+  <img src="/[Figures]/Fig_1/Fig_ST9_1.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_2.png" width="250" />
+  <img src="/[Figures]/Fig_1/Fig_ST9_3.png" width="250" />
+</p>
+
+## 2D quadrature
 <p align="center">
   <img src="/[Figures]/Fig_0/Fig_01_1.png" width="250" />
   <img src="/[Figures]/Fig_0/Fig_01_5.png" width="250" />
@@ -89,7 +97,8 @@ msh
 │   ├── c            #  >> Cell 'i' neighbouring cell indices. 
 │   └── f            #  >> Field: Face.
 │       ├── f        #   > Face indices of cell 'i'.
-│       ├── xy_v     #   > Face 'j' vertices of cell 'i'.       
+│       ├── xy_v     #   > Face 'j' vertices of cell 'i'.  
+│       ├── mean     #   > Face 'j' centroid: [Xv,Yv] = [mean(1,j),mean(2,j)].     
 │       ├── len      #   > Face 'j' length of cell 'i'.
 │       ├── Nf       #   > Face 'j' outer (unit) normal of cell 'i'.
 │       └── Sf       #   > Face 'j' outer (face) normal of cell 'i'.

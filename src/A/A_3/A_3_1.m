@@ -273,6 +273,9 @@ classdef A_3_1
         function [msh] = Set_FaceNormals(msh)
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.xy_v{i},1)
+                    %  > Face centroid.
+                    msh.c.f.mean{i}(1,j) = mean(msh.c.f.xy_v{i}{j}(:,1));
+                    msh.c.f.mean{i}(2,j) = mean(msh.c.f.xy_v{i}{j}(:,2));
                     %  > Outer (unit)/(face) normal.
                     [msh.c.f.Nf{i}(:,j),msh.c.f.Sf{i}(:,j)] = ...
                         A_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));

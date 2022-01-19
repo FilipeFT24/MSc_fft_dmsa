@@ -72,7 +72,7 @@ classdef A_Tools
             msh.d     = orderfields(msh.d    ,{'xy_v','h_ref'});
             %  > c.
             msh.c     = orderfields(msh.c    ,{'NC','xy_v','mean','h','c','f'});
-            msh.c.f   = orderfields(msh.c.f  ,{'f','xy_v','len','Nf','Sf'});
+            msh.c.f   = orderfields(msh.c.f  ,{'f','xy_v','mean','len','Nf','Sf'});
             %  > f.
             msh.f     = orderfields(msh.f    ,{'NF','xy_v','mean','c'});
             %  > bnd.
