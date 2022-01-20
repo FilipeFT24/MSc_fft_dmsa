@@ -62,12 +62,20 @@ classdef A_Tools
                 Z = X;
             end
         end
+        % >> 1.6. ---------------------------------------------------------
+        function [Y] = fft_unique(X)
+            Y = [X(not(~diff(X))),X(length(X))];
+        end
+        % >> 1.7. ---------------------------------------------------------
+        function [Y] = fft_mean(X)
+            Y = sum(X)./length(X);
+        end
         
         %% > 2. -----------------------------------------------------------      
         % >> 2.2. ---------------------------------------------------------
         function [msh] = Sort_msh(inp,msh)
             % >> Local variables.
-            et = inp.fr.et;
+            et_1 = inp.fr.et_1;
             
             % >> msh.
             msh     = orderfields(msh      ,{'d','c','f','bnd','s'});
@@ -82,7 +90,7 @@ classdef A_Tools
             msh.bnd = orderfields(msh.bnd  ,{'c','f'});
             %  > s.
             msh.s   = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
-            if ~et
+            if ~et_1
                 msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','lx','ly'});
             else
                 msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','ngx','ngy','lx','ly'});

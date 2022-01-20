@@ -8,17 +8,18 @@ classdef A_3
         % >> --------------------------------------------------------------
         function [msh] = WrapUp_A_3(inp,msh)
             % >> Local variables.
-            Type = inp.fr.nt;
+            nt   = inp.fr.nt;
             p    = inp.fr.np;
-            et   = inp.fr.et;
-            NLay = 1./2.*(p+1);           
-                        
+            nl   = 1./2.*(p+1);  
+            et_1 = inp.fr.et_1;
+            et_2 = inp.fr.et_2;
+            
             % >> 1.
             [struct,msh] = A_3.Set_struct(inp,msh);
             % >> 2.
             msh = A_3_1.WrapUp_A_3_1(struct,msh);
             % >> 3.
-            msh = A_3_2.WrapUp_A_3_2(msh,Type,NLay,p,et);
+            msh = A_3_2.WrapUp_A_3_2(msh,nt,nl,p,et_1,et_2);
         end
         
         %% > 1. -----------------------------------------------------------

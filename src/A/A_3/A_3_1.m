@@ -27,8 +27,8 @@ classdef A_3_1
             % >> 1.
             for i = 1:msh.c.NC
                 %  > Cell centroid.
-                msh.c.mean(1,i) = mean(msh.c.xy_v{i}(:,1));
-                msh.c.mean(2,i) = mean(msh.c.xy_v{i}(:,2));
+                msh.c.mean(1,i) = A_Tools.fft_mean(msh.c.xy_v{i}(:,1));
+                msh.c.mean(2,i) = A_Tools.fft_mean(msh.c.xy_v{i}(:,2));
             end
             %  > Cell neighbouring cells.
             msh = A_3_1.Set_CellNeighbours(struct,msh);
@@ -41,8 +41,8 @@ classdef A_3_1
             
             for j = 1:size(msh.f.xy_v,2)
                 %  > Face centroid.
-                msh.f.mean(1,j) = mean(msh.f.xy_v{j}(:,1));
-                msh.f.mean(2,j) = mean(msh.f.xy_v{j}(:,2));
+                msh.f.mean(1,j) = A_Tools.fft_mean(msh.f.xy_v{j}(:,1));
+                msh.f.mean(2,j) = A_Tools.fft_mean(msh.f.xy_v{j}(:,2));
             end
             %  > Face normals.
             msh = A_3_1.Set_FaceNormals(msh);
@@ -159,7 +159,7 @@ classdef A_3_1
             
             % >> Set boundaries.
             %  > Cells.
-            uni_c = unique(bnd_f(:,3));
+            uni_c = A_Tools.fft_unique(bnd_f(:,3)');
             for i = 1:length(uni_c)
                 %  > (Xv,Yv).
                 msh.bnd.c{1,i} = msh.c.f.xy_v{uni_c(i)};
@@ -276,8 +276,8 @@ classdef A_3_1
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.xy_v{i},1)
                     %  > Face centroid.
-                    msh.c.f.mean{i}(1,j) = mean(msh.c.f.xy_v{i}{j}(:,1));
-                    msh.c.f.mean{i}(2,j) = mean(msh.c.f.xy_v{i}{j}(:,2));
+                    msh.c.f.mean{i}(1,j) = A_Tools.fft_mean(msh.c.f.xy_v{i}{j}(:,1));
+                    msh.c.f.mean{i}(2,j) = A_Tools.fft_mean(msh.c.f.xy_v{i}{j}(:,2));
                     %  > Outer (unit)/(face) normal.
                     [msh.c.f.Nf{i}(:,j),msh.c.f.Sf{i}(:,j)] = ...
                         A_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
@@ -295,8 +295,8 @@ classdef A_3_1
         function [Nf,Sf] = Tools_FaceNormals(fv,mean_ic)
             % >> Centroids.
             %  > Face centroid.
-            if_mean(1) = mean(fv(:,1));
-            if_mean(2) = mean(fv(:,2));
+            if_mean(1) = A_Tools.fft_mean(fv(:,1));
+            if_mean(2) = A_Tools.fft_mean(fv(:,2));
             %  > Cell centroid.
             ic_mean(1) = mean_ic(1);
             ic_mean(2) = mean_ic(2);
