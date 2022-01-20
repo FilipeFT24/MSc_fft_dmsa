@@ -4,15 +4,22 @@ classdef A_3_2_1
         % >> --------------------------------------------------------------
         % >> 1.     Set stencil cell/face indices.
         % >> 2.     Tools.
-        %  > 2.1.   Check face index (i.e. check whether a given stencil cell is a boundary cell).
-        %  > 2.2.   Reshape element array.
-        %  > 2.3.   Compute stencil coordinates.
-        %  > 2.3.1. Compute stencil coordinates (cells).
-        %  > 2.3.2. Compute stencil coordinates (faces).
+        %  > 2.1.   
+        %  > 2.2.   Check face index (i.e. check whether a given stencil cell is a boundary cell).
+        %  > 2.3.   Reshape element array.
+        %  > 2.4.   Compute stencil coordinates.
+        %  > 2.4.1. Compute stencil coordinates (cells).
+        %  > 2.4.2. Compute stencil coordinates (faces).
         % >> --------------------------------------------------------------
         
         %% > 1. -----------------------------------------------------------
-        function [msh] = Set_Stencil(msh,bnd_cc,Type,NLay)
+        function [msh] = Set_Stencil(msh,bnd_cc,nt,NLay)
+            %  > Auxiliary arrays.
+            for i = 1:size(msh.bnd.f,2)
+                bnd_ff(i) = msh.bnd.f{2,i};
+                bnd_fc(i) = msh.bnd.f{3,i};
+            end
+            
             % >> Cells to be evaluated (stencil 1).
             %  > Evaluate stencil for neighbours of neighbouring cells of face i (purely for code efficiency).
             for i = 1:msh.f.NF
@@ -54,33 +61,31 @@ classdef A_3_2_1
                 % >> Level N.
                 %  > Vertex type: Requires (at least) 1 common vertex (i.e. common vertex/face).
                 %  > Cell   type: Requires 2 common vertices (i.e. common face).
-                if strcmpi(Type,'Face')
+                if nt
                     %  > Initialize.
                     prev_f = cell(NLay-1,msh.f.NF);
                 end
                 if NLay > 1
                     for j = 2:NLay
-                        %  > Vertex stencil elements.
-                        for k = 1:length(msh.s.c{j-1,i})
-                            if k == 1
-                                ngh{j,i} = msh.c.c{msh.s.c{j-1,i}(k)};
-                            else
-                                ngh{j,i} = [ngh{j,i},msh.c.c{msh.s.c{j-1,i}(k)}];
-                            end
+                        % >> Vertex stencil elements.
+                        %  > #1.
+                        l = 1;
+                        ngh{j,i} = msh.c.c{msh.s.c{j-1,i}(l)};
+                        %  > #2.
+                        for k = l+1:length(msh.s.c{j-1,i})
+                            ngh{j,i} = [ngh{j,i},msh.c.c{msh.s.c{j-1,i}(k)}]; 
                         end
                         %  > Exclude repeated cells.
                         ngh{j,i} = unique(ngh{j,i});
-                        
-                        if strcmpi(Type,'Vertex')
-                            %  > Do nothing...
-                        elseif strcmpi(Type,'Face')
-                            %  > Loop through previous stencil cells and select faces' index.
+                                               
+                        if nt
+                            % >> Face enighbours.
+                            %  > Loop through previous stencil cells and select outer faces' index.
                             for k = 1:length(msh.s.c{j-1,i})
                                 prev_f{j-1,i} = [prev_f{j-1,i},msh.c.f.f{msh.s.c{j-1,i}(k)}];
                             end
-                            %  > (Outer) faces of previous stencil.
                             prev_f{j-1,i} = unique(prev_f{j-1,i});
-                            
+
                             %  > Loop through 'ngh' cells and check whether cell k contains any element of 'prev_f'.
                             m = true;
                             for k = 1:length(ngh{j,i})
@@ -109,35 +114,33 @@ classdef A_3_2_1
                 % >> Stencil face indices.
                 for j = 1:size(msh.s.c,1)
                     %  > Initialize.
-                    Flag {j,i}   = false(1,length(msh.s.c{j,i}));
+                    Flag   {j,i} = false(1,length(msh.s.c{j,i}));
                     msh.s.f(j,i) = cell (1,1);
                     
                     %  > Check whether face i's stencil cells belong to the boundary. If so, add the respective face to the stencil.
-                    Flag {j,i}  = ismembc(msh.s.c{j,i},bnd_cc);
+                    Flag{j,i} = ismembc(msh.s.c{j,i},bnd_cc);
                     if any(Flag{j,i})
-                        msh.s.f{j,i} = A_3_2_1.Add_Face(Flag{j,i},msh,msh.s.c{j,i});
+                        msh.s.f{j,i} = A_3_2_1.Add_Face(Flag{j,i},msh.s.c{j,i},bnd_ff,bnd_fc);
                     end
                 end
                 
                 % >> Stencil coordinates.
                 %  > Cells.
-                msh.s.xy_v_c{i} = A_3_2_1.Compute_Coordinates_c(msh.s.c(:,i),msh.c.mean);
+                msh.s.xy_v_c{i} = A_3_2_1.Compute_Coordinates_cf(msh.s.c(:,i),msh.c.mean);
                 %  > Faces.
                 if any(~cellfun(@isempty,msh.s.f(:,i)))
-                    msh.s.xy_v_f{i} = A_3_2_1.Compute_Coordinates_f(msh.s.f(:,i),msh.f.mean);
+                    msh.s.xy_v_f{i} = A_3_2_1.Compute_Coordinates_cf(msh.s.f(:,i),msh.f.mean);
                 end
             end
         end
         
         %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        function [add_f] = Add_Face(Flag,msh,c)
-            %  > Auxiliary arrays.
-            for i = 1:size(msh.bnd.f,2)
-                bnd_ff(i) = msh.bnd.f{2,i};
-                bnd_fc(i) = msh.bnd.f{3,i};
-            end
-            
+        % >> 2.1.
+        function [] = Outer_CellLayer()
+        end
+               
+        % >> 2.2. ---------------------------------------------------------
+        function [add_f] = Add_Face(Flag,c,bnd_ff,bnd_fc)
             %  > Add respective boundary faces.
             %    Remark: A given boundary cell may contain more than 1 boundary face (see 3rd row of msh.bnd.f)
             j = 1;
@@ -147,15 +150,13 @@ classdef A_3_2_1
                     j     = j+1;
                 end
             end
-            %  > Faces to be added to the stencil.
-            add_f = bnd_ff(cell2mat(cf));
+            add_f = bnd_ff(cat(2,cf{:}));
         end
-        % >> 2.2. ---------------------------------------------------------
+        % >> 2.3. ---------------------------------------------------------
         function [arr] = Deal_StencilElem(st)
             %  > Initialize.
             ijk = 1;
-            
-            %  > Cell(s).
+
             for i = 1:size(st,1)
                 if isempty(st{i})
                     continue;
@@ -170,32 +171,16 @@ classdef A_3_2_1
                 end
             end
         end
-        % >> 2.3. ---------------------------------------------------------
-        %  > 2.3.1. -------------------------------------------------------
-        function [xy_v_c] = Compute_Coordinates_c(st_c,mean_c)
-            %  > Deal elements.
-            arr_c = A_3_2_1.Deal_StencilElem(st_c);
-            
-            len_c = length(arr_c);
-            for i = 1:len_c
-                xy_v_c(1,i) = mean_c(1,arr_c(i));
-                xy_v_c(2,i) = mean_c(2,arr_c(i));
-            end
+        % >> 2.4. ---------------------------------------------------------
+        %  > 2.4.1. -------------------------------------------------------
+        function [xy] = Compute_Coordinates_cf(st,mean_cf)
+            arr_c     = A_3_2_1.Deal_StencilElem(st);            
+            i         = 1:length(arr_c);
+            xy(:,i)   = mean_cf(:,arr_c(i));
         end
-        %  > 2.3.2. -------------------------------------------------------
-        function [xy_v_f] = Compute_Coordinates_f(st_f,mean_f)
-            %  > Deal elements.
-            arr_f = A_3_2_1.Deal_StencilElem(st_f);
-            
-            len_f = length(arr_f);
-            for i = 1:len_f
-                xy_v_f(1,i) = mean_f(1,arr_f(i));
-                xy_v_f(2,i) = mean_f(2,arr_f(i));
-            end
-        end
-        %  > 2.3.3. -------------------------------------------------------
-        function [xy_v_t] = Compute_Coordinates_t(st_c,st_f)
-            xy_v_t = cat(2,st_c,st_f);
+        %  > 2.4.2. -------------------------------------------------------
+        function [xy] = Compute_Coordinates_tt(st_c,st_f)
+            xy = cat(2,st_c,st_f);
         end
     end
 end

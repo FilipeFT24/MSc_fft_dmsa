@@ -14,7 +14,7 @@ classdef A_Tools
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         function [Flag] = fft_ismember_1(A,B)
-            Flag = double(any(ismembc(B,sort(A))));
+            Flag = any(ismembc(B,sort(A)));
         end
         % >> 1.2. ---------------------------------------------------------
         function [Flag] = fft_ismember_2(A,B)
@@ -27,20 +27,20 @@ classdef A_Tools
         end
         % >> 1.3. ---------------------------------------------------------
         function [i_Flag] = fft_isequal_1(A,B)
-            i_Flag = 0;
+            i_Flag = false;
             for i = 1:size(A,1)
                 for j = 1:size(B,1)
                     Flag(i,j) = isequal(A(i,:),B(j,:));
                 end
                 if any(Flag(i,:))
-                    i_Flag = 1;
+                    i_Flag = true;
                     break;
                 end
             end
         end
         % >> 1.4. ---------------------------------------------------------
         function [i_Flag] = fft_isequal_2(A,B)
-            i_Flag = 0;
+            i_Flag = false;
             for i = 1:size(A,1)
                 for j = 1:size(B,1)
                     Flag(i,j) = isequal(A(i,:),B(j,:));
@@ -48,7 +48,7 @@ classdef A_Tools
                 end
             end
             if nnz(Flag) > 1
-                i_Flag = 1;
+                i_Flag = true;
             end
         end
         % >> 1.5. ---------------------------------------------------------
@@ -83,9 +83,9 @@ classdef A_Tools
             %  > s.
             msh.s   = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
             if ~et
-                msh.s.par = orderfields(msh.s.par,{'n_e','n_x','n_y','l_x','l_y'});
+                msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','lx','ly'});
             else
-                msh.s.par = orderfields(msh.s.par,{'n_e','n_x','n_y','ng_x','ng_y','l_x','l_y'});
+                msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','ngx','ngy','lx','ly'});
             end
         end
     end

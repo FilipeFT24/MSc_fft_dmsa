@@ -79,10 +79,12 @@ classdef A_3_1
             
             % >> Process faces...
             %  > blk.
-            blk_f = cell2mat(reshape(blk_ij,[msh.c.NC,1]));
+            blk_f = reshape (blk_ij,[msh.c.NC,1]);
+            blk_f = cat(1,blk_f{:});
             shr_f = A_3_1.Match_blkFaces(blk_f);
             %  > bnd.
-            bnd_f = cell2mat(reshape(bnd_ij,[size(bnd_ij,2),1]));
+            bnd_f = reshape(bnd_ij,[size(bnd_ij,2),1]);
+            bnd_f = cat(1,bnd_f{:});
             %  > Concatenate arrays.
             for i = 1:size(blk_f,1)+size(bnd_f,1)
                 if i <= size(blk_f,1)
@@ -244,7 +246,7 @@ classdef A_3_1
             k = 1; % -> Growth of Array_o(2,:).
             for i = 1:len
                 if j <= len./2
-                    if (i == 1 || ~ismembc(id_f(i),sort(Array_v(1,1:j)))) && j <= len./2
+                    if (i == 1 || ~A_Tools.fft_ismember_1(id_f(i),Array_v(1,1:j))) && j <= len./2
                         Array_o(1,j)    = i;
                         Array_v(1,j)    = id_f(i);
                         j               = j+1;
