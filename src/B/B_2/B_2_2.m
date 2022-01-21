@@ -26,14 +26,14 @@ classdef B_2_2
                 Face(:,i) = [msh.f.mean(1,i),msh.f.mean(2,i)];
                 %  > Stencil point coordinates.
                 xy_v{i} = msh.s.xy_v_t{i};
-                for j = 1:size(xy_v{i},2)
-                    %  > x-xf.
-                    XY{i}(1,j) = xy_v{i}(1,j)-Face(1,i);
-                    XY{i}(2,j) = xy_v{i}(2,j)-Face(2,i);
-                    %  > Deal coefficients.
-                    for k = 1:pde.pr.numb
-                        Df{i}(j,k) = pde.pr.Coeff_1(k).*(XY{i}(1,j).^pde.pr.Exp_1(1,k)).*(XY{i}(2,j).^pde.pr.Exp_1(2,k));
-                    end
+                
+                j = 1:size(xy_v{i},2);
+                %  > x-xf.
+                XY{i}(1,j) = xy_v{i}(1,j)-Face(1,i);
+                XY{i}(2,j) = xy_v{i}(2,j)-Face(2,i);
+                %  > Deal coefficients.
+                for k = 1:pde.pr.numb
+                    Df{i}(j,k) = pde.pr.Coeff_1(k).*(XY{i}(1,j).^pde.pr.Exp_1(1,k)).*(XY{i}(2,j).^pde.pr.Exp_1(2,k));
                 end
             end
             
@@ -49,15 +49,15 @@ classdef B_2_2
                         %  > Point.
                         Point{i}(:,j) = xy_v{i}(:,j);
                         %  > Distance.
-                        d    {i}(j)   = pdist([Point{i}(:,j),Face(:,i)],'euclidean');
-                        w    {i}(j)   = pde.wf.wf_1(d{i}(j),2);
+                        d    {i}(j)   = A_Tools.fft_dist(Point{i}(:,j),Face(:,i));
+                        w    {i}(j)   = pde.wf.wf_1(d{i}(j),1);
                     else
                         %  > Point.
                         %    Remark: If point=face, use cell centroid instead.
                         Point{i}(:,j) = msh.c.mean(:,bnd_fc(bnd_ff == i));
                         %  > Distance.
-                        d    {i}(j)   = pdist([Point{i}(:,j),Face(:,i)],'euclidean');
-                        w    {i}(j)   = pde.wf.wf_2(d{i}(j),2);
+                        d    {i}(j)   = A_Tools.fft_dist(Point{i}(:,j),Face(:,i));
+                        w    {i}(j)   = pde.wf.wf_2(d{i}(j),1);
                     end
                     Dwf{i}(j,:) = Df{i}(j,:).*w{i}(j);
                 end
@@ -67,8 +67,8 @@ classdef B_2_2
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Inv{i} = eMatrices(transpose(Dwf{i})*Df{i});
-                Pf {i} = Inv{i}*transpose(Dwf{i});
+                %Inv{i} = inv(transpose(Dwf{i})*Df{i});
+                Pf {i} = (transpose(Dwf{i})*Df{i})\transpose(Dwf{i});
             end
             % >> Tf     = ?
             %  > C(1)   = P(1,1)*Phi(1)+P(1,2)*Phi(2)+P(1,3)*Phi(3)+P(1,4)*Phi(4)+...
@@ -89,10 +89,10 @@ classdef B_2_2
                 %  > Face quadrature.
                 pde.f.gq{i} = B_1_2.GaussFace_Points(pde.f.xy_fg,pde.f.j_fg,ng,msh.f.xy_v{i});
                 %  > Convection.
-                df      {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.Coeff_1,pde.pr.Exp_1);
+                df      {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_1,pde.pr.Exp_1);
                 Tf_C    {i} = df{i}*Pf{i};
                 %  > Diffusion.
-                grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.Coeff_2,pde.pr.Exp_2);
+                grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
                 Tf_D    {i} = grad_df{i}*Pf{i};
             end
             
@@ -108,29 +108,22 @@ classdef B_2_2
             pde.f.Tf_D = Tf_D;
         end
         % >> 1.2. ---------------------------------------------------------
-        function [df_ij] = Compute_df(iD,mean_f,fg,Coeff,Exp)
+        function [df_ij] = Compute_df(iD,mean_f,fg,numb,Coeff,Exp)
             if iD == 1
                 % >> Phi_f.
-                for i = 1:size(fg.Points,1)
-                    for j = 1:length(Coeff)
-                        df_ij(i,j) = Coeff(j).*fg.Weights(i).*((mean_f(1)-fg.Points(i,1)).^Exp(1,j)).*((mean_f(2)-fg.Points(i,2)).^Exp(2,j));
-                    end
-                end
-                df_ij = sum(df_ij,1);
+                i          = 1:size(fg.Points,1);
+                j          = 1:numb;
+                df_ij(i,j) = Coeff(j).*fg.Weights(i).*((mean_f(1)-fg.Points(i,1)).^Exp(1,j)).*((mean_f(2)-fg.Points(i,2)).^Exp(2,j));
+                df_ij      = sum(df_ij,1);
             elseif iD == 2
                 % >> grad(Phi_f).
                 for i = 1:size(Coeff,1)
-                    %  > i=1: X.
-                    %  > i=2: Y.
-                    for j = 1:size(fg.Points,1)
-                        for k = 1:size(Coeff,2)
-                            df_ij{i}(j,k) = Coeff(i,k).*fg.Weights(j).*((mean_f(1)-fg.Points(j,1)).^Exp{i}(1,k)).*((mean_f(2)-fg.Points(j,2)).^Exp{i}(2,k));
-                        end
-                    end
-                    df_ij{i} = sum(df_ij{i},1);
+                    j              = 1:size(fg.Points,1);
+                    k              = 1:numb;
+                    df_ijk{i}(j,k) = Coeff(i,k).*fg.Weights(j).*((mean_f(1)-fg.Points(j,1)).^Exp{i}(1,k)).*((mean_f(2)-fg.Points(j,2)).^Exp{i}(2,k));
+                    df_ijk{i}      = sum(df_ijk{i},1);
+                    df_ij (i,:)    = [df_ijk{i}];
                 end
-                %  > Reshape cell array.
-                df_ij = cell2mat(reshape(df_ij,[2,1]));
             end
         end
         % >> 1.3. ---------------------------------------------------------
@@ -222,7 +215,7 @@ classdef B_2_2
             B = sparse(B);
             
             % >> Solve: AX=B.
-            pde.Phi = B_2_2.SetUp_bicgstabl(A,B,10e-12,10e3)';
+            pde.Phi = A\B;%B_2_2.SetUp_bicgstabl(A,B,10e-6,10e3)';
         end
         % >> 1.4. ---------------------------------------------------------
         function [X] = SetUp_bicgstabl(A,B,Tol,iterMax)

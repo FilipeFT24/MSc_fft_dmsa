@@ -3,11 +3,13 @@ classdef A_Tools
         %% > A_Tools.
         % >> --------------------------------------------------------------
         % >> 1.   Tools.
-        %  > 1.1. Modified version(#1) of ismember/ismembc: Compare array  B w/ sorted array  A.
-        %  > 1.2. Modified version(#2) of ismember/ismembc: Compare array  B w/ sorted array  A and return nnz elements of B if nnz(Array) > 2.
-        %  > 1.3. Modified version(#1) of isequal: Compare array   B w/ matrix A.
-        %  > 1.4. Modified version(#2) of isequal: Compare matrix  B w/ matrix A.
-        %  > 1.5. Modified version(#1) of setdiff.
+        %  > 1.1. Modified version (#1) of ismember/ismembc: Compare array  B w/ sorted array  A.
+        %  > 1.2. Modified version (#2) of ismember/ismembc: Compare array  B w/ sorted array  A and return nnz elements of B if nnz(Array) > 2.
+        %  > 1.3. Modified version (#1) of isequal: Compare array   B w/ matrix A.
+        %  > 1.4. Modified version (#2) of isequal: Compare matrix  B w/ matrix A.
+        %  > 1.5. Modified version (#1) of setdiff.
+        %  > 1.6. Modified version (#1) of 'mean'.
+        %  > 1.7. Modified version (#1) of 'pdist'.
         % >> 2.   Sort 'msh' fields.
         % >> --------------------------------------------------------------
         
@@ -69,6 +71,10 @@ classdef A_Tools
         % >> 1.7. ---------------------------------------------------------
         function [Y] = fft_mean(X)
             Y = sum(X)./length(X);
+        end
+        % >> 1.8. ---------------------------------------------------------
+        function [D] = fft_dist(A,B)
+            D = sqrt(abs(bsxfun(@plus,sum(A.*A,1),sum(B.*B,1).')-2*A'*B));
         end
         
         %% > 2. -----------------------------------------------------------      

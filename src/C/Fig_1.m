@@ -17,7 +17,7 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot_1(inp,msh,iF,len);
+                Fig_1.Plot_1(inp,msh,1,len);
                 %  > Export as .pdf.
                 if Exp_1
                     Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
@@ -34,8 +34,8 @@ classdef Fig_1
             Yv_i = inp.msh.lim.Yv_i;
             Yv_f = inp.msh.lim.Yv_f;
             p    = inp.fr.np;
-            NLay = 1./2.*(p+1);
-            gq   = false;
+            et_2 = inp.fr.et_2;
+            nl   = 1./2.*(p+1);
             %  > Outer boundary.
             NE   = [Xv_f,Yv_f];
             NW   = [Xv_i,Yv_f];
@@ -96,9 +96,10 @@ classdef Fig_1
             %% > Stencil.           
             hold on;
             for i = 1:Sz
-                if i <= NLay
+                if i <= nl
                     for j = 1:length(msh.s.c{i,iF})
-                        [f_1{i,j}(:,1),f_1{i,j}(:,2)] = Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
+                        [f_1{i,j}(:,1),f_1{i,j}(:,2)] = ...
+                            Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
                         patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(i,:),'FaceAlpha',0.25,'Linestyle','None');
                     end
                     %  > Cells.
@@ -107,16 +108,32 @@ classdef Fig_1
                     %  > Faces.
                     plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
                 else
-                    for j = 1:length(msh.s.c{i,iF})
-                        [f_1{i,j}(:,1),f_1{i,j}(:,2)] = Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
-                        patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(NLay+1,:),'FaceAlpha',0.25,'Linestyle','None');
-                    end
-                    %  > Cells.
-                    c  (NLay+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
-                    leg(NLay+1) = '$*$';
-                    %  > Faces.
-                    if ~isempty(msh.s.f{i,iF})
-                        plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(NLay+1,:),'MarkerFaceColor',C(NLay+1,:),'MarkerSize',3.5);
+                    if i ~= Sz || ~et_2
+                        for j = 1:length(msh.s.c{i,iF})
+                            [f_1{i,j}(:,1),f_1{i,j}(:,2)] = ...
+                                Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
+                            patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(nl+1,:),'FaceAlpha',0.25,'Linestyle','None');
+                        end
+                        %  > Cells.
+                        c  (nl+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(nl+1,:),'MarkerFaceColor',C(nl+1,:),'MarkerSize',3.5);
+                        leg(nl+1) = '$*$';
+                        %  > Faces.
+                        if ~isempty(msh.s.f{i,iF})
+                            plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(nl+1,:),'MarkerFaceColor',C(nl+1,:),'MarkerSize',3.5);
+                        end
+                    else
+                        for j = 1:length(msh.s.c{i,iF})
+                            [f_1{i,j}(:,1),f_1{i,j}(:,2)] = ...
+                                Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
+                            patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(Sz,:),'FaceAlpha',0.25,'Linestyle','None');
+                        end
+                        %  > Cells.
+                        c  (Sz) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(Sz,:),'MarkerFaceColor',C(Sz,:),'MarkerSize',3.5);
+                        leg(Sz) = '$**$';
+                        %  > Faces.
+                        if ~isempty(msh.s.f{i,iF})
+                            plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(Sz,:),'MarkerFaceColor',C(Sz,:),'MarkerSize',3.5);
+                        end
                     end
                 end
             end

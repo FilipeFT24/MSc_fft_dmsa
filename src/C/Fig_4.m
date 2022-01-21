@@ -1,11 +1,15 @@
 classdef Fig_4
     methods (Static)
         %% > Wrap up-Fig_4.
-        function [] = WrapUp_Fig_4(Plot_4,Fig,inp,msh,pde,len)
+        function [] = WrapUp_Fig_4(Plot_4,Exp_4,Fig,inp,msh,pde,len)
             if Plot_4
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
                 Fig_4.Plot_1(inp,msh,pde,len);
+                %  > Export as .pdf.
+                if Exp_4
+                    Fig_Tools.Export_PDF('Fig_4','../[Figures]/Fig_4');
+                end
             end
         end
         

@@ -10,7 +10,7 @@ classdef A_3_2_2
         % >> --------------------------------------------------------------
         function [msh] = Extend_Stencil(msh,bnd_cc,bnd_ff,bnd_fc,nt,p,et_1,et_2)
             %  >  L_(x,y): Face length on the x,y-directions.
-            L = A_3_2_2.Compute_Lx_Ly(msh);    
+            L = A_3_2_2.Compute_Lx_Ly(msh);
             %  > hg_(x,y): Reference length of each domain cell.
             if et_1
                 hg = A_3_2_2.Compute_hgx_hgy(msh);
@@ -34,7 +34,7 @@ classdef A_3_2_2
             msh.s.par.ne = zeros(2,msh.f.NF);
             msh.s.c_e    = cell (1,msh.f.NF);
             msh.s.f_e    = cell (1,msh.f.NF);
-
+            
             for i = 1:msh.f.NF
                 %% > Extension #1 (...until it is incomplete and domain limits have not been reached.).
                 %  > Initialize.
@@ -42,15 +42,17 @@ classdef A_3_2_2
                 
                 % >> Check...
                 if (~et_1 && round(par.nx(i)) >= p && round(par.ny(i)) >= p) || ...
-                    (et_1 && round(par.nx(i)) >= p && round(par.ny(i)) >= p && round(par.ngx(i)) >= p && round(par.ngy(i)) >= p)
-                    continue;
+                   ( et_1 && round(par.nx(i)) >= p && round(par.ny(i)) >= p && round(par.ngx(i)) >= p && round(par.ngy(i)) >= p)
+                    if ~et_2
+                        continue;
+                    end
                 else
                     while ((~et_1 && (round(par.nx(i)) < p || round(par.ny(i)) < p)) || ...
-                            (et_1 && (round(par.nx(i)) < p || round(par.ny(i)) < p   || round(par.ngx(i)) < p || round(par.ngy(i)) < p))) && Continue
+                           ( et_1 && (round(par.nx(i)) < p || round(par.ny(i)) < p   || round(par.ngx(i)) < p || round(par.ngy(i)) < p))) && Continue
                         %% > x-direction.
                         Continue_X = false;
                         if (~et_1 &&  round(par.nx(i)) < p) || ...
-                            (et_1 && (round(par.nx(i)) < p  || round(par.ngx(i)) < p))
+                           ( et_1 && (round(par.nx(i)) < p  || round(par.ngx(i)) < p))
                             % >> Add/update...
                             [msh,Continue_X] = A_3_2_2.Perform_Extension(i,2,msh,bnd_cc,bnd_ff,bnd_fc,par.ly(1,i),par.ly(2,i),nt);
                             
@@ -70,7 +72,7 @@ classdef A_3_2_2
                         %% > y-direction.
                         Continue_Y = false;
                         if (~et_1 &&  round(par.ny(i)) < p) || ...
-                            (et_1 && (round(par.ny(i)) < p  || round(par.ngy(i)) < p))
+                           ( et_1 && (round(par.ny(i)) < p  || round(par.ngy(i)) < p))
                             % >> Add/update...
                             [msh,Continue_Y] = A_3_2_2.Perform_Extension(i,1,msh,bnd_cc,bnd_ff,bnd_fc,par.lx(1,i),par.lx(2,i),nt);
                             
@@ -93,7 +95,7 @@ classdef A_3_2_2
                 %% > Extension #2 (...until all cell centroids lie within the stencil limits).
                 if et_2
                     % >> Add cell(s) and respective face(s)...
-                    A_3_2_2.Extension_2(msh);
+                    msh = A_3_2_2.Extension_2(i,msh,par.lx(:,i),par.ly(:,i),[msh.s.c{:,i}],bnd_cc,bnd_ff,bnd_fc);
                     
                     % >> Re-compute parameters (w/o incrementing the number of extensions).
                     if ~et_1
@@ -127,7 +129,7 @@ classdef A_3_2_2
         function [lx,ly,nx,ny,ngx,ngy] = Compute_Parameters(i,msh,stl_c,L,hg)
             % >> Deal elements.
             arr_c = A_3_2_1.Deal_StencilElem(stl_c);
-
+            
             % >> (x,y)_min,max.
             [lcx(1),lcx(2)] = MinMaxElem(msh.s.xy_v_c{i}(1,:),'finite');
             [lcy(1),lcy(2)] = MinMaxElem(msh.s.xy_v_c{i}(2,:),'finite');
@@ -186,11 +188,9 @@ classdef A_3_2_2
         end
         % >> 1.2. ---------------------------------------------------------
         function [msh,Flag] = Perform_Extension(i,k,msh,bnd_cc,bnd_ff,bnd_fc,v_min,v_max,nt)
-            %  > Initialize.
-            Flag = false;
-            len  = nnz(~cellfun(@isempty,msh.s.c(:,i)));
-            
             % >> Previous stencils'...
+            %  > ...length.
+            len_c  = nnz(~cellfun(@isempty,msh.s.c(:,i)));
             %  > ...cell(s).
             stl_c  = [msh.s.c{:,i}];
             %  > ...cell neighbour(s).
@@ -199,14 +199,23 @@ classdef A_3_2_2
             Add_c  = A_3_2_2.Extension_1(stl_c,stl_cn,msh.c.mean,k,v_min,v_max,msh.c.f.f,nt);
             
             % >> Update/add...
+            [msh,Flag] = A_3_2_2.Add_Update(i,msh,Add_c,len_c,bnd_cc,bnd_ff,bnd_fc);
+        end
+        %  > 1.2.1. -------------------------------------------------------
+        function [msh,Flag] = Add_Update(i,msh,Add_c,len_c,bnd_cc,bnd_ff,bnd_fc)
+            %  > Initialize.
+            Flag_c = false;
+            
+            % >> Update/add...
             %  > ...cell indices.
-            msh.s.c{len+1,i} = Add_c;
-            msh.s.c_e    {i} = [msh.s.c_e{i},Add_c];
+            msh.s.c{len_c+1,i} = Add_c;
+            msh.s.c_e      {i} = [msh.s.c_e{i},Add_c];
             %  > ...face indices.
             i_face = ismembc(Add_c,bnd_cc) == true;
             if any(i_face)
-                msh.s.f  {len+1,i} = msh.s.f_e{i};
-                msh.s.f_e{i}       = A_3_2_1.Add_Face(i_face,Add_c,bnd_ff,bnd_fc);
+                Add_f              = A_3_2_1.Add_Face(i_face,Add_c,bnd_ff,bnd_fc);
+                msh.s.f{len_c+1,i} = Add_f;
+                msh.s.f_e      {i} = [msh.s.f_e{i},Add_f];
             end
             %  > Check whether any additions were made.
             Flag = ~isempty(Add_c);
@@ -221,7 +230,7 @@ classdef A_3_2_2
                 end
             end
         end
-        %  > 1.2.1. -------------------------------------------------------
+        %  > 1.2.2. -------------------------------------------------------
         function [add_to] = Extension_1(stl_c,stl_cn,mean_c,k,v_min,v_max,cell_f,nt)
             % >> Select...
             %  > ...outer cells (NOT in the current stencil) within the stencil limits.
@@ -262,11 +271,24 @@ classdef A_3_2_2
                 add_to = [];
             end
         end
-        %  > 1.2.2. -------------------------------------------------------
-        function [msh] = Extension_2(msh)
+        %  > 1.2.3. -------------------------------------------------------
+        function [msh] = Extension_2(i,msh,x_lim,y_lim,stl_c,bnd_cc,bnd_ff,bnd_fc)
+            %  > Select cells within stencil x,y-limits.
+            k = 1;
+            for j = 1:msh.c.NC
+                if (msh.c.mean(1,j) >= x_lim(1) && msh.c.mean(1,j) <= x_lim(2)) && (msh.c.mean(2,j) >= y_lim(1) && msh.c.mean(2,j) <= y_lim(2))
+                    bulk(k) = j;
+                    k       = k+1;
+                end
+            end
+            %  > Select cells in 'bulk' that don't belong to the stencil.
+            Add_c = A_Tools.fft_setdiff(bulk,stl_c);
             
-            s=1;
-            
+            %  > Update/add...
+            if ~isempty(Add_c)
+                len_c = nnz(~cellfun(@isempty,msh.s.c(:,i)));
+                msh   = A_3_2_2.Add_Update(i,msh,Add_c,len_c,bnd_cc,bnd_ff,bnd_fc);
+            end
         end
     end
 end

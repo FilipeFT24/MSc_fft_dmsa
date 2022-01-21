@@ -62,7 +62,6 @@ classdef A_2
             Yv_i = inp.msh.lim.Yv_i;
             Yv_f = inp.msh.lim.Yv_f;
             T1   = inp.msh.T_1.t;
-            % rng default;
             
             % >> Domain vertices.
             if strcmpi(T1,'s')

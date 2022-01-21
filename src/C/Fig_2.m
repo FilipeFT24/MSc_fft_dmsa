@@ -1,7 +1,7 @@
 classdef Fig_2
     methods (Static)
         %% > Wrap-up Fig_2.
-        function [] = WrapUp_Fig_2(Plot_2,Fig,inp,msh,pde,len)
+        function [] = WrapUp_Fig_2(Plot_2,Exp_2,Fig,inp,msh,pde,len)
             if Plot_2
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
@@ -14,6 +14,10 @@ classdef Fig_2
                 %  > #3.
                 subplot(1,3,3);
                 Fig_2.Plot_3(inp,msh,pde,len);
+                %  > Export as .pdf.
+                if Exp_2
+                    Fig_Tools.Export_PDF('Fig_2','../[Figures]/Fig_2');
+                end
             end
         end
         
