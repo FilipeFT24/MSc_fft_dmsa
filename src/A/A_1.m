@@ -1,10 +1,6 @@
 classdef A_1
     methods (Static)
         %% > Wrap-up A_1.
-        % >> ----------------------------------------------------------
-        % >> 1. Add folders' path.
-        % >> 2. Set 'inp' structure.
-        % >> ----------------------------------------------------------
         function [inp] = WrapUp_A_1()
             % >> 1.
             A_1.Add_FolderPaths;
@@ -29,13 +25,13 @@ classdef A_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.h     = 0.05;
+            inp.msh.h     = 0.1;
             inp.msh.Nv(1) = 15;
             inp.msh.Nv(2) = 15;
             
             % >> 3. Grid types:
             %    ├── v
-            %          ├─ Example 1: fft_Distmesh2D.
+            %          ├─ Example 1: fft_Distmesh2D (https://github.com/ionhandshaker/distmesh/blob/master/distmesh.m).
             %          └─ Example 2: Random.
             %    └── s
             %          ├─ Example 1: Uniform.
@@ -47,12 +43,13 @@ classdef A_1
             %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
             %                                  ├─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).            
-            inp.msh.pt       = 'v';
+            inp.msh.pt       = 's';
             inp.msh.eg       = '1';
-            inp.msh.T_2.Nf_X = 0.5;
-            inp.msh.T_2.Nf_Y = 0.5;
-            inp.msh.T_2.Ks_X = 7.5;
-            inp.msh.T_2.Ks_Y = 7.5;
+            inp.msh.dm       = '2';
+            inp.msh.s_nu.Nf_X = 0.5;
+            inp.msh.s_nu.Nf_Y = 0.5;
+            inp.msh.s_nu.Ks_X = 7.5;
+            inp.msh.s_nu.Ks_Y = 7.5;
             
             %% > pr.
             % >> 4. Flow conditions: 1. Convection parameter: V=[vx,vy].

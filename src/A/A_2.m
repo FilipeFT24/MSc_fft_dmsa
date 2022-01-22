@@ -1,33 +1,26 @@
 classdef A_2
     methods (Static)
         %% > Wrap-up A_2.
-        % >> --------------------------------------------------------------
-        % >> 1.   Uniform grid.
-        % >> 2.   Non-uniform grid.
-        %  > 2.1. Grid: Randomly generated point cloud.
-        %  > 2.2. Grid: Blust clustering.
-        %  > 2.3. Grid: Wall  clustering.
-        % >> 3.   Reshape arrays.
-        % >> --------------------------------------------------------------
         function [struct,msh] = WrapUp_A_2(inp)
             % >> Local variables.
             Xv_i = inp.msh.lim.Xv_i;
             Xv_f = inp.msh.lim.Xv_f;
             Yv_i = inp.msh.lim.Yv_i;
             Yv_f = inp.msh.lim.Yv_f;
-            h    = inp.msh.h;
-            NX_v = inp.msh.Nv(1);
-            NY_v = inp.msh.Nv(2);
             pt   = inp.msh.pt;
             eg   = inp.msh.eg;
+            dm   = inp.msh.dm;
             
             % >> Select polygon type...
             switch pt
                 case 'v'
                     switch eg
                         case '1'
-                            struct = A_2.fft_Distmesh2D(Xv_i,Xv_f,Yv_i,Yv_f,h);
+                            h      = inp.msh.h;
+                            struct = A_2.fft_Distmesh2D(dm,Xv_i,Xv_f,Yv_i,Yv_f,h);
                         case '2'
+                            NX_v   = inp.msh.Nv(1);
+                            NY_v   = inp.msh.Nv(2);
                             xy_v   = A_2.TriangleMesh_NonUniform(Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v);
                             struct = delaunayTriangulation(xy_v(:,1),xy_v(:,2));
                         otherwise
@@ -36,9 +29,12 @@ classdef A_2
                 case 's'
                     switch eg
                         case '1'
-                            xy_v = A_2.SquareMesh_Uniform(h);
+                            h                = inp.msh.h;
+                            [NX_v,NY_v,xy_v] = A_2.SquareMesh_Uniform(Xv_i,Xv_f,Yv_i,Yv_f,h);
                         case '2'
-                            xy_v = A_2.SquareMesh_NonUniform(NX_v,NY_v);
+                            NX_v = inp.msh.Nv(1);
+                            NY_v = inp.msh.Nv(2);
+                            xy_v = A_2.SquareMesh_NonUniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v);
                         otherwise
                             return;
                     end
@@ -68,18 +64,39 @@ classdef A_2
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [struct] = fft_Distmesh2D(Xv_i,Xv_f,Yv_i,Yv_f,h)
-            %  > A,B,C,D.
-            A  = [Xv_i,Yv_i];
-            B  = [Xv_f,Yv_i];
-            C  = [Xv_f,Yv_f];
-            D  = [Xv_i,Yv_f];
-            %  > Function handles.
-            fd = @(p) drectangle(p,Xv_i,Xv_f,Yv_i,Yv_f);
-            fh = @(p) ones(size(p,1),1);
-            %  > Use 'distmesh2d' script.
-            [struct.Points,struct.ConnectivityList] = ...
-                distmesh2d(fd,fh,h,[A;C],[A;D;B;C]);
+        function [struct] = fft_Distmesh2D(eg,Xv_i,Xv_f,Yv_i,Yv_f,h)
+            %  > Bounding box.
+            BBOX = [[Xv_i,Yv_i];[Xv_f,Yv_f]]; %  > [[Xmin,Ymin];[Xmax,Ymax]].
+            switch eg
+                case '1'
+                    %% > Example 1: Uniform mesh on square.
+                    %  > A,B,C,D.
+                    A  = [Xv_i,Yv_i];
+                    B  = [Xv_f,Yv_i];
+                    C  = [Xv_f,Yv_f];
+                    D  = [Xv_i,Yv_f];
+                    %  > Function handles.
+                    fd = @(p) drectangle(p,Xv_i,Xv_f,Yv_i,Yv_f);
+                    fh = @(p) ones(size(p,1),1);
+                    %  > Call 'distmesh2d'.
+                    [struct.Points,struct.ConnectivityList] = ...
+                        distmesh2d(fd,fh,h,[BBOX(1,:);BBOX(2,:)],[A;D;B;C]);
+                case '2'
+                    %% > Example 2: Circle/Ellipse.
+                    %  > (rx,ry).
+                    rx = 1./2.*(Xv_f-Xv_i);
+                    ry = 1./2.*(Yv_f-Yv_i);
+                    %  > (X0,Y0).
+                    X0 = Xv_i+rx;
+                    Y0 = Yv_i+ry;
+                    %  > Function handles.
+                    fd = @(p) (p(:,1)-X0).^2/rx.^2+(p(:,2)-Y0).^2/ry.^2-1;
+                    %  > Call 'distmesh2d'.
+                    [struct.Points,struct.ConnectivityList] = ...
+                        distmesh2d(fd,@huniform,h,[BBOX(1,:);BBOX(2,:)],[]);
+                otherwise
+                    return;
+            end
         end
         % >> 1.2. ---------------------------------------------------------
         function [xy_v] = TriangleMesh_NonUniform(Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v)
@@ -93,83 +110,29 @@ classdef A_2
             xy_v(:,2) = reshape(Yd,[],1);
         end
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        %% > 1. -----------------------------------------------------------
-        
-        function [xy_v] = Uniform_mshGenerator(inp)
-            % >> Local variables.
-            Xv_i = inp.msh.lim.Xv_i;
-            Xv_f = inp.msh.lim.Xv_f;
-            Yv_i = inp.msh.lim.Yv_i;
-            Yv_f = inp.msh.lim.Yv_f;
-            
-            % >> Domain vertices.
-            %  > (Xd,Yd).
-            Xd_x = linspace(Xv_i,Xv_f,NX_v);
-            Yd_y = linspace(Yv_i,Yv_f,NY_v);
-            %  > Generate grid.
-            [Xd,Yd] = meshgrid(Xd_x,Yd_y);
-            %  > (Xv,Yv).
-            xy_v = A_2.Reshape_Arrays(Xd,Yd);
-        end
-        
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [msh] = NonUniform_mshGenerator_1(inp)
-            % >> Local variables.
-            NX_v = inp.msh.Nv(1);
-            NY_v = inp.msh.Nv(2);
-            Xv_i = inp.msh.lim.Xv_i;
-            Xv_f = inp.msh.lim.Xv_f;
-            Yv_i = inp.msh.lim.Yv_i;
-            Yv_f = inp.msh.lim.Yv_f;
-            T1   = inp.msh.T_1.t;
-            
-            % >> Domain vertices.
-            if strcmpi(T1,'s')
-                %  > (Xd,Yd).
-                Xd_p = sort((Xv_f-Xv_i).*rand(1,NX_v-2)+Xv_i,'ascend');
-                Xd_p = [Xv_i,Xd_p,Xv_f];
-                Yd_p = sort((Yv_f-Yv_i).*rand(1,NY_v-2)+Yv_i,'ascend');
-                Yd_p = [Yv_i,Yd_p,Yv_f];
-                %  > Generate grid.
-                [Xd,Yd] = meshgrid(Xd_p,Yd_p);
-            elseif strcmpi(T1,'v')
-                %  > (Xd,Yd).
-                Xd = sort((Xv_f-Xv_i).*rand(NY_v,NX_v-2)+Xv_i,2,'ascend');
-                Xd = cat(2,ones(NY_v,1).*Xv_i,Xd,ones(NY_v,1).*Xv_f);
-                Yd = sort((Yv_f-Yv_i).*rand(NY_v-2,NX_v)+Yv_i,1,'ascend');
-                Yd = cat(1,ones(1,NX_v).*Yv_i,Yd,ones(1,NX_v).*Yv_f);
-            end
+        function [NX,NY,xy_v] = SquareMesh_Uniform(Xv_i,Xv_f,Yv_i,Yv_f,h)
+            %  > (Xd,Yd).
+            [Xd_x,Yd_y] = deal(Xv_i:h:Xv_f,Yv_i:h:Yv_f);
+            [Xd,Yd]     = meshgrid(Xd_x,Yd_y);
+            %  > (NX,NY).
+            NX = length(Xd_x);
+            NY = length(Xd_x);
             %  > (Xv,Yv).
-            msh.d.xy_v = A_2.Reshape_Arrays(Xd,Yd);
+            xy_v(:,1) = reshape(Xd,[],1);
+            xy_v(:,2) = reshape(Yd,[],1);
         end
         % >> 2.2. ---------------------------------------------------------
-        function [msh] = NonUniform_mshGenerator_2(inp)
+        function [xy_v] = SquareMesh_NonUniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v)
             % >> Local variables.
             %  > Nf_Unf: Normalized computational domain coordinate (uniform distribution).
             %  > Pt    : Stretching location in "domain percentage".
             %  > B     : Stretching parameter.
-            NX_v = inp.msh.Nv(1);
-            NY_v = inp.msh.Nv(2);
-            Xv_i = inp.msh.lim.Xv_i;
-            Xv_f = inp.msh.lim.Xv_f;
-            Yv_i = inp.msh.lim.Yv_i;
-            Yv_f = inp.msh.lim.Yv_f;
-            Nf_X = inp.msh.T_2.Nf_X;
-            Nf_Y = inp.msh.T_2.Nf_Y;
-            Ks_X = inp.msh.T_2.Ks_X;
-            Ks_Y = inp.msh.T_2.Ks_Y;
+            Nf_X = inp.msh.s_nu.Nf_X;
+            Nf_Y = inp.msh.s_nu.Nf_Y;
+            Ks_X = inp.msh.s_nu.Ks_X;
+            Ks_Y = inp.msh.s_nu.Ks_Y;
             
             % >> X.
             Nf_Unf_X = linspace(0,1,NX_v);
@@ -188,33 +151,10 @@ classdef A_2
             
             % >> Domain vertices.
             %  > (Xd,Yd).
-            k    = 1:NX_v;
-            l    = 1:NY_v;
-            Xd_p = NF_X(k).*(Xv_f-Xv_i);
-            Yd_p = NF_Y(l).*(Yv_f-Yv_i);
-            %  > Generate grid.
+            [Xd_p,Yd_p] = ...
+                deal(NF_X(1:NX_v).*(Xv_f-Xv_i),NF_Y(1:NY_v).*(Yv_f-Yv_i));
             [Xd,Yd] = meshgrid(Xd_p,Yd_p);
             %  > (Xv,Yv).
-            msh.d.xy_v = A_2.Reshape_Arrays(Xd,Yd);
-        end
-        % >> 2.3. ---------------------------------------------------------
-        function [msh] = NonUniform_mshGenerator_3(msh)
-        end
-        
-        %% > 3. -----------------------------------------------------------
-        function [msh] = Distmesh_Example_1(inp)
-            % >> Local variables.
-            NX_v = inp.msh.Nv(1);
-            NY_v = inp.msh.Nv(2);
-            Xv_i = inp.msh.lim.Xv_i;
-            Xv_f = inp.msh.lim.Xv_f;
-            Yv_i = inp.msh.lim.Yv_i;
-            Yv_f = inp.msh.lim.Yv_f;
-            
-        end
-        
-        %% > 4. -----------------------------------------------------------
-        function [xy_v] = Reshape_Arrays(Xd,Yd)
             xy_v(:,1) = reshape(Xd,[],1);
             xy_v(:,2) = reshape(Yd,[],1);
         end

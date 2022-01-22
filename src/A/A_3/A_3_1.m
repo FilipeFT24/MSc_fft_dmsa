@@ -57,8 +57,8 @@ classdef A_3_1
             
             % > If any(A) belongs to B, then A and B are neighbours.
             %   Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
-            for i = 1:1:size(Cn_c,1)
-                for j = i+1:1:size(Cn_c,1)
+            for i = 1:size(Cn_c,1)
+                for j = i+1:size(Cn_c,1)
                     x_ij(i,j) = A_Tools.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
                     x_ij(j,i) = x_ij(i,j);
                 end
