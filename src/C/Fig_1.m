@@ -17,7 +17,7 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot_1(inp,msh,1,len);
+                Fig_1.Plot_1(inp,msh,iF,len);
                 %  > Export as .pdf.
                 if Exp_1
                     Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
@@ -34,7 +34,7 @@ classdef Fig_1
             Yv_i = inp.msh.lim.Yv_i;
             Yv_f = inp.msh.lim.Yv_f;
             p    = inp.fr.np;
-            et_2 = inp.fr.et_2;
+            et   = inp.fr.et;
             nl   = 1./2.*(p+1);
             %  > Outer boundary.
             NE   = [Xv_f,Yv_f];
@@ -108,7 +108,7 @@ classdef Fig_1
                     %  > Faces.
                     plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
                 else
-                    if i ~= Sz || ~et_2
+                    if i ~= Sz || ~et
                         for j = 1:length(msh.s.c{i,iF})
                             [f_1{i,j}(:,1),f_1{i,j}(:,2)] = ...
                                 Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
@@ -140,7 +140,7 @@ classdef Fig_1
             %  > Face.
             plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.0);
             Fig_Tools.Plot_Limits(inp,msh,iF);
-            legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
+            %legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
             Fig_Tools.ChangeLook_1(inp,len);
         end
     end

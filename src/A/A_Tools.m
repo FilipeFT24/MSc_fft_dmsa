@@ -9,7 +9,8 @@ classdef A_Tools
         %  > 1.4. Modified version (#2) of isequal: Compare matrix  B w/ matrix A.
         %  > 1.5. Modified version (#1) of setdiff.
         %  > 1.6. Modified version (#1) of 'mean'.
-        %  > 1.7. Modified version (#1) of 'pdist'.
+        %  > 1.7. Modified version (#1) of 'pdist': Point/Point. 
+        %  > 1.8. Modified version (#1) of 'pdist': Point/Matrix.
         % >> 2.   Sort 'msh' fields.
         % >> --------------------------------------------------------------
         
@@ -73,34 +74,29 @@ classdef A_Tools
             Y = sum(X)./length(X);
         end
         % >> 1.8. ---------------------------------------------------------
-        function [D] = fft_dist(A,B)
+        function [D] = fft_dist_1(A,B)
             D = sqrt(abs(bsxfun(@plus,sum(A.*A,1),sum(B.*B,1).')-2*A'*B));
+        end
+        % >> 1.9. ---------------------------------------------------------
+        function [D] = fft_dist_2(A,B)
+            D = sqrt(abs(bsxfun(@plus,sum(B.*B,1),sum(A.*A,1).')'-2*B'*A));
         end
         
         %% > 2. -----------------------------------------------------------      
         % >> 2.2. ---------------------------------------------------------
-        function [msh] = Sort_msh(inp,msh)
-            % >> Local variables.
-            et_1 = inp.fr.et_1;
-            
+        function [msh] = Sort_msh(msh)
             % >> msh.
-            msh     = orderfields(msh      ,{'d','c','f','bnd','s'});
-            %  > d.
-            msh.d   = orderfields(msh.d    ,{'xy_v','h_ref'});
+            msh     = orderfields(msh        ,{'d','c','f','bnd','s'});
             %  > c.
-            msh.c   = orderfields(msh.c    ,{'NC','xy_v','mean','h','c','f'});
-            msh.c.f = orderfields(msh.c.f  ,{'f','xy_v','mean','len','Nf','Sf'});
+            msh.c   = orderfields(msh.c      ,{'NC','xy_v','mean','h','c','f'});
+            msh.c.f = orderfields(msh.c.f    ,{'f','xy_v','mean','len','Nf','Sf'});
             %  > f.
-            msh.f   = orderfields(msh.f    ,{'NF','xy_v','mean','c'});
+            msh.f   = orderfields(msh.f      ,{'NF','xy_v','mean','c'});
             %  > bnd.
-            msh.bnd = orderfields(msh.bnd  ,{'c','f'});
+            msh.bnd = orderfields(msh.bnd    ,{'c','f'});
             %  > s.
-            msh.s   = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
-            if ~et_1
-                msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','lx','ly'});
-            else
-                msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','ngx','ngy','lx','ly'});
-            end
+            msh.s     = orderfields(msh.s    ,{'c','f','c_e','f_e','xy_v_c','xy_v_f','xy_v_t','par'});
+            msh.s.par = orderfields(msh.s.par,{'ne','nx','ny','lx','ly'});
         end
     end
 end

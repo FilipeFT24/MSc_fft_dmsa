@@ -120,29 +120,10 @@ classdef A_3_2_1
             end
             add_f = bnd_ff([cf{:}]);
         end
-        % >> 2.2. ---------------------------------------------------------
-        function [arr] = Deal_StencilElem(st)
-            %  > Initialize.
-            ijk = 1;
-
-            for i = 1:size(st,1)
-                if isempty(st{i})
-                    continue;
-                else
-                    if ijk == 1
-                        arr = st{i};
-                        ijk = ijk+1;
-                    else
-                        arr = [arr,st{i}];
-                        ijk = ijk+1;
-                    end
-                end
-            end
-        end
         % >> 2.3. ---------------------------------------------------------
         %  > 2.3.1. -------------------------------------------------------
-        function [xy] = Compute_Coordinates_cf(st,mean_cf)
-            arr_c     = A_3_2_1.Deal_StencilElem(st);            
+        function [xy] = Compute_Coordinates_cf(stl,mean_cf)
+            arr_c     = [stl{:}];            
             i         = 1:length(arr_c);
             xy(:,i)   = mean_cf(:,arr_c(i));
         end

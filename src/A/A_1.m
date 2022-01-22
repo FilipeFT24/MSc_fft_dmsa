@@ -29,29 +29,30 @@ classdef A_1
             inp.msh.lim.Yv_f = 1;
             
             % >> 2. Vertex coordinates: Nv=[Nv(X),Nv(Y)].
-            inp.msh.Nv(1) = 18;
-            inp.msh.Nv(2) = 18;
+            inp.msh.h     = 0.05;
+            inp.msh.Nv(1) = 15;
+            inp.msh.Nv(2) = 15;
             
             % >> 3. Grid types:
-            %  > 1. Type #1.├- v.
-            %               └- s.
-            %  > 2. Type #2.├- Uniform.
-            %               └- Non-uniform.
-            %                  ├- Random.
-            %                  ├- Bulk.
-            %                     ├- 1. Domain percentage: 0 < (Nf)_X,Y < 1.
-            %                     └- 2. Domain stretching: 1 < (Ks)_X,Y < Infinity: e.g.: Ks ~= 3,4,...
-            %                  └- Wall.
-            %                     ├- 1. Domain percentage: 0 < (Nf)_X,Y < 1.
-            %                     ├- 2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
-            %                     └- 3. Location         : East(E)/West(W), North(N)/South(S).
-            inp.msh.T_1.t    = 's';
-            inp.msh.T_2.t    = 'Uniform';
-            inp.msh.T_2.st   = 'Random';
+            %    ├── v
+            %          ├─ Example 1: fft_Distmesh2D.
+            %          └─ Example 2: Random.
+            %    └── s
+            %          ├─ Example 1: Uniform.
+            %          └─ Example 2: Non-uniform.
+            %                      ├─ Example 2_1: Bulk.
+            %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
+            %                                  └─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity: e.g.: Ks ~= 3,4,...
+            %                      └─ Example 2_2: Wall.
+            %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
+            %                                  ├─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
+            %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).            
+            inp.msh.pt       = 'v';
+            inp.msh.eg       = '1';
             inp.msh.T_2.Nf_X = 0.5;
             inp.msh.T_2.Nf_Y = 0.5;
-            inp.msh.T_2.Ks_X = 5.0;
-            inp.msh.T_2.Ks_Y = 5.0;
+            inp.msh.T_2.Ks_X = 7.5;
+            inp.msh.T_2.Ks_Y = 7.5;
             
             %% > pr.
             % >> 4. Flow conditions: 1. Convection parameter: V=[vx,vy].
@@ -61,20 +62,14 @@ classdef A_1
             inp.pr.gx = 1.0;
             inp.pr.gy = 1.0;
             
-            % >> 5. Boundary conditions: 1. EB/EV -> East  boundary type/value.
-            %                            2. WB/WV -> West  boundary type/value.
-            %                            3. NB/NV -> North boundary type/value.
-            %                            4. SB/SV -> South boundary type/value.
-            %  > 1. Type.
+            % >> 5. Boundary conditions: 1. EB -> East  boundary type.
+            %                            2. WB -> West  boundary type.
+            %                            3. NB -> North boundary type.
+            %                            4. SB -> South boundary type.
             inp.pr.t.EB = 'Dirichlet';
             inp.pr.t.WB = 'Dirichlet';
             inp.pr.t.NB = 'Dirichlet';
             inp.pr.t.SB = 'Dirichlet';
-            %  > 2. Value (if solution~=analytic).
-            inp.pr.v.EB = 0;
-            inp.pr.v.WB = 0;
-            inp.pr.v.NB = 0;
-            inp.pr.v.SB = 0;
             
             %% > fr.
             % >> 6. Flux reconstruction method:
@@ -88,13 +83,12 @@ classdef A_1
             %  > 5. Neighbouring type : 1. Vertex (at least 1 common vertex) -> false.
             %                           2. Face   (at least 1 common face  ) -> true.
             %  > 6. Extension type.
-            inp.fr.st   = 'Implicit';           
-            inp.fr.wf   = 'Weighted';
-            inp.fr.np   = 7;
-            inp.fr.ng   = 9;
-            inp.fr.nt   = false;
-            inp.fr.et_1 = false;
-            inp.fr.et_2 = false;
+            inp.fr.st = 'Implicit';           
+            inp.fr.wf = 'Weighted';
+            inp.fr.np = 5;
+            inp.fr.ng = 9;
+            inp.fr.nt = false;
+            inp.fr.et = false;
         end
     end
 end

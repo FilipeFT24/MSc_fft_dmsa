@@ -11,10 +11,15 @@ classdef B_2
             ng = inp.fr.ng;
             wf = inp.fr.wf;
             
+            %  > Auxiliary arrays.
+            j         = 1:size(msh.bnd.f,2);
+            bnd_ff(j) = [msh.bnd.f{2,j}];
+            bnd_fc(j) = [msh.bnd.f{3,j}];
+            
             % >> 1.
             pde = B_2_1.WrapUp_B_2_1(pde,np,wf);
             % >> 2.
-            pde = B_2_2.WrapUp_B_2_2(msh,pde,ng,vx,vy,gx,gy);
+            pde = B_2_2.WrapUp_B_2_2(msh,pde,ng,vx,vy,gx,gy,bnd_ff,bnd_fc);
         end            
     end
 end

@@ -57,8 +57,8 @@ classdef A_3_1
             
             % > If any(A) belongs to B, then A and B are neighbours.
             %   Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
-            for i = 1:size(Cn_c,1)
-                for j = i+1:size(Cn_c,1)
+            for i = 1:1:size(Cn_c,1)
+                for j = i+1:1:size(Cn_c,1)
                     x_ij(i,j) = A_Tools.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
                     x_ij(j,i) = x_ij(i,j);
                 end
@@ -175,9 +175,6 @@ classdef A_3_1
                 msh.bnd.f{2,i}      = jj+i;
                 %  > Cell index.
                 msh.bnd.f{3,i}      = fin_f{jj+i,3};
-                %  > Boundary identification.
-                [msh.bnd.f{4,i},...
-                    msh.bnd.f{5,i}] = A_3_1.Identify_bnd(msh.bnd.f{1,i},msh.c.mean(:,msh.bnd.f{3,i}));
             end
         end
         % >> 2.1. ---------------------------------------------------------
@@ -315,19 +312,6 @@ classdef A_3_1
             if dot(FC,Nf) > 0
                 Nf = -Nf;
                 Sf = -Sf;
-            end
-        end
-        % >> 3.4. ---------------------------------------------------------
-        function [i_bnd] = Identify_Boundary(Nf)
-            switch true
-                case isequal(Nf,[ 1, 0])
-                    i_bnd  = 'E';
-                case isequal(Nf,[ 0, 1])
-                    i_bnd = 'N';
-                case isequal(Nf,[-1, 0])
-                    i_bnd = 'W';
-                case isequal(Nf,[ 0,-1])
-                    i_bnd = 'S';
             end
         end
         

@@ -8,26 +8,14 @@ classdef A_3_2_2
         %  > 1.2.1. Extension #1.
         %  > 1.2.2. Extension #2.
         % >> --------------------------------------------------------------
-        function [msh] = Extend_Stencil(msh,bnd_cc,bnd_ff,bnd_fc,nt,p,et_1,et_2)
+        function [msh] = Extend_Stencil(msh,bnd_cc,bnd_ff,bnd_fc,nt,p,et)
             %  >  L_(x,y): Face length on the x,y-directions.
             L = A_3_2_2.Compute_Lx_Ly(msh);
-            %  > hg_(x,y): Reference length of each domain cell.
-            if et_1
-                hg = A_3_2_2.Compute_hgx_hgy(msh);
-            end
             
             % >> 1.
             %  > 1.1.
             for i = 1:msh.f.NF
-                if ~et_1
-                    %  > w/o extension #1.
-                    [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = ...
-                        A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
-                else
-                    %  > w/  extension #1.
-                    [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i),par.ngx(i),par.ngy(i)] = ...
-                        A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L,hg);
-                end
+                [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
             end
             %  > 1.2.
             %  > Initialize.
@@ -41,72 +29,44 @@ classdef A_3_2_2
                 Continue = true;
                 
                 % >> Check...
-                if (~et_1 && round(par.nx(i)) >= p && round(par.ny(i)) >= p) || ...
-                   ( et_1 && round(par.nx(i)) >= p && round(par.ny(i)) >= p && round(par.ngx(i)) >= p && round(par.ngy(i)) >= p)
-                    if ~et_2
+                if round(par.nx(i)) >= p && round(par.ny(i)) >= p
+                    if ~et
                         continue;
                     end
                 else
-                    while ((~et_1 && (round(par.nx(i)) < p || round(par.ny(i)) < p)) || ...
-                           ( et_1 && (round(par.nx(i)) < p || round(par.ny(i)) < p   || round(par.ngx(i)) < p || round(par.ngy(i)) < p))) && Continue
+                    while (round(par.nx(i)) < p || round(par.ny(i)) < p) && Continue
                         %% > x-direction.
                         Continue_X = false;
-                        if (~et_1 &&  round(par.nx(i)) < p) || ...
-                           ( et_1 && (round(par.nx(i)) < p  || round(par.ngx(i)) < p))
+                        if round(par.nx(i)) < p 
                             % >> Add/update...
                             [msh,Continue_X] = A_3_2_2.Perform_Extension(i,2,msh,bnd_cc,bnd_ff,bnd_fc,par.ly(1,i),par.ly(2,i),nt);
                             
                             % >> Re-compute parameters.
-                            if ~et_1
-                                %  > w/o extension #1.
-                                [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = ...
-                                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
-                            else
-                                %  > w/  extension #1.
-                                [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i),par.ngx(i),par.ngy(i)] = ...
-                                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L,hg);
-                            end
-                            % >> Increment number of extensions (x-direction).
+                            [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
+                            %  > Increment number of extensions (x-direction).
                             msh.s.par.ne(1,i) = msh.s.par.ne(1,i)+1;
                         end
                         %% > y-direction.
                         Continue_Y = false;
-                        if (~et_1 &&  round(par.ny(i)) < p) || ...
-                           ( et_1 && (round(par.ny(i)) < p  || round(par.ngy(i)) < p))
+                        if round(par.ny(i)) < p
                             % >> Add/update...
                             [msh,Continue_Y] = A_3_2_2.Perform_Extension(i,1,msh,bnd_cc,bnd_ff,bnd_fc,par.lx(1,i),par.lx(2,i),nt);
                             
                             % >> Re-compute parameters.
-                            if ~et_1
-                                %  > w/o extension #1.
-                                [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = ...
-                                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
-                            else
-                                %  > w/  extension #1.
-                                [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i),par.ngx(i),par.ngy(i)] = ...
-                                    A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L,hg);
-                            end
-                            % >> Increment number of extensions (y-direction).
+                            [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
+                            %  > Increment number of extensions (y-direction).
                             msh.s.par.ne(2,i) = msh.s.par.ne(2,i)+1;
                         end
                         Continue = any([Continue_X,Continue_Y]);
                     end
                 end
                 %% > Extension #2 (...until all cell centroids lie within the stencil limits).
-                if et_2
+                if et
                     % >> Add cell(s) and respective face(s)...
                     msh = A_3_2_2.Extension_2(i,msh,par.lx(:,i),par.ly(:,i),[msh.s.c{:,i}],bnd_cc,bnd_ff,bnd_fc);
                     
                     % >> Re-compute parameters (w/o incrementing the number of extensions).
-                    if ~et_1
-                        %  > w/o extension #1.
-                        [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = ...
-                            A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
-                    else
-                        %  > w/  extension #1.
-                        [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i),par.ngx(i),par.ngy(i)] = ...
-                            A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L,hg);
-                    end
+                    [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
                 end
             end
             %  > Deal fields...
@@ -114,10 +74,6 @@ classdef A_3_2_2
             msh.s.par.ly = par.ly;
             msh.s.par.nx = par.nx;
             msh.s.par.ny = par.ny;
-            if et_1
-                msh.s.par.ngx = par.ngx;
-                msh.s.par.ngy = par.ngy;
-            end
             %  > Total stencil points.
             for i = 1:msh.f.NF
                 msh.s.xy_v_t{i} = A_3_2_1.Compute_Coordinates_tt(msh.s.xy_v_c{i},msh.s.xy_v_f{i});
@@ -126,9 +82,9 @@ classdef A_3_2_2
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [lx,ly,nx,ny,ngx,ngy] = Compute_Parameters(i,msh,stl_c,L,hg)
+        function [lx,ly,nx,ny] = Compute_Parameters(i,msh,stl_c,L)
             % >> Deal elements.
-            arr_c = A_3_2_1.Deal_StencilElem(stl_c);
+            arr_c = [stl_c{:}];
             
             % >> (x,y)_min,max.
             [lcx(1),lcx(2)] = MinMaxElem(msh.s.xy_v_c{i}(1,:),'finite');
@@ -157,12 +113,6 @@ classdef A_3_2_2
             Ly  = sum(Lyj)./len;
             nx  = (lx(2)-lx(1))./Lx;
             ny  = (ly(2)-ly(1))./Ly;
-            
-            % >> ng_(x,y).
-            if nargin == 5
-                ngx = (lx(2)-lx(1))./hg(1);
-                ngy = (ly(2)-ly(1))./hg(2);
-            end
         end
         % >> 1.1.1. -------------------------------------------------------
         function [Lt] = Compute_Lx_Ly(msh)
@@ -173,18 +123,6 @@ classdef A_3_2_2
             end
             %  > (Lt)_x,y.
             [Lt(1,:),Lt(2,:)] = deal(Lx(2,:)-Lx(1,:),Ly(2,:)-Ly(1,:));
-        end
-        % >> 1.1.2. -------------------------------------------------------
-        function [hgt] = Compute_hgx_hgy(msh)
-            for j = 1:msh.c.NC
-                %  > (Xv,Yv)_min,max.
-                [Xv(1,j),Xv(2,j)] = MinMaxElem(msh.c.xy_v{j}(:,1),'finite');
-                [Yv(1,j),Yv(2,j)] = MinMaxElem(msh.c.xy_v{j}(:,2),'finite');
-                %  > (Xv)_(max-min)-(Yv)_(max-min).
-                [hx(j)  ,hy(j)  ] = deal(Xv(2,j)-Xv(1,j),Yv(2,j)-Yv(1,j));
-            end
-            %  > (hgt)_x,y.
-            [hgt(1,:),hgt(2,:)] = deal(sum(hx)./msh.c.NC,sum(hy)./msh.c.NC);
         end
         % >> 1.2. ---------------------------------------------------------
         function [msh,Flag] = Perform_Extension(i,k,msh,bnd_cc,bnd_ff,bnd_fc,v_min,v_max,nt)
