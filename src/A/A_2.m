@@ -11,17 +11,17 @@ classdef A_2
             eg   = inp.msh.eg;
             dm   = inp.msh.dm;
             
-            % >> Select polygon type...
+            % >> Select cell polygon type...
             switch pt
                 case 'v'
                     switch eg
                         case '1'
                             h      = inp.msh.h;
-                            struct = A_2.fft_Distmesh2D(dm,Xv_i,Xv_f,Yv_i,Yv_f,h);
+                            struct = A_2.fft_Distmesh2D(inp,dm,Xv_i,Xv_f,Yv_i,Yv_f,h);
                         case '2'
                             NX_v   = inp.msh.Nv(1);
                             NY_v   = inp.msh.Nv(2);
-                            xy_v   = A_2.TriangleMesh_NonUniform(Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v);
+                            xy_v   = A_2.TriangleMesh_NonUniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v);
                             struct = delaunayTriangulation(xy_v(:,1),xy_v(:,2));
                         otherwise
                             return;
@@ -30,7 +30,7 @@ classdef A_2
                     switch eg
                         case '1'
                             h                = inp.msh.h;
-                            [NX_v,NY_v,xy_v] = A_2.SquareMesh_Uniform(Xv_i,Xv_f,Yv_i,Yv_f,h);
+                            [NX_v,NY_v,xy_v] = A_2.SquareMesh_Uniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,h);
                         case '2'
                             NX_v = inp.msh.Nv(1);
                             NY_v = inp.msh.Nv(2);
@@ -64,12 +64,13 @@ classdef A_2
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [struct] = fft_Distmesh2D(eg,Xv_i,Xv_f,Yv_i,Yv_f,h)
-            %  > Bounding box.
+        function [struct] = fft_Distmesh2D(inp,eg,Xv_i,Xv_f,Yv_i,Yv_f,h)
+            % >> Bounding box.
             BBOX = [[Xv_i,Yv_i];[Xv_f,Yv_f]]; %  > [[Xmin,Ymin];[Xmax,Ymax]].
             switch eg
                 case '1'
                     %% > Example 1: Uniform mesh on square.
+                    % >> Vertex coordinates and respective connectivity.
                     %  > A,B,C,D.
                     A  = [Xv_i,Yv_i];
                     B  = [Xv_f,Yv_i];
@@ -81,8 +82,15 @@ classdef A_2
                     %  > Call 'distmesh2d'.
                     [struct.Points,struct.ConnectivityList] = ...
                         distmesh2d(fd,fh,h,[BBOX(1,:);BBOX(2,:)],[A;D;B;C]);
+                    
+                    % >> Boundary conditions.
+                    inp.pr.t.EB = 'Dirichlet'; %  > East  boundary type.
+                    inp.pr.t.WB = 'Dirichlet'; %  > West  boundary type.
+                    inp.pr.t.NB = 'Dirichlet'; %  > North boundary type.
+                    inp.pr.t.SB = 'Dirichlet'; %  > South boundary type.
                 case '2'
                     %% > Example 2: Circle/Ellipse.
+                    % >> Vertex coordinates and respective connectivity.
                     %  > (rx,ry).
                     rx = 1./2.*(Xv_f-Xv_i);
                     ry = 1./2.*(Yv_f-Yv_i);
@@ -94,12 +102,16 @@ classdef A_2
                     %  > Call 'distmesh2d'.
                     [struct.Points,struct.ConnectivityList] = ...
                         distmesh2d(fd,@huniform,h,[BBOX(1,:);BBOX(2,:)],[]);
+                    
+                    % >> Boundary conditions.
+                    inp.pr.t = 'Dirichlet'; 
                 otherwise
                     return;
             end
         end
         % >> 1.2. ---------------------------------------------------------
-        function [xy_v] = TriangleMesh_NonUniform(Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v)
+        function [xy_v] = TriangleMesh_NonUniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v)
+            % >> Vertex coordinates.
             %  > (Xd,Yd).
             Xd = sort((Xv_f-Xv_i).*rand(NY_v,NX_v-2)+Xv_i,2,'ascend');
             Xd = cat(2,ones(NY_v,1).*Xv_i,Xd,ones(NY_v,1).*Xv_f);
@@ -108,11 +120,18 @@ classdef A_2
             %  > (Xv,Yv).
             xy_v(:,1) = reshape(Xd,[],1);
             xy_v(:,2) = reshape(Yd,[],1);
+            
+            % >> Boundary conditions.
+            inp.pr.t.EB = 'Dirichlet'; %  > East  boundary type.
+            inp.pr.t.WB = 'Dirichlet'; %  > West  boundary type.
+            inp.pr.t.NB = 'Dirichlet'; %  > North boundary type.
+            inp.pr.t.SB = 'Dirichlet'; %  > South boundary type.
         end
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [NX,NY,xy_v] = SquareMesh_Uniform(Xv_i,Xv_f,Yv_i,Yv_f,h)
+        function [NX,NY,xy_v] = SquareMesh_Uniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,h)
+            % >> Vertex coordinates.
             %  > (Xd,Yd).
             [Xd_x,Yd_y] = deal(Xv_i:h:Xv_f,Yv_i:h:Yv_f);
             [Xd,Yd]     = meshgrid(Xd_x,Yd_y);
@@ -122,6 +141,12 @@ classdef A_2
             %  > (Xv,Yv).
             xy_v(:,1) = reshape(Xd,[],1);
             xy_v(:,2) = reshape(Yd,[],1);
+            
+            % >> Boundary conditions.
+            inp.pr.t.EB = 'Dirichlet'; %  > East  boundary type.
+            inp.pr.t.WB = 'Dirichlet'; %  > West  boundary type.
+            inp.pr.t.NB = 'Dirichlet'; %  > North boundary type.
+            inp.pr.t.SB = 'Dirichlet'; %  > South boundary type.
         end
         % >> 2.2. ---------------------------------------------------------
         function [xy_v] = SquareMesh_NonUniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v)
@@ -149,7 +174,7 @@ classdef A_2
             j        = 1:NY_v;
             NF_Y     = (Nf_Y-0).*(1+sinh(Ks_Y.*(Nf_Unf_Y(j)-B_Y))./sinh(Ks_Y.*B_Y))+0;
             
-            % >> Domain vertices.
+            % >> Vertex coordinates.
             %  > (Xd,Yd).
             [Xd_p,Yd_p] = ...
                 deal(NF_X(1:NX_v).*(Xv_f-Xv_i),NF_Y(1:NY_v).*(Yv_f-Yv_i));
@@ -157,6 +182,12 @@ classdef A_2
             %  > (Xv,Yv).
             xy_v(:,1) = reshape(Xd,[],1);
             xy_v(:,2) = reshape(Yd,[],1);
+            
+            % >> Boundary conditions.
+            inp.pr.t.EB = 'Dirichlet'; %  > East  boundary type.
+            inp.pr.t.WB = 'Dirichlet'; %  > West  boundary type.
+            inp.pr.t.NB = 'Dirichlet'; %  > North boundary type.
+            inp.pr.t.SB = 'Dirichlet'; %  > South boundary type.
         end
     end
 end
