@@ -1,8 +1,13 @@
 classdef Tools
     methods (Static)
         %% > Set directories.
-        function [] = Set_Directory(str)
-            addpath(genpath(str));
+        function [] = Set_Directories()
+            addpath(genpath('A'));
+            addpath(genpath('B'));
+            addpath(genpath('C'));
+            addpath(genpath('[Tools - Data]'));
+            addpath(genpath('[Tools - Numerical]'));
+            addpath(genpath('[Tools - Post-processing]'));
         end
         %% > Measure elapsed time.
         function [TA,TB] = Time_AB(inp,msh)

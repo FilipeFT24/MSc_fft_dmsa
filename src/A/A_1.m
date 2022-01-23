@@ -3,19 +3,10 @@ classdef A_1
         %% > Wrap-up A_1.
         function [inp] = WrapUp_A_1()
             % >> 1.
-            A_1.Add_FolderPaths;
-            % >> 2.
             inp = A_1.Set_inp();
         end
         
         %% > 1. -----------------------------------------------------------
-        function [] = Add_FolderPaths()
-            addpath(genpath('[Tools - Data]'));
-            addpath(genpath('[Tools - Numerical]'));
-            addpath(genpath('[Tools - Post-processing]'));
-        end
-        
-        %% > 2. -----------------------------------------------------------
         function [inp] = Set_inp()
             %% > msh.
             % >> 1. Grid limits: (Xv,Yv)_i,(Xv,Yv)_f.

@@ -21,7 +21,6 @@ classdef A_3_2_1
                     for k = 1:length(nb{i})
                         if A_Tools.fft_isequal_1(msh.f.xy_v{i}(1,:),msh.c.xy_v{nb{i}(k)}) || ...
                                 A_Tools.fft_isequal_1(msh.f.xy_v{i}(2,:),msh.c.xy_v{nb{i}(k)})
-                            %  > Non-boundary cell that contains 1 boundary vertex
                             ngh{1,i}(j) = nb{i}(k);
                             j           = j+1;
                         end

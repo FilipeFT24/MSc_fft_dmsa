@@ -2,8 +2,6 @@ classdef B
     methods(Static)
         %% > Wrap-up B.
         function [pde] = WrapUp_B(inp,msh)
-            %  > Working directory.
-            Tools.Set_Directory('B');
             % >> 1.
             pde = B_1.WrapUp_B_1(inp,msh);
             % >> 2.

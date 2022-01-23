@@ -4,7 +4,7 @@ classdef B_1_2
         % >> --------------------------------------------------------------
         % >> 1.   1D quadrature.
         %  > 1.1. Face mapping.
-        %  > 1.2  Gauss points/weights per face (NOT used here -> see B_2_2(1)).
+        %  > 1.2  Gauss points/weights per face (NOT used here).
         % >> 2.   2D quadrature.
         %  > 2.1. Cell mapping (computational domain): Triangle.
         %  > 2.2. Cell mapping (computational domain): Square.
@@ -76,7 +76,7 @@ classdef B_1_2
             N{4} = 1./4.*(1-csi).*(1+eta);
         end
         % >> 2.3. ---------------------------------------------------------
-        function [xx,yy,det_j] = IsoMapping(N)
+        function [xx,yy,det_J] = IsoMapping(N)
             % >> Symbolic variables.
             syms csi eta;
             
@@ -89,13 +89,13 @@ classdef B_1_2
                 [xx,yy] = ...
                     deal(xx+N{i}.*a(i),yy+N{i}.*b(i));
             end
-            j     = jacobian([xx,yy],[csi,eta]);
-            det_j = det(j);
+            J     = jacobian([xx,yy],[csi,eta]);
+            det_J = det(J);
             
             %  > Create function handles.
             xx    = matlabFunction(xx);
             yy    = matlabFunction(yy);
-            det_j = matlabFunction(det_j);
+            det_J = matlabFunction(det_J);
         end
         % >> 2.4. ---------------------------------------------------------
         function [Qp,I] = Compute_Integral_2D(Qc,xx,yy,det_J,func)
@@ -103,20 +103,20 @@ classdef B_1_2
             Qp.Points  = [xx,yy];
             Qp.Weights = Qc.Weights;
             %  > Func(phi).
-            func_p     = func(Qp.Points(:,1),Qp.Points(:,2));
+            func  = func(Qp.Points(:,1),Qp.Points(:,2));
             %  > 2D integral.
             I = 0;
             for i = 1:size(Qp.Points,1)
-                I = I+det_J(i).*Qp.Weights(i).*func_p(i);
+                I = I+det_J(i).*Qp.Weights(i).*func(i);
             end
         end
         % >> 2.5. ---------------------------------------------------------
         function [Qp,F_Vol] = Compute_SourceTerm(msh,func,ng)
             %  > Cell mapping (computational domain).
             [Qc_T,N_T]          = B_1_2.CD_Triangle     (ng);
-            [xx_T,yy_T,det_j_T] = B_1_2.IsoMapping      (N_T);
+            [xx_T,yy_T,det_J_T] = B_1_2.IsoMapping      (N_T);
             [Qc_S,N_S]          = B_1_2.CD_Quadrilateral(ng);
-            [xx_S,yy_S,det_j_S] = B_1_2.IsoMapping      (N_S);
+            [xx_S,yy_S,det_J_S] = B_1_2.IsoMapping      (N_S);
             
             %  > Compute source term (based on cell polygon).
             for i = 1:msh.c.NC
@@ -130,7 +130,7 @@ classdef B_1_2
                     Qc   {i} = Qc_T;
                     xx   {i} = xx_T   (X{i}(1),X{i}(2),X{i}(3),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                     yy   {i} = yy_T   (Y{i}(1),Y{i}(2),Y{i}(3),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
-                    det_J{i} = det_j_T(X{i}(1),X{i}(2),X{i}(3),Y{i}(1),Y{i}(2),Y{i}(3));
+                    det_J{i} = det_J_T(X{i}(1),X{i}(2),X{i}(3),Y{i}(1),Y{i}(2),Y{i}(3));
                     det_J{i} = repelem(det_J{i},size(xx{i},1))';
                 elseif size(msh.c.xy_v{i},1) == 4
                     % >> (xx,yy,det_J,Qc).
@@ -142,7 +142,7 @@ classdef B_1_2
                     Qc   {i} = Qc_S;
                     xx   {i} = xx_S   (X{i}(1),X{i}(2),X{i}(3),X{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                     yy   {i} = yy_S   (Y{i}(1),Y{i}(2),Y{i}(3),Y{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
-                    det_J{i} = det_j_S(X{i}(1),X{i}(2),X{i}(3),X{i}(4),Y{i}(1),Y{i}(2),Y{i}(3),Y{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
+                    det_J{i} = det_J_S(X{i}(1),X{i}(2),X{i}(3),X{i}(4),Y{i}(1),Y{i}(2),Y{i}(3),Y{i}(4),Qc{i}.Points(:,1),Qc{i}.Points(:,2));
                 end
                 %  > 2D Quadrature/cell source term.
                 [Qp{i},F_Vol(i)] = B_1_2.Compute_Integral_2D(Qc{i},xx{i},yy{i},det_J{i},func);

@@ -13,7 +13,7 @@ classdef B_2_2
             %  > 1.1.
             pde = B_2_2.Assemble_Mat_1(msh,pde,ng,bnd_ff,bnd_fc);
             %  > 1.3.
-            pde = B_2_2.Assemble_Mat_2(msh,pde,vx,vy,gx,gy,bnd_ff);
+            pde = B_2_2.Assemble_Mat_2(msh,pde,vx,vy,gx,gy);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -109,7 +109,7 @@ classdef B_2_2
             end
         end
         % >> 1.3. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_2(msh,pde,vx,vy,gx,gy,bnd_ff)            
+        function [pde] = Assemble_Mat_2(msh,pde,vx,vy,gx,gy)            
             % >> X*Tf.
             %    Remark: Tf=[A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
             %                                                 Face dependent coefficients: H,i,J,...,(...).
