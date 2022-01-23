@@ -10,12 +10,7 @@ classdef A_3_1
         %  > 2.4. Match bulk face cells.
         % >> 3.   Compute face normals/identify to which boundary do they belong to (based on its direction).
         %  > 3.1. Compute face normals.
-        %  > 3.2. Boundary identification: 1. Nf = [ 1, 0]: East (E) boundary.
-        %                                  2. Nf = [ 0, 1]: North(N) boundary.
-        %                                  3. Nf = [-1, 0]: West (W) boundary.
-        %                                  4. Nf = [ 0,-1]: South(S) boundary.
-        %  > 3.3. Face normal tools.
-        %  > 3.4. Boundary iD.
+        %  > 3.2. Face normal tools.
         % >> 4.   Compute reference length.
         % >> --------------------------------------------------------------
         function [msh] = WrapUp_A_3_1(struct,msh)
@@ -30,12 +25,14 @@ classdef A_3_1
                 msh.c.mean(1,i) = A_Tools.fft_mean(msh.c.xy_v{i}(:,1));
                 msh.c.mean(2,i) = A_Tools.fft_mean(msh.c.xy_v{i}(:,2));
             end
+            %  > Connectivity list.
+            Cn_c = sort(struct.ConnectivityList,2);
             %  > Cell neighbouring cells.
-            msh = A_3_1.Set_CellNeighbours(struct,msh);
+            msh = A_3_1.Set_CellNeighbours(msh,Cn_c);
             
             % >> 2.
             %  > Face coordinates.
-            msh = A_3_1.Set_DomainFaces(struct,msh);
+            msh = A_3_1.Set_DomainFaces(struct,msh,Cn_c);
             %  > Cell reference length.
             msh = A_3_1.Set_ReferenceLength(msh);
             
@@ -49,17 +46,15 @@ classdef A_3_1
         end
                                       
         %% > 1. -----------------------------------------------------------
-        function [msh] = Set_CellNeighbours(struct,msh)
-            %  > Connectivity list.
-            Cn_c = struct.ConnectivityList;
+        function [msh] = Set_CellNeighbours(msh,Cn_c)
             %  > Initialize x_ij.
             x_ij = zeros(size(Cn_c,1),size(Cn_c,1));
             
-            % > If any(A) belongs to B, then A and B are neighbours.
-            %   Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
+            %  > If any(A) belongs to B, then A and B are neighbours.
+            %    Remark: Some constraints (if clauses) were set to speed up evaluation process (VERY time consuming for large grids).
             for i = 1:size(Cn_c,1)
                 for j = i+1:size(Cn_c,1)
-                    x_ij(i,j) = A_Tools.fft_ismember_1(Cn_c(i,:),Cn_c(j,:));
+                    x_ij(i,j) = any(ismembc(Cn_c(i,:),Cn_c(j,:)));
                     x_ij(j,i) = x_ij(i,j);
                 end
                 msh.c.c{i} = find(x_ij(i,:));
@@ -67,10 +62,7 @@ classdef A_3_1
         end
         
         %% > 2. -----------------------------------------------------------
-        function [msh] = Set_DomainFaces(struct,msh)
-            %  > Connectivity list.
-            Cn_c = struct.ConnectivityList;
-            
+        function [msh] = Set_DomainFaces(struct,msh,Cn_c)
             % >> Domain faces.
             %  > Bulk faces (contains duplicates).
             blk_ij = A_3_1.Pick_BlkFaces(msh,Cn_c);
@@ -239,8 +231,8 @@ classdef A_3_1
             Array_o      = zeros(2,len./2);
             Array_v      = zeros(1,len./2);
             
-            j = 1; % -> Growth of Array_o(1,:).
-            k = 1; % -> Growth of Array_o(2,:).
+            j = 1; %  > Growth of Array_o(1,:).
+            k = 1; %  > Growth of Array_o(2,:).
             for i = 1:len
                 if j <= len./2
                     if (i == 1 || ~A_Tools.fft_ismember_1(id_f(i),Array_v(1,1:j))) && j <= len./2
@@ -280,15 +272,8 @@ classdef A_3_1
                         A_3_1.Tools_FaceNormals(msh.c.f.xy_v{i}{j},msh.c.mean(:,i));
                 end
             end
-        end
+        end     
         % >> 3.2. ---------------------------------------------------------
-        function [i_bnd,Nf] = Identify_bnd(fv,mean_ic)
-            %  > Outer (unit) normal.
-            [Nf,~] = A_3_1.Tools_FaceNormals(fv,mean_ic);
-            %  > Boundary identification.
-            i_bnd  = A_3_1.Identify_Boundary(Nf);
-        end       
-        % >> 3.3. ---------------------------------------------------------
         function [Nf,Sf] = Tools_FaceNormals(fv,mean_ic)
             % >> Centroids.
             %  > Face centroid.
@@ -322,7 +307,7 @@ classdef A_3_1
                 vol(i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
                 for j = 1:size(msh.c.f.xy_v{i},2)
                     %  > Face length (for each cell).
-                    msh.c.f.len{i}(j) = pdist([msh.c.f.xy_v{i}{j}(:,1),msh.c.f.xy_v{i}{j}(:,2)],'euclidean');
+                    msh.c.f.len{i}(j) = A_Tools.fft_dist_1(msh.c.f.xy_v{i}{j}(1,:)',msh.c.f.xy_v{i}{j}(2,:)');
                 end
                 %  > Cell perimeter.
                 p(i) = sum(msh.c.f.len{i});

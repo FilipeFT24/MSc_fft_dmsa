@@ -5,8 +5,9 @@ classdef A_3_2_2
         % >> 1.     Compute stencil limits and check if and extension is required.
         %  > 1.1.   Compute parameters.
         %  > 1.2.   Perform extension.
-        %  > 1.2.1. Extension #1.
-        %  > 1.2.2. Extension #2.
+        %  > 1.2.1. Add/update cell/face indices/coordinates.
+        %  > 1.2.2. Extension #1.
+        %  > 1.2.3. Extension #2.
         % >> --------------------------------------------------------------
         function [msh] = Extend_Stencil(msh,bnd_cc,bnd_ff,bnd_fc,nt,p,et)
             %  >  L_(x,y): Face length on the x,y-directions.
@@ -29,18 +30,17 @@ classdef A_3_2_2
                 Continue = true;
                 
                 % >> Check...
-                if round(par.nx(i)) >= p && round(par.ny(i)) >= p
+                if ceil(par.nx(i)) >= p && ceil(par.ny(i)) >= p
                     if ~et
                         continue;
                     end
                 else
-                    while (round(par.nx(i)) < p || round(par.ny(i)) < p) && Continue
+                    while (ceil(par.nx(i)) < p || ceil(par.ny(i)) < p) && Continue
                         %% > x-direction.
                         Continue_X = false;
-                        if round(par.nx(i)) < p 
+                        if ceil(par.nx(i)) < p 
                             % >> Add/update...
                             [msh,Continue_X] = A_3_2_2.Perform_Extension(i,2,msh,bnd_cc,bnd_ff,bnd_fc,par.ly(1,i),par.ly(2,i),nt);
-                            
                             % >> Re-compute parameters.
                             [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
                             %  > Increment number of extensions (x-direction).
@@ -48,10 +48,9 @@ classdef A_3_2_2
                         end
                         %% > y-direction.
                         Continue_Y = false;
-                        if round(par.ny(i)) < p
+                        if ceil(par.ny(i)) < p
                             % >> Add/update...
                             [msh,Continue_Y] = A_3_2_2.Perform_Extension(i,1,msh,bnd_cc,bnd_ff,bnd_fc,par.lx(1,i),par.lx(2,i),nt);
-                            
                             % >> Re-compute parameters.
                             [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
                             %  > Increment number of extensions (y-direction).
@@ -64,7 +63,6 @@ classdef A_3_2_2
                 if et
                     % >> Add cell(s) and respective face(s)...
                     msh = A_3_2_2.Extension_2(i,msh,par.lx(:,i),par.ly(:,i),[msh.s.c{:,i}],bnd_cc,bnd_ff,bnd_fc);
-                    
                     % >> Re-compute parameters (w/o incrementing the number of extensions).
                     [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
                 end
@@ -114,7 +112,7 @@ classdef A_3_2_2
             nx  = (lx(2)-lx(1))./Lx;
             ny  = (ly(2)-ly(1))./Ly;
         end
-        % >> 1.1.1. -------------------------------------------------------
+        %  > 1.1.1. -------------------------------------------------------
         function [Lt] = Compute_Lx_Ly(msh)
             for j = 1:msh.c.NC
                 %  > (Lx,Ly)_min,max.

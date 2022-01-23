@@ -27,7 +27,7 @@ classdef A_1
             % >> 2. Grid type.
             %    ├─ Uniform     grid: h.
             %    └─ Non-uniform grid: Nv=[Nv(X),Nv(Y)].
-            inp.msh.h     = 0.1;
+            inp.msh.h     = 0.05;
             inp.msh.Nv(1) = 15;
             inp.msh.Nv(2) = 15;
             
@@ -47,7 +47,7 @@ classdef A_1
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).            
             inp.msh.pt       = 's';
             inp.msh.eg       = '1';
-            inp.msh.dm       = '2';
+            inp.msh.dm       = '1';
             inp.msh.s_nu.Nf_X = 0.5;
             inp.msh.s_nu.Nf_Y = 0.5;
             inp.msh.s_nu.Ks_X = 7.5;
@@ -75,7 +75,7 @@ classdef A_1
             %  > 6. Extension type.
             inp.fr.st = 'Implicit';           
             inp.fr.wf = 'Weighted';
-            inp.fr.np = 5;
+            inp.fr.np = 7;
             inp.fr.ng = 9;
             inp.fr.nt = false;
             inp.fr.et = false;

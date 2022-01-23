@@ -8,9 +8,10 @@ classdef A_Tools
         %  > 1.3. Modified version (#1) of isequal: Compare array   B w/ matrix A.
         %  > 1.4. Modified version (#2) of isequal: Compare matrix  B w/ matrix A.
         %  > 1.5. Modified version (#1) of setdiff.
-        %  > 1.6. Modified version (#1) of 'mean'.
-        %  > 1.7. Modified version (#1) of 'pdist': Point/Point. 
-        %  > 1.8. Modified version (#1) of 'pdist': Point/Matrix.
+        %  > 1.6. Modified version (#1) of 'unique'.
+        %  > 1.7. Modified version (#1) of 'mean'.
+        %  > 1.8. Modified version (#1) of 'pdist': Point/Point. 
+        %  > 1.9. Modified version (#1) of 'pdist': Point/Matrix.
         % >> 2.   Sort 'msh' fields.
         % >> --------------------------------------------------------------
         
@@ -21,7 +22,7 @@ classdef A_Tools
         end
         % >> 1.2. ---------------------------------------------------------
         function [Flag] = fft_ismember_2(A,B)
-            Array = find(double(ismembc(B,sort(A))));
+            Array = find(double(ismembc(B,A)));
             if size(Array) < 2
                 Flag = zeros(1,2);
             else

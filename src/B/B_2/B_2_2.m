@@ -41,8 +41,6 @@ classdef B_2_2
                 end
             end
      
-            
-            
             % >> Dwf = w*Df.
             for i = 1:msh.f.NF
                 for j = 1:size(stl_xy{i},2)

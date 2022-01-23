@@ -140,7 +140,7 @@ classdef Fig_1
             %  > Face.
             plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.0);
             Fig_Tools.Plot_Limits(inp,msh,iF);
-            %legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
+            legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
             Fig_Tools.ChangeLook_1(inp,len);
         end
     end

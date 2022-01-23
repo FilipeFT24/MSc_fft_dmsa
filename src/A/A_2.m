@@ -132,12 +132,14 @@ classdef A_2
         % >> 2.1. ---------------------------------------------------------
         function [NX,NY,xy_v] = SquareMesh_Uniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,h)
             % >> Vertex coordinates.
+            %  > (NX_c,NY_c).
+            [NX_c,NY_c] = deal(round(1./h.*(Xv_f-Xv_i)),round(1./h.*(Yv_f-Yv_i)));
             %  > (Xd,Yd).
-            [Xd_x,Yd_y] = deal(Xv_i:h:Xv_f,Yv_i:h:Yv_f);
+            [Xd_x,Yd_y] = deal(linspace(Xv_i,Xv_f,NX_c),linspace(Yv_i,Yv_f,NY_c));
             [Xd,Yd]     = meshgrid(Xd_x,Yd_y);
             %  > (NX,NY).
             NX = length(Xd_x);
-            NY = length(Xd_x);
+            NY = length(Yd_y);
             %  > (Xv,Yv).
             xy_v(:,1) = reshape(Xd,[],1);
             xy_v(:,2) = reshape(Yd,[],1);
