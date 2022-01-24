@@ -19,7 +19,7 @@ function Q = quadtriangle(d,varargin)
 %    of the following Name-Value pair arguments: 
 %    ______________________________________________________________________
 %    'Domain' — Triangular domain
-%    [ -1 -1; 1 -1; -1 1 ] (default) | [ x1 y2; x2 y2; x3 y3 ] | [ ] 
+%    [ -1 -1; 1 -1; -1 1 ] (default) | [ x1 y1; x2 y2; x3 y3 ] | [ ] 
 %    ¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯¯     
 %    The triangular domain over which the weights and points are defined,
 %    specified as a 3×2 array of the (x,y) vertices of the triangle, i.e.,

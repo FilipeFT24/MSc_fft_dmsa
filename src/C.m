@@ -9,7 +9,7 @@ classdef C
             %  > Figure 2.
             Fig_2.WrapUp_Fig_2(false,false,3,inp,msh,pde,len);
             %  > Figure 3.
-            Fig_3.WrapUp_Fig_3(true ,false,4,inp,msh,pde,len);
+            Fig_3.WrapUp_Fig_3(false,false,4,inp,msh,pde,len);
             %  > Figure 4.
             Fig_4.WrapUp_Fig_4(true ,false,5,inp,msh,pde,len);
         end

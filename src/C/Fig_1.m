@@ -17,7 +17,7 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot_1(inp,msh,iF,len);
+                Fig_1.Plot_1(inp,msh,3,len);
                 %  > Export as .pdf.
                 if Exp_1
                     Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
@@ -55,7 +55,7 @@ classdef Fig_1
                     continue;
                 end
                 patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'w');
-            end
+            end                
             % %% > Boundaries.
             % %  > Cells.
             % hold on;
@@ -79,8 +79,8 @@ classdef Fig_1
             % for j = 1:msh.f.NF
             %     plot(msh.f.mean(1,j),msh.f.mean(2,j),'ob','MarkerFaceColor','b','MarkerSize',1.5);
             % end
-            % %% > Normals.
-            % hold on;
+            %% > Normals.
+            hold on;
             % for i = 1:msh.c.NC
             %     for j = 1:size(msh.c.f.xy_v{i},2)
             %         quiver(msh.c.f.mean{i}(1,j),msh.c.f.mean{i}(2,j),msh.c.f.Nf{i}(1,j).*len,msh.c.f.Nf{i}(2,j).*len,'AutoScale','off','Color','b');

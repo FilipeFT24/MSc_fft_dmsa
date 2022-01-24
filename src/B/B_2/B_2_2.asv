@@ -21,12 +21,12 @@ classdef B_2_2
         function [pde] = Assemble_Mat_1(msh,pde,bnd_ff,bnd_fc)
             %% > Matrices Df and Dwf.
             % >> (x,y) coordinates...
-            i         = 1:msh.f.NF;
+            i          = 1:msh.f.NF;
             %  > ...face centroid.
-            Face(1,i) = msh.f.mean(1,i);
-            Face(2,i) = msh.f.mean(2,i);
+            Face(1,i)  = msh.f.mean(1,i);
+            Face(2,i)  = msh.f.mean(2,i);
             %  > ...stencil points.
-            stl_xy    = msh.s.xy_v_t;
+            stl_xy     = msh.s.xy_v_t;
             
             % >> Df.
             for i = 1:msh.f.NF
@@ -45,21 +45,24 @@ classdef B_2_2
             for i = 1:msh.f.NF
                 %  > if d~=0...
                 for j = 1:size(stl_xy{i},2)
-                    d{i}  (j) = A_Tools.fft_dist_1([stl_xy{i}(:,j)';Face(:,i)']);
+                    d    {i}  (j) = A_Tools.fft_dist_1([stl_xy{i}(:,j)';Face(:,i)']);
                 end
-                w    {i}(:,1) = pde.wf.wf_1(d{i},2);
+                w        {i}(:,1) = pde.wf.wf_1(d{i},2);
                 %  > if d=0...
                 %    Remark: If point=face, use cell centroid instead.
                 d_flag{i} = find(~d{i});
                 if ~isempty(d_flag{i})
-                    k         = d_flag{i};
-                    Point     = msh.c.mean(:,bnd_fc(bnd_ff == i));
-                    d{i}  (k) = A_Tools.fft_dist_1([Point';Face(:,i)']);
-                    w{i}(k,1) = pde.wf.wf_1(d{i}(k),2); 
+                    k             = d_flag{i};
+                    Point         = msh.c.mean(:,bnd_fc(bnd_ff == i));
+                    d    {i}  (k) = A_Tools.fft_dist_1([Point';Face(:,i)']);
+                    w    {i}(k,1) = pde.wf.wf_1(d{i}(k),2); 
                 end
                 Dwf{i} = bsxfun(@times,Df{i},w{i});
             end
-        
+         
+            
+       
+            
             %% > Matrices Pf and Tf.
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
@@ -71,18 +74,21 @@ classdef B_2_2
             for i = 1:msh.f.NF
                 %  > Face quadrature.
                 pde.f.gq{i} = B_1_2.GaussFace_Points(pde.f.Q_1D,pde.f.xy_fg,pde.f.j_fg,msh.f.xy_v{i});
-                %  > Convection/diffusion contribution(s).
+                %  > Convection.
                 df      {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_1,pde.pr.Exp_1);
-                grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
                 Tf_C    {i} = df{i}*Pf{i};
+                %  > Diffusion.
+                grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
                 Tf_D    {i} = grad_df{i}*Pf{i};
             end
             
             % >> Deal...
-            %  > Df, Dwf and Pf.
-            [pde.f.Df,pde.f.Dwf,pde.f.Pf] = deal(Df,Dwf,Pf);
-            %  > Tf_C and Tf_D.
-            [pde.f.Tf_C,pde.f.Tf_D] = deal(Tf_C,Tf_D);
+            %  > Df, Dwf and Pf
+            [pde.f.Df,pde.f.Dwf,pde.f.Pf] = ...
+                deal(Df,Dwf,Pf);
+            %  > Tf_C and .
+            [pde.f.Tf_C,pde.f.Tf_D] = ...
+                deal(Tf_C,Tf_D);
         end
         % >> 1.2. ---------------------------------------------------------
         function [df_ij] = Compute_df(iD,mean_f,fg,numb,Coeff,Exp)

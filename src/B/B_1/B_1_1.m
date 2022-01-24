@@ -38,21 +38,20 @@ classdef B_1_1
         % >> 1.2. ---------------------------------------------------------
         function [bnd,blk] = Compute_f_df_d2f(msh,fn)
             %  > Boundary faces.
-            for i = 1:size(msh.bnd.f,2)
-                bnd.f    (i) = fn.f    (msh.f.mean(1,msh.bnd.f{2,i}),msh.f.mean(2,msh.bnd.f{2,i}));
-                bnd.df_x (i) = fn.df_x (msh.f.mean(1,msh.bnd.f{2,i}),msh.f.mean(2,msh.bnd.f{2,i}));
-                bnd.df_y (i) = fn.df_y (msh.f.mean(1,msh.bnd.f{2,i}),msh.f.mean(2,msh.bnd.f{2,i}));
-                bnd.d2f_x(i) = fn.d2f_x(msh.f.mean(1,msh.bnd.f{2,i}),msh.f.mean(2,msh.bnd.f{2,i}));
-                bnd.d2f_y(i) = fn.d2f_y(msh.f.mean(1,msh.bnd.f{2,i}),msh.f.mean(2,msh.bnd.f{2,i}));
-            end
+            i            = 1:size(msh.bnd.f,2);
+            bnd.f    (i) = fn.f    (msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
+            bnd.df_x (i) = fn.df_x (msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
+            bnd.df_y (i) = fn.df_y (msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
+            bnd.d2f_x(i) = fn.d2f_x(msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
+            bnd.d2f_y(i) = fn.d2f_y(msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
+            
             %  > Domain cells.
-            for i = 1:msh.c.NC
-                blk.f    (i) = fn.f    (msh.c.mean(1,i),msh.c.mean(2,i));
-                blk.df_x (i) = fn.df_x (msh.c.mean(1,i),msh.c.mean(2,i));
-                blk.df_y (i) = fn.df_y (msh.c.mean(1,i),msh.c.mean(2,i));
-                blk.d2f_x(i) = fn.d2f_x(msh.c.mean(1,i),msh.c.mean(2,i));
-                blk.d2f_y(i) = fn.d2f_y(msh.c.mean(1,i),msh.c.mean(2,i));
-            end
+            j            = 1:msh.c.NC;
+            blk.f    (j) = fn.f    (msh.c.mean(1,j),msh.c.mean(2,j));
+            blk.df_x (j) = fn.df_x (msh.c.mean(1,j),msh.c.mean(2,j));
+            blk.df_y (j) = fn.df_y (msh.c.mean(1,j),msh.c.mean(2,j));
+            blk.d2f_x(j) = fn.d2f_x(msh.c.mean(1,j),msh.c.mean(2,j));
+            blk.d2f_y(j) = fn.d2f_y(msh.c.mean(1,j),msh.c.mean(2,j));           
         end
     end
 end

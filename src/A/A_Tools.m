@@ -75,14 +75,10 @@ classdef A_Tools
             Y = sum(X)./length(X);
         end
         % >> 1.8. ---------------------------------------------------------
-        function [D] = fft_dist_1(A,B)
-            D = sqrt(abs(bsxfun(@plus,sum(A.*A,1),sum(B.*B,1).')-2*A'*B));
+        function [D] = fft_dist_1(XY)
+            D = sqrt((XY(1,1)-XY(2,1)).^2+(XY(1,2)-XY(2,2)).^2);
         end
-        % >> 1.9. ---------------------------------------------------------
-        function [D] = fft_dist_2(A,B)
-            D = sqrt(abs(bsxfun(@plus,sum(B.*B,1),sum(A.*A,1).')'-2*B'*A));
-        end
-        
+   
         %% > 2. -----------------------------------------------------------      
         % >> 2.2. ---------------------------------------------------------
         function [msh] = Sort_msh(msh)

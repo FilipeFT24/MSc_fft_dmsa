@@ -307,7 +307,7 @@ classdef A_3_1
                 vol(i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
                 for j = 1:size(msh.c.f.xy_v{i},2)
                     %  > Face length (for each cell).
-                    msh.c.f.len{i}(j) = A_Tools.fft_dist_1(msh.c.f.xy_v{i}{j}(1,:)',msh.c.f.xy_v{i}{j}(2,:)');
+                    msh.c.f.len{i}(j) = A_Tools.fft_dist_1(msh.c.f.xy_v{i}{j}); %  > X|Y
                 end
                 %  > Cell perimeter.
                 p(i) = sum(msh.c.f.len{i});
