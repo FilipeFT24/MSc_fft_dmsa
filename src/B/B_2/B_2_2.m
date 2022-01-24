@@ -12,8 +12,8 @@ classdef B_2_2
             % >> 1.
             %  > 1.1.
             pde = B_2_2.Assemble_Mat_1(msh,pde,bnd_ff,bnd_fc);
-            %  > 1.3.
-            pde = B_2_2.Assemble_Mat_2(msh,pde,vx,vy,gx,gy);
+            %  > 1.2.
+            pde = B_2_2.Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -30,18 +30,17 @@ classdef B_2_2
             
             % >> Df.
             for i = 1:msh.f.NF
-                j {i} = 1:size(stl_xy{i},2);  
+                j {i} = 1:size(stl_xy{i},2);
                 %  > x-xf.
                 XY{i}(1,j{i}) = stl_xy{i}(1,j{i})-Face(1,i);
                 XY{i}(2,j{i}) = stl_xy{i}(2,j{i})-Face(2,i);
-                %  > Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].           
+                %  > Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
                 for k = 1:pde.pr.numb
                     Df{i}(j{i},k) = pde.pr.Coeff_1(k).*(XY{i}(1,j{i}).^pde.pr.Exp_1(1,k)).*(XY{i}(2,j{i}).^pde.pr.Exp_1(2,k));
                 end
             end
-     
+            
             % >> Dwf = w*Df.
-            %  > d~=0...
             for i = 1:msh.f.NF
                 %  > if d~=0...
                 for j = 1:size(stl_xy{i},2)
@@ -55,34 +54,27 @@ classdef B_2_2
                     k         = d_flag{i};
                     Point     = msh.c.mean(:,bnd_fc(bnd_ff == i));
                     d{i}  (k) = A_Tools.fft_dist_1([Point';Face(:,i)']);
-                    w{i}(k,1) = pde.wf.wf_1(d{i}(k),2); 
+                    w{i}(k,1) = pde.wf.wf_1(d{i}(k),2);
                 end
                 Dwf{i} = bsxfun(@times,Df{i},w{i});
             end
-        
+            
             %% > Matrices Pf and Tf.
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Inv{i} = pinv(transpose(Dwf{i})*Df{i});
-                Pf {i} = Inv{i}*transpose(Dwf{i});
+                Pf{i} = pinv(transpose(Dwf{i})*Df{i})*transpose(Dwf{i});
             end
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
                 %  > Face quadrature.
-                pde.f.gq{i} = B_1_2.GaussFace_Points(pde.f.Q_1D,pde.f.xy_fg,pde.f.j_fg,msh.f.xy_v{i});
+                pde.f.gq  {i} = B_1_2.GaussFace_Points(pde.f.Q_1D,pde.f.xy_fg,pde.f.j_fg,msh.f.xy_v{i});
                 %  > Convection/diffusion contribution(s).
-                df      {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_1,pde.pr.Exp_1);
-                grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
-                Tf_C    {i} = df{i}*Pf{i};
-                Tf_D    {i} = grad_df{i}*Pf{i};
+                df        {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_1,pde.pr.Exp_1);
+                grad_df   {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
+                pde.f.Tf_C{i} = df{i}*Pf{i};
+                pde.f.Tf_D{i} = grad_df{i}*Pf{i};
             end
-            
-            % >> Deal...
-            %  > Df, Dwf and Pf.
-            [pde.f.Df,pde.f.Dwf,pde.f.Pf] = deal(Df,Dwf,Pf);
-            %  > Tf_C and Tf_D.
-            [pde.f.Tf_C,pde.f.Tf_D] = deal(Tf_C,Tf_D);
         end
         % >> 1.2. ---------------------------------------------------------
         function [df_ij] = Compute_df(iD,mean_f,fg,numb,Coeff,Exp)
@@ -104,7 +96,7 @@ classdef B_2_2
             end
         end
         % >> 1.3. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_2(msh,pde,vx,vy,gx,gy)            
+        function [pde] = Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy)
             %  > Initialize.
             A = zeros(msh.c.NC,msh.c.NC);
             B = zeros(msh.c.NC,1);
@@ -125,7 +117,7 @@ classdef B_2_2
                     Phi_ff{i}  = [msh.s.f{:,i}];
                 end
             end
-
+            
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.f.Sf{i},2)
                     %  > Face 'j' of cell 'i'.
@@ -140,36 +132,51 @@ classdef B_2_2
             %  > ... for cell #i: Phi_f(j_1)=A*Phi(X)+B*Phi(Y)+C*Phi(Z)+...
             %                     Phi_f(j_2)=D*Phi(M)+E*Phi(N)+F*Phi(O)+...
             %                     Phi_f(...)=...
-            for i = 1:msh.c.NC 
+            for i = 1:msh.c.NC
                 for j = 1:length(face{i})
                     %  > Index in the j-direction.
-                    numb_c {i}(j)     = length(Phi_fc{face{i}(j)});
-                    k_ini  {i}(j)     = 1;
-                    k_fin  {i}(j)     = numb_c{i}(j);
-                    k                 = k_ini{i}(j):k_fin{i}(j);
-                    ijk    {i}{j}     = Phi_fc{face{i}(j)}(k);                    
+                    numb_c   {i}(j)     = length(Phi_fc{face{i}(j)});
+                    kc_i     {i}(j)     = 1;
+                    kc_f     {i}(j)     = numb_c{i}(j);
+                    k                   = kc_i{i}(j):kc_f{i}(j);
+                    ijk_c    {i}{j}     = Phi_fc{face{i}(j)}(k);
                     %  > Convection/diffusion contribution(s).
-                    A(i,ijk{i}{j}(k)) = A(i,ijk{i}{j}(k))+V_Tf_C_Sf{i}{j}(k);
-                    A(i,ijk{i}{j}(k)) = A(i,ijk{i}{j}(k))-G_Tf_D_Sf{i}{j}(k);
+                    A(i,ijk_c{i}{j}(k)) = A(i,ijk_c{i}{j}(k))+V_Tf_C_Sf{i}{j}(k);
+                    A(i,ijk_c{i}{j}(k)) = A(i,ijk_c{i}{j}(k))-G_Tf_D_Sf{i}{j}(k);
                 end
             end
-
+            
             % >> B (Face dependent coefficients).
             for i = 1:msh.c.NC
-                % >> Boundary contribution(s).
+                %  > Boundary contribution(s).
                 for j = 1:length(face{i})
                     %  > Index in the j-direction.
-                    numb_f{i}(j) = length(Phi_ff{face{i}(j)});
-                    k_ini {i}(j) = numb_c{i}(j)+1;
-                    k_fin {i}(j) = numb_c{i}(j)+numb_f{i}(j);
-                    k            = k_ini{i}(j):k_fin{i}(j);
+                    numb_f   {i}(j) = length(Phi_ff{face{i}(j)});
+                    kf_i     {i}(j) = numb_c{i}(j)+1;
+                    kf_f     {i}(j) = numb_c{i}(j)+numb_f{i}(j);
+                    k               = kf_i{i}(j):kf_f{i}(j);
+                    ijk_f    {i}{j} = Phi_ff{face{i}(j)}(k-numb_c{i}(j));
                     %  > Convection/diffusion contribution(s).
-                    B(i,1)       = B(i,1)+0;
+                    if all(isempty(ijk_f{i}{j}))
+                        %  > Skip cells that don't have faces whose sentil does not include boundary faces.
+                        break;
+                    else
+                        if ~isempty(ijk_f{i}{j})
+                            for l = 1:length(ijk_f{i}{j})
+                                %  > Indices.
+                                bnd_j{i}{j}(l) = find(ijk_f{i}{j}(l) == bnd_ff);
+                                %  > Boundary values.
+                                bnd_f{i}{j}(l) = pde.bnd.f(bnd_j{i}{j}(l));
+                            end
+                        end
+                    end
+                    B(i,1) = B(i,1)-V_Tf_C_Sf{i}{j}(k)*bnd_f{i}{j}';
+                    B(i,1) = B(i,1)+G_Tf_D_Sf{i}{j}(k)*bnd_f{i}{j}';
                 end
-                % >> Source term contribution.
+                %  > Source term contribution(s).
                 B(i,1) = B(i,1)+pde.c.F_Vol(i);
             end
- 
+            
             % >> PDE solution (nodal values).
             pde.Phi = B_2_2.SetUp_bicgstabl(A,B,10e-12,10e3)';
         end

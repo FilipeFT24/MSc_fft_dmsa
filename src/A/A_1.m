@@ -18,9 +18,9 @@ classdef A_1
             % >> 2. Grid type.
             %    ├─ Uniform     grid: h.
             %    └─ Non-uniform grid: Nv=[Nv(X),Nv(Y)].
-            inp.msh.h     = 0.04;
-            inp.msh.Nv(1) = 15;
-            inp.msh.Nv(2) = 15;
+            inp.msh.h     = 0.05;
+            inp.msh.Nv(1) = 25;
+            inp.msh.Nv(2) = 25;
             
             % >> 3. Grid types:
             %    ├── v
@@ -36,7 +36,7 @@ classdef A_1
             %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
             %                                  ├─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).            
-            inp.msh.pt       = 's';
+            inp.msh.pt       = 'v';
             inp.msh.eg       = '1';
             inp.msh.dm       = '1';
             inp.msh.s_nu.Nf_X = 0.5;
@@ -57,8 +57,8 @@ classdef A_1
             %  > 1. Simulation type   : 1. Explicit.
             %                           2. Implicit.
             %                           3. Deferred-correction approach (DC).
-            %  > 2. Weighting function: 1. Weighted.
-            %                           2. Unweighted.
+            %  > 2. Weighting function: 1. Unweighted.
+            %                           2. Weighted.
             %  > 3. Face polynomial degree.
             %  > 4. Number of Gauss points/per face.
             %  > 5. Neighbouring type : 1. Vertex (at least 1 common vertex) -> false.
