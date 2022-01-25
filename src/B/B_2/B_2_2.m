@@ -66,7 +66,6 @@ classdef B_2_2
                     if strcmpi(wfs,'1')
                         [a(i),b(i)] = deal(1,4);
                     elseif strcmpi(wfs,'2')
-                        [a(i),b(i)] = B_2_2.Fit_Distances(d{i});
                     else
                         return;
                     end
@@ -225,23 +224,6 @@ classdef B_2_2
             [A,B,setup] = deal(sparse(A),sparse(B),struct('type','ilutp','droptol',1e-6));
             [L,U]       = ilu(A,setup);
             [X,~]       = bicgstabl(A,B,Tol,iterMax,L,U,[]);
-        end
-        % >> 1.5. ---------------------------------------------------------
-        function [a,b] = Fit_Distances(y)
-            len    = length(y);
-            y      = sort  (y);
-            x      = linspace(1,len,len); 
-            fitfun = fittype(@(a,b,x) a.*x.^b);
-            fit_c  = fit(x',y',fitfun,'StartPoint',[1,2]);
-            coeff  = coeffvalues(fit_c);
-            a      = coeff(1);
-            b      = coeff(2);
-            
-            scatter(x, y, 'r+')
-            hold on
-            plot(x,fit_c(x));
-            hold off
-            
         end
         
         %% > 2. -----------------------------------------------------------
