@@ -11,9 +11,11 @@ classdef B_2_1
             [pde.pr.numb,pde.pr.Coeff_1,pde.pr.Coeff_2,pde.pr.Exp_1,pde.pr.Exp_2] = ...
                 B_2_1.Polynomial_Reconstruction(np);
             % >> 2.
-            [pde.wf.wf_1,pde.wf.wf_2] = B_2_1.W_Function(wf);
-        end       
-                
+            if strcmpi(wf,'Weighted')
+                [pde.wf.wf_1,pde.wf.wf_2] = B_2_1.W_Function();
+            end
+        end
+        
         %% > 1. -----------------------------------------------------------
         function [len_p,Coeff_1,Coeff_2,Exp_1,Exp_2] = Polynomial_Reconstruction(p)
             %  > Number of terms.
@@ -35,14 +37,14 @@ classdef B_2_1
             %  > dX        = | 0 | 1 | 0 | 2x  | y   | 0   | 3x^2 | 2xy  | y^2  | 0    | 4x^3 | 3x^2y | 2xy^2  | y^3   | 0    | (...)
             %  > Coeff     = | 0 | 1 | 0 | 2   | 1   | 0   | 3    | 2    | 1    | 0    | 4    | 3     | 2      | 1     | 0    | (...)
             %  > dX_exp(x) = | 0 | 0 | 0 | 1   | 0   | 0   | 2    | 1    | 0    | 0    | 3    | 2     | 1      | 0     | 0    | (...)
-            %  > dX_exp(y) = | 0 | 0 | 0 | 0   | 1   | 0   | 0    | 1    | 2    | 0    | 0    | 1     | 2      | 3     | 0    | (...)            
+            %  > dX_exp(y) = | 0 | 0 | 0 | 0   | 1   | 0   | 0    | 1    | 2    | 0    | 0    | 1     | 2      | 3     | 0    | (...)
             %                |------------------------------------------------------------------------------------------------|
             %  > dY        = | 0 | 0 | 1 | 0   | x   | 2y  | 0    | x^2  | 2xy  | 3y^2 | 0    | x^3   | 2x^2y  | 3xy^2 | 4y^3 | (...)
             %  > Coeff     = | 0 | 0 | 1 | 0   | 1   | 2   | 0    | 1    | 2    | 3    | 0    | 1     | 2      | 3     | 4    | (...)
             %  > dX_exp(x) = | 0 | 0 | 0 | 0   | 1   | 0   | 0    | 2    | 1    | 0    | 0    | 3     | 2      | 1     | 0    | (...)
             %  > dX_exp(y) = | 0 | 0 | 0 | 0   | 0   | 1   | 0    | 0    | 1    | 2    | 0    | 0     | 1      | 2     | 3    | (...)
             %                |------------------------------------------------------------------------------------------------|
-            %                |------------------------------------------------------------------------------------------------|      
+            %                |------------------------------------------------------------------------------------------------|
             %  > #         = | 1 | 2 | 3 | 4   | 5   | 6   | 7    | 8    | 9    | 10   | 11   | 12    | 13     | 14    | 15   | (...)
             %                |------------------------------------------------------------------------------------------------| (...)
             %                | p = 1     | p = 3                                | p = 5                                      ...
@@ -51,7 +53,7 @@ classdef B_2_1
             % >> iD = 1.
             %  > Polynomial coefficients.
             Coeff_1 = ones(1,len_p);
-            %  > Polynomial exponents.            
+            %  > Polynomial exponents.
             Exp_1   = zeros(2,len_p);
             i       = 1;
             while i < p+1
@@ -66,7 +68,7 @@ classdef B_2_1
                     Exp_1(2,k+j) = j-1;
                 end
                 i = i+1;
-            end 
+            end
             
             % >> iD = 2.
             %  > Polynomial exponents.
@@ -103,7 +105,7 @@ classdef B_2_1
                     i = i+1;
                 end
             end
-
+            
             % >> Deal coefficients/exponents.
             if iD == 1
                 % >> Phi_f.
@@ -121,24 +123,15 @@ classdef B_2_1
                 Exp_iD{2}(2,:) = Exp_dY(2,:);
             end
         end
-
+        
         %% > 2. -----------------------------------------------------------
-        function [wf_1,wf_2] = W_Function(wf)
+        function [wf_1,wf_2] = W_Function()
             % >> Symbolic variable.
-            syms d k;
+            syms a b d;
             
-            % >> Weighting functions: 1) Unweighted: wij = 1.
-            %                         2) Weighted  : wij = 1/|xj-xi|^2 -> wij = 1/|dist(x_point-xf)|^k.
-            %                         3) Weighted  : wij = (...).
-            if strcmpi(wf,'Unweighted')
-                %  > 1.
-                wf_1 = @(d,k) 1;
-                wf_2 = @(d,k) 1;
-            elseif strcmpi(wf,'Weighted')
-                %  > 2.
-                wf_1 = @(d,k) 1./(d).^k;
-                wf_2 = @(d,k) 1./(d./2).^k;
-            end
-        end                  
+            %  > Weight function(s).
+            wf_1 = @(a,b,d) 1./(a.*d.^b);
+            wf_2 = @(a,b,d) 1./(a.*(d./2).^b);
+        end
     end
 end

@@ -168,19 +168,19 @@ classdef Fig_Tools
             Yv_f = inp.msh.lim.Yv_f;
             
             %  > x_min.
-            if msh.s.par.lx(1,iF) ~= Xv_i
+            if round(msh.s.par.lx(1,iF),2) ~= Xv_i
                 xline(msh.s.par.lx(1,iF),'-.r','Linewidth',0.5);
             end
             %  > x_max.
-            if msh.s.par.lx(2,iF) ~= Xv_f
+            if round(msh.s.par.lx(2,iF),2) ~= Xv_f
                 xline(msh.s.par.lx(2,iF),'-.r','Linewidth',0.5);
             end
             %  > y_min.
-            if msh.s.par.ly(1,iF) ~= Yv_i
+            if round(msh.s.par.ly(1,iF),2) ~= Yv_i
                 yline(msh.s.par.ly(1,iF),'-.r','Linewidth',0.5);
             end
             %  > y_max.
-            if msh.s.par.ly(2,iF) ~= Yv_f
+            if round(msh.s.par.ly(2,iF),2) ~= Yv_f
                 yline(msh.s.par.ly(2,iF),'-.r','Linewidth',0.5);
             end
         end

@@ -302,19 +302,19 @@ classdef A_3_1
         
         %% > 4. -----------------------------------------------------------
         function [msh] = Set_ReferenceLength(msh)
+            %  > Face length.
             for i = 1:msh.c.NC
-                %  > Cell volume.
-                vol(i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
                 for j = 1:size(msh.c.f.xy_v{i},2)
-                    %  > Face length (for each cell).
-                    msh.c.f.len{i}(j) = A_Tools.fft_dist_1(msh.c.f.xy_v{i}{j}); %  > X|Y
+                    msh.c.f.len{i}(j) = A_Tools.fft_dist(msh.c.f.xy_v{i}{j}); %  > X|Y
                 end
-                %  > Cell perimeter.
-                p(i) = sum(msh.c.f.len{i});
-                %  > Cell hydraulic diameter.
-                msh.c.h(i) = 4.*vol(i)./p(i);
+                %  > Face perimeter.
+                p        (i) = sum(msh.c.f.len{i});
+                %  > Face volume.
+                msh.c.vol(i) = polyarea(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2));
             end
-            %  > Reference length.
+            %  > Hydraulic diameter (h) and reference length(h_ref).
+            i           = 1:msh.c.NC;
+            msh.c.h (i) = 4.*msh.c.vol(i)./p(i);
             msh.d.h_ref = sum(msh.c.h)./msh.c.NC;
         end
     end

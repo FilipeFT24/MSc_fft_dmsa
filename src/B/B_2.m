@@ -3,13 +3,14 @@ classdef B_2
         %% > Wrap-up B_2.
         function [pde] = WrapUp_B_2(inp,msh,pde)
             % >> Local variables.
-            vx = inp.pr.vx;
-            vy = inp.pr.vy;
-            gx = inp.pr.gx;
-            gy = inp.pr.gy;
-            np = inp.fr.np;
-            ng = inp.fr.ng;
-            wf = inp.fr.wf;
+            vx  = inp.pr.vx;
+            vy  = inp.pr.vy;
+            gx  = inp.pr.gx;
+            gy  = inp.pr.gy;
+            np  = inp.fr.np;
+            ng  = inp.fr.ng;
+            wf  = inp.fr.wf;
+            wfs = inp.fr.wfs;
             
             %  > Auxiliary arrays.
             j         = 1:size(msh.bnd.f,2);
@@ -19,7 +20,7 @@ classdef B_2
             % >> 1.
             pde = B_2_1.WrapUp_B_2_1(pde,np,wf);
             % >> 2.
-            pde = B_2_2.WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,bnd_ff,bnd_fc);
+            pde = B_2_2.WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,wf,wfs,bnd_ff,bnd_fc);
         end            
     end
 end

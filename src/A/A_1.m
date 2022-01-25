@@ -18,7 +18,7 @@ classdef A_1
             % >> 2. Grid type.
             %    ├─ Uniform     grid: h.
             %    └─ Non-uniform grid: Nv=[Nv(X),Nv(Y)].
-            inp.msh.h     = 0.05;
+            inp.msh.h     = 0.025;
             inp.msh.Nv(1) = 25;
             inp.msh.Nv(2) = 25;
             
@@ -36,7 +36,7 @@ classdef A_1
             %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
             %                                  ├─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).            
-            inp.msh.pt       = 'v';
+            inp.msh.pt       = 's';
             inp.msh.eg       = '1';
             inp.msh.dm       = '1';
             inp.msh.s_nu.Nf_X = 0.5;
@@ -64,12 +64,13 @@ classdef A_1
             %  > 5. Neighbouring type : 1. Vertex (at least 1 common vertex) -> false.
             %                           2. Face   (at least 1 common face  ) -> true.
             %  > 6. Extension type.
-            inp.fr.st = 'Implicit';           
-            inp.fr.wf = 'Weighted';
-            inp.fr.np = 5;
-            inp.fr.ng = 5;
-            inp.fr.nt = false;
-            inp.fr.et = false;
+            inp.fr.st  = 'Implicit';           
+            inp.fr.wf  = 'Weighted';
+            inp.fr.wfs = '2';
+            inp.fr.np  = 5;
+            inp.fr.ng  = 5;
+            inp.fr.nt  = false;
+            inp.fr.et  = false;
         end
     end
 end

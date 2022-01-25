@@ -1,24 +1,27 @@
 classdef B_2_2
     methods (Static)
         %% > Wrap-up B_2_2.
-        function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,bnd_ff,bnd_fc)
+        function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,wf,wfs,bnd_ff,bnd_fc)
             % >> ----------------------------------------------------------
             % >> 1.   Assemble matrices.
             %  > 1.1. Assemble matrices Df, Dwf, Pf and Tf.
             %  > 1.2. Compute df array.
             %  > 1.3. Assemble matrices A and B.
             %  > 1.4. Solver setup.
+            % >> 2.   Compute error norms.
             % >> ----------------------------------------------------------
             % >> 1.
             %  > 1.1.
-            pde = B_2_2.Assemble_Mat_1(msh,pde,bnd_ff,bnd_fc);
+            pde = B_2_2.Assemble_Mat_1(msh,pde,wf,wfs,bnd_ff,bnd_fc);
             %  > 1.2.
             pde = B_2_2.Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy);
+            % >> 2.
+            pde = B_2_2.Compute_ErrorNorms(msh,pde);
         end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_1(msh,pde,bnd_ff,bnd_fc)
+        function [pde] = Assemble_Mat_1(msh,pde,wf,wfs,bnd_ff,bnd_fc)
             %% > Matrices Df and Dwf.
             % >> (x,y) coordinates...
             i         = 1:msh.f.NF;
@@ -28,43 +31,69 @@ classdef B_2_2
             %  > ...stencil points.
             stl_xy    = msh.s.xy_v_t;
             
-            % >> Df.
+            % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
+            k     = 1:pde.pr.numb;
             for i = 1:msh.f.NF
                 j {i} = 1:size(stl_xy{i},2);
                 %  > x-xf.
                 XY{i}(1,j{i}) = stl_xy{i}(1,j{i})-Face(1,i);
                 XY{i}(2,j{i}) = stl_xy{i}(2,j{i})-Face(2,i);
-                %  > Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
-                for k = 1:pde.pr.numb
-                    Df{i}(j{i},k) = pde.pr.Coeff_1(k).*(XY{i}(1,j{i}).^pde.pr.Exp_1(1,k)).*(XY{i}(2,j{i}).^pde.pr.Exp_1(2,k));
-                end
+                %  > Polynomial coefficients.
+                C1{i}   (:,k) = repelem(pde.pr.Coeff_1(k),length(j{i}),1);
+                C2{i}   (:,k) = XY{i}(1,j{i})'.^pde.pr.Exp_1(1,k).*XY{i}(2,j{i})'.^pde.pr.Exp_1(2,k);       
+                Df{i}(j{i},k) = C1{i}.*C2{i};
+                % for k = 1:pde.pr.numb
+                %     Df{i}(j{i},k) = pde.pr.Coeff_1(k).*(XY{i}(1,j{i}).^pde.pr.Exp_1(1,k)).*(XY{i}(2,j{i}).^pde.pr.Exp_1(2,k));
+                % end
             end
             
             % >> Dwf = w*Df.
-            for i = 1:msh.f.NF
-                %  > if d~=0...
-                for j = 1:size(stl_xy{i},2)
-                    d{i}  (j) = A_Tools.fft_dist_1([stl_xy{i}(:,j)';Face(:,i)']);
+            if strcmpi(wf,'Unweighted')
+                Dwf = Df;
+            elseif strcmpi(wf,'Weighted')
+                for i = 1:msh.f.NF
+                    %  > if d~=0...
+                    d{i} = sqrt((stl_xy{i}(1,:)-Face(1,i)).^2+(stl_xy{i}(2,:)-Face(2,i)).^2);
+                    %  > if d=0...
+                    %    Remark: If point=face, use cell centroid instead.
+                    d_flag{i} = find(~d{i});
+                    if ~isempty(d_flag{i})
+                        kf           = d_flag{i};
+                        Point        = msh.c.mean(:,bnd_fc(bnd_ff == i));
+                        d    {i}(kf) = A_Tools.fft_dist([Point';Face(:,i)']);
+                    end
+                    %  > Select weight function coefficients.
+                    if strcmpi(wfs,'1')
+                        [a(i),b(i)] = deal(1,4);
+                    elseif strcmpi(wfs,'2')
+                        [a(i),b(i)] = B_2_2.Fit_Distances(d{i});
+                    else
+                        return;
+                    end
+                    %  > Check whether d=0...
+                    if isempty(d_flag{i})
+                        w  {i}(:,1)      = pde.wf.wf_1(a(i),b(i),d{i});
+                    else
+                        len              = length(d{i});
+                        idf{i}           = setdiff(1:len,kf);
+                        w  {i}(idf{i},1) = pde.wf.wf_1(a(i),b(i),d{i}(idf{i}));
+                        w  {i}(kf    ,1) = pde.wf.wf_2(a(i),b(i),d{i}(kf));
+                    end
+                    Dwf{i} = Df{i}.*w{i};
                 end
-                w    {i}(:,1) = pde.wf.wf_1(d{i},2);
-                %  > if d=0...
-                %    Remark: If point=face, use cell centroid instead.
-                d_flag{i} = find(~d{i});
-                if ~isempty(d_flag{i})
-                    k         = d_flag{i};
-                    Point     = msh.c.mean(:,bnd_fc(bnd_ff == i));
-                    d{i}  (k) = A_Tools.fft_dist_1([Point';Face(:,i)']);
-                    w{i}(k,1) = pde.wf.wf_1(d{i}(k),2);
-                end
-                Dwf{i} = bsxfun(@times,Df{i},w{i});
+            else
+                return;
             end
-            
+                        
             %% > Matrices Pf and Tf.
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Pf{i} = pinv(transpose(Dwf{i})*Df{i})*transpose(Dwf{i});
+                Inv{i} = transpose(Dwf{i})*Df{i};
+                cd (i) = cond(Inv{i});
+                Pf {i} = pinv(Inv{i})*transpose(Dwf{i});               
             end
+            max(cd)
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
                 %  > Face quadrature.
@@ -97,10 +126,6 @@ classdef B_2_2
         end
         % >> 1.3. ---------------------------------------------------------
         function [pde] = Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy)
-            %  > Initialize.
-            A = zeros(msh.c.NC,msh.c.NC);
-            B = zeros(msh.c.NC,1);
-            
             % >> X*Tf.
             %    Remark: Tf=[A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
             %                                                 Face dependent coefficients: H,i,J,...,(...).
@@ -117,7 +142,6 @@ classdef B_2_2
                     Phi_ff{i}  = [msh.s.f{:,i}];
                 end
             end
-            
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.f.Sf{i},2)
                     %  > Face 'j' of cell 'i'.
@@ -128,11 +152,24 @@ classdef B_2_2
                 end
             end
             
+            % >> A.
+            A = B_2_2.Assemble_A(msh.c.NC,face,Phi_fc,V_Tf_C_Sf,G_Tf_D_Sf);
+            % >> B.
+            B = B_2_2.Assemble_B(msh.c.NC,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,pde.bnd.f,pde.c.F_Vol);
+            
+            % >> PDE solution (nodal values).
+            pde.Phi = B_2_2.SetUp_bicgstabl(A,B,1e-9,1e3)';
+        end
+        % >> 1.3.1 --------------------------------------------------------
+        function [A] = Assemble_A(NC,face,Phi_fc,V_Tf_C_Sf,G_Tf_D_Sf)
+            %  > Initialize.
+            A = zeros(NC,NC);
+            
             % >> A (Cell dependent coefficients).
             %  > ... for cell #i: Phi_f(j_1)=A*Phi(X)+B*Phi(Y)+C*Phi(Z)+...
             %                     Phi_f(j_2)=D*Phi(M)+E*Phi(N)+F*Phi(O)+...
             %                     Phi_f(...)=...
-            for i = 1:msh.c.NC
+            for i = 1:NC
                 for j = 1:length(face{i})
                     %  > Index in the j-direction.
                     numb_c   {i}(j)     = length(Phi_fc{face{i}(j)});
@@ -145,12 +182,18 @@ classdef B_2_2
                     A(i,ijk_c{i}{j}(k)) = A(i,ijk_c{i}{j}(k))-G_Tf_D_Sf{i}{j}(k);
                 end
             end
+        end
+        % >> 1.3.2 --------------------------------------------------------
+        function [B] = Assemble_B(NC,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,bnd_fv,F_Vol)
+            %  > Initialize.
+            B = zeros(NC,1);
             
             % >> B (Face dependent coefficients).
-            for i = 1:msh.c.NC
+            for i = 1:NC
                 %  > Boundary contribution(s).
                 for j = 1:length(face{i})
                     %  > Index in the j-direction.
+                    numb_c   {i}(j) = length(Phi_fc{face{i}(j)});
                     numb_f   {i}(j) = length(Phi_ff{face{i}(j)});
                     kf_i     {i}(j) = numb_c{i}(j)+1;
                     kf_f     {i}(j) = numb_c{i}(j)+numb_f{i}(j);
@@ -166,25 +209,51 @@ classdef B_2_2
                                 %  > Indices.
                                 bnd_j{i}{j}(l) = find(ijk_f{i}{j}(l) == bnd_ff);
                                 %  > Boundary values.
-                                bnd_f{i}{j}(l) = pde.bnd.f(bnd_j{i}{j}(l));
+                                bnd_v{i}{j}(l) = bnd_fv(bnd_j{i}{j}(l));
                             end
                         end
                     end
-                    B(i,1) = B(i,1)-V_Tf_C_Sf{i}{j}(k)*bnd_f{i}{j}';
-                    B(i,1) = B(i,1)+G_Tf_D_Sf{i}{j}(k)*bnd_f{i}{j}';
+                    B(i,1) = B(i,1)-V_Tf_C_Sf{i}{j}(k)*bnd_v{i}{j}';
+                    B(i,1) = B(i,1)+G_Tf_D_Sf{i}{j}(k)*bnd_v{i}{j}';
                 end
                 %  > Source term contribution(s).
-                B(i,1) = B(i,1)+pde.c.F_Vol(i);
+                B(i,1) = B(i,1)+F_Vol(i);
             end
-            
-            % >> PDE solution (nodal values).
-            pde.Phi = B_2_2.SetUp_bicgstabl(A,B,10e-12,10e3)';
-        end
+        end       
         % >> 1.4. ---------------------------------------------------------
         function [X] = SetUp_bicgstabl(A,B,Tol,iterMax)
             [A,B,setup] = deal(sparse(A),sparse(B),struct('type','ilutp','droptol',1e-6));
             [L,U]       = ilu(A,setup);
             [X,~]       = bicgstabl(A,B,Tol,iterMax,L,U,[]);
+        end
+        % >> 1.5. ---------------------------------------------------------
+        function [a,b] = Fit_Distances(y)
+            len    = length(y);
+            y      = sort  (y);
+            x      = linspace(1,len,len); 
+            fitfun = fittype(@(a,b,x) a.*x.^b);
+            fit_c  = fit(x',y',fitfun,'StartPoint',[1,2]);
+            coeff  = coeffvalues(fit_c);
+            a      = coeff(1);
+            b      = coeff(2);
+            
+            scatter(x, y, 'r+')
+            hold on
+            plot(x,fit_c(x));
+            hold off
+            
+        end
+        
+        %% > 2. -----------------------------------------------------------
+        function [pde] = Compute_ErrorNorms(msh,pde)
+            i           = 1:msh.c.NC;
+            X(i)        = abs(pde.blk.f(i)-pde.Phi(i));
+            pde.E.EA(i) = X(i);
+            E_iX{1} (i) = X(i).*msh.c.vol(i);
+            E_iX{2} (i) = X(i).^2.*msh.c.vol(i).^2;
+            pde.E.EN{1} = sum(E_iX{1})./sum(msh.c.vol);
+            pde.E.EN{2} = sum(sqrt(E_iX{2}))./sum(sqrt(msh.c.vol.^2));
+            pde.E.EN{3} = max(X(i));
         end
     end
 end

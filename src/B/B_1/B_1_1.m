@@ -9,7 +9,7 @@ classdef B_1_1
         function [pde] = WrapUp_B_1_1(msh,Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy)
             % >> 1.
             %  > 1.1.
-            pde.fn = B_1_1.Set_fn(Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy,'2');
+            pde.fn = B_1_1.Set_fn(Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy,'1');
             %  > 1.2.
             [pde.bnd,pde.blk] = B_1_1.Compute_f_df_d2f(msh,pde.fn);
         end
@@ -28,7 +28,7 @@ classdef B_1_1
                 xc   = 1./2.*(Xv_f-Xv_i);
                 yc   = 1./2.*(Yv_f-Yv_i);
                 %  > Intensity.
-                i    = 50;
+                i    = 10;
                 fn.f = exp(-i.*((x-xc).^2+(y-yc).^2));
             end
             
