@@ -63,12 +63,8 @@ classdef B_2_2
                         d    {i}(kf) = A_Tools.fft_dist([Point';Face(:,i)']);
                     end
                     %  > Select weight function coefficients.
-                    if strcmpi(wfs,'1')
-                        [a(i),b(i)] = deal(1,4);
-                    elseif strcmpi(wfs,'2')
-                    else
-                        return;
-                    end
+                    a(i) = 1;
+                    b(i) = 3;
                     %  > Check whether d=0...
                     if isempty(d_flag{i})
                         w  {i}(:,1)      = pde.wf.wf_1(a(i),b(i),d{i});
@@ -88,11 +84,8 @@ classdef B_2_2
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Inv{i} = transpose(Dwf{i})*Df{i};
-                cd (i) = cond(Inv{i});
-                Pf {i} = pinv(Inv{i})*transpose(Dwf{i});               
+                Pf{i} = pinv(transpose(Dwf{i})*Df{i})*transpose(Dwf{i});               
             end
-            max(cd)
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
                 %  > Face quadrature.

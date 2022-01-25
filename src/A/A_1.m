@@ -18,7 +18,7 @@ classdef A_1
             % >> 2. Grid type.
             %    ├─ Uniform     grid: h.
             %    └─ Non-uniform grid: Nv=[Nv(X),Nv(Y)].
-            inp.msh.h     = 0.025;
+            inp.msh.h     = 0.05;
             inp.msh.Nv(1) = 25;
             inp.msh.Nv(2) = 25;
             
@@ -66,7 +66,7 @@ classdef A_1
             %  > 6. Extension type.
             inp.fr.st  = 'Implicit';           
             inp.fr.wf  = 'Weighted';
-            inp.fr.wfs = '2';
+            inp.fr.wfs = '1';
             inp.fr.np  = 5;
             inp.fr.ng  = 5;
             inp.fr.nt  = false;
