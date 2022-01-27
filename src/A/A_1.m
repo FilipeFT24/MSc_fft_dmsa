@@ -1,13 +1,13 @@
 classdef A_1
     methods (Static)
         %% > Wrap-up A_1.
-        function [inp] = WrapUp_A_1()
+        function [inp] = WrapUp_A_1(h)
             % >> 1.
-            inp = A_1.Set_inp();
+            inp = A_1.Set_inp(h);
         end
         
         %% > 1. -----------------------------------------------------------
-        function [inp] = Set_inp()
+        function [inp] = Set_inp(h)
             %% > msh.
             % >> 1. Grid limits: (Xv,Yv)_i,(Xv,Yv)_f.
             inp.msh.lim.Xv_i = 0;
@@ -18,7 +18,7 @@ classdef A_1
             % >> 2. Grid type.
             %    ├─ Uniform     grid: h.
             %    └─ Non-uniform grid: Nv=[Nv(X),Nv(Y)].
-            inp.msh.h     = 0.05;
+            inp.msh.h     = h;
             inp.msh.Nv(1) = 25;
             inp.msh.Nv(2) = 25;
             
@@ -47,8 +47,8 @@ classdef A_1
             %% > pr.
             % >> 4. Flow conditions: 1. Convection parameter: V=[vx,vy].
             %                        2. Diffusion  parameter: G=[gx,gy].
-            inp.pr.vx = 0.0;
-            inp.pr.vy = 0.0;
+            inp.pr.vx = 0;
+            inp.pr.vy = 0;
             inp.pr.gx = 1.0;
             inp.pr.gy = 1.0;
 
@@ -66,9 +66,8 @@ classdef A_1
             %  > 6. Extension type.
             inp.fr.st  = 'Implicit';           
             inp.fr.wf  = 'Weighted';
-            inp.fr.wfs = '1';
-            inp.fr.np  = 5;
-            inp.fr.ng  = 5;
+            inp.fr.np  = 3;
+            inp.fr.ng  = 3;
             inp.fr.nt  = false;
             inp.fr.et  = false;
         end

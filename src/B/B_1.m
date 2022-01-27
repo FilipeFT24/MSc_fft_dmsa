@@ -16,7 +16,7 @@ classdef B_1
             % >> 1.
             pde = B_1_1.WrapUp_B_1_1(msh,Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy);
             % >> 2.
-            pde = B_1_2.WrapUp_B_1_2(msh,pde,ng);
+            pde = B_1_2.WrapUp_B_1_2(pde,ng);
         end            
     end
 end

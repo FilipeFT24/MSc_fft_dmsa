@@ -7,9 +7,9 @@ classdef A
         % >> 3. Wrap-up A_3.
         % >> 4. Sort 'msh' fields.
         % >> --------------------------------------------------------------
-        function [inp,msh] = WrapUp_A()
+        function [inp,msh] = WrapUp_A(h)
             %  > 1.
-            inp = A_1.WrapUp_A_1;
+            inp = A_1.WrapUp_A_1(h);
             %  > 2.
             msh = A_2.WrapUp_A_2(inp);
             %  > 3.

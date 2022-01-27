@@ -8,9 +8,9 @@ classdef Fig_0
                     deal([-0.5,0.0],[0.5,0.0],[0.0,sqrt(3)./2]);                
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                %  > #1.
+                subplot(1,2,1);
                 Fig_0.Plot_1(n,xy_T);
-                %  > #2.
+                subplot(1,2,2);
                 Fig_0.Plot_2(n);
                 %  > Export as .pdf.
                 if Exp_0
@@ -22,7 +22,6 @@ classdef Fig_0
         %% > Auxiliary functions.
         % >> Plot 1.
         function [] = Plot_1(n,xy)
-            subplot(1,2,1);
             %  > Quadrature abcissas/weights.
             Q = quadtriangle(n,'Domain',xy,...
                 'Type','product','Symmetry','allowAsymmetric','Weights','allowNegative','Points','allowOutside');
@@ -30,7 +29,6 @@ classdef Fig_0
         end
         % >> Plot 2.
         function [] = Plot_2(n)
-            subplot(1,2,2);
             %  > Quadrature abcissas/weights.
             Q = quadsquare(n,'Type',...
                 'productLegendre','Symmetry','allowAsymmetric','Weights','allowNegative','Points','allowOutside');

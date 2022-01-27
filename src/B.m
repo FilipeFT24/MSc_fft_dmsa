@@ -6,6 +6,8 @@ classdef B
             pde = B_1.WrapUp_B_1(inp,msh);
             % >> 2.
             pde = B_2.WrapUp_B_2(inp,msh,pde);
+            % >> 3.
+            B_3.WrapUp_B_3(inp,msh,pde);
         end
     end
 end

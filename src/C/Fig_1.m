@@ -17,7 +17,7 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot_1(inp,msh,iF,len);
+                Fig_1.Plot(inp,msh,iF,len);
                 %  > Export as .pdf.
                 if Exp_1
                     Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
@@ -26,7 +26,7 @@ classdef Fig_1
         end
         
         %% > Auxiliary functions.
-        function [] = Plot_1(inp,msh,iF,len)
+        function [] = Plot(inp,msh,iF,len)
             % >> Local variables.
             Xv_i = inp.msh.lim.Xv_i;
             Xv_f = inp.msh.lim.Xv_f;
@@ -39,7 +39,7 @@ classdef Fig_1
             %% > Face selection.
             Sz_c = nnz(~cellfun(@isempty,msh.s.c(:,iF)));
             Sz_f = nnz(~cellfun(@isempty,msh.s.f(:,iF)));
-            C    = linspecer(9,'qualitative');            
+            C    = linspecer(9,'qualitative');
             %% > Cell borders.
             %  > NOTE: Add "'Linestyle','None'" to remove cell border.
             hold on;
@@ -48,7 +48,7 @@ classdef Fig_1
                     continue;
                 end
                 patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'w');
-            end                
+            end
             % %% > Boundaries.
             % %  > Cells.
             % hold on;
@@ -65,7 +65,7 @@ classdef Fig_1
             %  > Cells.
             hold on;
             for i = 1:msh.c.NC
-               plot(msh.c.mean(1,i),msh.c.mean(2,i),'ok','MarkerFaceColor','k','MarkerSize',1.5);
+                plot(msh.c.mean(1,i),msh.c.mean(2,i),'ok','MarkerFaceColor','k','MarkerSize',1.5);
             end
             % %  > Faces.
             % hold on;

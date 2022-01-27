@@ -5,6 +5,7 @@ classdef Tools
             addpath(genpath('A'));
             addpath(genpath('B'));
             addpath(genpath('C'));
+            addpath(genpath('D'));
             addpath(genpath('[Tools - Data]'));
             addpath(genpath('[Tools - Numerical]'));
             addpath(genpath('[Tools - Post-processing]'));

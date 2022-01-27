@@ -49,11 +49,11 @@
 
 ```
 '
-├── [Tools - Data]
+├── [Tools - Data]            # >>> Save and load data    (for plotting purposes...).
 │
-├── [Tools - Numerical]
+├── [Tools - Numerical]       # >>> Numerical tools (mostly) used for code speed up/efficiency.
 │
-├── [Tools - Post-processing]
+├── [Tools - Post-processing] # >>> Post-processing tools (for plotting purposes...).
 │
 └── src  
     │
@@ -61,46 +61,84 @@
     │
     ├── A                     # >>> Call 'SubClass' functions.
     │   ├── A_1               #  >> Set inputs.
-    │   ├── A_2               #  >> Grid generation. 
+    │   ├── A_2               #  >> Generate grid and set boundaries.
     │   ├── A_3               #  >> Call 'SubSubClass' functions.
     │   │   ├── A_3_1         #   > Compute grid properties.
     │   │   └── A_3_2         #   > Call 'SubSubSubClass' functions.
     │   │       ├── A_3_2_1   #   > Compute stencil elements (w/o extension(s)).
-    │   │       └── A_3_2_2   #   > Compute stencil elements (w/o extension(s)).
+    │   │       └── A_3_2_2   #   > Compute stencil elements (w/  extension(s)).
     │   └── A_Tools           #  >> 'Class' Tools.
     │
     ├── B                     # >>> Call 'SubClass' functions.
     │   ├── B_1               #  >> Call 'SubSubClass' functions.
     │   │   ├── B_1_1         #   > Compute analytic solution.
-    │   │   └── B_1_2         #   > 1D/2D quadrature.
+    │   │   └── B_1_2         #   > Set 1D/2D quadrature rules.
+    │   │                     #   > Compute source term.
     │   ├── B_2               #  >> Call 'SubSubClass' functions.
-    │   │   ├── B_2_1         #   > Assemble matrices Df, Dwf, Pf and Tf.
-    │   │   └── B_2_2         #   > Assemble matrices A, B and C.
-    │   └── B_3               #  >> Compute error norms.
+    │   │   ├── B_2_1         #   > Compute face polynomial coefficients (recursively).
+    │   │   │                 #   > Set weighting function.
+    │   │   └── B_2_2         #   > Assemble matrices Df, Dwf, Pf, Tf, A and B.
+    │   │                     #   > Compute source term.
+    │   │                     #   > Compute error norms.
+    │   └── B_3               #  >> 
     │
     └── C                     # >>> Call 'Fig_X' functions.
         ├── Fig_0             #  >> Fig_0.
         ├── Fig_1             #  >> Fig_1.
         ├── Fig_2             #  >> Fig_2.
-        └── ...               #  >> ...
-    
+        ├── Fig_Tools         #  >> Fig_Tools.
+        └── ...               #  >> ...    
 ```
 ```
 '
 inp 
+├── msh                       # >>> Field: Grid.
+│   ├── lim                   #  >> Field: Limits.
+│   │   ├── Xv_i              #   > LHS (x-direction).
+│   │   ├── Xv_f              #   > RHS (x-direction).
+│   │   ├── Yv_i              #   > LHS (y-direction).
+│   │   └── Yv_f              #   > RHS (y-direction).
+│   ├── h                     #  >> ...case of a     uniform grid: "Approximated" hydraulic diameter used to generate the grid. 
+│   ├── Nv                    #  >> ...case of a non-uniform grid: Number of vertices used in the x and y-directions used to generate the grid: [Nv(:)] = [Nv(X),Nv(Y)].  
+│   ├── pt                    #  >> Face polygon type.
+│   │   ├── (1)               #   - Option (1): Triangles  ('v').
+│   │   └── (2)               #   - Option (2): Squares    ('s').
+│   ├── eg                    #  >> Mesh example type #1   (Check SubClass A_2).
+│   ├── dm                    #  >> Mesh example type #2   (Check SubClass A_2).
+│   └── su                    #  >> Clustering parameters  (...case of a non-uniform grid).
+│       ├── Nf_X              #   > Clustering location    (x-direction).
+│       ├── Nf_Y              #   > Clustering location    (y-direction).
+│       ├── Ks_X              #   > Clustering factor      (x-direction).
+│       └── Ks_Y              #   > Clustering factor      (y-direction).  
 │
-├── X                      
+├── pr                        # >>> Field: Problem reconstruction.
+│   ├── vx                    #  >> Convection coefficient (x-direction).
+│   ├── vy                    #  >> Convection coefficient (y-direction).
+│   ├── gx                    #  >> Diffusion  coefficient (x-direction).
+│   └── gy                    #  >> Diffusion  coefficient (y-direction).                
 │
-├── Y
-│
-└── Z
+└── fr                        # >>> Field: Flux reconstruction.
+    ├── st                    #  >> Simulation type.
+    │   ├── (1)               #   - Option (1): Implicit.
+    │   ├── (2)               #   - Option (2): Explicit.
+    │   └── (3)               #   - Option (3): Deferred-correction (DC).
+    ├── wf                    #  >> Weighting function.
+    │   ├── (1)               #   - Option (1): Unweighted.
+    │   └── (2)               #   - Option (2): Weighted.
+    ├── np                    #  >> Face  polynomial order.
+    ├── ng                    #  >> 1D/2D quadrature order.
+    ├── nt                    #  >> Face neighbouring type.
+    │   ├── (1)               #   - Option (1): Vertex neighbour.          ('false')
+    │   └── (2)               #   - Option (2): Face   neighbour.          ('true ')
+    └── et                    #  >> Extension type.
+        ├── (1)               #   - Option (1): Do nothing...              ('false')
+        └── (2)               #   - Option (2): Perform "extra" extension. ('true ')               
 ```
 ```
 '
 msh
 │ 
 ├── d                # >>> Field: Domain.
-│   ├── xy_v         #  >> Domain vertices: [Xv(:),Yv(:)] = [xy_v(:,1),xy_v(:,2)]. 
 │   └── h_ref        #  >> Hydraulic diameter. 
 │
 ├── c                # >>> Field: Cell.
@@ -108,6 +146,7 @@ msh
 │   ├── xy_v         #  >> Cell 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
 │   ├── mean         #  >> Cell 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
 │   ├── h            #  >> Cell 'i' hydraulic diameter.
+│   ├── vol          #  >> Cell 'i' volume.
 │   ├── c            #  >> Cell 'i' neighbouring cell indices. 
 │   └── f            #  >> Field: Face.
 │       ├── f        #   > Face indices of cell 'i'.
@@ -153,8 +192,6 @@ msh
         │                        └── ne(2,i): number of extensions (y-direction)
         ├── n_x      #   > Adimensional          length (x-direction).
         ├── n_y      #   > Adimensional          length (y-direction).
-        ├── ng_x     #   > Adimensional (global) length (x-direction).
-        ├── ng_y     #   > Adimensional (global) length (y-direction).
         ├── l_x      #   > Limit                        (x-direction): [l_x_min(i),l_x_max(i)] = [l_x(i,1),l_x(i,2)].
         └── l_y      #   > Limit                        (y-direction): [l_y_min(i),l_y_max(i)] = [l_y(i,1),l_y(i,2)].             ​
 ```

@@ -1,7 +1,7 @@
 classdef B_2_2
     methods (Static)
         %% > Wrap-up B_2_2.
-        function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,wf,wfs,bnd_ff,bnd_fc)
+        function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,st,wf,bnd_ff,bnd_fc,ng)
             % >> ----------------------------------------------------------
             % >> 1.   Assemble matrices.
             %  > 1.1. Assemble matrices Df, Dwf, Pf and Tf.
@@ -11,17 +11,20 @@ classdef B_2_2
             % >> 2.   Compute error norms.
             % >> ----------------------------------------------------------
             % >> 1.
+            %  > Select weight function coefficients.
+            a = 1;
+            b = 2;
             %  > 1.1.
-            pde = B_2_2.Assemble_Mat_1(msh,pde,wf,wfs,bnd_ff,bnd_fc);
+            [pde,Tf_C,Tf_D] = ...
+                B_2_2.Assemble_Mat_1(msh,pde,wf,bnd_ff,bnd_fc,a,b);
             %  > 1.2.
-            pde = B_2_2.Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy);
-            % >> 2.
-            pde = B_2_2.Compute_ErrorNorms(msh,pde);
+            [pde] = ...
+                B_2_2.Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy,ng,st,Tf_C,Tf_D);
         end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_1(msh,pde,wf,wfs,bnd_ff,bnd_fc)
+        function [pde,Tf_C,Tf_D] = Assemble_Mat_1(msh,pde,wf,bnd_ff,bnd_fc,a,b)
             %% > Matrices Df and Dwf.
             % >> (x,y) coordinates...
             i         = 1:msh.f.NF;
@@ -40,7 +43,7 @@ classdef B_2_2
                 XY{i}(2,j{i}) = stl_xy{i}(2,j{i})-Face(2,i);
                 %  > Polynomial coefficients.
                 C1{i}   (:,k) = repelem(pde.pr.Coeff_1(k),length(j{i}),1);
-                C2{i}   (:,k) = XY{i}(1,j{i})'.^pde.pr.Exp_1(1,k).*XY{i}(2,j{i})'.^pde.pr.Exp_1(2,k);       
+                C2{i}   (:,k) = XY{i}(1,j{i})'.^pde.pr.Exp_1(1,k).*XY{i}(2,j{i})'.^pde.pr.Exp_1(2,k);
                 Df{i}(j{i},k) = C1{i}.*C2{i};
                 % for k = 1:pde.pr.numb
                 %     Df{i}(j{i},k) = pde.pr.Coeff_1(k).*(XY{i}(1,j{i}).^pde.pr.Exp_1(1,k)).*(XY{i}(2,j{i}).^pde.pr.Exp_1(2,k));
@@ -58,43 +61,40 @@ classdef B_2_2
                     %    Remark: If point=face, use cell centroid instead.
                     d_flag{i} = find(~d{i});
                     if ~isempty(d_flag{i})
-                        kf           = d_flag{i};
-                        Point        = msh.c.mean(:,bnd_fc(bnd_ff == i));
-                        d    {i}(kf) = A_Tools.fft_dist([Point';Face(:,i)']);
+                        kf       = d_flag{i};
+                        Point    = msh.c.mean(:,bnd_fc(bnd_ff == i));
+                        d{i}(kf) = A_Tools.fft_dist([Point';Face(:,i)']);
                     end
-                    %  > Select weight function coefficients.
-                    a(i) = 1;
-                    b(i) = 3;
                     %  > Check whether d=0...
                     if isempty(d_flag{i})
-                        w  {i}(:,1)      = pde.wf.wf_1(a(i),b(i),d{i});
+                        w  {i}(:,1)      = pde.wf.wf_1(a,b,d{i});
                     else
                         len              = length(d{i});
                         idf{i}           = setdiff(1:len,kf);
-                        w  {i}(idf{i},1) = pde.wf.wf_1(a(i),b(i),d{i}(idf{i}));
-                        w  {i}(kf    ,1) = pde.wf.wf_2(a(i),b(i),d{i}(kf));
+                        w  {i}(idf{i},1) = pde.wf.wf_1(a,b,d{i}(idf{i}));
+                        w  {i}(kf    ,1) = pde.wf.wf_2(a,b,d{i}(kf));
                     end
                     Dwf{i} = Df{i}.*w{i};
                 end
             else
                 return;
             end
-                        
+            
             %% > Matrices Pf and Tf.
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Pf{i} = pinv(transpose(Dwf{i})*Df{i})*transpose(Dwf{i});               
+                Pf{i} = pinv(transpose(Dwf{i})*Df{i})*transpose(Dwf{i});
             end
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
                 %  > Face quadrature.
-                pde.f.gq  {i} = B_1_2.GaussFace_Points(pde.f.Q_1D,pde.f.xy_fg,pde.f.j_fg,msh.f.xy_v{i});
+                pde.f.gq{i} = B_1_2.GaussFace_Points(pde.f.Q_1D,pde.f.xy_fg,pde.f.j_fg,msh.f.xy_v{i});
                 %  > Convection/diffusion contribution(s).
-                df        {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_1,pde.pr.Exp_1);
-                grad_df   {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
-                pde.f.Tf_C{i} = df{i}*Pf{i};
-                pde.f.Tf_D{i} = grad_df{i}*Pf{i};
+                df      {i} = B_2_2.Compute_df(1,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_1,pde.pr.Exp_1);
+                grad_df {i} = B_2_2.Compute_df(2,Face(:,i),pde.f.gq{i},pde.pr.numb,pde.pr.Coeff_2,pde.pr.Exp_2);
+                Tf_C    {i} = df{i}*Pf{i};
+                Tf_D    {i} = grad_df{i}*Pf{i};
             end
         end
         % >> 1.2. ---------------------------------------------------------
@@ -117,17 +117,17 @@ classdef B_2_2
             end
         end
         % >> 1.3. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy)
+        function [pde] = Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy,ng,st,Tf_C,Tf_D)
             % >> X*Tf.
             %    Remark: Tf=[A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
             %                                                 Face dependent coefficients: H,i,J,...,(...).
             % >> Face 'i'...
             for i = 1:msh.f.NF
                 %  > Convection/diffusion contribution(s).
-                V_Tf_C{i}(1,:) = vx.*pde.f.Tf_C{i};
-                V_Tf_C{i}(2,:) = vy.*pde.f.Tf_C{i};
-                G_Tf_D{i}(1,:) = gx.*pde.f.Tf_D{i}(1,:);
-                G_Tf_D{i}(2,:) = gy.*pde.f.Tf_D{i}(2,:);
+                V_Tf_C{i}(1,:) = vx.*Tf_C{i};
+                V_Tf_C{i}(2,:) = vy.*Tf_C{i};
+                G_Tf_D{i}(1,:) = gx.*Tf_D{i}(1,:);
+                G_Tf_D{i}(2,:) = gy.*Tf_D{i}(2,:);
                 %  > Cell/Face indices.
                 Phi_fc{i}      = [msh.s.c{:,i}];
                 if ~isempty(msh.s.xy_v_f{i})
@@ -147,12 +147,34 @@ classdef B_2_2
             % >> A.
             A = B_2_2.Assemble_A(msh.c.NC,face,Phi_fc,V_Tf_C_Sf,G_Tf_D_Sf);
             % >> B.
-            B = B_2_2.Assemble_B(msh.c.NC,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,pde.bnd.f,pde.c.F_Vol);
+            [pde.c.Qp,B] = ...
+                B_2_2.Assemble_B(msh,pde.fn.func,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,pde.bnd.f);
             
-            % >> PDE solution (nodal values).
-            pde.Phi = B_2_2.SetUp_bicgstabl(A,B,1e-9,1e3)';
+            % >> PDE solution.
+%             if strcmpi(st,'Implicit')
+                % >> Implicit flux reconstruction.
+                %  > Phi.
+                pde.Phi = B_2_2.SetUp_Solver('QR',A,B,1e-9,10e3);
+                %  > Error norms.
+                i       = 1:msh.c.NC;
+                X(i)    = abs(pde.blk.f(i)-pde.Phi(i));
+                pde.E  = B_2_2.Compute_ErrorNorms(msh,X);
+                %  > Face polynomial.
+                %B_2_2.Compute_FacePolynomial(msh,Phi_fc,Phi_ff,pde.Phi,pde.bnd.f,bnd_ff,Tf_C,Tf_D);
+
+                
+                %             elseif strcmpi(st,'Explicit')
+%                 % >> Explicit flux reconstruction.
+%                 %  > Error norms.
+%                 X     = abs(A*pde.blk.f-B)';
+%                 pde.E = B_2_2.Compute_ErrorNorms(msh,X);
+%                 %  > Face polynomial.
+%                 B_2_2.Compute_FacePolynomial(msh,Phi_fc,Phi_ff,pde.blk.f,pde.bnd.f,bnd_ff,Tf_C,Tf_D);
+%             else
+%                 return;
+%             end
         end
-        % >> 1.3.1 --------------------------------------------------------
+        % >> 1.3.1. -------------------------------------------------------
         function [A] = Assemble_A(NC,face,Phi_fc,V_Tf_C_Sf,G_Tf_D_Sf)
             %  > Initialize.
             A = zeros(NC,NC);
@@ -175,22 +197,24 @@ classdef B_2_2
                 end
             end
         end
-        % >> 1.3.2 --------------------------------------------------------
-        function [B] = Assemble_B(NC,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,bnd_fv,F_Vol)
+        % >> 1.3.2. -------------------------------------------------------
+        function [Qp,B] = Assemble_B(msh,func,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,bnd_fv)
             %  > Initialize.
-            B = zeros(NC,1);
+            B = zeros(msh.c.NC,1);
+            %  > Compute source term.
+            [Qp,F_Vol] = B_1_2.Compute_SourceTerm(msh,func,ng);
             
             % >> B (Face dependent coefficients).
-            for i = 1:NC
+            for i = 1:msh.c.NC
                 %  > Boundary contribution(s).
                 for j = 1:length(face{i})
                     %  > Index in the j-direction.
-                    numb_c   {i}(j) = length(Phi_fc{face{i}(j)});
-                    numb_f   {i}(j) = length(Phi_ff{face{i}(j)});
-                    kf_i     {i}(j) = numb_c{i}(j)+1;
-                    kf_f     {i}(j) = numb_c{i}(j)+numb_f{i}(j);
-                    k               = kf_i{i}(j):kf_f{i}(j);
-                    ijk_f    {i}{j} = Phi_ff{face{i}(j)}(k-numb_c{i}(j));
+                    numb_c{i}(j) = length(Phi_fc{face{i}(j)});
+                    numb_f{i}(j) = length(Phi_ff{face{i}(j)});
+                    kf_i  {i}(j) = numb_c{i}(j)+1;
+                    kf_f  {i}(j) = numb_c{i}(j)+numb_f{i}(j);
+                    k            = kf_i{i}(j):kf_f{i}(j);
+                    ijk_f {i}{j} = Phi_ff{face{i}(j)}(k-numb_c{i}(j));
                     %  > Convection/diffusion contribution(s).
                     if all(isempty(ijk_f{i}{j}))
                         %  > Skip cells that don't have faces whose sentil does not include boundary faces.
@@ -211,24 +235,50 @@ classdef B_2_2
                 %  > Source term contribution(s).
                 B(i,1) = B(i,1)+F_Vol(i);
             end
-        end       
+        end
+        % >> 1.3.3. -------------------------------------------------------
+        function [] = Compute_FacePolynomial(msh,Phi_fc,Phi_ff,Phi_cv,Phi_fv,bnd_ff,Tf_C,Tf_D)
+            %  > Stencil values (a posteriori).
+            for i = 1:msh.f.NF
+                nc (i)         = length(Phi_fc{i});
+                nf (i)         = length(Phi_ff{i});
+                j  {i}         = 1:nc(i);
+                Phi{i}(j{i})   = Phi_cv(Phi_fc{i}(j{i}));
+                k  {i}         = nc(i)+1:nc(i)+nf(i);
+                if ~isempty(k{i})
+                    for l = 1:length(k{i})
+                        Phi{i}(k{i}) = Phi_fv(Phi_ff{i}(k{i}(l)-nc(i)) == bnd_ff);
+                    end
+                end
+                Phi_f(i)       = Tf_C{i}*Phi{i}';
+                gradPhi_f(:,i) = Tf_D{i}*Phi{i}';
+            end
+        end
         % >> 1.4. ---------------------------------------------------------
-        function [X] = SetUp_bicgstabl(A,B,Tol,iterMax)
-            [A,B,setup] = deal(sparse(A),sparse(B),struct('type','ilutp','droptol',1e-6));
-            [L,U]       = ilu(A,setup);
-            [X,~]       = bicgstabl(A,B,Tol,iterMax,L,U,[]);
+        function [X] = SetUp_Solver(Type,A,B,Tol,iterMax)
+            if strcmpi(Type,'bicgstabl')
+                %  > bicgstabl.
+                [A,B,setup] = deal(sparse(A),sparse(B),struct('type','ilutp','droptol',1e-6));
+                [L,U]       = ilu(A,setup);
+                [X,~]       = bicgstabl(A,B,Tol,iterMax,L,U,[]);
+            elseif strcmpi(Type,'QR')
+                %  > QR Decomposition (Householder reflections approach).
+                Q = qr(A);
+                Y = Q'*B;
+                R = Q'*A;
+                X = inv(R'*R)*R'*Y;
+            end
         end
         
         %% > 2. -----------------------------------------------------------
-        function [pde] = Compute_ErrorNorms(msh,pde)
-            i           = 1:msh.c.NC;
-            X(i)        = abs(pde.blk.f(i)-pde.Phi(i));
-            pde.E.EA(i) = X(i);
-            E_iX{1} (i) = X(i).*msh.c.vol(i);
-            E_iX{2} (i) = X(i).^2.*msh.c.vol(i).^2;
-            pde.E.EN{1} = sum(E_iX{1})./sum(msh.c.vol);
-            pde.E.EN{2} = sum(sqrt(E_iX{2}))./sum(sqrt(msh.c.vol.^2));
-            pde.E.EN{3} = max(X(i));
+        function [E]   = Compute_ErrorNorms(msh,X)
+            i          = 1:msh.c.NC;
+            E.EA(i)    = X(i);
+            E_iX{1}(i) = X(i).*msh.c.vol(i);
+            E_iX{2}(i) = X(i).^2.*msh.c.vol(i).^2;
+            E.EN{1}    = sum(E_iX{1})./sum(msh.c.vol);
+            E.EN{2}    = sum(sqrt(E_iX{2}))./sum(sqrt(msh.c.vol.^2));
+            E.EN{3}    = max(X);
         end
     end
 end

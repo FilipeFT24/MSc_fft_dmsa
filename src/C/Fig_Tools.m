@@ -53,7 +53,7 @@ classdef Fig_Tools
                     Flag = 'T';
                 end
             end
-            xlabel('$\Delta\mathrm{x}$','FontSize',12,'Interpreter','latex');
+            xlabel('$\mathrm{H_{ref}}$','FontSize',12,'Interpreter','latex');
             if strcmpi(Flag,'F')
                 xlim([min(H_Mat(:,end)),max(H_Mat(:,1))]);
             end
@@ -119,7 +119,7 @@ classdef Fig_Tools
             c.AxisLocation         = 'out';
             AdvancedColormap(str);
             %  > Colorbar format.
-            %  set(c,'xticklabel',cellfun(@(x)sprintf('% .3f',x),num2cell(get(c,'xtick')),'Un',0))
+            %  set(c,'xticklabel',cellfun(@(x)sprintf('%.3f',x),num2cell(get(c,'xtick')),'Un',0))
         end
         % >> 5. -----------------------------------------------------------
         function [Marker] = Set_Markers()
@@ -128,15 +128,6 @@ classdef Fig_Tools
             Marker{3} = '-^';
             Marker{4} = '-v';
             Marker{5} = '->';
-        end
-        % >> 6. -----------------------------------------------------------
-        function [H_av,CR] = Compute_ConvergenceRate(H,X)
-            for i = 1:size(X,2)-1
-                for j = 1:3
-                    CR  (i,j) = log(cell2mat(X{i+1}(j))./cell2mat(X{i}(j)))./log(H(i+1)./H(i));
-                    H_av(i)   = 1./2.*(H(i)+H(i+1));
-                end
-            end
         end
         % >> 7. -----------------------------------------------------------
         function [X_o,Y_o] = Order_Clockwise(Flag,Cell)
@@ -190,5 +181,6 @@ classdef Fig_Tools
             print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r375');
             movefile(strcat(Filename,'.pdf'),Directory); 
         end
+
     end
 end     

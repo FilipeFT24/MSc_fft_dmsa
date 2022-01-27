@@ -5,7 +5,7 @@ classdef Fig_2
             if Plot_2
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_2.Plot_1(inp,msh,pde,len);
+                Fig_2.Plot(inp,msh,pde,len);
                 %  > Export as .pdf.
                 if Exp_2
                     Fig_Tools.Export_PDF('Fig_2','../[Figures]/Fig_2');
@@ -14,8 +14,7 @@ classdef Fig_2
         end
         
         %% > Auxiliary functions.
-        % >> Plot 1.
-        function [] = Plot_1(inp,msh,pde,len)
+        function [] = Plot(inp,msh,pde,len)
             %% > Cell borders.
             %  > NOTE: Add "'Linestyle','None'" to remove cell border.
             hold on;

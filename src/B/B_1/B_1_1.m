@@ -9,7 +9,7 @@ classdef B_1_1
         function [pde] = WrapUp_B_1_1(msh,Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy)
             % >> 1.
             %  > 1.1.
-            pde.fn = B_1_1.Set_fn(Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy,'1');
+            [pde.fn] = B_1_1.Set_fn(Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy,'2');
             %  > 1.2.
             [pde.bnd,pde.blk] = B_1_1.Compute_f_df_d2f(msh,pde.fn);
         end
@@ -28,7 +28,7 @@ classdef B_1_1
                 xc   = 1./2.*(Xv_f-Xv_i);
                 yc   = 1./2.*(Yv_f-Yv_i);
                 %  > Intensity.
-                i    = 10;
+                i    = 50;
                 fn.f = exp(-i.*((x-xc).^2+(y-yc).^2));
             end
             
@@ -47,11 +47,11 @@ classdef B_1_1
         % >> 1.2. ---------------------------------------------------------
         function [bnd,blk] = Compute_f_df_d2f(msh,fn)
             %  > Boundary faces.
-            i         = 1:size(msh.bnd.f,2);
-            bnd.f (i) = fn.f(msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
+            i          = 1:size(msh.bnd.f,2);
+            bnd.f(i,1) = fn.f(msh.f.mean(1,[msh.bnd.f{2,i}]),msh.f.mean(2,[msh.bnd.f{2,i}]));
             %  > Domain cells.
-            j        = 1:msh.c.NC;
-            blk.f(j) = fn.f(msh.c.mean(1,j),msh.c.mean(2,j));           
+            j          = 1:msh.c.NC;
+            blk.f(j,1) = fn.f(msh.c.mean(1,j),msh.c.mean(2,j));           
         end
     end
 end

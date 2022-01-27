@@ -10,16 +10,11 @@ classdef B_1_2
         %  > 2.2. Cell mapping (computational domain): Square.
         %  > 2.3. Isoparameteric mapping.
         %  > 2.4. Compute (individual) cell polygon integral (2D).
-        %  > 2.5. Compute source term.
         % >> --------------------------------------------------------------
-        function [pde] = WrapUp_B_1_2(msh,pde,ng)
+        function [pde] = WrapUp_B_1_2(pde,ng)
             % >> 1.
             %  > 1.1.
-            [pde.f.xy_fg,pde.f.j_fg,pde.f.Q_1D] = ...
-                B_1_2.CD_1D(ng);
-            % >> 2.
-            [pde.c.Qp,pde.c.F_Vol] = ...
-                B_1_2.Compute_SourceTerm(msh,pde.fn.func,ng);
+            [pde.f.xy_fg,pde.f.j_fg,pde.f.Q_1D] = B_1_2.CD_1D(ng);
         end
         
         %% > 1. -----------------------------------------------------------

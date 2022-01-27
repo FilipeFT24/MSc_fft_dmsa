@@ -212,7 +212,8 @@ classdef A_3_2_2
             %  > Select cells within stencil x,y-limits.
             k = 1;
             for j = 1:msh.c.NC
-                if (msh.c.mean(1,j) >= x_lim(1) && msh.c.mean(1,j) <= x_lim(2)) && (msh.c.mean(2,j) >= y_lim(1) && msh.c.mean(2,j) <= y_lim(2))
+                if (single(msh.c.mean(1,j)) >= single(x_lim(1)) && single(msh.c.mean(1,j)) <= single(x_lim(2))) && ...
+                        (single(msh.c.mean(2,j)) >= single(y_lim(1)) && single(msh.c.mean(2,j)) <= single(y_lim(2)))
                     bulk(k) = j;
                     k       = k+1;
                 end
