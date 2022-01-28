@@ -9,7 +9,7 @@ classdef B_1_1
         function [pde] = WrapUp_B_1_1(msh,Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy)
             % >> 1.
             %  > 1.1.
-            [pde.fn] = B_1_1.Set_fn(Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy,'2');
+            [pde.fn] = B_1_1.Set_fn(Xv_i,Xv_f,Yv_i,Yv_f,vx,vy,gx,gy,'1');
             %  > 1.2.
             [pde.bnd,pde.blk] = B_1_1.Compute_f_df_d2f(msh,pde.fn);
         end

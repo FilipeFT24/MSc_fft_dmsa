@@ -8,9 +8,9 @@ classdef D
                 %  > Set directories...
                 [Dir_1,Dir_2] = Data_Tools.Set_Directories(ij);
                 %  > Save...
-                h_max = 0.150;
-                h_min = 0.015;
-                N     = 25;
+                h_max = 0.10;
+                h_min = 0.01;
+                N     = 20;
                 h     = linspace(h_max,h_min,N);
                 for ik = 1:N
                     %  > Compute...
@@ -30,6 +30,18 @@ classdef D
                 %  > Load...
                 Xi = Data_Tools.LoadData(Dir_1,Dir_2);
                 Xo = D.Process_Data(Xi);
+                %  > Remove duplicates.
+                for i = 1:size(Xo.NR.H,2)
+                    [~,~,rem_j{i}] = RunLength(Xo.NR.H{i});
+                    [Xo.NR.H{i},Xo.NR.E{i}] = ...
+                        deal(Xo.NR.H{i}(rem_j{i}),Xo.NR.E{i}(rem_j{i}));
+                end
+                %  > Convergence rate.
+                for i = 1:size(Xo.NR.H,2)
+                    if size(Xo.NR.E{i},2) ~= 1
+                        [Xo.CR.H{i},Xo.CR.R{i}] = D.Compute_CR(Xo.NR.H{i},Xo.NR.E{i});
+                    end
+                end
                 
                 % >> Select...
                 %  > Test #1.
@@ -61,17 +73,14 @@ classdef D
                     Xo.NR.H{i}(l) = H{i}(m{i}(l));
                     Xo.NR.E{i}{l} = [E{i}{m{i}(l)}{:}];
                 end
-                %  > Convergence rate.
-                if size(Xo.NR.E{i},2) ~= 1
-                    [Xo.CR.H{i},Xo.CR.R{i}] = D.Compute_CR(Xo.NR.H{i},Xo.NR.E{i});
-                end
             end
         end           
         % >> 1.2. ---------------------------------------------------------
         function [H_mean,CR] = Compute_CR(H,X)
             for i = 1:size(X,2)-1
                 for j = 1:3
-                    CR  (i,j) = log(X{i+1}(j)./X{i}(j))./log(H(i+1)./H(i));
+                    dE  (i,j) = log(X{i+1}(j)./X{i}(j));
+                    CR  (i,j) = dE(i,j)./log(H(i+1)./H(i));
                     H_mean(i) = 1./2.*(H(i)+H(i+1));
                 end
             end

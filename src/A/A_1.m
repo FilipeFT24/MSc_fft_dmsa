@@ -66,8 +66,8 @@ classdef A_1
             %  > 6. Extension type.
             inp.fr.st  = 'Implicit';           
             inp.fr.wf  = 'Weighted';
-            inp.fr.np  = 3;
-            inp.fr.ng  = 3;
+            inp.fr.np  = 5;
+            inp.fr.ng  = 5;
             inp.fr.nt  = false;
             inp.fr.et  = false;
         end

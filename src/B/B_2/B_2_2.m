@@ -3,12 +3,15 @@ classdef B_2_2
         %% > Wrap-up B_2_2.
         function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,st,wf,bnd_ff,bnd_fc,ng)
             % >> ----------------------------------------------------------
-            % >> 1.   Assemble matrices.
-            %  > 1.1. Assemble matrices Df, Dwf, Pf and Tf.
-            %  > 1.2. Compute df array.
-            %  > 1.3. Assemble matrices A and B.
-            %  > 1.4. Solver setup.
-            % >> 2.   Compute error norms.
+            % >> 1.     Assemble matrices.
+            %  > 1.1.   Assemble matrices Df, Dwf, Pf and Tf.
+            %  > 1.2.   Compute df array.
+            %  > 1.3.   Assemble matrices A and B.
+            %  > 1.3.1. Assemble A.
+            %  > 1.3.2. Assemble B.
+            %  > 1.3.3. Solver setup.
+            %  > 1.4.   Compute face polynomial.
+            % >> 2.     Compute error norms.
             % >> ----------------------------------------------------------
             % >> 1.
             %  > Select weight function coefficients.
@@ -84,7 +87,7 @@ classdef B_2_2
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Pf{i} = pinv(transpose(Dwf{i})*Df{i})*transpose(Dwf{i});
+                Pf{i} = (transpose(Dwf{i})*Df{i})\transpose(Dwf{i});
             end
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
@@ -106,7 +109,7 @@ classdef B_2_2
                 df_ij(i,j) = Coeff(j).*fg.Weights(i).*((mean_f(1)-fg.Points(i,1)).^Exp(1,j)).*((mean_f(2)-fg.Points(i,2)).^Exp(2,j));
                 df_ij      = sum(df_ij,1);
             elseif iD == 2
-                % >> grad(Phi_f).
+                % >> gradPhi_f.
                 for i = 1:size(Coeff,1)
                     j              = 1:size(fg.Points,1);
                     k              = 1:numb;
@@ -150,29 +153,16 @@ classdef B_2_2
             [pde.c.Qp,B] = ...
                 B_2_2.Assemble_B(msh,pde.fn.func,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,pde.bnd.f);
             
-            % >> PDE solution.
-%             if strcmpi(st,'Implicit')
-                % >> Implicit flux reconstruction.
-                %  > Phi.
-                pde.Phi = B_2_2.SetUp_Solver('QR',A,B,1e-9,10e3);
-                %  > Error norms.
-                i       = 1:msh.c.NC;
-                X(i)    = abs(pde.blk.f(i)-pde.Phi(i));
-                pde.E  = B_2_2.Compute_ErrorNorms(msh,X);
-                %  > Face polynomial.
-                %B_2_2.Compute_FacePolynomial(msh,Phi_fc,Phi_ff,pde.Phi,pde.bnd.f,bnd_ff,Tf_C,Tf_D);
-
-                
-                %             elseif strcmpi(st,'Explicit')
-%                 % >> Explicit flux reconstruction.
-%                 %  > Error norms.
-%                 X     = abs(A*pde.blk.f-B)';
-%                 pde.E = B_2_2.Compute_ErrorNorms(msh,X);
-%                 %  > Face polynomial.
-%                 B_2_2.Compute_FacePolynomial(msh,Phi_fc,Phi_ff,pde.blk.f,pde.bnd.f,bnd_ff,Tf_C,Tf_D);
-%             else
-%                 return;
-%             end
+            % >> Solve PDE...
+            if strcmpi(st,'Implicit')
+                %  > Flux reconstruction: implicit.
+                pde = B_2_2.PDE_Implicit(msh,pde,A,B);
+            elseif strcmpi(st,'Explicit')
+                %  > Flux reconstruction: explicit.
+                pde = B_2_2.PDE_Implicit(msh,pde,A,B);
+            else
+                return;
+            end
         end
         % >> 1.3.1. -------------------------------------------------------
         function [A] = Assemble_A(NC,face,Phi_fc,V_Tf_C_Sf,G_Tf_D_Sf)
@@ -237,9 +227,43 @@ classdef B_2_2
             end
         end
         % >> 1.3.3. -------------------------------------------------------
+        function [X] = SetUp_Solver(A,B,str)
+            [U,S,V]  = svd (A);
+            s        = diag(S);
+            if strcmpi(str,'backslash')
+                X    = V*((U'*B)./s);
+            elseif strcmpi(str,'Tikhonov')
+                lmbd = 1E-06;
+                X    = V*(s.*(U'*B)./(s.^2+lmbd));
+            else
+                return;
+            end
+        end
+        % >> 1.3.4. -------------------------------------------------------
+        %  > Implicit flux reconstruction.
+        function [pde] = PDE_Implicit(msh,pde,A,B)
+            %  > Phi_c.
+            pde.Phi = B_2_2.SetUp_Solver(A,B,'backslash');
+            %  > Error norms.
+            i       = 1:msh.c.NC;
+            X(i)    = abs(pde.blk.f(i)-pde.Phi(i));
+            pde.E   = B_2_2.Compute_ErrorNorms(msh,X);
+            %  > Face polynomial.
+            %    B_2_2.Compute_FacePolynomial(msh,Phi_fc,Phi_ff,pde.Phi,pde.bnd.f,bnd_ff,Tf_C,Tf_D);
+        end
+        % >> 1.3.5. -------------------------------------------------------
+        %  > Explicit flux reconstruction.
+        function [pde] = PDE_Explicit(msh,pde,A,B)
+            %  > Error norms.
+            X     = abs(A*pde.blk.f-B)';
+            pde.E = B_2_2.Compute_ErrorNorms(msh,X);
+            %  > Face polynomial.
+            %    B_2_2.Compute_FacePolynomial(msh,Phi_fc,Phi_ff,pde.blk.f,pde.bnd.f,bnd_ff,Tf_C,Tf_D);
+        end
+        % >> 1.4. ---------------------------------------------------------
         function [] = Compute_FacePolynomial(msh,Phi_fc,Phi_ff,Phi_cv,Phi_fv,bnd_ff,Tf_C,Tf_D)
-            %  > Stencil values (a posteriori).
             for i = 1:msh.f.NF
+                %  > Stencil values (a posteriori).
                 nc (i)         = length(Phi_fc{i});
                 nf (i)         = length(Phi_ff{i});
                 j  {i}         = 1:nc(i);
@@ -250,23 +274,9 @@ classdef B_2_2
                         Phi{i}(k{i}) = Phi_fv(Phi_ff{i}(k{i}(l)-nc(i)) == bnd_ff);
                     end
                 end
+                %  > Phi_f,gradPhi_f.
                 Phi_f(i)       = Tf_C{i}*Phi{i}';
                 gradPhi_f(:,i) = Tf_D{i}*Phi{i}';
-            end
-        end
-        % >> 1.4. ---------------------------------------------------------
-        function [X] = SetUp_Solver(Type,A,B,Tol,iterMax)
-            if strcmpi(Type,'bicgstabl')
-                %  > bicgstabl.
-                [A,B,setup] = deal(sparse(A),sparse(B),struct('type','ilutp','droptol',1e-6));
-                [L,U]       = ilu(A,setup);
-                [X,~]       = bicgstabl(A,B,Tol,iterMax,L,U,[]);
-            elseif strcmpi(Type,'QR')
-                %  > QR Decomposition (Householder reflections approach).
-                Q = qr(A);
-                Y = Q'*B;
-                R = Q'*A;
-                X = inv(R'*R)*R'*Y;
             end
         end
         
@@ -274,10 +284,10 @@ classdef B_2_2
         function [E]   = Compute_ErrorNorms(msh,X)
             i          = 1:msh.c.NC;
             E.EA(i)    = X(i);
-            E_iX{1}(i) = X(i).*msh.c.vol(i);
-            E_iX{2}(i) = X(i).^2.*msh.c.vol(i).^2;
-            E.EN{1}    = sum(E_iX{1})./sum(msh.c.vol);
-            E.EN{2}    = sum(sqrt(E_iX{2}))./sum(sqrt(msh.c.vol.^2));
+            E_iX{1}(i) = X(i).*msh.c.h(i);
+            E_iX{2}(i) = X(i).^2.*msh.c.h(i).^2;
+            E.EN{1}    = sum(E_iX{1})./sum(msh.c.h);
+            E.EN{2}    = sum(sqrt(E_iX{2}))./sum(sqrt(msh.c.h.^2));
             E.EN{3}    = max(X);
         end
     end

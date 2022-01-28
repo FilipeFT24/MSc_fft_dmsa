@@ -4,12 +4,21 @@ clear, clc, close all; format default;
 % >> ----------------------------------------------------------------------
 %  > Working directories.
 Tools.Set_Directories();
+%  > Run...
+run_1 = true;
+run_2 = false;
 % >> ----------------------------------------------------------------------
-%  > Class A/B.
-[inp,msh] = A.WrapUp_A(0.015);
-[pde]     = B.WrapUp_B(inp,msh); 
+if run_1
+    %  > Class A/B.
+    [inp,msh] = A.WrapUp_A(0.1);
+    [pde]     = B.WrapUp_B(inp,msh);
+    %  > Class C/D.
+    C.WrapUp_C(inp,msh,pde,'bnd',0);
+end
 % >> ----------------------------------------------------------------------
-%  > Class C/D.
-%C.WrapUp_C(inp,msh,pde,'bnd',0);
-%D.WrapUp_D(true,true,'1');
 % >> ----------------------------------------------------------------------
+if run_2
+    D.WrapUp_D(false,true,'1');
+end
+% >> ----------------------------------------------------------------------
+

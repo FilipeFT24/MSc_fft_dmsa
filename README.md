@@ -2,16 +2,6 @@
 ## Top-level directory layout
 
 ## Grid generation
-<p align="center">
-  <img src="/[Figures]/Fig_1/Fig_11_1.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_11_2.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_11_3.png" width="250" />
-</p>
-<p align="center">
-  <img src="/[Figures]/Fig_1/Fig_12_1.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_12_2.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_12_3.png" width="250" />
-</p>
 
 ## Stencil generation
 <p align="center">
@@ -24,28 +14,8 @@
   <img src="/[Figures]/Fig_1/Fig_ST9_5.png" width="250" />
   <img src="/[Figures]/Fig_1/Fig_ST9_6.png" width="250" />
 </p>
-<p align="center">
-  <img src="/[Figures]/Fig_1/Fig_ST9_7.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_ST9_8.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_ST9_9.png" width="250" />
-</p>
-<p align="center">
-  <img src="/[Figures]/Fig_1/Fig_ST9_10.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_ST9_11.png" width="250" />
-  <img src="/[Figures]/Fig_1/Fig_ST9_12.png" width="250" />
-</p>
 
 ## 2D quadrature
-<p align="center">
-  <img src="/[Figures]/Fig_0/Fig_01_1.png" width="250" />
-  <img src="/[Figures]/Fig_0/Fig_01_5.png" width="250" />
-  <img src="/[Figures]/Fig_0/Fig_01_9.png" width="250" />
-</p>
-<p align="center">
-  <img src="/[Figures]/Fig_0/Fig_02_1.png" width="250" />
-  <img src="/[Figures]/Fig_0/Fig_02_5.png" width="250" />
-  <img src="/[Figures]/Fig_0/Fig_02_9.png" width="250" />
-</p>
 
 ```
 '
@@ -172,9 +142,7 @@ msh
 │   └── f            #  >> Field: Face.  
 │       ├── f{1,i}   #   > Face vertices of boundary face 'i'. 
 │       ├── f{2,i}   #   > Face index of boundary face 'i'.
-│       ├── f{3,i}   #   > Cell index of boundary face 'i'.
-│       ├── f{4,i}   #   > Boundary (char). 
-│       └── f{5,i}   #   > Outer normal of boundary face 'i'.                 
+│       └── f{3,i}   #   > Cell index of boundary face 'i'.               
 │
 └── s                # >>> Field: Stencil.
     ├── c            #  >> Face 'i' stencil cell indices.                           
