@@ -18,7 +18,7 @@ classdef Data_Tools
             %  > Change directory.
             cd(Dir_1);
             %  > Save data and print to terminal.
-            save(['T','_',sprintf('%.0f',np),'_',sprintf('%.0f',ik)],'np','h','Variable');
+            save(['T','_',sprintf('%.0f',np),'_',sprintf('%.0f',ik)],'np','h','Variable','-v7');
             fprintf('Loop #%d complete.\n',ik);
             %  > Change directory.
             cd(Dir_2);

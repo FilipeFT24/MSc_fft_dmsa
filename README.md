@@ -108,59 +108,61 @@ inp
 '
 msh
 │ 
-├── d                # >>> Field: Domain.
-│   └── h_ref        #  >> Hydraulic diameter. 
+├── d                         # >>> Field: Domain.
+│   └── h_ref                 #  >> Hydraulic diameter. 
 │
-├── c                # >>> Field: Cell.
-│   ├── NC           #  >> Number of cells.
-│   ├── xy_v         #  >> Cell 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
-│   ├── mean         #  >> Cell 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
-│   ├── h            #  >> Cell 'i' hydraulic diameter.
-│   ├── vol          #  >> Cell 'i' volume.
-│   ├── c            #  >> Cell 'i' neighbouring cell indices. 
-│   └── f            #  >> Field: Face.
-│       ├── f        #   > Face indices of cell 'i'.
-│       ├── xy_v     #   > Face 'j' vertices of cell 'i'.  
-│       ├── mean     #   > Face 'j' centroid: [Xv,Yv] = [mean(1,j),mean(2,j)].     
-│       ├── len      #   > Face 'j' length of cell 'i'.
-│       ├── Nf       #   > Face 'j' outer (unit) normal of cell 'i'.
-│       └── Sf       #   > Face 'j' outer (face) normal of cell 'i'.
+├── c                         # >>> Field: Cell.
+│   ├── NC                    #  >> Number of cells.
+│   ├── xy_v                  #  >> Cell 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
+│   ├── mean                  #  >> Cell 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
+│   ├── h                     #  >> Cell 'i' hydraulic diameter.
+│   ├── vol                   #  >> Cell 'i' volume.
+│   ├── v                     #  >> Cell 'i' vertex indices. 
+│   ├── c                     #  >> Cell 'i' neighbouring cell indices. 
+│   └── f                     #  >> Field: Face.
+│       ├── f                 #   > Face indices of cell 'i'.
+│       ├── xy_v              #   > Face 'j' vertices of cell 'i'.  
+│       ├── mean              #   > Face 'j' centroid: [Xv,Yv] = [mean(1,j),mean(2,j)].     
+│       ├── len               #   > Face 'j' length of cell 'i'.
+│       ├── Nf                #   > Face 'j' outer (unit) normal of cell 'i'.
+│       └── Sf                #   > Face 'j' outer (face) normal of cell 'i'.
 │
-├── f                # >>> Field: Face.
-│   ├── NF           #  >> Number of faces.
-│   ├── xy_v         #  >> Face 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
-│   ├── mean         #  >> Cell 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
-│   └── c            #  >> Face 'i' direct neighbouring cells.
+├── f                         # >>> Field: Face.
+│   ├── NF                    #  >> Number of faces.
+│   ├── xy_v                  #  >> Face 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
+│   ├── mean                  #  >> Face 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
+│   ├── v                     #  >> Face 'i' vertex indices.
+│   └── c                     #  >> Face 'i' direct neighbouring cell indices.
 │                                ├── 1. length(c{i}) = 1. Boundary face.
 │                                └── 2. length(c{i}) = 2. Bulk face.
 │
-├── bnd              # >>> Field: Boundary.
-│   ├── c            #  >> Field: Cell.
-│   │   ├── c{1,i}   #   > Face 'j' vertices of boundary cell 'i': [Xv(:),Yv(:)] = [c{1,i}{j}(:,1),c{1,i}{j}(:,2)]. 
-│   │   └── c{2,i}   #   > Cell index of boundary cell 'i'.
+├── bnd                       # >>> Field: Boundary.
+│   ├── c                     #  >> Field: Cell.
+│   │   ├── c{1,i}            #   > Face 'j' vertices of boundary cell 'i': [Xv(:),Yv(:)] = [c{1,i}{j}(:,1),c{1,i}{j}(:,2)]. 
+│   │   └── c{2,i}            #   > Cell index of boundary cell 'i'.
 │   │
-│   └── f            #  >> Field: Face.  
-│       ├── f{1,i}   #   > Face vertices of boundary face 'i'. 
-│       ├── f{2,i}   #   > Face index of boundary face 'i'.
-│       └── f{3,i}   #   > Cell index of boundary face 'i'.               
+│   └── f                     #  >> Field: Face.  
+│       ├── f{1,i}            #   > Face vertices of boundary face 'i'. 
+│       ├── f{2,i}            #   > Face index of boundary face 'i'.
+│       └── f{3,i}            #   > Cell index of boundary face 'i'.               
 │
-└── s                # >>> Field: Stencil.
-    ├── c            #  >> Face 'i' stencil cell indices.                           
-    ├── f            #  >> Face 'i' stencil face indices.
+└── s                         # >>> Field: Stencil.
+    ├── c                     #  >> Face 'i' stencil cell indices.                           
+    ├── f                     #  >> Face 'i' stencil face indices.
     │                            └──  c{j,i}: Layer 'j' of face 'i' stencil.
-    ├── c_e          #  >> Face 'i' extended stencil cell indices.                           
-    ├── f_e          #  >> Face 'i' extended stencil face indices.
+    ├── c_e                   #  >> Face 'i' extended stencil cell indices.                           
+    ├── f_e                   #  >> Face 'i' extended stencil face indices.
     │                            └──  c{j,i}: (Extension) layer 'j' of face 'i' stencil.
-    ├── xy_v_c       #  >> Face 'i' (cell)  stencil points: [Xv(:),Yv(:)] = [xy_v_l{j,i}(1,:),xy_v_l{j,i}(2,:)]. 
-    ├── xy_v_f       #  >> Face 'i' (face)  stencil points: [Xv(:),Yv(:)] = [xy_v_t  {i}(1,:),xy_v_t  {i}(2,:)]. 
-    ├── xy_v_t       #  >> Face 'i' (total) stencil points: [Xv(:),Yv(:)] = [xy_v_t  {i}(1,:),xy_v_t  {i}(2,:)]. 
-    └── par          #  >> Face 'i' stencil parameters.
-        ├── n_e      #   > Face 'i' number of extensions.
+    ├── xy_v_c                #  >> Face 'i' (cell)  stencil points: [Xv(:),Yv(:)] = [xy_v_l{j,i}(1,:),xy_v_l{j,i}(2,:)]. 
+    ├── xy_v_f                #  >> Face 'i' (face)  stencil points: [Xv(:),Yv(:)] = [xy_v_t  {i}(1,:),xy_v_t  {i}(2,:)]. 
+    ├── xy_v_t                #  >> Face 'i' (total) stencil points: [Xv(:),Yv(:)] = [xy_v_t  {i}(1,:),xy_v_t  {i}(2,:)]. 
+    └── par                   #  >> Face 'i' stencil parameters.
+        ├── n_e               #   > Face 'i' number of extensions.
         │                        ├── ne(1,i): number of extensions (x-direction).
         │                        └── ne(2,i): number of extensions (y-direction)
-        ├── n_x      #   > Adimensional          length (x-direction).
-        ├── n_y      #   > Adimensional          length (y-direction).
-        ├── l_x      #   > Limit                        (x-direction): [l_x_min(i),l_x_max(i)] = [l_x(i,1),l_x(i,2)].
-        └── l_y      #   > Limit                        (y-direction): [l_y_min(i),l_y_max(i)] = [l_y(i,1),l_y(i,2)].             ​
+        ├── n_x               #   > Adimensional            length (x-direction).
+        ├── n_y               #   > Adimensional            length (y-direction).
+        ├── l_x               #   > Limit                          (x-direction): [l_x_min(i),l_x_max(i)] = [l_x(i,1),l_x(i,2)].
+        └── l_y               #   > Limit                          (y-direction): [l_y_min(i),l_y_max(i)] = [l_y(i,1),l_y(i,2)].             ​
 ```
 

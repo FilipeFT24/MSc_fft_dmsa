@@ -8,8 +8,8 @@ classdef D
                 %  > Set directories...
                 [Dir_1,Dir_2] = Data_Tools.Set_Directories(ij);
                 %  > Save...
-                h_max = 0.10;
-                h_min = 0.01;
+                h_max = 0.100;
+                h_min = 0.025;
                 N     = 20;
                 h     = linspace(h_max,h_min,N);
                 for ik = 1:N
@@ -78,11 +78,11 @@ classdef D
         % >> 1.2. ---------------------------------------------------------
         function [H_mean,CR] = Compute_CR(H,X)
             for i = 1:size(X,2)-1
-                for j = 1:3
-                    dE  (i,j) = log(X{i+1}(j)./X{i}(j));
-                    CR  (i,j) = dE(i,j)./log(H(i+1)./H(i));
-                    H_mean(i) = 1./2.*(H(i)+H(i+1));
-                end
+                j         = 1:size(X{i},2);
+                dE  (i,j) = log(X{i+1}(j)./X{i}(j));
+                CR  (i,j) = dE(i,j)./log(H(i+1)./H(i));
+                CR  (i,j) = abs(CR(i,j));
+                H_mean(i) = 1./2.*(H(i)+H(i+1));
             end
         end
     end

@@ -56,20 +56,21 @@ classdef A_1
             % >> 5. Flux reconstruction method:
             %  > 1. Simulation type   : 1. Explicit.
             %                           2. Implicit.
-            %                           3. Deferred-correction approach (DC).
             %  > 2. Weighting function: 1. Unweighted.
             %                           2. Weighted.
             %  > 3. Face polynomial degree.
             %  > 4. Number of Gauss points/per face.
-            %  > 5. Neighbouring type : 1. Vertex (at least 1 common vertex) -> false.
-            %                           2. Face   (at least 1 common face  ) -> true.
+            %  > 5. Neighbouring type : 1. Vertex (false).
+            %                           2. Face   (true ).
             %  > 6. Extension type.
+            %  > 7. Add all boundary faces (true/false).
             inp.fr.st  = 'Implicit';           
             inp.fr.wf  = 'Weighted';
             inp.fr.np  = 5;
             inp.fr.ng  = 5;
             inp.fr.nt  = false;
             inp.fr.et  = false;
+            inp.fr.add = false;
         end
     end
 end

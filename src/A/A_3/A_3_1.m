@@ -71,7 +71,7 @@ classdef A_3_1
             
             % >> Process faces...
             %  > blk.
-            blk_f = reshape (blk_ij,[msh.c.NC,1]);
+            blk_f = reshape(blk_ij,[msh.c.NC,1]);
             blk_f = cat(1,blk_f{:});
             shr_f = A_3_1.Match_blkFaces(blk_f);
             %  > bnd.
@@ -95,8 +95,8 @@ classdef A_3_1
             %  > Re-arranged cell array.
             jj = size(uni_f,1)-size(bnd_f,1);
             for i = 1:size(uni_f,1)
-                fin_f{i,1} = uni_f(i,1);
-                fin_f{i,2} = uni_f(i,2);
+                fin_f{i,1}     = uni_f(i,1);
+                fin_f{i,2}     = uni_f(i,2);
                 if i <= jj
                     fin_f{i,3} = shr_f(i,:);
                     fin_f{i,4} = 0;
@@ -131,19 +131,26 @@ classdef A_3_1
                         msh.c.f.xy_v{i}{j}(1,:) = [struct.Points(dom_f(j,1),1),struct.Points(dom_f(j,1),2)];
                         msh.c.f.xy_v{i}{j}(2,:) = [struct.Points(dom_f(j,2),1),struct.Points(dom_f(j,2),2)];
                     end
+                    %  > Vertex indices.
+                    msh.c.v{i} = unique([dom_f(1:n(i),1);dom_f(1:n(i),2)])';
                 else
                     for j = 1:n(i)
                         %  > (Xv,Yv).
                         msh.c.f.xy_v{i}{j}(1,:) = [struct.Points(dom_f(sum(n(1:i-1))+j,1),1),struct.Points(dom_f(sum(n(1:i-1))+j,1),2)];
                         msh.c.f.xy_v{i}{j}(2,:) = [struct.Points(dom_f(sum(n(1:i-1))+j,2),1),struct.Points(dom_f(sum(n(1:i-1))+j,2),2)];
                     end
-                end
+                    %  > Vertex indices.
+                    msh.c.v{i} = unique([dom_f(sum(n(1:i-1))+1:sum(n(1:i-1))+n(i),1);dom_f(sum(n(1:i-1))+1:sum(n(1:i-1))+n(i),2)])';
+                end  
+            end
+            %  > Face vertex indices.
+            for i = 1:size(fin_f,1)
+                msh.f.v{i} = [fin_f{i,1:2}];
             end
             
             % >> Set neighbours.
             %  > Cells.
-            %    Remark: 1. Already done (see call of previous function on 2.1.(A_3).
-            %            2. That routine "triggers" the remaining routines coded in this SubClass.
+            %    Remark: Already done.
             %  > Faces.
             for i = 1:msh.f.NF
                 msh.f.c{i} = fin_f{i,3};
@@ -305,7 +312,7 @@ classdef A_3_1
             %  > Face length.
             for i = 1:msh.c.NC
                 for j = 1:size(msh.c.f.xy_v{i},2)
-                    msh.c.f.len{i}(j) = A_Tools.fft_dist(msh.c.f.xy_v{i}{j}); %  > X|Y
+                    msh.c.f.len{i}(j) = A_Tools.fft_dist(msh.c.f.xy_v{i}{j});
                 end
                 %  > Face perimeter.
                 p        (i) = sum(msh.c.f.len{i});

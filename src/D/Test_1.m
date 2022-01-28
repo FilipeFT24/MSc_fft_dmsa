@@ -36,7 +36,7 @@ classdef Test_1
             end
             for i = 1:size(X.NR.E,2)
                 %  > Get index...
-                [~,l] = min(abs(X.NR.H{i}-1E-02));
+                [~,l] = min(abs(X.NR.H{i}-5.0E-02));
                 fplot(@(x) (Ej(i,l)./X.NR.H{i}(l).^X.n(i)).*x.^X.n(i),[X.NR.H{i}(end),X.NR.H{i}(1)],'--','color',Color(i,:),'Linewidth',0.50);
                 legendName(size(X.NR.E,2)+i) = convertCharsToStrings(num2str(X.n(i)));
             end

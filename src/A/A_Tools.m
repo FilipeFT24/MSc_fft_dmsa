@@ -85,10 +85,10 @@ classdef A_Tools
             % >> msh.
             msh     = orderfields(msh        ,{'d','c','f','bnd','s'});
             %  > c.
-            msh.c   = orderfields(msh.c      ,{'NC','xy_v','mean','h','vol','c','f'});
+            msh.c   = orderfields(msh.c      ,{'NC','xy_v','mean','h','vol','v','c','f'});
             msh.c.f = orderfields(msh.c.f    ,{'f','xy_v','mean','len','Nf','Sf'});
             %  > f.
-            msh.f   = orderfields(msh.f      ,{'NF','xy_v','mean','c'});
+            msh.f   = orderfields(msh.f      ,{'NF','xy_v','mean','v','c'});
             %  > bnd.
             msh.bnd = orderfields(msh.bnd    ,{'c','f'});
             %  > s.

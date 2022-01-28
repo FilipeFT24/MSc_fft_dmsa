@@ -87,7 +87,8 @@ classdef B_2_2
             % >> Pf.
             %  > Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Pf{i} = (transpose(Dwf{i})*Df{i})\transpose(Dwf{i});
+                Inv{i} = B_Tools.LU(transpose(Dwf{i})*Df{i},'Dolittle');
+                Pf {i} = Inv{i}*transpose(Dwf{i});
             end
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
@@ -228,13 +229,13 @@ classdef B_2_2
         end
         % >> 1.3.3. -------------------------------------------------------
         function [X] = SetUp_Solver(A,B,str)
-            [U,S,V]  = svd (A);
-            s        = diag(S);
             if strcmpi(str,'backslash')
-                X    = V*((U'*B)./s);
+                X       = A\B; % Equivalent to: V*((U'*B)./s).
             elseif strcmpi(str,'Tikhonov')
-                lmbd = 1E-06;
-                X    = V*(s.*(U'*B)./(s.^2+lmbd));
+                lmbd    = 1E-06;
+                [U,S,V] = svd (A);
+                s       = diag(S);
+                X       = V*(s.*(U'*B)./(s.^2+lmbd));
             else
                 return;
             end
