@@ -9,6 +9,7 @@ classdef B_2
             gy  = inp.pr.gy;
             np  = inp.fr.np;
             ng  = inp.fr.ng;
+            ft  = inp.fr.ft;
             st  = inp.fr.st;
             wf  = inp.fr.wf;
             
@@ -20,7 +21,7 @@ classdef B_2
             % >> 1.
             pde = B_2_1.WrapUp_B_2_1(pde,np,wf);
             % >> 2.
-            pde = B_2_2.WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,st,wf,bnd_ff,bnd_fc,ng);
+            pde = B_2_2.WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,ft,st,wf,bnd_ff,bnd_fc,ng);
         end            
     end
 end

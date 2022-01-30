@@ -5,6 +5,26 @@ classdef B_Tools
         % >> --------------------------------------------------------------
         
         %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
+        function [Y] = CramerRule(X)
+            [m,n] = size(X);
+            for i = 1:n
+                det_X(i) = 0;
+                for j = 1:m
+                    ki{i,j} = setdiff(1:n,i);
+                    kj{i,j} = setdiff(1:m,j);
+                    Xk{i,j} = X(ki{i,j},kj{i,j});
+                    if ~mod(i+j,2)
+                        det_Xk(i,j) =  det(Xk{i,j});
+                    else
+                        det_Xk(i,j) = -det(Xk{i,j});
+                    end
+                    det_X(i) = det_X(i)+X(i,j).*det_Xk(i,j);
+                end
+                Y(:,i) = det_Xk(i,:)./det_X(i);
+            end
+        end
+        % >> 1.2. ---------------------------------------------------------
         function Y = LU(X,str)
             %  > Initialization.
             [m,n]     = size(X);

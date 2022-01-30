@@ -17,7 +17,7 @@ classdef Fig_1
                 end
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
-                Fig_1.Plot(inp,msh,iF,len);
+                Fig_1.Plot(inp,msh,iF,len,Exp_1);
                 %  > Export as .pdf.
                 if Exp_1
                     Fig_Tools.Export_PDF('Fig_1','../[Figures]/Fig_1');
@@ -26,7 +26,7 @@ classdef Fig_1
         end
         
         %% > Auxiliary functions.
-        function [] = Plot(inp,msh,iF,len)
+        function [] = Plot(inp,msh,iF,len,Exp_1) %#ok<INUSD>
             % >> Local variables.
             Xv_i = inp.msh.lim.Xv_i;
             Xv_f = inp.msh.lim.Xv_f;
@@ -48,15 +48,8 @@ classdef Fig_1
                     continue;
                 end
                 patch(msh.c.xy_v{i}(:,1),msh.c.xy_v{i}(:,2),'w');
-            end
-            
-            
-            
-            
-            
-            
-            
-            % %% > Boundaries.
+            end           
+            %% > Boundaries.
             % %  > Cells.
             % hold on;
             % for i = 1:size(msh.bnd.c,2)
@@ -86,7 +79,7 @@ classdef Fig_1
             %         quiver(msh.c.f.mean{i}(1,j),msh.c.f.mean{i}(2,j),msh.c.f.Nf{i}(1,j).*len,msh.c.f.Nf{i}(2,j).*len,'AutoScale','off','Color','b');
             %     end
             % end
-            % %% > Neighbours(iF).
+            %% > Neighbours(iF).
             % %  > Cells.
             % hold on;
             % for i = 1:length(msh.f.c{iF})
@@ -103,7 +96,7 @@ classdef Fig_1
                             Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
                         patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(i,:),'FaceAlpha',0.25,'Linestyle','None');
                     end
-                    c  (i) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
+                    c  (i) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',4.75);
                     leg(i) = convertCharsToStrings(num2str(i));
                 else
                     if i ~= Sz_c || ~et
@@ -112,7 +105,7 @@ classdef Fig_1
                                 Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
                             patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(nl+1,:),'FaceAlpha',0.25,'Linestyle','None');
                         end
-                        c  (nl+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(nl+1,:),'MarkerFaceColor',C(nl+1,:),'MarkerSize',3.5);
+                        c  (nl+1) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(nl+1,:),'MarkerFaceColor',C(nl+1,:),'MarkerSize',4.75);
                         leg(nl+1) = '$*$';
                     else
                         for j = 1:length(msh.s.c{i,iF})
@@ -120,7 +113,7 @@ classdef Fig_1
                                 Fig_Tools.Order_Clockwise('T',msh.c.f.xy_v{msh.s.c{i,iF}(j)});
                             patch(f_1{i,j}(:,1),f_1{i,j}(:,2),C(Sz_c,:),'FaceAlpha',0.25,'Linestyle','None');
                         end
-                        c  (Sz_c) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(Sz_c,:),'MarkerFaceColor',C(Sz_c,:),'MarkerSize',3.5);
+                        c  (Sz_c) = plot(msh.c.mean(1,msh.s.c{i,iF}),msh.c.mean(2,msh.s.c{i,iF}),'s','Color',C(Sz_c,:),'MarkerFaceColor',C(Sz_c,:),'MarkerSize',4.75);
                         leg(Sz_c) = '$**$';
                     end
                 end
@@ -129,23 +122,23 @@ classdef Fig_1
             hold on;
             for i = 1:Sz_f
                 if i <= nl
-                    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',3.5);
+                    plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(i,:),'MarkerFaceColor',C(i,:),'MarkerSize',4.75);
                 else
                     if i ~= Sz_f || ~et
                         if ~isempty(msh.s.f{i,iF})
-                            plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(nl+1,:),'MarkerFaceColor',C(nl+1,:),'MarkerSize',3.5);
+                            plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(nl+1,:),'MarkerFaceColor',C(nl+1,:),'MarkerSize',4.75);
                         end
                     else
                         if ~isempty(msh.s.f{i,iF})
-                            plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(Sz_c,:),'MarkerFaceColor',C(Sz_c,:),'MarkerSize',3.5);
+                            plot(msh.f.mean(1,msh.s.f{i,iF}),msh.f.mean(2,msh.s.f{i,iF}),'s','Color',C(Sz_c,:),'MarkerFaceColor',C(Sz_c,:),'MarkerSize',4.75);
                         end
                     end
                 end
             end
-            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.0);
+            plot(msh.f.xy_v{iF}(:,1),msh.f.xy_v{iF}(:,2),'-','Color',C(1,:),'Linewidth',2.0);       
             Fig_Tools.Plot_Limits(inp,msh,iF);
             legend(c,leg,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
-            Fig_Tools.ChangeLook_1(inp,len);
+            Fig_Tools.ChangeLook_1(inp,len,Exp_1);
         end
     end
 end

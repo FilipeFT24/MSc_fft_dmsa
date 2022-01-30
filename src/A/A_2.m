@@ -113,6 +113,7 @@ classdef A_2
         function [xy_v] = TriangleMesh_NonUniform(inp,Xv_i,Xv_f,Yv_i,Yv_f,NX_v,NY_v)
             % >> Vertex coordinates.
             %  > (Xd,Yd).
+            rng default;
             Xd = sort((Xv_f-Xv_i).*rand(NY_v,NX_v-2)+Xv_i,2,'ascend');
             Xd = cat(2,ones(NY_v,1).*Xv_i,Xd,ones(NY_v,1).*Xv_f);
             Yd = sort((Yv_f-Yv_i).*rand(NY_v-2,NX_v)+Yv_i,1,'ascend');

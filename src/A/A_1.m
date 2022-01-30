@@ -19,8 +19,8 @@ classdef A_1
             %    ├─ Uniform     grid: h.
             %    └─ Non-uniform grid: Nv=[Nv(X),Nv(Y)].
             inp.msh.h     = h;
-            inp.msh.Nv(1) = 25;
-            inp.msh.Nv(2) = 25;
+            inp.msh.Nv(1) = 7;
+            inp.msh.Nv(2) = 7;
             
             % >> 3. Grid types:
             %    ├── v
@@ -54,23 +54,25 @@ classdef A_1
 
             %% > fr.
             % >> 5. Flux reconstruction method:
-            %  > 1. Simulation type   : 1. Explicit.
-            %                           2. Implicit.
-            %  > 2. Weighting function: 1. Unweighted.
-            %                           2. Weighted.
-            %  > 3. Face polynomial degree.
-            %  > 4. Number of Gauss points/per face.
-            %  > 5. Neighbouring type : 1. Vertex (false).
-            %                           2. Face   (true ).
-            %  > 6. Extension type.
-            %  > 7. Add all boundary faces (true/false).
-            inp.fr.st  = 'Implicit';           
+            %  > 1. Simulation type        : 1. Explicit.
+            %                                2. Implicit.
+            %  > 2. Source term integration: 1. 2D Quadrature (false).
+            %                                2. Analytic      (true ).
+            %  > 3. Weighting function:      1. Unweighted.
+            %                                2. Weighted.
+            %  > 4. Face polynomial degree.
+            %  > 5. Number of Gauss points/per face.
+            %  > 6. Neighbouring type      : 1. Vertex (false).
+            %                                2. Face   (true ).
+            %  > 7. Extension type.
+            %  > 8. Add all boundary faces (true/false).
+            inp.fr.ft  = 'Implicit'; 
+            inp.fr.st  = false;
             inp.fr.wf  = 'Weighted';
-            inp.fr.np  = 5;
-            inp.fr.ng  = 5;
+            inp.fr.np  = 3;
+            inp.fr.ng  = 3;
             inp.fr.nt  = false;
             inp.fr.et  = false;
-            inp.fr.add = false;
         end
     end
 end

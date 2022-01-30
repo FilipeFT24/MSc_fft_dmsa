@@ -1,7 +1,7 @@
 classdef B_2_2
     methods (Static)
         %% > Wrap-up B_2_2.
-        function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,st,wf,bnd_ff,bnd_fc,ng)
+        function [pde] = WrapUp_B_2_2(msh,pde,vx,vy,gx,gy,ft,st,wf,bnd_ff,bnd_fc,ng)
             % >> ----------------------------------------------------------
             % >> 1.     Assemble matrices.
             %  > 1.1.   Assemble matrices Df, Dwf, Pf and Tf.
@@ -16,13 +16,13 @@ classdef B_2_2
             % >> 1.
             %  > Select weight function coefficients.
             a = 1;
-            b = 2;
+            b = 1;
             %  > 1.1.
             [pde,Tf_C,Tf_D] = ...
                 B_2_2.Assemble_Mat_1(msh,pde,wf,bnd_ff,bnd_fc,a,b);
             %  > 1.2.
             [pde] = ...
-                B_2_2.Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy,ng,st,Tf_C,Tf_D);
+                B_2_2.Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy,ng,ft,st,Tf_C,Tf_D);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -84,12 +84,24 @@ classdef B_2_2
             end
             
             %% > Matrices Pf and Tf.
-            % >> Pf.
-            %  > Pf = inv(Dwf_T*Df)*Dwf_T.
+            % >> Pf = inv(Dwf_T*Df)*Dwf_T.
             for i = 1:msh.f.NF
-                Inv{i} = B_Tools.LU(transpose(Dwf{i})*Df{i},'Dolittle');
-                Pf {i} = Inv{i}*transpose(Dwf{i});
+                %  > Df*W*Df.
+                DwfDf{i} = transpose(Dwf{i})*Df{i}; %  > Square matrix.
+                %  > Select...
+                %  > See prof. Duarte's PhD thesis (page 56).
+                if size(DwfDf{i},1) <= 4
+                    Inv{i} = B_Tools.CramerRule(DwfDf{i});
+                else  
+                    Inv {i} = DwfDf{i}\eye(size(DwfDf{i}));
+                    %  > Alternatives:
+                    %  [U{i},S{i},V{i}] = svd_lapack(DwfDf{i});
+                    %  Inv{i}           = V{i}*(S{i}\U{i}');
+                    %  Inv{i}           = inv(DwfDf{i});
+                end
+                Pf{i} = Inv{i}*transpose(Dwf{i});
             end
+
             % >> Tf = [1,(x-xf),(y-yf),...]*Pf*Phi = df*Pf*Phi.
             for i = 1:msh.f.NF
                 %  > Face quadrature.
@@ -121,7 +133,7 @@ classdef B_2_2
             end
         end
         % >> 1.3. ---------------------------------------------------------
-        function [pde] = Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy,ng,st,Tf_C,Tf_D)
+        function [pde] = Assemble_Mat_2(msh,pde,bnd_ff,vx,vy,gx,gy,ng,ft,st,Tf_C,Tf_D)
             % >> X*Tf.
             %    Remark: Tf=[A,B,C,D,E,F,G,H,I,J,...], where: Cell dependent coefficients: A,B,C,...,G.
             %                                                 Face dependent coefficients: H,i,J,...,(...).
@@ -151,14 +163,13 @@ classdef B_2_2
             % >> A.
             A = B_2_2.Assemble_A(msh.c.NC,face,Phi_fc,V_Tf_C_Sf,G_Tf_D_Sf);
             % >> B.
-            [pde.c.Qp,B] = ...
-                B_2_2.Assemble_B(msh,pde.fn.func,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,pde.bnd.f);
+            B = B_2_2.Assemble_B(msh,pde.fn.func,st,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,pde.bnd.f);
             
             % >> Solve PDE...
-            if strcmpi(st,'Implicit')
+            if strcmpi(ft,'Implicit')
                 %  > Flux reconstruction: implicit.
                 pde = B_2_2.PDE_Implicit(msh,pde,A,B);
-            elseif strcmpi(st,'Explicit')
+            elseif strcmpi(ft,'Explicit')
                 %  > Flux reconstruction: explicit.
                 pde = B_2_2.PDE_Implicit(msh,pde,A,B);
             else
@@ -189,11 +200,11 @@ classdef B_2_2
             end
         end
         % >> 1.3.2. -------------------------------------------------------
-        function [Qp,B] = Assemble_B(msh,func,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,bnd_fv)
+        function [B,Qp] = Assemble_B(msh,func,st,ng,face,Phi_fc,Phi_ff,V_Tf_C_Sf,G_Tf_D_Sf,bnd_ff,bnd_fv)
             %  > Initialize.
             B = zeros(msh.c.NC,1);
             %  > Compute source term.
-            [Qp,F_Vol] = B_1_2.Compute_SourceTerm(msh,func,ng);
+            [F_Vol] = B_1_2.Compute_SourceTerm(msh,func,st,ng);
             
             % >> B (Face dependent coefficients).
             for i = 1:msh.c.NC

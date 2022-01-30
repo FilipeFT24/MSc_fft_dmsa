@@ -2,7 +2,7 @@ classdef Fig_Tools
     methods (Static)         
         %% > Tools.
         % >> 1. -----------------------------------------------------------
-        function [] = ChangeLook_1(inp,len)
+        function [] = ChangeLook_1(inp,len,Flag)
             % >> Local variables.
             Xv_i  = inp.msh.lim.Xv_i;
             Xv_f  = inp.msh.lim.Xv_f;
@@ -23,10 +23,13 @@ classdef Fig_Tools
             set(gca,'TickLabelInterpreter','latex'); set(gca,'FontSize',12);
                        
             %  > X-Axis,Y-Axis label.
-            xlabel('$\textrm{x}$','FontSize',12,'Interpreter','latex'); 
-            ylabel('$\textrm{y}$','FontSize',12,'Interpreter','latex');
+            xlabel('$x$','FontSize',20,'Interpreter','latex'); 
+            ylabel('$y$','FontSize',20,'Interpreter','latex');
             set(gca,'XLim',[x_Min,x_Max],'XTick',x_Min:(Xv_f-Xv_i)./10:x_Max);
             set(gca,'YLim',[y_Min,y_Max],'YTick',y_Min:(Yv_f-Yv_i)./10:y_Max);
+            if Flag
+                set(gca,'XTick',[],'YTick',[]);
+            end
         end
         % >> 2. -----------------------------------------------------------
         function [] = ChangeLook_2(k,H)

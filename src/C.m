@@ -7,7 +7,7 @@ classdef C
             %  > Figure 1.
             Fig_1.WrapUp_Fig_1(true ,false,2,inp,msh,dt,len);
             %  > Figure 2.
-            Fig_2.WrapUp_Fig_2(true ,false,3,inp,msh,pde,len)
+            Fig_2.WrapUp_Fig_2(false,false,3,inp,msh,pde,len)
         end
     end
 end
