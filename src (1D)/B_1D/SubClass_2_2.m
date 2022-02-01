@@ -1,25 +1,24 @@
 classdef SubClass_2_2
     methods (Static)
         %% > Wrap up SubClass_2_2.
-        function [X,Norm] = WrapUp_2_2(msh,fn,bnd,blk)
+        function [X,Norm] = WrapUp_2_2(inp,msh,fn,bnd,blk)
             %  > Compute source term contribution.
-            if ~strcmpi(obj.Sim_Type,'DC')
-                F_Vol = SubClass_2_1.Compute_SourceTerm(obj.n,fn,msh);
-            else
-                F_Vol.LO = SubClass_2_1.Compute_SourceTerm(obj.n_LO,fn,msh);
-                F_Vol.HO = SubClass_2_1.Compute_SourceTerm(obj.n_HO,fn,msh);
-            end
+           
+            ft = inp.fr.ft;
+            st = inp.fr.st;
+            np = inp.fr.np;
+            ng = inp.fr.ng;
+            v = inp.pr.v;
+            g = inp.pr.g;
+            
+            [F_Vol] = SubClass_2_1.Compute_SourceTerm(np,fn,msh);
             
             %  > Set flux reconstruction method.
-            if strcmpi(obj.Sim_Type,'Explicit')
+            if strcmpi(ft,'Explicit')
                 [X,Norm] = SubClass_2_2.Reconstruct_ExplicitFlux(msh,bnd,blk,F_Vol);
-            elseif strcmpi(obj.Sim_Type,'Implicit')
-                [X,Norm] = SubClass_2_2.Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol);
-            elseif strcmpi(obj.Sim_Type,'DC')
-                [X,Norm] = SubClass_2_2.Reconstruct_DC(msh,bnd,blk,F_Vol);
+            elseif strcmpi(ft,'Implicit')
+                [X,Norm] = SubClass_2_2.Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol,np,v,g);
             end
-            %  > Measure elapsed time.
-            SRT = SubClass_2_2.Compute_SRT(msh,bnd,blk,F_Vol);
         end
         
         %% > Step #1: Reconstruct faces(Phi,gradPhi).
@@ -38,7 +37,7 @@ classdef SubClass_2_2
             %% > a(iX).
             % >> Row(s): 1.
             for i = 1:1
-                for j = 1:msh.NC+1
+                for j = 1:msh.c.NC+1
                     a_i{j}(i,1:n) = 1;
                 end
             end
@@ -52,43 +51,43 @@ classdef SubClass_2_2
                     for j = j_ini_lhs:j_fin_lhs
                         if j == -i
                             %  > NOTE: Use west boundary "face node".
-                            a_i{i}(k,1)     = (msh.Xv(1)-msh.Xv(i)).^(k-1);
+                            a_i{i}(k,1)     = (msh.f.Xv(1)-msh.f.Xv(i)).^(k-1);
                             c_i{i}(1,1)     = 0;
                         else
-                            a_i{i}(k,j+i+1) = (msh.Xc(i+j)-msh.Xv(i)).^(k-1);
+                            a_i{i}(k,j+i+1) = (msh.c.Xc(i+j)-msh.f.Xv(i)).^(k-1);
                             c_i{i}(1,j+i+1) = i+j;
                         end
                     end
                 end
                 %  > Bulk of the domain (central).
-                for i = n./2+1:msh.NC+1-n./2
+                for i = n./2+1:msh.c.NC+1-n./2
                     j_ini_blk = -n./2;
                     j_fin_blk =  n/2-1;
                     %  > Columns: 2,...,n.
                     for j = j_ini_blk:j_fin_blk
-                        a_i{i}(k,j+n./2+1) = (msh.Xc(i+j)-msh.Xv(i)).^(k-1);
+                        a_i{i}(k,j+n./2+1) = (msh.c.Xc(i+j)-msh.f.Xv(i)).^(k-1);
                         c_i{i}(1,j+n./2+1) = i+j;
                     end
                 end
                 %  > Right boundary (upwind).
-                for i = msh.NC+1-n./2+1:msh.NC+1
-                    j_ini_rhs = -n+(msh.NC+2-i);
-                    j_fin_rhs =  msh.NC-i+1;
+                for i = msh.c.NC+1-n./2+1:msh.c.NC+1
+                    j_ini_rhs = -n+(msh.c.NC+2-i);
+                    j_fin_rhs =  msh.c.NC-i+1;
                     %  > Columns: 2,...,n.
                     for j = j_ini_rhs:j_fin_rhs
-                        if j == msh.NC-i+1
+                        if j == msh.c.NC-i+1
                             %  > NOTE: Use west boundary "face node".
-                            a_i{i}(k,n)                = (msh.Xv(msh.NC+1)-msh.Xv(i)).^(k-1);
-                            c_i{i}(1,n)                = msh.NC+1;  
+                            a_i{i}(k,n)                = (msh.f.Xv(msh.c.NC+1)-msh.f.Xv(i)).^(k-1);
+                            c_i{i}(1,n)                = msh.c.NC+1;  
                         else
-                            a_i{i}(k,n-(msh.NC+1-i)+j) = (msh.Xc(i+j)-msh.Xv(i)).^(k-1);
-                            c_i{i}(1,n-(msh.NC+1-i)+j) = i+j;
+                            a_i{i}(k,n-(msh.c.NC+1-i)+j) = (msh.c.Xc(i+j)-msh.f.Xv(i)).^(k-1);
+                            c_i{i}(1,n-(msh.c.NC+1-i)+j) = i+j;
                         end
                     end
                 end
             end
             %% > b(iX).
-            for i = 1:msh.NC+1
+            for i = 1:msh.c.NC+1
                 b_i{i}       = zeros(n,1);
                 b_i{i}(iD,1) = 1;
             end
@@ -112,7 +111,8 @@ classdef SubClass_2_2
             %  > 4th order:     | D  , C  , B  , A   | -> Face 1 and 2.
             %                   | 1  , 2  , 3  , 4   | -> Nodes used for reconstruction.
             %                   | D  , C  , B  , A   | -> Face 2.
-            for i = 1:msh.NC+1
+            for i = 1:msh.c.NC+1
+                y{i}   = [a_i{i},b_i{i}];
                 x(i,:) = Gauss_Jordan(a_i{i},b_i{i});
             end
         end
@@ -148,15 +148,15 @@ classdef SubClass_2_2
         function [a] = Assemble_a(msh,n,xf)
             %% > w/ Bulk nodes ONLY.
             %  > Loop through cells.
-            for i = 1:msh.NC
+            for i = 1:msh.c.NC
                 %% > a.
                 % >> Fill upper diagonals(i+1,...).
-                if i <= n./2-1 || i >= msh.NC+1-(n./2-1)
+                if i <= n./2-1 || i >= msh.c.NC+1-(n./2-1)
                     %  > w/ boundary nodes.
                     %  > Proceed...
                 else
                     for j = 1:n./2
-                        if i+j < msh.NC+1
+                        if i+j < msh.c.NC+1
                             %  > w/ bulk nodes.
                             if j == n./2
                                 a(i,i+j) = xf.Eq(i+1,n);
@@ -172,7 +172,7 @@ classdef SubClass_2_2
                 if i <= n./2-1
                     %  > w/ boundary nodes.
                     %  > Proceed...
-                elseif i >= msh.NC+1-(n./2-1)
+                elseif i >= msh.c.NC+1-(n./2-1)
                     %  > w/ boundary nodes.
                     %  > Proceed...
                 else
@@ -180,7 +180,7 @@ classdef SubClass_2_2
                     a(i,i) = xf.Eq(i+1,n./2)-xf.Eq(i,n./2+1);
                 end
                 % >> Fill lower diagonals(...,i-1).
-                if i <= n./2-1 || i >= msh.NC+1-(n./2-1)
+                if i <= n./2-1 || i >= msh.c.NC+1-(n./2-1)
                     %  > w/ boundary nodes.
                     %  > Proceed...
                 else
@@ -199,19 +199,19 @@ classdef SubClass_2_2
                 end
             end
             %% > w/ boundary nodes ONLY.
-            for i = 1:msh.NC
+            for i = 1:msh.c.NC
                 %% > a.
                 % >> Fill upper diagonals(i+1,...).
-                if i <= n./2-1 || (i >= msh.NC+1-(n./2-1) && i < msh.NC)
+                if i <= n./2-1 || (i >= msh.c.NC+1-(n./2-1) && i < msh.c.NC)
                     if i <= n./2-1
                         for j = 1:n-(i+1)
                             %  > w/ boundary nodes(EB:i+1).
                             a(i,i+j) = xf.Eq(i+1,i+1+j)-xf.Eq(i,i+1+j);
                         end
                     else
-                        for j = msh.NC-i:-1:1
+                        for j = msh.c.NC-i:-1:1
                             %  > w/ boundary nodes(WB:i+1).
-                            a(i,msh.NC+1-j) = xf.Eq(i+1,n-j)-xf.Eq(i,n-j);
+                            a(i,msh.c.NC+1-j) = xf.Eq(i+1,n-j)-xf.Eq(i,n-j);
                         end
                     end
                 else
@@ -222,19 +222,19 @@ classdef SubClass_2_2
                 if i <= n./2-1
                     %  > w/ boundary nodes.
                     a(i,i) = xf.Eq(i+1,i+1)-xf.Eq(i,i+1);
-                elseif i >= msh.NC+1-(n./2-1)
+                elseif i >= msh.c.NC+1-(n./2-1)
                     %  > w/ boundary nodes.
-                    a(i,i) = xf.Eq(i+1,n-1-(msh.NC-i))-xf.Eq(i,n-1-(msh.NC-i));
+                    a(i,i) = xf.Eq(i+1,n-1-(msh.c.NC-i))-xf.Eq(i,n-1-(msh.c.NC-i));
                 else
                     %  > w/ bulk nodes.
                     %  > Proceed...
                 end
                 % >> Fill lower diagonals(...,i-1).
-                if (i <= n./2-1 && i > 1) || i >= msh.NC+1-(n./2-1)
-                    if i >= msh.NC+1-(n./2-1)
-                        for j = 1:n-2-(msh.NC-i)
+                if (i <= n./2-1 && i > 1) || i >= msh.c.NC+1-(n./2-1)
+                    if i >= msh.c.NC+1-(n./2-1)
+                        for j = 1:n-2-(msh.c.NC-i)
                             %  > w/ boundary nodes.
-                            a(i,i-j) = xf.Eq(i+1,n-1-(msh.NC-i)-j)-xf.Eq(i,n-1-(msh.NC-i)-j);
+                            a(i,i-j) = xf.Eq(i+1,n-1-(msh.c.NC-i)-j)-xf.Eq(i,n-1-(msh.c.NC-i)-j);
                         end
                     else
                         for j = 1:i-1
@@ -247,19 +247,19 @@ classdef SubClass_2_2
                     %  > Proceed...
                 end
             end
-            % >> Add boundary conditions contribution.
-            %  > West boundary.
-            if strcmpi(obj.West_Boundary,'Neumann')
-                a = SubClass_2_2.Neumann_BC_a('i_Min',n,a,msh,xf);
-            elseif strcmpi(obj.West_Boundary,'Robin')
-                a = SubClass_2_2.Robin_BC_a('i_Min',n,a,msh,xf);
-            end
-            %  > East boundary.
-            if strcmpi(obj.East_Boundary,'Neumann')
-                a = SubClass_2_2.Neumann_BC_a('i_Max',n,a,msh,xf);
-            elseif strcmpi(obj.East_Boundary,'Robin')
-                a = SubClass_2_2.Robin_BC_a('i_Max',n,a,msh,xf);
-            end
+%             % >> Add boundary conditions contribution.
+%             %  > West boundary.
+%             if strcmpi(obj.West_Boundary,'Neumann')
+%                 a = SubClass_2_2.Neumann_BC_a('i_Min',n,a,msh,xf);
+%             elseif strcmpi(obj.West_Boundary,'Robin')
+%                 a = SubClass_2_2.Robin_BC_a('i_Min',n,a,msh,xf);
+%             end
+%             %  > East boundary.
+%             if strcmpi(obj.East_Boundary,'Neumann')
+%                 a = SubClass_2_2.Neumann_BC_a('i_Max',n,a,msh,xf);
+%             elseif strcmpi(obj.East_Boundary,'Robin')
+%                 a = SubClass_2_2.Robin_BC_a('i_Max',n,a,msh,xf);
+%             end
             %  > Transform to sparse notation...
             a = sparse(a);
         end
@@ -269,25 +269,25 @@ classdef SubClass_2_2
         %  > Assemble vector b.
         function [b] = Assemble_b(msh,n,xf,bnd)
             % >> Initialize b.
-            b = zeros(msh.NC,1);
+            b = zeros(msh.c.NC,1);
 
             % >> Add boundary conditions contribution.
             %  > West boundary.
-            if strcmpi(obj.West_Boundary,'Dirichlet')
-                b = SubClass_2_2.Dirichlet_BC_b('i_Min',n,b,msh,xf,bnd.f(1));
-            elseif strcmpi(obj.West_Boundary,'Neumann')
-                b = SubClass_2_2.Neumann_BC_b('i_Min',n,b,msh,xf,bnd.df(1));
-            elseif strcmpi(obj.West_Boundary,'Robin')
-                b = SubClass_2_2.Robin_BC_b('i_Min',n,b,msh,xf,bnd.f(1),bnd.df(1));
-            end
+%            if strcmpi(obj.West_Boundary,'Dirichlet')
+                b = SubClass_2_2.Dirichlet_BC_b('i_Min',n,b,msh,xf,bnd(1));
+          %  elseif strcmpi(obj.West_Boundary,'Neumann')
+           %     b = SubClass_2_2.Neumann_BC_b('i_Min',n,b,msh,xf,bnd.df(1));
+           % elseif strcmpi(obj.West_Boundary,'Robin')
+           %     b = SubClass_2_2.Robin_BC_b('i_Min',n,b,msh,xf,bnd.f(1),bnd.df(1));
+          %  end
             %  > East boundary.
-            if strcmpi(obj.East_Boundary,'Dirichlet')
-                b = SubClass_2_2.Dirichlet_BC_b('i_Max',n,b,msh,xf,bnd.f(msh.NV));
-            elseif strcmpi(obj.East_Boundary,'Neumann')
-                b = SubClass_2_2.Neumann_BC_b('i_Max',n,b,msh,xf,bnd.df(msh.NV));
-            elseif strcmpi(obj.East_Boundary,'Robin')
-                b = SubClass_2_2.Robin_BC_b('i_Max',n,b,msh,xf,bnd.f(msh.NV),bnd.df(msh.NV));
-            end
+          %  if strcmpi(obj.East_Boundary,'Dirichlet')
+                b = SubClass_2_2.Dirichlet_BC_b('i_Max',n,b,msh,xf,bnd(msh.f.NF));
+          %  elseif strcmpi(obj.East_Boundary,'Neumann')
+          %      b = SubClass_2_2.Neumann_BC_b('i_Max',n,b,msh,xf,bnd.df(msh.NV));
+          %  elseif strcmpi(obj.East_Boundary,'Robin')
+          %      b = SubClass_2_2.Robin_BC_b('i_Max',n,b,msh,xf,bnd.f(msh.NV),bnd.df(msh.NV));
+          %  end
             b = sparse(b);
         end
         
@@ -310,9 +310,9 @@ classdef SubClass_2_2
                 for j = 1:n./2 
                     if j == 1 || n==2
                         %  > First element(RHS).
-                        b(msh.NC-n./2+j) = b(msh.NC-n./2+j)-(xf.Eq(msh.NC-n./2+j+1,n)).*Value;
+                        b(msh.c.NC-n./2+j) = b(msh.c.NC-n./2+j)-(xf.Eq(msh.c.NC-n./2+j+1,n)).*Value;
                     else
-                        b(msh.NC-n./2+j) = b(msh.NC-n./2+j)-(xf.Eq(msh.NC-n./2+j+1,n)-xf.Eq(msh.NC-n./2+j,n)).*Value;
+                        b(msh.c.NC-n./2+j) = b(msh.c.NC-n./2+j)-(xf.Eq(msh.c.NC-n./2+j+1,n)-xf.Eq(msh.c.NC-n./2+j,n)).*Value;
                     end
                 end
             end
@@ -336,14 +336,14 @@ classdef SubClass_2_2
                 end
             elseif strcmpi(x_Loc,'i_Max')
                 % >> East boundary ('i_Max').
-                for i = msh.NC-n./2+1:msh.NC
-                    if i == msh.NC-n./2+1 || n == 2
+                for i = msh.c.NC-n./2+1:msh.c.NC
+                    if i == msh.c.NC-n./2+1 || n == 2
                         for j = 1:n-1
-                            a(i,msh.NC-n+1+j) = a(i,msh.NC-n+1+j)+(-xf.gradPhi(msh.NC+1,j)./xf.gradPhi(msh.NC+1,n)).*(xf.Eq(i+1,n));
+                            a(i,msh.c.NC-n+1+j) = a(i,msh.c.NC-n+1+j)+(-xf.gradPhi(msh.c.NC+1,j)./xf.gradPhi(msh.c.NC+1,n)).*(xf.Eq(i+1,n));
                         end
                     else
                         for j = 1:n-1
-                            a(i,msh.NC+1-n+j) = a(i,msh.NC+1-n+j)+(-xf.gradPhi(msh.NC+1,j)./xf.gradPhi(msh.NC+1,n)).*(xf.Eq(i+1,n)-xf.Eq(i,n));
+                            a(i,msh.c.NC+1-n+j) = a(i,msh.c.NC+1-n+j)+(-xf.gradPhi(msh.c.NC+1,j)./xf.gradPhi(msh.c.NC+1,n)).*(xf.Eq(i+1,n)-xf.Eq(i,n));
                         end
                     end
                 end
@@ -362,11 +362,11 @@ classdef SubClass_2_2
                 end
             elseif strcmpi(x_Loc,'i_Max')
                 % >> East boundary ('i_Max').
-                for i = msh.NC-n./2+1:msh.NC
-                    if i == msh.NC-n./2+1
-                        b(i) = b(i)-Value./xf.gradPhi(msh.NC+1,n).*(xf.Eq(i+1,n));
+                for i = msh.c.NC-n./2+1:msh.c.NC
+                    if i == msh.c.NC-n./2+1
+                        b(i) = b(i)-Value./xf.gradPhi(msh.c.NC+1,n).*(xf.Eq(i+1,n));
                     else
-                        b(i) = b(i)-Value./xf.gradPhi(msh.NC+1,n).*(xf.Eq(i+1,n)-xf.Eq(i,n));
+                        b(i) = b(i)-Value./xf.gradPhi(msh.c.NC+1,n).*(xf.Eq(i+1,n)-xf.Eq(i,n));
                     end
                 end
             end
@@ -393,14 +393,14 @@ classdef SubClass_2_2
                 end
             elseif strcmpi(x_Loc,'i_Max')
                 % >> East boundary ('i_Max').
-                for i = msh.NC-n./2+1:msh.NC
-                    if i == msh.NC-n./2+1 || n == 2
+                for i = msh.c.NC-n./2+1:msh.c.NC
+                    if i == msh.c.NC-n./2+1 || n == 2
                         for j = 1:n-1
-                            a(i,msh.NC-n+1+j) = a(i,msh.NC-n+1+j)+(G.*xf.gradPhi(msh.NC+1,j)./(V-G.*xf.gradPhi(msh.NC+1,n))).*(xf.Eq(i+1,n));
+                            a(i,msh.c.NC-n+1+j) = a(i,msh.c.NC-n+1+j)+(G.*xf.gradPhi(msh.c.NC+1,j)./(V-G.*xf.gradPhi(msh.c.NC+1,n))).*(xf.Eq(i+1,n));
                         end
                     else
                         for j = 1:n-1
-                            a(i,msh.NC+1-n+j) = a(i,msh.NC+1-n+j)+(G.*xf.gradPhi(msh.NC+1,j)./(V-G.*xf.gradPhi(msh.NC+1,n))).*(xf.Eq(i+1,n)-xf.Eq(i,n));
+                            a(i,msh.c.NC+1-n+j) = a(i,msh.c.NC+1-n+j)+(G.*xf.gradPhi(msh.c.NC+1,j)./(V-G.*xf.gradPhi(msh.c.NC+1,n))).*(xf.Eq(i+1,n)-xf.Eq(i,n));
                         end
                     end
                 end
@@ -422,11 +422,11 @@ classdef SubClass_2_2
                 end
             elseif strcmpi(x_Loc,'i_Max')
                 % >> East boundary ('i_Max').
-                for i = msh.NC-n./2+1:msh.NC
-                    if i == msh.NC-n./2+1
-                        b(i) = b(i)-((V.*Value_f-G.*Value_df)./(V-G.*xf.gradPhi(msh.NC+1,n))).*(xf.Eq(i+1,n));
+                for i = msh.c.NC-n./2+1:msh.c.NC
+                    if i == msh.c.NC-n./2+1
+                        b(i) = b(i)-((V.*Value_f-G.*Value_df)./(V-G.*xf.gradPhi(msh.c.NC+1,n))).*(xf.Eq(i+1,n));
                     else
-                        b(i) = b(i)-((V.*Value_f-G.*Value_df)./(V-G.*xf.gradPhi(msh.NC+1,n))).*(xf.Eq(i+1,n)-xf.Eq(i,n));
+                        b(i) = b(i)-((V.*Value_f-G.*Value_df)./(V-G.*xf.gradPhi(msh.c.NC+1,n))).*(xf.Eq(i+1,n)-xf.Eq(i,n));
                     end
                 end
             end
@@ -454,24 +454,24 @@ classdef SubClass_2_2
             X.Ap             = a*(X.Phi)'-b-F_Vol.Ap';
             X.Ap             = X.Ap';
             %  > #4: Compute error norms.
-            X.Error          = abs(zeros(1,msh.NC)-X.Ap);
+            X.Error          = abs(zeros(1,msh.c.NC)-X.Ap);
             Norm             = SubClass_2_2.Compute_ErrorNorms(X.Error,msh);
         end
         
         %% > Step #5.2: Implicit flux reconstruction.
         % >> Implicit flux reconstruction: Ax=b, where x=?
-        function [X,Norm] = Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol)
+        function [X,Norm] = Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol,np,v,g)
             %  > #1: Compute reconstruction coefficients(Phi,gradPhi).
-            [~,~,xf.Phi]     = SubClass_2_2.Reconstruct_Faces(msh,obj.n,1);
-            [~,~,xf.gradPhi] = SubClass_2_2.Reconstruct_Faces(msh,obj.n,2);
-            xf.Eq            = obj.V.*xf.Phi-obj.Gamma.*xf.gradPhi;
+            [~,~,xf.Phi]     = SubClass_2_2.Reconstruct_Faces(msh,np,1);
+            [~,~,xf.gradPhi] = SubClass_2_2.Reconstruct_Faces(msh,np,2);
+            xf.Eq            = v.*xf.Phi-g.*xf.gradPhi;
             %  > #2: Assemble matrices(a,b).
-            a                = SubClass_2_2.Assemble_a(msh,obj.n,xf);
-            b                = SubClass_2_2.Assemble_b(msh,obj.n,xf,bnd);
+            a                = SubClass_2_2.Assemble_a(msh,np,xf);
+            b                = SubClass_2_2.Assemble_b(msh,np,xf,bnd);
             b                = b+F_Vol.Ap';
             %  > #3: Compute approximate solution.
-            X.Phi            = blk.f;
-            X.Phi_PDE        = SubClass_2_2.SetUp_bicgstabl(a,b,10e-12,10e3)';
+            X.Phi            = blk;
+            X.Phi_PDE        = SubClass_2_2.SetUp_bicgstabl(a,b,10e-12,10e3);
             %  > #4: Compute error norms.
             X.Error          = abs(X.Phi-X.Phi_PDE);
             Norm             = SubClass_2_2.Compute_ErrorNorms(X.Error,msh);
@@ -510,13 +510,13 @@ classdef SubClass_2_2
         
         %% > Step #7: Compute local/global errors.
         function [Norm] = Compute_ErrorNorms(X_Error,msh)
-            for i = 1:msh.NC
+            for i = 1:msh.c.NC
                 X(i)            = X_Error(i);
-                Norm.E_iX{1}(i) = X(i).*msh.Vol(i);
-                Norm.E_iX{2}(i) = X(i).^2.*msh.Vol(i).^2;
+                Norm.E_iX{1}(i) = X(i).*msh.c.Vol(i);
+                Norm.E_iX{2}(i) = X(i).^2.*msh.c.Vol(i).^2;
             end
-            Norm.E{1} = sum(Norm.E_iX{1})./sum(msh.Vol);
-            Norm.E{2} = sum(sqrt(Norm.E_iX{2}))./sum(sqrt(msh.Vol.^2));
+            Norm.E{1} = sum(Norm.E_iX{1})./sum(msh.c.Vol);
+            Norm.E{2} = sum(sqrt(Norm.E_iX{2}))./sum(sqrt(msh.c.Vol.^2));
             Norm.E{3} = max(X(i));
         end
         

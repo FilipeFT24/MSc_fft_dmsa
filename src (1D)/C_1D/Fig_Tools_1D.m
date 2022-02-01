@@ -1,4 +1,4 @@
-classdef Fig_Tools
+classdef Fig_Tools_1D
     methods (Static)         
         %% > Tools.
         %  > #1.
@@ -60,25 +60,25 @@ classdef Fig_Tools
         % >> #3.
         function [ToPatch] = ToPatch_Cell_Face(msh,wdt)
             % >> XYv(1).
-            for i = 1:msh.NC+1
-                XYv_1(1,i) =  msh.Xv(i);
+            for i = 1:msh.c.NC+1
+                XYv_1(1,i) =  msh.f.Xv(i);
                 XYv_1(2,i) =  wdt;
                 XYv_1(3,i) = -wdt;
             end
             % >> XYv(2).           
-            XYv_2(1,1)        = 2.*msh.Xv(1)       -msh.Xc(1);
-            XYv_2(1,msh.NC+2) = 2.*msh.Xv(msh.NC+1)-msh.Xc(msh.NC);
-            for i = 2:msh.NC+1
+            XYv_2(1,1)        = 2.*msh.f.Xv(1)       -msh.c.Xc(1);
+            XYv_2(1,msh.c.NC+2) = 2.*msh.f.Xv(msh.c.NC+1)-msh.c.Xc(msh.c.NC);
+            for i = 2:msh.c.NC+1
                 XYv_2(2,i) =  wdt;
                 XYv_2(3,i) = -wdt;
-                if i == 1 || i == msh.NC+2
+                if i == 1 || i == msh.c.NC+2
                     continue;
                 else
-                    XYv_2(1,i) = msh.Xc(i-1);
+                    XYv_2(1,i) = msh.c.Xc(i-1);
                 end
             end
             %  > Cell patch.
-            for i = 1:msh.NC
+            for i = 1:msh.c.NC
                 ToPatch.Cell{i}(1,1) = XYv_1(1,i+1);
                 ToPatch.Cell{i}(2,1) = XYv_1(2,i+1);
                 ToPatch.Cell{i}(1,2) = XYv_1(1,i+1);
@@ -89,7 +89,7 @@ classdef Fig_Tools
                 ToPatch.Cell{i}(2,4) = XYv_1(2,i);
             end
             %  > Face patch.
-            for i = 1:msh.NC+1
+            for i = 1:msh.c.NC+1
                 ToPatch.Face{i}(1,1) = XYv_2(1,i+1);
                 ToPatch.Face{i}(2,1) = XYv_2(2,i+1);
                 ToPatch.Face{i}(1,2) = XYv_2(1,i+1);
