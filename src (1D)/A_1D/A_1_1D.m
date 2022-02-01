@@ -29,7 +29,7 @@ classdef A_1_1D
             %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
             %                                  ├─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).
-            inp.msh.eg       = '2';
+            inp.msh.eg       = '1';
             inp.msh.s_nu.Nf_X = 0.5;
             inp.msh.s_nu.Ks_X = 7.5;
             
@@ -40,7 +40,7 @@ classdef A_1_1D
             inp.pr.g = 1.0;
             
             %% > fr.
-            % >> 5. Flux reconstruction method:
+            % >> 5. Flux reconstruction method.
             %  > 1. Simulation type        : 1. Explicit.
             %                                2. Implicit.
             %  > 2. Source term integration: 1. 1D Quadrature (false).
@@ -48,7 +48,7 @@ classdef A_1_1D
             %  > 3. Face polynomial degree.
             %  > 4. Number of Gauss points/per face.
             inp.fr.ft = 'Implicit';
-            inp.fr.st = false;
+            inp.fr.st = true;
             inp.fr.np = 6;
             inp.fr.ng = 3;
         end

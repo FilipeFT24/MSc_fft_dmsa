@@ -5,9 +5,9 @@ classdef A_3_1D
             % >> Local variables.
             np = inp.fr.np;
             
-            % >> 1.
+            %  > Compute grid properties.
             msh = A_3_1_1D.WrapUp_A_3_1_1D(msh);
-            % >> 2.
+            %  > Setup stencil.
             msh = A_3_2_1D.WrapUp_A_3_2_1D(msh,np);
         end
     end

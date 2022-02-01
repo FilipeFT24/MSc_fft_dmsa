@@ -1,121 +1,49 @@
 classdef SubClass_2_2
     methods (Static)
         %% > Wrap up SubClass_2_2.
-        function [X,Norm] = WrapUp_2_2(inp,msh,fn,bnd,blk)
+        function [X,Norm] = WrapUp_2_2(inp,msh,pde,ft,st,ng,np,v,g)
             %  > Compute source term contribution.
-           
-            ft = inp.fr.ft;
-            st = inp.fr.st;
-            np = inp.fr.np;
-            ng = inp.fr.ng;
-            v = inp.pr.v;
-            g = inp.pr.g;
+
             
-            [F_Vol] = SubClass_2_1.Compute_SourceTerm(np,fn,msh);
+            F_Vol = B_1_2_1D.Compute_SourceTerm(msh,pde,st,ng);
             
             %  > Set flux reconstruction method.
             if strcmpi(ft,'Explicit')
-                [X,Norm] = SubClass_2_2.Reconstruct_ExplicitFlux(msh,bnd,blk,F_Vol);
+                [X,Norm] = SubClass_2_2.Reconstruct_ExplicitFlux(msh,pde.an.bnd,pde.an.blk,F_Vol);
             elseif strcmpi(ft,'Implicit')
-                [X,Norm] = SubClass_2_2.Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol,np,v,g);
+                [X,Norm] = SubClass_2_2.Reconstruct_ImplicitFlux(msh,pde.an.bnd,pde.an.blk,F_Vol,np,v,g);
             end
         end
         
-        %% > Step #1: Reconstruct faces(Phi,gradPhi).
-        % >> NOTE:
-        %  > Rather than having multiple files (one for each order), the following procedure is recursively executed based on the method's order (n).
-        % >> TODO:
-        %  > Solve system: ax=b, where a stores the centroid's distances to the face to be reconstructed and b=[1,0,...]->Phi,b=[0,1,...]->gradPhi.
-        %  > c stores the cells used on this reconstruction.
-        %
-        %  ---------------c----------------
-        %    1   2   3        N-2 N-1  N
-        %  |-o-|-o-|-o-|-...-|-o-|-o-|-o-|
-        %  1   2   3   4    N-2 N-1  N  N+1
-        %  ---------------v----------------
-        function [a_i,c_i,x] = Reconstruct_Faces(msh,n,iD)
-            %% > a(iX).
-            % >> Row(s): 1.
-            for i = 1:1
-                for j = 1:msh.c.NC+1
-                    a_i{j}(i,1:n) = 1;
-                end
-            end
-            % >> Row(s): 2,...n.
-            for k = 2:n
-                %  > Left boundary (downwind).
-                for i = 1:n./2
-                    j_ini_lhs = -i;
-                    j_fin_lhs = -i+n-1;
-                    %  > Columns: 2,...,n.
-                    for j = j_ini_lhs:j_fin_lhs
-                        if j == -i
-                            %  > NOTE: Use west boundary "face node".
-                            a_i{i}(k,1)     = (msh.f.Xv(1)-msh.f.Xv(i)).^(k-1);
-                            c_i{i}(1,1)     = 0;
-                        else
-                            a_i{i}(k,j+i+1) = (msh.c.Xc(i+j)-msh.f.Xv(i)).^(k-1);
-                            c_i{i}(1,j+i+1) = i+j;
-                        end
-                    end
-                end
-                %  > Bulk of the domain (central).
-                for i = n./2+1:msh.c.NC+1-n./2
-                    j_ini_blk = -n./2;
-                    j_fin_blk =  n/2-1;
-                    %  > Columns: 2,...,n.
-                    for j = j_ini_blk:j_fin_blk
-                        a_i{i}(k,j+n./2+1) = (msh.c.Xc(i+j)-msh.f.Xv(i)).^(k-1);
-                        c_i{i}(1,j+n./2+1) = i+j;
-                    end
-                end
-                %  > Right boundary (upwind).
-                for i = msh.c.NC+1-n./2+1:msh.c.NC+1
-                    j_ini_rhs = -n+(msh.c.NC+2-i);
-                    j_fin_rhs =  msh.c.NC-i+1;
-                    %  > Columns: 2,...,n.
-                    for j = j_ini_rhs:j_fin_rhs
-                        if j == msh.c.NC-i+1
-                            %  > NOTE: Use west boundary "face node".
-                            a_i{i}(k,n)                = (msh.f.Xv(msh.c.NC+1)-msh.f.Xv(i)).^(k-1);
-                            c_i{i}(1,n)                = msh.c.NC+1;  
-                        else
-                            a_i{i}(k,n-(msh.c.NC+1-i)+j) = (msh.c.Xc(i+j)-msh.f.Xv(i)).^(k-1);
-                            c_i{i}(1,n-(msh.c.NC+1-i)+j) = i+j;
-                        end
-                    end
-                end
-            end
-            %% > b(iX).
-            for i = 1:msh.c.NC+1
-                b_i{i}       = zeros(n,1);
-                b_i{i}(iD,1) = 1;
-            end
-            %% > x.
-            %  > Compute reconstruction coefficients (X).
-            %  > 2nd order: x = | B  , A   |           -> Face 1.
-            %                   | B  , A   |           -> Face 2.                                                 
-            %                   | ..., ... |           -> Face NC+1.
-            %  > 4th order: x = | D  , C  , B  , A   | -> Face 1.
-            %                   | D  , C  , B  , A   | -> Face 2.                                                 
-            %                   | ..., ..., ..., ... | -> Face NC+1.
-            %
-            %  > NOTE: In order to properly assemble matrix 'a', it is important to be aware of the nodes used for reconstructing the faces.
-            %
-            %                   | 0  , 1   |           -> Nodes used for reconstruction.
-            %  > 2nd order:     | B  , A   |           -> Face 1.
-            %                   | 1  , 2   |           -> Nodes used for reconstruction.
-            %                   | B  , A   |           -> Face 2.
-            %
-            %                   | 0  , 1  , 2  , 3   | -> Nodes used for reconstruction.
-            %  > 4th order:     | D  , C  , B  , A   | -> Face 1 and 2.
-            %                   | 1  , 2  , 3  , 4   | -> Nodes used for reconstruction.
-            %                   | D  , C  , B  , A   | -> Face 2.
-            for i = 1:msh.c.NC+1
-                y{i}   = [a_i{i},b_i{i}];
-                x(i,:) = Gauss_Jordan(a_i{i},b_i{i});
+        %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
+        function [Phi_f,GradPhi_f] = Reconstruct_Faces(msh,np)
+            %  > df.
+            df      = zeros(2,np);
+            df(1,1) = 1; % > Phi_f.
+            df(2,2) = 1; % > gradPhi_f.
+            %  > Df.
+            j = 1:np;
+            k = 1:np;
+            for i = 1:msh.f.NF
+                Df       {i}(j,k) = (msh.s.x_v_t{i}(j)-msh.f.Xv(i))'.^(k-1);
+                Phi_f       (i,:) = df(1,:)*inv(Df{i});
+                GradPhi_f   (i,:) = df(2,:)*inv(Df{i});
             end
         end
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         %% > Step #2: Assemble matrix a.
         % >> NOTE: 
@@ -462,13 +390,12 @@ classdef SubClass_2_2
         % >> Implicit flux reconstruction: Ax=b, where x=?
         function [X,Norm] = Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol,np,v,g)
             %  > #1: Compute reconstruction coefficients(Phi,gradPhi).
-            [~,~,xf.Phi]     = SubClass_2_2.Reconstruct_Faces(msh,np,1);
-            [~,~,xf.gradPhi] = SubClass_2_2.Reconstruct_Faces(msh,np,2);
+            [xf.Phi,xf.gradPhi] = SubClass_2_2.Reconstruct_Faces(msh,np);
             xf.Eq            = v.*xf.Phi-g.*xf.gradPhi;
             %  > #2: Assemble matrices(a,b).
             a                = SubClass_2_2.Assemble_a(msh,np,xf);
             b                = SubClass_2_2.Assemble_b(msh,np,xf,bnd);
-            b                = b+F_Vol.Ap';
+            b                = b+F_Vol;
             %  > #3: Compute approximate solution.
             X.Phi            = blk;
             X.Phi_PDE        = SubClass_2_2.SetUp_bicgstabl(a,b,10e-12,10e3);
@@ -476,38 +403,7 @@ classdef SubClass_2_2
             X.Error          = abs(X.Phi-X.Phi_PDE);
             Norm             = SubClass_2_2.Compute_ErrorNorms(X.Error,msh);
         end
-        
-        %% > Step #5.3: Deferred-correction approach.
-        % >> Deferred-correction approach: A(H)x=b, where x=? -> A(LO)x=b-[A(HO)x-A(LO)x]_(OLD), where [A(HO)x]_(OLD) and [A(LO)x]_(OLD) are computed explicitly.
-        function [X,Norm] = Reconstruct_DC(msh,bnd,blk,F_Vol)
-            %  > #1: LO-Compute reconstruction coefficients(Phi,gradPhi).
-            [~,~,xf_LO.Phi]     = SubClass_2_2.Reconstruct_Faces(msh,obj.n_LO,1);
-            [~,~,xf_LO.gradPhi] = SubClass_2_2.Reconstruct_Faces(msh,obj.n_LO,2);
-            xf_LO.Eq            = obj.V.*xf_LO.Phi-obj.Gamma.*xf_LO.gradPhi;
-            %  > #2: HO-Compute reconstruction coefficients(Phi,gradPhi).
-            [~,~,xf_HO.Phi]     = SubClass_2_2.Reconstruct_Faces(msh,obj.n_HO,1);
-            [~,~,xf_HO.gradPhi] = SubClass_2_2.Reconstruct_Faces(msh,obj.n_HO,2);
-            xf_HO.Eq            = obj.V.*xf_HO.Phi-obj.Gamma.*xf_HO.gradPhi;
-            %  > #3: Assemble matrices(b_LO,a_LO,a_HO,b_HO).
-            a_LO                = SubClass_2_2.Assemble_a(msh,obj.n_LO,xf_LO);
-            b_LO                = SubClass_2_2.Assemble_b(msh,obj.n_LO,xf_LO,bnd);               
-            a_HO                = SubClass_2_2.Assemble_a(msh,obj.n_HO,xf_HO);
-            b_HO                = SubClass_2_2.Assemble_b(msh,obj.n_HO,xf_HO,bnd);  
-            %  > #4: Assemble RHS.
-            X.Phi               = blk.f;
-            RHS_1               = b_HO+F_Vol.HO.Ap';
-            RHS_2               = a_HO*X.Phi'-b_HO-F_Vol.HO.Ap';
-            RHS_3               = a_LO*X.Phi'-b_LO-F_Vol.LO.Ap';
-            RHS_T               = RHS_1-(RHS_2-RHS_3);
-            %  > #5: Compute approximate solution.
-            X.Phi_PDE           = SubClass_2_2.SetUp_bicgstabl(a_LO,RHS_T,10e-12,10e3)';
-            %  > #6: Compute error norms.
-            X.Error             = abs(X.Phi-X.Phi_PDE);
-            Norm                = SubClass_2_2.Compute_ErrorNorms(X.Error,msh);
-        end
-        
-        %% > Step #6: Advance in time.
-        
+
         %% > Step #7: Compute local/global errors.
         function [Norm] = Compute_ErrorNorms(X_Error,msh)
             for i = 1:msh.c.NC
@@ -518,17 +414,6 @@ classdef SubClass_2_2
             Norm.E{1} = sum(Norm.E_iX{1})./sum(msh.c.Vol);
             Norm.E{2} = sum(sqrt(Norm.E_iX{2}))./sum(sqrt(msh.c.Vol.^2));
             Norm.E{3} = max(X(i));
-        end
-        
-        %% > Step #8: Compute flux reconstruction SRT.
-        function [SRT] = Compute_SRT(msh,bnd,blk,F_Vol)
-            if strcmpi(obj.Sim_Type,'Explicit')
-                SRT = timeit(@()SubClass_2_2.Reconstruct_ExplicitFlux(msh,bnd,blk,F_Vol));
-            elseif strcmpi(obj.Sim_Type,'Implicit')
-                SRT = timeit(@()SubClass_2_2.Reconstruct_ImplicitFlux(msh,bnd,blk,F_Vol));
-            elseif strcmpi(obj.Sim_Type,'DC')
-                SRT = timeit(@()SubClass_2_2.Reconstruct_DC(msh,bnd,blk,F_Vol));
-            end
         end
     end
 end

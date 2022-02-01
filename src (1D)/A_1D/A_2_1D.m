@@ -30,8 +30,8 @@ classdef A_2_1D
             % >> Vertex coordinates.
             %  > Xd.
             NX_c = round(1./h.*(Xv_f-Xv_i));
-            Xd_x = linspace(Xv_i,Xv_f,NX_c);
-
+            Xd_x = linspace(Xv_i,Xv_f,NX_c+1);
+            
             % >> Boundary conditions.
             inp.pr.t.EB = 'Dirichlet'; %  > East  boundary type.
             inp.pr.t.WB = 'Dirichlet'; %  > West  boundary type.
@@ -52,12 +52,12 @@ classdef A_2_1D
             %  > NF_X.
             i        = 1:NX_v;
             NF_X     = (Nf_X-0).*(1+sinh(Ks_X.*(Nf_Unf_X(i)-B_X))./sinh(Ks_X.*B_X))+0;
-
+            
             % >> Vertex coordinates.
             %  > Xd.
             Xd_x = NF_X(1:NX_v).*(Xv_f-Xv_i);
             NX_c = NX_v-1;
-
+            
             % >> Boundary conditions.
             inp.pr.t.EB = 'Dirichlet'; %  > East  boundary type.
             inp.pr.t.WB = 'Dirichlet'; %  > West  boundary type.

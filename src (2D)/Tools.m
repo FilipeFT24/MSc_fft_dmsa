@@ -6,9 +6,9 @@ classdef Tools
             addpath(genpath('B'));
             addpath(genpath('C'));
             addpath(genpath('D'));
-            addpath(genpath('../[Tools - Data]'));
-            addpath(genpath('../[Tools - Numerical]'));
-            addpath(genpath('[Tools - Post-processing]'));
+            addpath(genpath('../[Tools]/[Tools - Data]'));
+            addpath(genpath('../[Tools]/[Tools - Numerical]'));
+            addpath(genpath('../[Tools]/[Tools - Post-processing]'));
         end
         %% > Measure elapsed time.
         function [T] = Time_AB(inp,msh)

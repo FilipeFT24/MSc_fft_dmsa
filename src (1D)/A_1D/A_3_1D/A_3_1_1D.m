@@ -1,7 +1,7 @@
 classdef A_3_1_1D
     methods (Static)
         %% > Wrap-up A_3_1 (1D).
-        function [msh] = WrapUp_A_3_1_1D(msh)
+        function [msh]   = WrapUp_A_3_1_1D(msh)
             i            = 1:msh.c.NC;
             %  > Xc.
             msh.c.Xc (i) = 1./2.*(msh.f.Xv(i)+msh.f.Xv(i+1));

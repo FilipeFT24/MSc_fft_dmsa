@@ -1,4 +1,4 @@
-classdef Tools
+classdef Tools_1D
     methods (Static)
         %% > Set directories.
         function [] = Set_Directories()
@@ -6,9 +6,9 @@ classdef Tools
             addpath(genpath('B_1D'));
             addpath(genpath('C_1D'));
             addpath(genpath('D_1D'));
-            addpath(genpath('[Tools - Post-processing]'));
-            addpath(genpath('../[Tools - Data]'));
-            addpath(genpath('../[Tools - Numerical]'));            
+            addpath(genpath('../[Tools]/[Tools - Data]'));
+            addpath(genpath('../[Tools]/[Tools - Numerical]'));
+            addpath(genpath('../[Tools]/[Tools - Post-processing]'));           
         end
     end
 end
