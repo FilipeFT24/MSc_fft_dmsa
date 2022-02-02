@@ -41,7 +41,6 @@ classdef B_1_2_1D
                 for i = 1:msh.c.NC
                     F_Vol(i,1) = B_1_2_1D.ApproxIntegral(A(i),B(i),func,x,j,Q_1D);
                 end
-                F_Vol = sparse(F_Vol);
             else
                 % >> Exact integral.
                 %  > Source term.
@@ -49,7 +48,6 @@ classdef B_1_2_1D
                 for i = 1:msh.c.NC
                     F_Vol(i,1) = func(B(i))-func(A(i));
                 end
-                F_Vol = sparse(F_Vol);
             end
         end
     end

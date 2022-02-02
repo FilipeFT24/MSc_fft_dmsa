@@ -36,7 +36,7 @@ classdef A_1_1D
             %% > pr.
             % >> 4. Flow conditions: 1. Convection parameter: v.
             %                        2. Diffusion  parameter: g.
-            inp.pr.v = 0;
+            inp.pr.v = 1.0;
             inp.pr.g = 1.0;
             
             %% > fr.
