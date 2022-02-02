@@ -14,10 +14,8 @@ classdef A_1_1D
             inp.msh.lim.Xv_f = 1;
             
             % >> 2. Grid type.
-            %    ├─ Uniform     grid: h.
-            %    └─ Non-uniform grid: Nv(X).
+            %    └─ Uniform/non-uniform grid: h.
             inp.msh.h  = h;
-            inp.msh.Nv = 15;
             
             % >> 3. Grid types:
             %    ├─ Example 1: Uniform.
@@ -31,12 +29,12 @@ classdef A_1_1D
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).
             inp.msh.eg       = '1';
             inp.msh.s_nu.Nf_X = 0.5;
-            inp.msh.s_nu.Ks_X = 7.5;
+            inp.msh.s_nu.Ks_X = 1.01;
             
             %% > pr.
             % >> 4. Flow conditions: 1. Convection parameter: v.
             %                        2. Diffusion  parameter: g.
-            inp.pr.v = 1.0;
+            inp.pr.v = 0.0;
             inp.pr.g = 1.0;
             
             %% > fr.
@@ -49,7 +47,7 @@ classdef A_1_1D
             %  > 4. Number of Gauss points/per face.
             inp.fr.ft = 'Implicit';
             inp.fr.st = true;
-            inp.fr.np = 6;
+            inp.fr.np = 4;
             inp.fr.ng = 3;
         end
     end
