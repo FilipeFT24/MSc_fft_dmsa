@@ -6,8 +6,8 @@ classdef B_1_1_1D
             [pde.an.fn] = ...
                 B_1_1_1D.Set_fn(Xv_i,Xv_f,v,g,as);
             %  > Analytic values.
-            [pde.an.bnd,pde.an.blk] = ...
-                B_1_1_1D.Compute_blkf_blkc(msh,pde.an.fn.f);
+            [pde.an.f_v,pde.an.df_v,pde.an.c_v] = ...
+                B_1_1_1D.Compute_blkf_blkc(msh,pde.an.fn.f,pde.an.fn.df);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -29,24 +29,25 @@ classdef B_1_1_1D
                 fn.f = exp(-i.*((x-xc).^2));
             end
             %  > gradPhi/lapPhi.
-            df       = diff(fn.f,x);
+            fn.df    = diff(fn.f,x);
             d2f      = diff(diff(fn.f,x),x);
             %  > func/int(func).
-            fn.func  = v.*df-g.*d2f;
+            fn.func  = v.*fn.df-g.*d2f;
             fn.int   = int(fn.func);
             
             %  > Function handles.
-            [fn.f,fn.func,fn.int] = ...
-                deal(matlabFunction(fn.f),matlabFunction(fn.func),matlabFunction(fn.int));
+            [fn.f,fn.df,fn.func,fn.int] = ...
+                deal(matlabFunction(fn.f),matlabFunction(fn.df),matlabFunction(fn.func),matlabFunction(fn.int));
         end
         % >> 1.2. ---------------------------------------------------------
-        function [blk_f,blk_c] = Compute_blkf_blkc(msh,f)
+        function [f_v,df_v,c_v] = Compute_blkf_blkc(msh,f,df)
             %  > Face values.
-            i          = 1:msh.f.NF;
-            blk_f(i,1) = f(msh.f.Xv(i));
+            i         = 1:msh.f.NF;
+            f_v (i,1) = f (msh.f.Xv(i));
+            df_v(i,1) = df(msh.f.Xv(i));
             %  > Cell values.
-            j          = 1:msh.c.NC;
-            blk_c(j,1) = f(msh.c.Xc(j));
+            j         = 1:msh.c.NC;
+            c_v (j,1) = f(msh.c.Xc(j));
         end
     end
 end

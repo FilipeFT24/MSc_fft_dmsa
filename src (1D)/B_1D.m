@@ -11,8 +11,8 @@ classdef B_1D
             ng    = inp.fr.ng;
             v     = inp.pr.v;
             g     = inp.pr.g;
-            bnd_w = inp.pr.t.WB;
-            bnd_e = inp.pr.t.EB;
+            bnd_w = inp.pr.w;
+            bnd_e = inp.pr.e;
 
             %  > Set analytic functions/values.
             pde = B_1_1_1D.WrapUp_B_1_1_1D(msh,Xv_i,Xv_f,v,g,'exp');

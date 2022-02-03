@@ -32,11 +32,7 @@ classdef A_2_1D
             msh.c.Xc (i) = 1./2.*(msh.f.Xv(i)+msh.f.Xv(i+1));
             msh.c.Vol(i) = msh.f.Xv(i+1)-msh.f.Xv(i);
             %  > Reference length.
-            msh.d.H_ref  = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
-            
-            % >> Boundary conditions.
-            inp.pr.t.EB  = 'Dirichlet'; %  > East  boundary type.
-            inp.pr.t.WB  = 'Dirichlet'; %  > West  boundary type.
+            msh.d.H_ref  = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;          
         end
         
         %% > 1. -----------------------------------------------------------
@@ -130,7 +126,7 @@ classdef A_2_1D
             xt = [xc,xf];
         end
         % >> 2.3. ---------------------------------------------------------
-        function [x_f_v,x_f_g] = x_f(v,g,np,stl_x,xf)
+        function [Phi_f,GradPhi_f,x_f_v,x_f_g] = x_f(v,g,np,stl_x,xf)
             df         = zeros(2,np);
             df  (1,1)  = 1; % > Phi_f.
             df  (2,2)  = 1; % > gradPhi_f.

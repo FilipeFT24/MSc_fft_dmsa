@@ -29,14 +29,19 @@ classdef A_1_1D
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).
             inp.msh.eg       = '1';
             inp.msh.s_nu.Nf_X = 0.5;
-            inp.msh.s_nu.Ks_X = 1.01;
+            inp.msh.s_nu.Ks_X = 5.0;
             
             %% > pr.
-            % >> 4. Flow conditions: 1. Convection parameter: v.
-            %                        2. Diffusion  parameter: g.
-            inp.pr.v = 0.0;
-            inp.pr.g = 1.0;
-            
+            % >> 4. Problem setup.
+            %  > 1. Flow conditions    : 1. Convection parameter : v.
+            %                            2. Diffusion  parameter : g.
+            %  > 2. Boundary conditions: 1. East(E) boundary type: Dirichlet.
+            %                            2. West(W) boundary type: Dirichlet/Neumann/Robin.
+            inp.pr.v  = 1.0;
+            inp.pr.g  = 1.0;
+            inp.pr.w  = 'Dirichlet';
+            inp.pr.e  = 'Dirichlet';
+                       
             %% > fr.
             % >> 5. Flux reconstruction method.
             %  > 1. Simulation type        : 1. Explicit.
@@ -46,8 +51,8 @@ classdef A_1_1D
             %  > 3. Face polynomial degree.
             %  > 4. Number of Gauss points/per face.
             inp.fr.ft = 'Implicit';
-            inp.fr.st = true;
-            inp.fr.np = 4;
+            inp.fr.st = false;
+            inp.fr.np = 6;
             inp.fr.ng = 3;
         end
     end

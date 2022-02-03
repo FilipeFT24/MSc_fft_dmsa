@@ -20,15 +20,23 @@ classdef Fig_2_1D
             % >> Subplot 1.
             subplot(2,1,1);
             hold on;
-            P1    = plot(msh.c.Xc,pde.E.EA,'-ob','Linewidth',1.0,'MarkerFaceColor','b','MarkerSize',2.0);
-            P2    = line([msh.c.Xc(1),msh.c.Xc(msh.c.NC)],[pde.E.EN(1),pde.E.EN(1)],'Color','r','LineStyle','--','Linewidth',0.50);
-            str_1 = "$\textrm{Absolute error}\left(\epsilon_{abs}\right)$";
-            str_2 = '$|\!|\epsilon|\!|_{1}$';
-            legend(P2,str_2,'Interpreter','latex','Location','Northwest','FontSize',10);
-            %  > Colormap.
-            set(colorbar,'Visible','off');
+            C     = linspecer(3,'qualitative');
+            %  > Cell(s).
+            P1    = plot(msh.c.Xc,pde.Ec.EA     ,'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            %  > Face(s).
+            P2    = plot(msh.f.Xv,pde.Ef.EA(:,1),'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P3    = plot(msh.f.Xv,pde.Ef.EA(:,2),'-^','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            %  > Mean cell error.
+            P4    = yline(pde.Ec.EN(1),'Color','k','LineStyle','--','Linewidth',0.5);
+            %  > Label(s).
+            str_1 = "$\epsilon_{c}^{\phi}$";
+            str_2 = "$\epsilon_{f}^{\phi}$";
+            str_3 = "$\epsilon_{f}^{\nabla\phi}$";
+            str_4 = "$|\!|\epsilon_{c}^{\phi}|\!|_{1}$";
+            str_5 = "$\textrm{Absolute error}\left(\epsilon_{abs}\right)$";
+            legend([P1,P2,P3,P4],[str_1,str_2,str_3,str_4],'Interpreter','latex','Location','Northeastoutside','FontSize',10);
             %  > Axis.
-            ylabel(str_1,'FontSize',20,'Interpreter','latex');
+            ylabel(str_5,'FontSize',20,'Interpreter','latex');
             Fig_Tools_1D.ChangeLook_1D(true,msh.f.Xv,10,12);            
             
             % >> Subplot 2.
@@ -37,12 +45,12 @@ classdef Fig_2_1D
             hold on;
             for i = 1:msh.c.NC
                 %  > NOTE: Add "'Linestyle','None'" to remove cell border.
-                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.E.EA(i),'Linestyle','None');
+                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.Ec.EA(i),'Linestyle','None');
             end
             %  > Colormap.
-            str_3 = '$\textrm{Absolute error}\left(\epsilon_{abs}\right)$';
+            str_2 = '$\textrm{Absolute error}\left(\epsilon_{abs}\right)$';
             str_4 = 'thermal';
-            c     = Fig_Tools_1D.Colormap_style(str_3,str_4,[0,roundn(max(pde.E.EA),ceil(log10(max(pde.E.EA))))],5,12);
+            c     = Fig_Tools_1D.Colormap_style(str_2,str_4,[0,roundn(max(pde.Ec.EA),ceil(log10(max(pde.Ec.EA))))],5,12);
             %  > Axis.
             ax = gca; ax.YAxis.Visible = 'off';
             Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,12);        
