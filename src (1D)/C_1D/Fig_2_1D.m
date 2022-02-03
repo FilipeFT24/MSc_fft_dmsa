@@ -22,12 +22,12 @@ classdef Fig_2_1D
             hold on;
             C     = linspecer(3,'qualitative');
             %  > Cell(s).
-            P1    = plot(msh.c.Xc,pde.Ec.EA     ,'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P1    = plot(msh.c.Xc,pde.en.c.c ,'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
             %  > Face(s).
-            P2    = plot(msh.f.Xv,pde.Ef.EA(:,1),'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P3    = plot(msh.f.Xv,pde.Ef.EA(:,2),'-^','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            %  > Mean cell error.
-            P4    = yline(pde.Ec.EN(1),'Color','k','LineStyle','--','Linewidth',0.5);
+            P2    = plot(msh.f.Xv,pde.en.f.f ,'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P3    = plot(msh.f.Xv,pde.en.f.df,'-^','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            %  > Mean (cell) error.
+            P4    = yline(pde.en.c.n(1),'Color','k','LineStyle','--','Linewidth',0.5);
             %  > Label(s).
             str_1 = "$\epsilon_{c}^{\phi}$";
             str_2 = "$\epsilon_{f}^{\phi}$";
@@ -45,12 +45,12 @@ classdef Fig_2_1D
             hold on;
             for i = 1:msh.c.NC
                 %  > NOTE: Add "'Linestyle','None'" to remove cell border.
-                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.Ec.EA(i),'Linestyle','None');
+                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.en.c.c(i),'Linestyle','None');
             end
             %  > Colormap.
             str_2 = '$\textrm{Absolute error}\left(\epsilon_{abs}\right)$';
             str_4 = 'thermal';
-            c     = Fig_Tools_1D.Colormap_style(str_2,str_4,[0,roundn(max(pde.Ec.EA),ceil(log10(max(pde.Ec.EA))))],5,12);
+            c     = Fig_Tools_1D.Colormap_style(str_2,str_4,[0,roundn(max(pde.en.c.c),ceil(log10(max(pde.en.c.c))))],5,12);
             %  > Axis.
             ax = gca; ax.YAxis.Visible = 'off';
             Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,12);        

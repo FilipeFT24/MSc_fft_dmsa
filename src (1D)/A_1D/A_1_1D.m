@@ -1,12 +1,5 @@
 classdef A_1_1D
     methods (Static)
-        %% > Wrap-up A_1 (1D).
-        function [inp] = WrapUp_A_1_1D(h)
-            % >> 1.
-            inp = A_1_1D.Set_inp(h);
-        end
-        
-        %% > 1. -----------------------------------------------------------
         function [inp] = Set_inp(h)
             %% > msh.
             % >> 1. Grid limits: (Xv)_i,(Xv)_f.
@@ -40,17 +33,14 @@ classdef A_1_1D
             inp.pr.v  = 1.0;
             inp.pr.g  = 1.0;
             inp.pr.w  = 'Dirichlet';
-            inp.pr.e  = 'Dirichlet';
+            inp.pr.e  = 'Neumann';
                        
             %% > fr.
             % >> 5. Flux reconstruction method.
-            %  > 1. Simulation type        : 1. Explicit.
-            %                                2. Implicit.
-            %  > 2. Source term integration: 1. 1D Quadrature (false).
+            %  > 1. Source term integration: 1. 1D Quadrature (false).
             %                                2. Analytic      (true ).
-            %  > 3. Face polynomial degree.
-            %  > 4. Number of Gauss points/per face.
-            inp.fr.ft = 'Implicit';
+            %  > 2. Face polynomial degree.
+            %  > 3. Number of Gauss points/per face.
             inp.fr.st = false;
             inp.fr.np = 6;
             inp.fr.ng = 3;

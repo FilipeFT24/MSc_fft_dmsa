@@ -37,14 +37,14 @@ classdef B_1_2_1D
                 %  > 1D Quadrature.
                 [x,j,Q_1D] = B_1_2_1D.CD_1D(ng);
                 %  > Source term.
-                func  = pde.an.fn.func;
+                func  = pde.fn.func;
                 for i = 1:msh.c.NC
                     F_Vol(i,1) = B_1_2_1D.ApproxIntegral(A(i),B(i),func,x,j,Q_1D);
                 end
             else
                 % >> Exact integral.
                 %  > Source term.
-                func  = pde.an.fn.int;
+                func  = pde.fn.int;
                 for i = 1:msh.c.NC
                     F_Vol(i,1) = func(B(i))-func(A(i));
                 end

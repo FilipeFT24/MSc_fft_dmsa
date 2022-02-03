@@ -17,7 +17,7 @@ classdef A_2_1D
                     [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_1(Xv_i,Xv_f,h,Nf_X,Ks_X);
                 case '3'
                     Ks_X        = inp.msh.s_nu.Ks_X;
-                    [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,'East');
+                    [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,'e');
                 otherwise
                     return;
             end
@@ -77,9 +77,9 @@ classdef A_2_1D
             NX_c = NX_v-1;
             
             switch bnd
-                case 'West'
+                case 'w'
                     %  > Do nothing.
-                case 'East'
+                case 'e'
                     %  > Invert mesh.
                     fl_x = flip(Xd_x);
                     Xd_x = ones(1,length(fl_x)).*Xv_i+Xv_f-fl_x;
@@ -90,28 +90,31 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [sc,sf] = SetUp_Stencil_f(i,msh,np)
+        function [sc,sf,bnd] = SetUp_Stencil_f(msh,i,np,bnd_w,bnd_e)
             %  > Auxiliary variables.
-            Xc = msh.c.Xc;
-            NC = msh.c.NC;
-            Xf = msh.f.Xv;
-            NF = msh.f.NF;
+            Xc   = msh.c.Xc;
+            NC   = msh.c.NC;
+            Xf   = msh.f.Xv;
+            NF   = msh.f.NF;
+            np_2 = np./2;
             
-            %  > Add faces...
-            np_2 =  np./2;
+            % >> Add...
+            %  > ...face(s).
             if i <= np_2
-                sf = 1;
+                sf  = 1;
+                bnd = bnd_w;
             elseif i >= NF-np_2+1
-                sf = NF;
+                sf  = NF;
+                bnd = bnd_e;
             else
-                sf = [];
+                sf  = [];
+                bnd = [];
             end
-            %  > Add cells...
+            %  > ...cell(s).
             df     = Xf(i)-Xc;
             [~,ic] = min(abs(df));
             vc     = Xc(ic);
-            
-            if i <= np_2
+            if i  <= np_2
                 sc = 1:1:np-1;
             elseif i >= NF-np_2+1
                 sc = NC-np+2:1:NC;
@@ -120,24 +123,45 @@ classdef A_2_1D
             end
         end
         % >> 2.2. ---------------------------------------------------------
-        function [xc,xf,xt] = Compute_Coordinates_cft(msh,sc,sf)
-            xc = msh.c.Xc(sc);
-            xf = msh.f.Xv(sf);
-            xt = [xc,xf];
+        function [xc,xf,xt] = Compute_Coordinates_cft(Xc,sc,Xv,sf)
+            xc = Xc(sc);
+            if isempty(sf)
+                xf = [];
+                xt = xc;
+            else
+                xf = Xv(sf);
+                xt = [xc,xf];
+            end
         end
         % >> 2.3. ---------------------------------------------------------
-        function [Phi_f,GradPhi_f,x_f_v,x_f_g] = x_f(v,g,np,stl_x,xf)
-            df         = zeros(2,np);
-            df  (1,1)  = 1; % > Phi_f.
-            df  (2,2)  = 1; % > gradPhi_f.
-            j          = 1:np;
-            k          = 1:np;
-            Df  (j,k)  = (stl_x(j)-xf)'.^(k-1);
-            Phi_f      = df(1,:)*inv(Df);
-            GradPhi_f  = df(2,:)*inv(Df);
-            x_f_v      = v.*Phi_f;
-            x_f_g      = g.*GradPhi_f;
-            x_f        = x_f_v-x_f_g;
+        function [Phi_f,GradPhi_f,x_f,bnd_v] = x_f(fv,dfv,np,stlx,fx,bnd_i,bnd_t,v,g)
+            df      = zeros(2,np);
+            df(1,1) = 1; % > Phi_f.
+            df(2,2) = 1; % > gradPhi_f.
+            k       = 1:np;
+            
+            switch char(bnd_t)
+                case 'Dirichlet'
+                    j          = 1:np;
+                    Df(j ,k)   = (stlx(j)-fx)'.^(k-1);
+                    bnd_v      = fv(bnd_i);
+                case 'Neumann'
+                    j          = 1:np-1;
+                    Df(j ,k)   = (stlx(j)-fx)'.^(k-1);
+                    Df(np,1)   = 0;
+                    Df(np,j+1) = j.*(stlx(np)-fx).^(j-1);
+                    bnd_v      = dfv(bnd_i);
+                case 'Robin'
+                otherwise
+                    j          = 1:np;
+                    Df(j ,k)   = (stlx(j)-fx)'.^(k-1);
+                    bnd_v      = [];
+            end
+            Phi_f     = df(1,:)*inv(Df);
+            GradPhi_f = df(2,:)*inv(Df);
+            x_fv      = v.*Phi_f;
+            x_fg      = g.*GradPhi_f;
+            x_f       = x_fv-x_fg;
         end
     end
 end
