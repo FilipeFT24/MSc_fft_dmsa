@@ -2,9 +2,7 @@ classdef Fig_2_1D
     methods (Static)         
         %% > Wrap-up Fig_2 (1D).
         function [] = WrapUp_Fig_2_1D(Plot_2,Exp_2,Fig,msh,pde)
-            if Plot_2
-                %  > Select...
-                iF  = randperm(msh.f.NF,1);               
+            if Plot_2               
                 %  > Figure.
                 figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
                 Fig_2_1D.Plot(msh,pde);
@@ -18,16 +16,22 @@ classdef Fig_2_1D
         %% > Auxiliary functions.
         function [] = Plot(msh,pde)
             % >> Subplot 1.
+            %  > Auxiliary array.
+            for i = 1:msh.f.NF
+                en_f(i,1) = pde.en.f{i}(1);
+                en_f(i,2) = pde.en.f{i}(2);
+            end
+            
             subplot(2,1,1);
             hold on;
             C     = linspecer(3,'qualitative');
             %  > Cell(s).
-            P1    = plot(msh.c.Xc,pde.en.c.c ,'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P1    = plot(msh.c.Xc,pde.en.c.c,'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
             %  > Face(s).
-            P2    = plot(msh.f.Xv,pde.en.f.f ,'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P3    = plot(msh.f.Xv,pde.en.f.df,'-^','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P2    = plot(msh.f.Xv,en_f(:,1) ,'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P3    = plot(msh.f.Xv,en_f(:,2) ,'-^','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
             %  > Mean (cell) error.
-            P4    = yline(pde.en.c.n(1),'Color','k','LineStyle','--','Linewidth',0.5);
+            P4    = yline(pde.en.c.n(1)     ,'Color','k','LineStyle','--','Linewidth',0.5);
             %  > Label(s).
             str_1 = "$\epsilon_{c}^{\phi}$";
             str_2 = "$\epsilon_{f}^{\phi}$";
@@ -41,7 +45,7 @@ classdef Fig_2_1D
             
             % >> Subplot 2.
             subplot(2,1,2);
-            c_xy = Fig_Tools_1D.ToPatch_Cell_Face(msh,0.05);
+            c_xy = Fig_Tools_1D.ToPatch(msh,0.05);
             hold on;
             for i = 1:msh.c.NC
                 %  > NOTE: Add "'Linestyle','None'" to remove cell border.

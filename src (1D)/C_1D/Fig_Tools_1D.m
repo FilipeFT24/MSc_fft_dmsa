@@ -25,7 +25,7 @@ classdef Fig_Tools_1D
         end
         % >> 2. -----------------------------------------------------------
         % >> 3. -----------------------------------------------------------
-        function [c_xy] = ToPatch_Cell_Face(msh,wdt)
+        function [c_xy] = ToPatch(msh,wdt)
             %  > XY_v.
             i       =  1:msh.f.NF;
             v_xy(i) =  msh.f.Xv(i);

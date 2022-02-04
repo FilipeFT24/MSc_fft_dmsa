@@ -32,7 +32,7 @@ classdef A_2_1D
             msh.c.Xc (i) = 1./2.*(msh.f.Xv(i)+msh.f.Xv(i+1));
             msh.c.Vol(i) = msh.f.Xv(i+1)-msh.f.Xv(i);
             %  > Reference length.
-            msh.d.H_ref  = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;          
+            msh.d.H_ref  = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
         end
         
         %% > 1. -----------------------------------------------------------
@@ -134,34 +134,71 @@ classdef A_2_1D
             end
         end
         % >> 2.3. ---------------------------------------------------------
-        function [Phi_f,GradPhi_f,x_f,bnd_v] = x_f(fv,dfv,np,stlx,fx,bnd_i,bnd_t,v,g)
-            df      = zeros(2,np);
-            df(1,1) = 1; % > Phi_f.
-            df(2,2) = 1; % > gradPhi_f.
-            k       = 1:np;
+        %  > 2.3.1.--------------------------------------------------------
+        function [df] = Compute_df(np)
+            %  > φ(x) = C1 + C2(x-xf)^1 +  C3(x-xf)^2 +  C4(x-xf)^3 +   C5(x-xf)^4 +    C6(x-xf)^5.
+            %  > φ(x) = 0  + C2         + 2C3(x-xf)^1 + 3C4(x-xf)^2 +  4C5(x-xf)^3 +   5C6(x-xf)^4.
+            %  > φ(x) = 0  + 0          + 2C3         + 6C4(x-xf)^1 + 12C5(x-xf)^2 +  20C6(x-xf)^3.
+            %  > φ(x) = 0  + 0          + 0           + 6C4         + 24C5(x-xf)^1 +  60C6(x-xf)^2.
+            %  > φ(x) = 0  + 0          + 0           + 0           + 24C5         + 120C6(x-xf)^1.
+            %  > φ(x) = 0  + 0          + 0           + 0           +  0           + 120C6        .
+            %  > ...
+            %  > Initialize.
+            df = zeros(np);
+            
+            for i = 1:np
+                if i == 1
+                    df(i,i) = 1;
+                else
+                    df(i,:) = circshift(df(i-1,:),1).*(i-1);
+                end
+            end
+        end
+        %  > 2.3.2.--------------------------------------------------------
+        function [Tf,x_f,bnd_v] = x_f(fv,dfv,np,stlx,fx,bnd_i,bnd_t,v,g)
+            df = A_2_1D.Compute_df(np);
+            j  = 1:np;
             
             switch char(bnd_t)
                 case 'Dirichlet'
-                    j          = 1:np;
-                    Df(j ,k)   = (stlx(j)-fx)'.^(k-1);
-                    bnd_v      = fv(bnd_i);
+                    %  > Boundary value.
+                    bnd_v   = fv(bnd_i);
+                    %  > Df.
+                    Df(j,j) = (stlx(j)-fx)'.^(j-1);
                 case 'Neumann'
-                    j          = 1:np-1;
-                    Df(j ,k)   = (stlx(j)-fx)'.^(k-1);
-                    Df(np,1)   = 0;
-                    Df(np,j+1) = j.*(stlx(np)-fx).^(j-1);
-                    bnd_v      = dfv(bnd_i);
+                    %  > Boundary value.
+                    bnd_v   = dfv(bnd_i);
+                    %  > Df.
+                    k       = 1:np-1;
+                    Df(k,j) = (stlx(k)-fx)'.^(j-1);
+                    l       = np;
+                    m       = k+1;
+                    Df(l,1) = 0;
+                    Df(l,m) = k.*(stlx(l)-fx).^(k-1);
                 case 'Robin'
+                    %  > Boundary value.
+                    g_v     = g./v;
+                    bnd_v   = fv(bnd_i)-g_v.*dfv(bnd_i);
+                    %  > Df.
+                    k       = 1:np-1;
+                    Df(k,j) = (stlx(k)-fx)'.^(j-1);
+                    l       = np;
+                    lv  (j) = (stlx(l)-fx)'.^(j-1);
+                    m       = k+1;
+                    lg  (1) = 0;
+                    lg  (m) = k.*(stlx(l)-fx).^(k-1);
+                    Df(l,j) = lv(j)-g./v.*lg(j);
                 otherwise
-                    j          = 1:np;
-                    Df(j ,k)   = (stlx(j)-fx)'.^(k-1);
-                    bnd_v      = [];
+                    %  > Boundary value.
+                    bnd_v   = [];
+                    %  > Df.
+                    Df(j,j) = (stlx(j)-fx)'.^(j-1);
             end
-            Phi_f     = df(1,:)*inv(Df);
-            GradPhi_f = df(2,:)*inv(Df);
-            x_fv      = v.*Phi_f;
-            x_fg      = g.*GradPhi_f;
-            x_f       = x_fv-x_fg;
+            Inv  = inv(Df);
+            Tf   = df*Inv;
+            x_fv = v.*Tf(1,:);
+            x_fg = g.*Tf(2,:);
+            x_f  = x_fv-x_fg;
         end
     end
 end

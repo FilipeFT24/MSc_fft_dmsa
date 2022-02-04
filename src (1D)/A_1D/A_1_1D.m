@@ -33,7 +33,7 @@ classdef A_1_1D
             inp.pr.v  = 1.0;
             inp.pr.g  = 1.0;
             inp.pr.w  = 'Dirichlet';
-            inp.pr.e  = 'Neumann';
+            inp.pr.e  = 'Dirichlet';
                        
             %% > fr.
             % >> 5. Flux reconstruction method.
@@ -41,9 +41,9 @@ classdef A_1_1D
             %                                2. Analytic      (true ).
             %  > 2. Face polynomial degree.
             %  > 3. Number of Gauss points/per face.
-            inp.fr.st = false;
-            inp.fr.np = 6;
-            inp.fr.ng = 3;
+            inp.fr.st = true;
+            inp.fr.np = 4;
+            inp.fr.ng = 2;
         end
     end
 end

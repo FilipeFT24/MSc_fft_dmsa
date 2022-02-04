@@ -3,21 +3,21 @@ classdef B_2_1D
         %% > Wrap-up B_2 (1D).
         function [msh,pde] = WrapUp_B_2_1D(msh,pde,st,ng,np,v,g,bnd_w,bnd_e)
             % >> Assemble A and B.
-            [msh,f,gradf,A,B] = B_2_1D.Assemble_AB(msh,pde,v,g,st,np,ng,bnd_w,bnd_e);
+            [msh,Tf,A,B] = B_2_1D.Assemble_AB(msh,pde,v,g,st,np,ng,bnd_w,bnd_e);
             % >> Compute PDE solution.
             %  > ...cell(s).
             pde = B_2_1D.PDE_cv(msh,pde,A,B);
             %  > ...face(s).
-            pde = B_2_1D.PDE_fv(msh,pde,f,gradf,msh.s.bnd.v);
+            pde = B_2_1D.PDE_fv(msh,pde,msh.s.bnd.v,Tf);
         end
     
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [msh,f,gradf,A,B] = Assemble_AB(msh,pde,v,g,st,np,ng,bnd_w,bnd_e)
+        function [msh,Tf,A,B] = Assemble_AB(msh,pde,v,g,st,np,ng,bnd_w,bnd_e)
             %  > Initialize.
             np_i = ones(1,msh.f.NF);
-            np_i = np_i.*np; 
-            
+            np_i = np_i.*np;
+
             %% > Face 'i'...
             for i = 1:msh.f.NF
                 %  > ...stencil indices.
@@ -26,9 +26,9 @@ classdef B_2_1D
                 %  > ...stencil coordinates.
                 [msh.s.x_v_c{i},msh.s.x_v_f{i},msh.s.x_v_t{i}] = ...
                     A_2_1D.Compute_Coordinates_cft(msh.c.Xc,msh.s.c{i},msh.f.Xv,msh.s.f{i});
-                %  > ...Phi_f & GradPhi_f.
-                [f{i},gradf{i},xf{i},msh.s.bnd.v{i}] = ...
-                    A_2_1D.x_f(pde.sn.f,pde.sn.df,np,msh.s.x_v_t{i},msh.f.Xv(i),msh.s.f{i},msh.s.bnd.i{i},v,g);
+                %  > ...Tf, xf and boundary values.
+                [Tf{i},xf{i},msh.s.bnd.v{i}] = ...
+                    A_2_1D.x_f(pde.sn.f(:,1),pde.sn.f(:,2),np_i(i),msh.s.x_v_t{i},msh.f.Xv(i),msh.s.f{i},msh.s.bnd.i{i},v,g);
             end
             
             %% > Assemble matrix A.
@@ -79,15 +79,16 @@ classdef B_2_1D
         end
         % >> 1.2. ---------------------------------------------------------
         function [X] = SetUp_Solver(A,B,str)
-            if strcmpi(str,'backslash')
-                X       = A\B; % Equivalent to: V*((U'*B)./s).
-            elseif strcmpi(str,'Tikhonov')
-                lmbd    = 1E-06;
-                [U,S,V] = svd_lapack(A);
-                s       = diag(S);
-                X       = V*(s.*(U'*B)./(s.^2+lmbd));
-            else
-                return;
+            switch str
+                case char('backslash')
+                    X       = A\B; % Equivalent to: V*((U'*B)./s).
+                case char('Tikhonov')
+                    lmbd    = 1E-06;
+                    [U,S,V] = svd_lapack(A);
+                    s       = diag(S);
+                    X       = V*(s.*(U'*B)./(s.^2+lmbd));
+                otherwise
+                    return;
             end
         end
         % >> 1.3. ---------------------------------------------------------
@@ -100,7 +101,7 @@ classdef B_2_1D
             pde.en.c = B_2_1D.Compute_Error(msh,pde,'c');
         end
         %  > 1.3.2. -------------------------------------------------------
-        function [pde] = PDE_fv(msh,pde,f,gradf,bnd_v)
+        function [pde] = PDE_fv(msh,pde,bnd_v,Tf)
             for i = 1:msh.f.NF
                 n_c(i) = length(msh.s.c{i});
                 k_c{i} = msh.s.c{i};
@@ -114,17 +115,19 @@ classdef B_2_1D
                 end
                 % >> Compute...
                 %  > ...face nodal solution.
-                pde.xn.f.f (i,1) = f    {i}*v_t{i};
-                pde.xn.f.df(i,1) = gradf{i}*v_t{i};
+                j       {i}         = 1:size(Tf{i},1);
+                pde.xn.f{i,1}(j{i}) = Tf{i}*v_t{i};
             end
             %  > ...face error.
             pde.en.f = B_2_1D.Compute_Error(msh,pde,'f');
         end
         
         %% > 2. -----------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
         function [E] = Compute_Error(msh,pde,char_cf)
             switch char_cf
                 case 'c'
+                    %  > Cell(s).
                     i         = 1:msh.c.NC;
                     Vol (i)   = msh.c.Vol(i);
                     EA  (i)   = abs(pde.sn.c(i)-pde.xn.c(i));
@@ -135,12 +138,47 @@ classdef B_2_1D
                     E.n (2,1) = sum(sqrt(E2))./sum(sqrt(Vol));
                     E.n (3,1) = max(EA);
                 case 'f'
-                    i         = 1:msh.f.NF;
-                    E.f (i,1) = abs(pde.sn.f (i)-pde.xn.f.f (i));
-                    E.df(i,1) = abs(pde.sn.df(i)-pde.xn.f.df(i));
+                    %  > Fce(s).
+                    for i = 1:msh.f.NF
+                        sz(i) = length(pde.xn.f{i});
+                    end
+                    ki = size(pde.fn.f,2);
+                    kf = max (sz);
+                    if kf > 2
+                        [pde.fn.sym(ki+1:kf),pde.fn.f(ki+1:kf)] = ...
+                            B_2_1D.Compute_Derivatives_rec(pde.fn.sym{2},ki,kf);
+                        i = 1:msh.f.NF;
+                        for j = ki+1:kf
+                            pde.sn.f(i,j) = pde.fn.f{j}(msh.f.Xv(i));
+                        end
+                    end
+                    for i = 1:msh.f.NF
+                        for j = 1:size(pde.xn.f{i},2)
+                            E{i,1}(j) = abs(pde.sn.f(i,j)-pde.xn.f{i}(j));
+                        end
+                    end
                 otherwise
                     return;
             end
+        end
+        % >> 2.2. ---------------------------------------------------------
+        function [dnf_sym,dnf_hdl] = Compute_Derivatives_rec(df,ki,kf)
+            %  > Symbolic variable.
+            syms x;
+
+            for k = 1:kf-ki
+                if k == 1
+                    dnf_sym{k} = diff(df);
+                else
+                    dnf_sym{k} = diff(dnf_sym{k-1});
+                end
+                dnf_hdl{k} = matlabFunction(dnf_sym{k});
+            end
+        end
+        
+        %% > 3. -----------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
+        function [] = Adapt_p()
         end
     end
 end
