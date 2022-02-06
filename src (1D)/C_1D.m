@@ -6,6 +6,8 @@ classdef C_1D
             Fig_1_1D.WrapUp_Fig_1_1D(false,false,1,msh);
             %  > Figure 2.
             Fig_2_1D.WrapUp_Fig_2_1D(true ,false,2,msh,pde);
+            %  > Figure 3.
+            Fig_3_1D.WrapUp_Fig_3_1D(false,false,3,msh,pde);
         end
     end
 end

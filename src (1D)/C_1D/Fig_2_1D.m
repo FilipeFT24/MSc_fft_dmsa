@@ -4,7 +4,7 @@ classdef Fig_2_1D
         function [] = WrapUp_Fig_2_1D(Plot_2,Exp_2,Fig,msh,pde)
             if Plot_2               
                 %  > Figure.
-                figure(Fig); set(gcf,'Units','pixels','Position',[250,150,1000,500]);
+                figure(Fig); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
                 Fig_2_1D.Plot(msh,pde);
                 %  > Export as .pdf.
                 if Exp_2
@@ -13,51 +13,30 @@ classdef Fig_2_1D
             end
         end
         
-        %% > Auxiliary functions.
+        %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
         function [] = Plot(msh,pde)
-            % >> Subplot 1.
-            %  > Auxiliary array.
-            for i = 1:msh.f.NF
-                en_f(i,1) = pde.en.f{i}(1);
-                en_f(i,2) = pde.en.f{i}(2);
-            end
-            
-            subplot(2,1,1);
+            C  = linspecer(9,'qualitative');
             hold on;
-            C     = linspecer(3,'qualitative');
-            %  > Cell(s).
-            P1    = plot(msh.c.Xc,pde.en.c.c,'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            %  > Face(s).
-            P2    = plot(msh.f.Xv,en_f(:,1) ,'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P3    = plot(msh.f.Xv,en_f(:,2) ,'-^','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            %  > Mean (cell) error.
-            P4    = yline(pde.en.c.n(1)     ,'Color','k','LineStyle','--','Linewidth',0.5);
-            %  > Label(s).
-            str_1 = "$\epsilon_{c}^{\phi}$";
-            str_2 = "$\epsilon_{f}^{\phi}$";
-            str_3 = "$\epsilon_{f}^{\nabla\phi}$";
-            str_4 = "$|\!|\epsilon_{c}^{\phi}|\!|_{1}$";
-            str_5 = "$\textrm{Absolute error}\left(\epsilon_{abs}\right)$";
-            legend([P1,P2,P3,P4],[str_1,str_2,str_3,str_4],'Interpreter','latex','Location','Northeastoutside','FontSize',10);
-            %  > Axis.
-            ylabel(str_5,'FontSize',20,'Interpreter','latex');
-            Fig_Tools_1D.ChangeLook_1D(true,msh.f.Xv,10,12);            
-            
-            % >> Subplot 2.
-            subplot(2,1,2);
-            c_xy = Fig_Tools_1D.ToPatch(msh,0.05);
-            hold on;
-            for i = 1:msh.c.NC
-                %  > NOTE: Add "'Linestyle','None'" to remove cell border.
-                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.en.c.c(i),'Linestyle','None');
-            end
-            %  > Colormap.
-            str_2 = '$\textrm{Absolute error}\left(\epsilon_{abs}\right)$';
-            str_4 = 'thermal';
-            c     = Fig_Tools_1D.Colormap_style(str_2,str_4,[0,roundn(max(pde.en.c.c),ceil(log10(max(pde.en.c.c))))],5,12);
-            %  > Axis.
-            ax = gca; ax.YAxis.Visible = 'off';
-            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,12);        
+            P1 = plot (msh.f.Xv,pde.en.f.f(:,3),'-^','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P2 = plot (msh.f.Xv,pde.en.f.f(:,1),'-v','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P3 = plot (msh.f.Xv,pde.en.f.f(:,2),'-o','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P4 = yline(pde.en.f.n(1)           ,'-' ,'Color',C(1,:),'Linewidth',1.0);
+            P5 = yline(pde.en.f.n(3)           ,'-.','Color',C(1,:),'Linewidth',1.0);
+            L  = Fig_2_1D.Set_Labels();
+            set(colorbar,'visible','off');
+            legend([P1,P2,P3,P4,P5],[L{1},L{2},L{3},L{4},L{5}],...
+                'Interpreter','latex','Location','Northeast','FontSize',10,'NumColumns',2);
+            Fig_Tools_1D.ChangeLook_1D(true,true,msh.f.Xv,10,"$x$",L{6},20,12);
+        end
+        % >> 1.2. ---------------------------------------------------------
+        function [L] = Set_Labels()
+            L{1} = "$\epsilon_{f}^{\phi}$";
+            L{2} = "$\bar{\epsilon}_{f}^{\phi}$";
+            L{3} = "$\bar{\epsilon}_{f}^{\nabla\phi}$";
+            L{4} = "$|\!|\epsilon_{f}^{\phi}|\!|_{1}$";
+            L{5} = "$|\!|\epsilon_{f}^{\phi}|\!|_{\infty}$";
+            L{6} = "$\textrm{Error magnitude}\left(\epsilon^{\phi}\right)$";
         end
     end
 end      

@@ -2,26 +2,28 @@ classdef Fig_Tools_1D
     methods (Static)         
         %% > Tools.
         % >> 1. -----------------------------------------------------------
-        function [] = ChangeLook_1D(box_w,xc,NX,sz)
-            % >> Other parameters.
+        function [] = ChangeLook_1D(box_w,y_w,xc,NX,L_X,L_Y,SZ_X,SZ_Y)
+            %  > Other parameters.
             if box_w
                 box on;
             end
             set(gcf,'color','w');
             set(gca,'Clipping','on');
             set(gca,'Layer','bottom');
-            set(gca,'XAxisLocation','bottom');
-            set(gca,'TickLength',[0,0]);
-            set(gca,'XTick',[]);
             set(gca,'TickLabelInterpreter','latex'); 
-            set(gca,'FontSize',sz);
-            % >> Labels.
-            %  > X-Axis label.
+            set(gca,'FontSize',min(SZ_X,SZ_Y));
+            %  > X-Axis.
             xlim_label = [min(xc),max(xc)];
             for ix_ticks = 1:NX+1
                 xticks_label(ix_ticks) = xlim_label(1)-(xlim_label(1)-xlim_label(2))./NX.*(ix_ticks-1);
             end
-            xlabel('$x$','FontSize',20,'Interpreter','latex'); xlim([xlim_label(1),xlim_label(2)]); xticks(xticks_label);
+            set   (gca,'XAxisLocation','bottom');
+            set   (gca,'XTick',[]);
+            xlabel(L_X,'FontSize',SZ_X,'Interpreter','latex'); xlim([xlim_label(1),xlim_label(2)]); xticks(xticks_label);
+            %  > Y-Axis.
+            if y_w
+                ylabel(L_Y,'FontSize',SZ_Y,'Interpreter','latex');
+            end
         end
         % >> 2. -----------------------------------------------------------
         % >> 3. -----------------------------------------------------------
@@ -38,17 +40,16 @@ classdef Fig_Tools_1D
             end
         end
         % >> 4. -----------------------------------------------------------
-        function [c] = Colormap_style(str_1,str_2,yv,NY,sz) %#ok<INUSL>
-            c                      = colorbar();
+        function [c] = Colormap_style(L1,L2,SZ_Y)
+            c                      =  colorbar();
             c.Location             = 'Eastoutside';
             c.Label.Interpreter    = 'latex';
             c.TickLabelInterpreter = 'latex';
-            c.FontSize             =  sz;
+            c.FontSize             =  SZ_Y;
             c.AxisLocation         = 'out';
-            c.Label.String         = str_1;
-            AdvancedColormap(str_2);
+            c.Label.String         =  L1;
+            AdvancedColormap(L2);
             %  > Colorbar format.
-            %  c.Ticks = linspace(yv(1),yv(2),NY);
             %  set(c,'xticklabel',cellfun(@(x)sprintf('%.3f',x),num2cell(get(c,'xtick')),'Un',0))
         end
         % >> 5. -----------------------------------------------------------

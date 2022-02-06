@@ -40,7 +40,7 @@ classdef A_3_2_2
                         Continue_X = false;
                         if ceil(par.nx(i)) < np_x
                             % >> Add/update...
-                            [msh,Continue_X] = A_3_2_2.Perform_Extension(i,2,msh,bnd_cc,bnd_ff,bnd_fc,par.ly(1,i),par.ly(2,i),nt);
+                            %[msh,Continue_X] = A_3_2_2.Perform_Extension(i,2,msh,bnd_cc,bnd_ff,bnd_fc,par.ly(1,i),par.ly(2,i),nt);
                             % >> Re-compute parameters.
                             [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
                             %  > Increment number of extensions (x-direction).
@@ -50,7 +50,7 @@ classdef A_3_2_2
                         Continue_Y = false;
                         if ceil(par.ny(i)) < np_y
                             % >> Add/update...
-                            [msh,Continue_Y] = A_3_2_2.Perform_Extension(i,1,msh,bnd_cc,bnd_ff,bnd_fc,par.lx(1,i),par.lx(2,i),nt);
+                            %[msh,Continue_Y] = A_3_2_2.Perform_Extension(i,1,msh,bnd_cc,bnd_ff,bnd_fc,par.lx(1,i),par.lx(2,i),nt);
                             % >> Re-compute parameters.
                             [par.lx(:,i),par.ly(:,i),par.nx(i),par.ny(i)] = A_3_2_2.Compute_Parameters(i,msh,msh.s.c(:,i),L);
                             %  > Increment number of extensions (y-direction).

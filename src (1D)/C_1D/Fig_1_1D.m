@@ -21,8 +21,7 @@ classdef Fig_1_1D
             %  > Patch...
             wdt  = 0.05;
             c_xy = Fig_Tools_1D.ToPatch(msh,wdt);
-            C    = linspecer(9,'qualitative');
-            
+            C    = linspecer(9,'qualitative');            
             %% > #1.
             subplot(3,1,1);
             %  > Organize layers...
@@ -52,9 +51,10 @@ classdef Fig_1_1D
             end
             plot([msh.f.Xv(1),msh.f.Xv(1)],[-wdt,wdt],'-','Color',C(1,:),'Linewidth',2.0);
             %  > Axis.
-            ax = gca; ax.YAxis.Visible = 'off';
-            legend(c_1,leg_1,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
-            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,12);
+            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,30);
+            ax = gca; 
+            set(gca,'XTick',[]); ax.YAxis.Visible = 'off';
+            legend(c_1,leg_1,'Interpreter','latex','Location','NortheastOutside','FontSize',12);     
             %% > #2.
             subplot(3,1,2);
             %  > Organize layers...
@@ -84,9 +84,10 @@ classdef Fig_1_1D
             end
             plot([msh.f.Xv(msh.f.NF),msh.f.Xv(msh.f.NF)],[-wdt,wdt],'-','Color',C(1,:),'Linewidth',2.0);
             %  > Axis.
-            ax = gca; ax.YAxis.Visible = 'off';
-            legend(c_F,leg_F,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
-            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,12);
+            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,30);
+            ax = gca; 
+            set(gca,'XTick',[]); ax.YAxis.Visible = 'off';
+            legend(c_F,leg_F,'Interpreter','latex','Location','NortheastOutside','FontSize',12);         
             %% > #3.
             subplot(3,1,3);
             %  > Organize layers...
@@ -111,9 +112,10 @@ classdef Fig_1_1D
             end
             plot([msh.f.Xv(iF),msh.f.Xv(iF)],[-wdt,wdt],'-','Color',C(1,:),'Linewidth',2.0);
             %  > Axis.
-            ax = gca; ax.YAxis.Visible = 'off';
-            legend(c_i,leg_i,'Interpreter','latex','Location','NortheastOutside','FontSize',12);
-            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,12);
+            Fig_Tools_1D.ChangeLook_1D(false,msh.f.Xv,10,30);
+            ax = gca; 
+            set(gca,'XTick',[]); ax.YAxis.Visible = 'off';
+            legend(c_i,leg_i,'Interpreter','latex','Location','NortheastOutside','FontSize',12);            
         end
     end
 end      

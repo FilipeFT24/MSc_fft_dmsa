@@ -20,14 +20,14 @@ classdef B_2_1D
             B     = B+F_Vol(i);            
             %% > Update...
             %  > ...stencil and matrices A/B.
-            [msh,A,B] = B_2_1D.Update_stl(msh,A,B,stl_p,stl_s,bnd,f,v,g);
+            [msh,A,B] = B_2_1D.Update_Problem(msh,A,B,stl_p,stl_s,bnd,f,v,g);
             %  > ...cell/face error/error norms.
             pde       = B_2_1D.Update_PDE(msh,pde,A,B,v,g);
         end
     
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [msh,A,B] = Update_stl(msh,A,B,stl_p,stl_s,bnd,f,v,g)
+        function [msh,A,B] = Update_Problem(msh,A,B,stl_p,stl_s,bnd,f,v,g)
             % >> Compute/update...
             %  > ...stencil.
             msh   = A_2_1D.Problem_SetUp(msh,stl_p,stl_s,bnd,f,v,g);
@@ -109,7 +109,6 @@ classdef B_2_1D
                 j             = 1:2;
                 pde.xn.f(i,j) = vt'*msh.s.Tf{i}(j,:)';
             end
-            %  > ...face error/error norms.
             pde.en.f = B_2_1D.Compute_Error(msh,pde,'f',v,g);
         end
         % >> 1.4. ---------------------------------------------------------

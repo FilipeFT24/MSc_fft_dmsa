@@ -9,15 +9,15 @@ classdef A_2_1D
             eg   = inp.msh.eg;
             
             switch eg
-                case '1'
+                case "1"
                     [NX_c,Xd_x] = A_2_1D.SquareMesh_Uniform(Xv_i,Xv_f,h);
-                case '2'
+                case "2"
                     Nf_X        = inp.msh.s_nu.Nf_X;
                     Ks_X        = inp.msh.s_nu.Ks_X;
                     [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_1(Xv_i,Xv_f,h,Nf_X,Ks_X);
-                case '3'
+                case "3"
                     Ks_X        = inp.msh.s_nu.Ks_X;
-                    [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,'e');
+                    [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,"e");
                 otherwise
                     return;
             end
@@ -77,9 +77,9 @@ classdef A_2_1D
             NX_c = NX_v-1;
             
             switch bnd
-                case 'w'
+                case "w"
                     %  > Do nothing.
-                case 'e'
+                case "e"
                     %  > Invert mesh.
                     fl_x = flip(Xd_x);
                     Xd_x = ones(1,length(fl_x)).*Xv_i+Xv_f-fl_x;
@@ -90,115 +90,128 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [sc,sf,bnd] = SetUp_Stencil_f(msh,i,np,bnd_w,bnd_e)
+        function [msh] = Problem_SetUp(msh,stl_p,stl_s,bnd,f,v,g)
             %  > Auxiliary variables.
-            Xc   = msh.c.Xc;
-            NC   = msh.c.NC;
-            Xf   = msh.f.Xv;
-            NF   = msh.f.NF;
-            np_2 = np./2;
+            Xc = msh.c.Xc;
+            NC = msh.c.NC;
+            Xv = msh.f.Xv;
+            NF = msh.f.NF;
+                     
+            stl_type = "CDS";
             
-            % >> Add...
-            %  > ...face(s).
-            if i <= np_2
-                sf  = 1;
-                bnd = bnd_w;
-            elseif i >= NF-np_2+1
-                sf  = NF;
-                bnd = bnd_e;
-            else
-                sf  = [];
-                bnd = [];
-            end
-            %  > ...cell(s).
-            df     = Xf(i)-Xc;
-            [~,ic] = min(abs(df));
-            vc     = Xc(ic);
-            if i  <= np_2
-                sc = 1:1:np-1;
-            elseif i >= NF-np_2+1
-                sc = NC-np+2:1:NC;
-            else
-                sc = i-np_2:1:i+np_2-1;
-            end
-        end
-        % >> 2.2. ---------------------------------------------------------
-        function [xc,xf,xt] = Compute_Coordinates_cft(Xc,sc,Xv,sf)
-            xc = Xc(sc);
-            if isempty(sf)
-                xf = [];
-                xt = xc;
-            else
-                xf = Xv(sf);
-                xt = [xc,xf];
-            end
-        end
-        % >> 2.3. ---------------------------------------------------------
-        %  > 2.3.1.--------------------------------------------------------
-        function [df] = Compute_df(np)
-            %  > φ(x) = C1 + C2(x-xf)^1 +  C3(x-xf)^2 +  C4(x-xf)^3 +   C5(x-xf)^4 +    C6(x-xf)^5.
-            %  > φ(x) = 0  + C2         + 2C3(x-xf)^1 + 3C4(x-xf)^2 +  4C5(x-xf)^3 +   5C6(x-xf)^4.
-            %  > φ(x) = 0  + 0          + 2C3         + 6C4(x-xf)^1 + 12C5(x-xf)^2 +  20C6(x-xf)^3.
-            %  > φ(x) = 0  + 0          + 0           + 6C4         + 24C5(x-xf)^1 +  60C6(x-xf)^2.
-            %  > φ(x) = 0  + 0          + 0           + 0           + 24C5         + 120C6(x-xf)^1.
-            %  > φ(x) = 0  + 0          + 0           + 0           +  0           + 120C6        .
-            %  > ...
-            %  > Initialize.
-            df = zeros(np);
-            
-            for i = 1:np
-                if i == 1
-                    df(i,i) = 1;
-                else
-                    df(i,:) = circshift(df(i-1,:),1).*(i-1);
+            % >> Loop through selected faces...
+            for i = stl_s
+                % >> Stencil set up.
+                switch stl_type
+                    case "CDS"
+                        % >> Add...
+                        %  > ...face(s).
+                        add_f = false;
+                        %  > Auxiliary variables.
+                        P1 = stl_p(i);
+                        P2 = stl_p(i)./2;
+                        %  > Check whether face i's stencil contains a boundary face...
+                        if i <= P2
+                            add_f = true;
+                            bnd_f = 1;
+                            bnd_i = bnd(1);
+                        elseif i >= NF-P2+1
+                            add_f = true;
+                            bnd_f = NF;
+                            bnd_i = bnd(2); 
+                        else
+                            bnd_i = "NA";
+                        end
+                        %  > ...cell(s).
+                        %  > Auxiliary variables.
+                        LHS = P2;
+                        RHS = NF+1-P2;
+                        %  > Set up stencil...
+                        if i <= LHS
+                            stl_c = 1:1:P1-1;
+                            stl_f = bnd_f;
+                        elseif i >= RHS
+                            stl_c = NF+1-P1:1:NC;
+                            stl_f = bnd_f;
+                        else
+                            stl_c = i-P2:1:i+P2-1;
+                            stl_f = [];
+                        end
+                    case "UPW"
+                    case "DOW"
+                    otherwise
+                        return;
                 end
+                %  > Compute stencil coordinates.
+                xc = Xc(stl_c);
+                if ~add_f
+                    xt = xc;
+                else
+                    xt = [xc,Xv(bnd_f)];
+                end
+                % >> Normaliztion factor.
+                Ls  = (max(xt)-min(xt))./length(stl_c);
+                Fvg = v+g./Ls;
+
+                % >> Tf.  
+                %  > Auxiliary variables.
+                j  = 1:stl_p(i); 
+                fx = Xv(i);                
+                %  > Df.
+                switch bnd_i
+                    case "Dirichlet"
+                        %  > Boundary value.
+                        bnd_v   = f(bnd_f,1);
+                        %  > Df.
+                        Df(j,j) = (xt(j)-fx)'.^(j-1);
+                    case "Neumann"
+                        %  > Boundary value.
+                        bnd_v   = f(bnd_f,2);
+                        %  > Df.
+                        k       = 1:stl_p(i)-1;
+                        Df(k,j) = (xt(j)-fx)'.^(j-1);
+                        l       = stl_p(i);
+                        m       = k+1;
+                        Df(l,1) = 0;
+                        Df(l,m) = k.*(xt(l)-fx).^(k-1);
+                    case 'Robin'
+                        %  > Boundary value.
+                        g_v     = g./v;
+                        bnd_v   = f(bnd_f,1)+g_v.*f(bnd_f,2);
+                        %  > Df.
+                        k       = 1:stl_p(i)-1;
+                        Df(k,j) = (xt(k)-fx)'.^(j-1);
+                        l       = stl_p(i);
+                        lv  (j) = (xt(l)-fx)'.^(j-1);
+                        m       = k+1;
+                        lg  (1) = 0;
+                        lg  (m) = k.*(xt(l)-fx).^(k-1);
+                        Df(l,j) = lv(j)+g./v.*lg(j);
+                    otherwise
+                        %  > Boundary value.
+                        bnd_v   = [];
+                        %  > Df.
+                        Df(j,j) = (xt(j)-fx)'.^(j-1);
+                end
+                df      = zeros(2,stl_p(i));
+                df(1,1) = 1;
+                df(2,2) = df(1,1);
+                Inv     = inv(Df);
+                Tf      = df*Inv;
+                xf_v    = v.*Tf(1,:);
+                xf_g    = g.*Tf(2,:);
+                xf      = xf_v-xf_g;
+                
+                %  > Update 'msh' structure...
+                msh.s.c  {i} = stl_c;
+                msh.s.f  {i} = stl_f;
+                msh.s.xt {i} = xt;
+                msh.s.Ls (i) = Ls;
+                msh.s.Fvg(i) = Fvg;
+                msh.s.bnd{i} = bnd_v;
+                msh.s.Tf {i} = Tf;
+                msh.s.xf {i} = xf;
             end
-        end
-        %  > 2.3.2.--------------------------------------------------------
-        function [Tf,x_f,bnd_v] = x_f(fv,dfv,np,stlx,fx,bnd_i,bnd_t,v,g)
-            df = A_2_1D.Compute_df(np);
-            j  = 1:np;
-            
-            switch char(bnd_t)
-                case 'Dirichlet'
-                    %  > Boundary value.
-                    bnd_v   = fv(bnd_i);
-                    %  > Df.
-                    Df(j,j) = (stlx(j)-fx)'.^(j-1);
-                case 'Neumann'
-                    %  > Boundary value.
-                    bnd_v   = dfv(bnd_i);
-                    %  > Df.
-                    k       = 1:np-1;
-                    Df(k,j) = (stlx(k)-fx)'.^(j-1);
-                    l       = np;
-                    m       = k+1;
-                    Df(l,1) = 0;
-                    Df(l,m) = k.*(stlx(l)-fx).^(k-1);
-                case 'Robin'
-                    %  > Boundary value.
-                    g_v     = g./v;
-                    bnd_v   = fv(bnd_i)-g_v.*dfv(bnd_i);
-                    %  > Df.
-                    k       = 1:np-1;
-                    Df(k,j) = (stlx(k)-fx)'.^(j-1);
-                    l       = np;
-                    lv  (j) = (stlx(l)-fx)'.^(j-1);
-                    m       = k+1;
-                    lg  (1) = 0;
-                    lg  (m) = k.*(stlx(l)-fx).^(k-1);
-                    Df(l,j) = lv(j)-g./v.*lg(j);
-                otherwise
-                    %  > Boundary value.
-                    bnd_v   = [];
-                    %  > Df.
-                    Df(j,j) = (stlx(j)-fx)'.^(j-1);
-            end
-            Inv  = inv(Df);
-            Tf   = df*Inv;
-            x_fv = v.*Tf(1,:);
-            x_fg = g.*Tf(2,:);
-            x_f  = x_fv-x_fg;
         end
     end
 end

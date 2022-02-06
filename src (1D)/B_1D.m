@@ -12,11 +12,16 @@ classdef B_1D
             g     = inp.pr.g;
             bnd_w = inp.pr.w;
             bnd_e = inp.pr.e;
+            bnd   = [string(bnd_w),string(bnd_e)];
+            
+            
+            
+            
 
             %  > Set analytic functions/values.
-            pde = B_1_1_1D.WrapUp_B_1_1_1D(msh,Xv_i,Xv_f,v,g,'exp');
+            [pde]     = B_1_1_1D.WrapUp_B_1_1_1D(msh,Xv_i,Xv_f,v,g,'exp');
             %  > Solve...
-            [msh,pde] = B_2_1D.WrapUp_B_2_1D(msh,pde,st,ng,np,v,g,bnd_w,bnd_e);
+            [msh,pde] = B_2_1D.WrapUp_B_2_1D(msh,pde,st,ng,np,v,g,bnd);
         end
     end
 end

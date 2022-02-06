@@ -12,16 +12,15 @@ classdef B_1_1_1D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         function [fn] = Set_fn(Xv_i,Xv_f,v,g,as)
-            %  > Symbolic variable.
-            syms x;
-            
             switch char(as)
                 case 'sin'
+                    syms x;
                     i    = 9;
                     f{1} = sin(i.*pi.*x);
                 case 'exp'
+                    syms x;
                     c    = 1./2.*(Xv_f-Xv_i);
-                    i    = 50;
+                    i    = 100;
                     f{1} = exp(-i.*((x-c).^2));
                 otherwise
                     return;
@@ -41,6 +40,7 @@ classdef B_1_1_1D
             %  > Cell values.
             i        = 1:msh.c.NC;
             s.c(i,1) = fn.f{1}(msh.c.Xc(i));
+            s.c(i,2) = fn.f{2}(msh.c.Xc(i));
             
             %  > Face values.
             j        = 1:msh.f.NF;
