@@ -8,7 +8,7 @@ classdef A_1_1D
             
             % >> 2. Grid type.
             %    └─ Uniform/non-uniform grid: h.
-            inp.msh.h  = h;
+            inp.msh.h = h;
             
             % >> 3. Grid types:
             %    ├─ Example 1: Uniform.
@@ -20,7 +20,7 @@ classdef A_1_1D
             %                                  ├─  1. Domain percentage: 0 < (Nf)_X,Y < 1.
             %                                  ├─  2. Domain stretching: 1 < (Ks)_X,Y < Infinity. -> e.g.: Ks ~= 1.10,1.01,...
             %                                  └─  3. Location         : East(E)/West(W), North(N)/South(S).
-            inp.msh.eg       = "1";
+            inp.msh.eg        = "1";
             inp.msh.s_nu.Nf_X = 0.5;
             inp.msh.s_nu.Ks_X = 5.0;
             
@@ -30,20 +30,17 @@ classdef A_1_1D
             %                            2. Diffusion  parameter : g.
             %  > 2. Boundary conditions: 1. East(E) boundary type: Dirichlet.
             %                            2. West(W) boundary type: Dirichlet/Neumann/Robin.
-            inp.pr.v  = 1.0;
-            inp.pr.g  = 1.0;
-            inp.pr.w  = "Dirichlet";
-            inp.pr.e  = "Dirichlet";
+            inp.pr.v = 1.0;
+            inp.pr.g = 1.0;
+            inp.pr.w = "Dirichlet";
+            inp.pr.e = "Dirichlet";
                        
             %% > fr.
             % >> 5. Flux reconstruction method.
-            %  > 1. Source term integration: 1. 1D Quadrature (false).
-            %                                2. Analytic      (true ).
-            %  > 2. Face polynomial degree.
-            %  > 3. Number of Gauss points/per face.
-            inp.fr.st = true;
-            inp.fr.np = 4;
-            inp.fr.ng = 2;
+            %  > 1. Face polynomial degree.
+            %  > 2. Test p-adaptation.
+            inp.fr.np      = 4;
+            inp.fr.p_adapt = true;
         end
     end
 end

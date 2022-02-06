@@ -20,8 +20,8 @@ classdef Fig_3_1D
             subplot(2,1,1);
             C  = linspecer(9,'qualitative');
             hold on;
-            P1 = plot (msh.c.Xc,pde.en.c.c(:,1),'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P2 = yline(pde.en.c.n(1)           ,'-' ,'Color',C(1,:),'Linewidth',1.0);
+            P1 = plot (msh.c.Xc,pde.e.c.c(:,1),'-s','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P2 = yline(pde.e.c.n(1)           ,'-' ,'Color',C(1,:),'Linewidth',1.0);
             L  = Fig_3_1D.Set_Labels();
             set(colorbar,'visible','off');
             legend([P1,P2],[L{1},L{2}],...
@@ -33,7 +33,7 @@ classdef Fig_3_1D
             c_xy = Fig_Tools_1D.ToPatch(msh,0.01);
             hold on;
             for i = 1:msh.c.NC
-                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.en.c.c(i),'Linestyle','None');
+                patch(c_xy{i}(1,:),c_xy{i}(2,:),pde.e.c.c(i),'Linestyle','None');
             end
             %  > Colormap.
             c  = Fig_Tools_1D.Colormap_style(L{3},'thermal',12);

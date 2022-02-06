@@ -18,11 +18,11 @@ classdef Fig_2_1D
         function [] = Plot(msh,pde)
             C  = linspecer(9,'qualitative');
             hold on;
-            P1 = plot (msh.f.Xv,pde.en.f.f(:,3),'-^','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P2 = plot (msh.f.Xv,pde.en.f.f(:,1),'-v','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P3 = plot (msh.f.Xv,pde.en.f.f(:,2),'-o','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P4 = yline(pde.en.f.n(1)           ,'-' ,'Color',C(1,:),'Linewidth',1.0);
-            P5 = yline(pde.en.f.n(3)           ,'-.','Color',C(1,:),'Linewidth',1.0);
+            P1 = plot (msh.f.Xv,pde.e.f.f(:,3),'-^','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P2 = plot (msh.f.Xv,pde.e.f.f(:,1),'-v','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P3 = plot (msh.f.Xv,pde.e.f.f(:,2),'-o','Color',C(3,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+            P4 = yline(pde.e.f.n(1)           ,'-' ,'Color',C(1,:),'Linewidth',1.0);
+            P5 = yline(pde.e.f.n(3)           ,'-.','Color',C(1,:),'Linewidth',1.0);
             L  = Fig_2_1D.Set_Labels();
             set(colorbar,'visible','off');
             legend([P1,P2,P3,P4,P5],[L{1},L{2},L{3},L{4},L{5}],...

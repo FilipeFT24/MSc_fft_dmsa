@@ -90,12 +90,15 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [msh] = Problem_SetUp(msh,stl_p,stl_s,bnd,f,v,g)
+        function [s] = Problem_SetUp(msh,stl_p,stl_s,sn,bnd,v,g)
             %  > Auxiliary variables.
-            Xc = msh.c.Xc;
-            NC = msh.c.NC;
-            Xv = msh.f.Xv;
-            NF = msh.f.NF;
+            Xc     = msh.c.Xc;
+            NC     = msh.c.NC;
+            Xv     = msh.f.Xv;
+            NF     = msh.f.NF;
+            f(:,1) = sn.f(:,1);
+            f(:,2) = sn.f(:,2);
+
                      
             stl_type = "CDS";
             
@@ -193,24 +196,24 @@ classdef A_2_1D
                         %  > Df.
                         Df(j,j) = (xt(j)-fx)'.^(j-1);
                 end
-                df      = zeros(2,stl_p(i));
-                df(1,1) = 1;
-                df(2,2) = df(1,1);
-                Inv     = inv(Df);
-                Tf      = df*Inv;
-                xf_v    = v.*Tf(1,:);
-                xf_g    = g.*Tf(2,:);
-                xf      = xf_v-xf_g;
+                df       = zeros(2,stl_p(i));
+                df(1,1)  = 1;
+                df(2,2)  = df(1,1);
+                Inv      = inv(Df);
+                Tf       = df*Inv;
+                xf_v     = v.*Tf(1,:);
+                xf_g     = g.*Tf(2,:);
+                xf       = xf_v-xf_g;
                 
                 %  > Update 'msh' structure...
-                msh.s.c  {i} = stl_c;
-                msh.s.f  {i} = stl_f;
-                msh.s.xt {i} = xt;
-                msh.s.Ls (i) = Ls;
-                msh.s.Fvg(i) = Fvg;
-                msh.s.bnd{i} = bnd_v;
-                msh.s.Tf {i} = Tf;
-                msh.s.xf {i} = xf;
+                s.c  {i} = stl_c;
+                s.f  {i} = stl_f;
+                s.xt {i} = xt;
+                s.Ls (i) = Ls;
+                s.Fvg(i) = Fvg;
+                s.bnd{i} = bnd_v;
+                s.Tf {i} = Tf;
+                s.xf {i} = xf;
             end
         end
     end
