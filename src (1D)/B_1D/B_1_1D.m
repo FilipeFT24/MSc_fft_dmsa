@@ -1,28 +1,31 @@
 classdef B_1_1D
     methods (Static)
         %% > Wrap-up B_1 (1D).
-        function [pde] = WrapUp_B_1_1D(msh,v,g,np,p_adapt,ft)
+        function [pde] = WrapUp_B_1_1D(msh,v,g,p,ft)
             % >> Compute...
             %  > ...analytic functions/values.
             pde.fn = B_1_1D.Set_fn(msh,v,g,ft);
             pde.sn = B_1_1D.Compute_blkf_blkc(msh,pde.fn);
-            %  > ...source term.
-            pde.FV = B_1_1D.Compute_ST(msh,np,p_adapt,pde.fn);
+            %  > ...(analytic) source term.
+            pde.FV = B_1_1D.Compute_ST(msh,p,pde.fn);
         end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         function [fn] = Set_fn(msh,v,g,ft)
+            syms x;
             switch char(ft)
-                case 'sin'
-                    syms x;
+                case "sin"
                     i    = 9;
                     f{1} = sin(i.*pi.*x);
-                case 'exp'
-                    syms x;
+                case "exp"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 100;
+                    i    = 500;
                     f{1} = exp(-i.*((x-c).^2));
+                case "tanh"
+                    c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
+                    a    = 0.05;
+                    f{1} = c.*(1-tanh((c-x)./a));
                 otherwise
                     return;
             end
@@ -41,12 +44,12 @@ classdef B_1_1D
         end
         % >> 1.2. ---------------------------------------------------------
         function [s] = Compute_blkf_blkc(msh,fn)
-            %  > Cell values.
+            % >> Values...
+            %  > ...cell(s).
             i        = 1:msh.c.NC;
             s.c(i,1) = fn.f{1}(msh.c.Xc(i));
             s.c(i,2) = fn.f{2}(msh.c.Xc(i));
-            
-            %  > Face values.
+            %  > ...face(s).
             j        = 1:msh.f.NF;
             s.f(j,1) = fn.f{1}(msh.f.Xv(j));
             s.f(j,2) = fn.f{2}(msh.f.Xv(j));
@@ -74,26 +77,23 @@ classdef B_1_1D
             end
         end
         % >> 2.3 ----------------------------------------------------------
-        function [FV] = Compute_ST(msh,np,p_adapt,fn)
+        function [FV] = Compute_ST(msh,p,fn) %#ok<INUSL>
             %  > Interval extrema.
             i    = 1:msh.c.NC;
             A(i) = msh.f.Xv(i);
             B(i) = msh.f.Xv(i+1);
-            
-            if ~p_adapt
-                %  > Appoximated integral.
-                [x,j,Q_1D] = B_1_1D.CD_1D(np);
-                func  = fn.func;
-                for i = 1:msh.c.NC
-                    FV(i,1) = B_1_1D.ApproxIntegral(A(i),B(i),func,x,j,Q_1D);
-                end
-            else
-                %  > Exact integral.
-                func  = fn.int;
-                for i = 1:msh.c.NC
-                    FV(i,1) = func(B(i))-func(A(i));
-                end
-            end
+
+            %  > Exact integral.
+            func  = fn.int;
+            for i = 1:msh.c.NC
+                FV(i,1) = func(B(i))-func(A(i));
+            end  
+            %  > Appoximated integral (NOT USED).
+            %  [x,j,Q_1D] = B_1_1D.CD_1D(p+1);
+            %  func  = fn.func;
+            %  for i = 1:msh.c.NC
+            %      FV(i,1) = B_1_1D.ApproxIntegral(A(i),B(i),func,x,j,Q_1D);
+            %  end      
         end
     end
 end

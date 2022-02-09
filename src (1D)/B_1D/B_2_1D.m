@@ -2,10 +2,10 @@ classdef B_2_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [s,A,B] = Update_stl(msh,stl_p,stl_s,A,B,sn,bnd,v,g)
+        function [s,xn] = Update_stl(msh,stl_p,stl_s,stl_t,A,B,sn,bnd,v,g)
             % >> Compute/update...
             %  > ...stencil.
-            s     = A_2_1D.Problem_SetUp(msh,stl_p,stl_s,sn,bnd,v,g);
+            s     = A_2_1D.Problem_SetUp(msh,stl_p,stl_s,stl_t,sn,bnd,v,g);
             xf    = s.xf;
             bnd_s = find(~cellfun(@isempty,s.f));
             bnd_v = cell2mat(s.bnd(bnd_s));
@@ -38,29 +38,28 @@ classdef B_2_1D
                     end
                 end
             end
+            xn.c = A\B;
         end
         % >> 1.2. ---------------------------------------------------------
-        function [en] = Update_pde(msh,A,B,sn,s,v,g)
+        function [e,x] = Update_pde(msh,x,sn,s)
             % >> Update pde...
-            %  > ...cell(s).
-            xn.c = A\B;
             %  > ...face(s).
             for i  = 1:msh.f.NF
                 kc = s.c{i};
-                vc = xn.c(kc);
+                vc = x.c(kc);
                 vt = vc;
                 if ~isempty(s.f{i})
                     vf = s.bnd{i};
                     vt = [vt;vf];
                 end
-                j         = 1:2;
-                xn.f(i,j) = vt'*s.Tf{i}(j,:)';
+                j        = 1:2;
+                x.f(i,j) = vt'*s.Tf{i}(j,:)';
             end
-            %  > ...cell/face error/error norms.
-            [en.c,en.f] = B_2_1D.Compute_Error(msh,sn,xn,s,v,g);
+            %  > ...cell/face error/error norm(s).
+            [e.c,e.f] = B_2_1D.Compute_Error(msh,sn,x,s);
         end
         % >> 1.3. ---------------------------------------------------------
-        function [Ec,Ef] = Compute_Error(msh,sn,xn,s,v,g)
+        function [Ec,Ef] = Compute_Error(msh,sn,xn,s)
             % >> Cell(s).
             i         = 1:msh.c.NC;
             Vol(i,1)  = msh.c.Vol(i);
@@ -76,52 +75,123 @@ classdef B_2_1D
             % >> Face(s).
             i         = 1:msh.f.NF;
             Ls (i,1)  = s.Ls;
-            Fvg(i,1)  = s.Fvg;
             %  > Absolute error: 1) Column #1: Absolute   error: Phi(f).
             %                    2) Column #2: Absolute   error: GradPhi(f).
-            %                    3) Column #3: Normalized error: [u*(Phi-Phi_A)+g*(GradPhi-GradPhi_A)./Vol]./[u+g./Vol].
             Ef.f(i,1) = abs(sn.f(i,1)-xn.f(i,1));
             Ef.f(i,2) = abs(sn.f(i,2)-xn.f(i,2));
-            Ef.f(i,3) = (v.*Ef.f(i,1)+g.*Ef.f(i,2)./Ls(i,1))./Fvg(i,1);
             %  > Error norms.
-            Ef_1(i,1) = Ef.f(i,3).*Ls(i,1);
-            Ef_2(i,1) = Ef_1(i,1).^2;
-            Ef.n(1,1) = sum(Ef_1)./sum(Ls);
-            Ef.n(2,1) = sum(sqrt(Ef_2))./sum(sqrt(Ls.^2));
-            Ef.n(3,1) = max(Ef.f(:,3));
+            Ef_1(i,1) = Ef.f(i,1).*Ls(i,1);
+            Ef_1(i,2) = Ef.f(i,2).*Ls(i,1);
+            Ef_2(i,1) = Ef_1(:,1).^2;
+            Ef_2(i,2) = Ef_1(:,2).^2;
+            Ef.n(1,1) = sum(Ef_1(:,1))./sum(Ls);
+            Ef.n(1,2) = sum(Ef_1(:,2))./sum(Ls);
+            Ef.n(2,1) = sum(sqrt(Ef_2(:,1)))./sum(sqrt(Ls.^2));
+            Ef.n(2,2) = sum(sqrt(Ef_2(:,2)))./sum(sqrt(Ls.^2));
+            Ef.n(3,1) = max(Ef_1(:,1));
+            Ef.n(3,2) = max(Ef_1(:,2));
         end
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [msh,pde] = SetUp_Problem(msh,pde,v,g,bnd,np,p_adapt)
+        function [msh,pde] = SetUp_Problem(msh,pde,v,g,bnd,p,p_adapt)
             %  > Initialize.
-            A  = zeros(msh.c.NC);
-            B  = zeros(msh.c.NC,1);
+            An  = zeros(msh.c.NC);
+            Bn  = zeros(msh.c.NC,1);
+            Bn  = Bn+pde.FV;
             
             %  > Select...
             switch p_adapt
                 case false
-                    %  > Initialize/add...
-                    %  > ...indices to compute/update stencil,etc.
-                    stl_p   = repelem(np,msh.f.NF);
-                    stl_s   = 1:msh.f.NF;
-                    %  > ...source term contribution.
-                    B = B+pde.FV;
-                    
+                    %  > Initialize.
+                    stl_p  = repelem(p,msh.f.NF);
+                    stl_s  = 1:msh.f.NF;
+                    stl_t  = repelem("CDS",msh.f.NF);
                     %  > Solve PDE.
-                    [s,A,B] = B_2_1D.Update_stl(msh,stl_p,stl_s,A,B,pde.sn,bnd,v,g);
-                    [e]     = B_2_1D.Update_pde(msh,A,B,pde.sn,s,v,g);
+                    [s,xn] = B_2_1D.Update_stl(msh,stl_p,stl_s,stl_t,An,Bn,pde.sn,bnd,v,g);
+                    [e,xn] = B_2_1D.Update_pde(msh,xn,pde.sn,s);
+                    %  > Check error estimators.
+                    B_2_1D.Check_EE("1","CDS",msh,stl_s,An,Bn,pde.sn,bnd,v,g);
                     %  > Update structure.
-                    msh.s   = s;
-                    pde.e   = e;
+                    msh.s  = s;
+                    pde.e  = e;
+                    pde.x  = xn;   
                 case true
-                    
-                    
-                    s=1;
-                    
-                    
                 otherwise
                     return;
+            end
+        end
+        % >> 2.2. ---------------------------------------------------------
+        function [] = Check_EE(EE,DT,msh,stl_s,An,Bn,sn,bnd,v,g)
+            switch EE
+                %  > Higher-order face polynomial regression w/ lower-order values.
+                case "1"
+                    %  > Select discretization type...
+                    switch DT
+                        case "CDS"
+                            %  > Auxiliary variables.
+                            LO = 1;
+                            HO = 7;
+                            i  = LO:2:HO;
+                            for j = 1:length(i)
+                                ij         = i(j);
+                                stl_p(j,:) = repelem(ij,msh.f.NF);
+                                stl_t(j,:) = repelem(DT,msh.f.NF);
+                            end
+                            %  > Error estimation.
+                            for j = 1:length(i)
+                                %  > Exact error.
+                                [SN1{j},XN{j}] = B_2_1D.Update_stl(msh,stl_p(j,:),stl_s,stl_t(j,:),An,Bn,sn,bnd,v,g);
+                                [E1{j},XN{j}] = B_2_1D.Update_pde(msh,XN{j},sn,SN1{j});
+                                if j == 1
+                                    continue;
+                                else
+                                    %  > Estimated error.
+                                    [E2{j-1},~] = B_2_1D.Update_pde(msh,XN{j-1},sn,SN1{j});
+                                end
+                            end
+                            %  > Plot...
+                            Fig_4_1D.WrapUp_Fig_4_1D(true,false,[4,5],msh.f.Xv,i,XN,E1,E2);
+                        otherwise
+                            return;
+                    end
+                case "2"
+                    switch DT
+                        case "CDS"
+                            %  > Auxiliary variables.
+                            LO = 1;
+                            HO = 7;
+                            i  = LO:2:HO;
+                            for j = 1:length(i)
+                                ij         = i(j);
+                                stl_p(j,:) = repelem(ij,msh.f.NF);
+                                stl_t(j,:) = repelem(DT,msh.f.NF);
+                            end
+                            %  > Error estimation.
+                            for j = 1:length(i)
+                                %  > Approximated values.
+                                [SN1{j},XN{j}] = B_2_1D.Update_stl(msh,stl_p(j,:),stl_s,stl_t(j,:),An,Bn,sn,bnd,v,g);
+                                [EN1{j},XN{j}] = B_2_1D.Update_pde(msh,XN{j},sn,SN1{j});
+                                if j == 1
+                                    continue;
+                                else
+                                    %  > Estimated error.
+                                    EN2{j-1}(:,1) = abs(XN{j}.f(:,1)-XN{j-1}.f(:,1));
+                                    EN2{j-1}(:,2) = abs(XN{j}.f(:,2)-XN{j-1}.f(:,2));
+                                end
+                            end
+                            
+                            hold on;
+                            plot(msh.f.Xv,EN1{2}.f.f(:,2),'-r');
+                            plot(msh.f.Xv,EN2{2}    (:,2),'-k');
+                           
+                            %  > Plot...
+                            %Fig_4_1D.WrapUp_Fig_4_1D(true,false,[4,5],msh.f.Xv,i,E1,E2);
+                            
+                            
+                        otherwise
+                            return;   
+                    end
             end
         end
     end

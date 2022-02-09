@@ -26,6 +26,12 @@ classdef B_1_1
                 %  > Intensity.
                 i    = 50;
                 fn.f = exp(-i.*((x-xc).^2+(y-yc).^2));
+            elseif as == 'bessel'
+                S    = 16.67;
+                G    = 0.05;
+                K    = 1;
+                C1   = S.*K./(2.*pi.G);
+                C2   = U./G;
             end
             
             %  > gradPhi.
