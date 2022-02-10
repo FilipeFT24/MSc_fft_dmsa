@@ -1,13 +1,13 @@
 classdef B_1_1D
     methods (Static)
         %% > Wrap-up B_1 (1D).
-        function [pde] = WrapUp_B_1_1D(msh,v,g,p,ft)
+        function [pde] = WrapUp_B_1_1D(msh,v,g,ft)
             % >> Compute...
             %  > ...analytic functions/values.
             pde.fn = B_1_1D.Set_fn(msh,v,g,ft);
             pde.sn = B_1_1D.Compute_blkf_blkc(msh,pde.fn);
             %  > ...(analytic) source term.
-            pde.FV = B_1_1D.Compute_ST(msh,p,pde.fn);
+            pde.FV = B_1_1D.Compute_ST(msh,pde.fn);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -20,7 +20,7 @@ classdef B_1_1D
                     f{1} = sin(i.*pi.*x);
                 case "exp"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 500;
+                    i    = 100;
                     f{1} = exp(-i.*((x-c).^2));
                 case "tanh"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
@@ -58,14 +58,11 @@ classdef B_1_1D
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         function [x,j,Q_1D] = CD_1D(ng)
-            %  > x(csi) = a*(1-csi)/2+b*(1+csi)/2.
-            %  > j(csi) = d(x)/d(csi) = (b-a)/2.
             syms a b csi;
             x    = a.*(1-csi)./2+b.*(1+csi)./2;
             x    = matlabFunction(x);
             j    = (b-a)./2;
             j    = matlabFunction(j);
-            %  > Quadrature abcissas/weights.
             Q_1D = quadGaussLegendre(ng);
         end
         % >> 2.2. ---------------------------------------------------------
@@ -77,7 +74,7 @@ classdef B_1_1D
             end
         end
         % >> 2.3 ----------------------------------------------------------
-        function [FV] = Compute_ST(msh,p,fn) %#ok<INUSL>
+        function [FV] = Compute_ST(msh,fn)
             %  > Interval extrema.
             i    = 1:msh.c.NC;
             A(i) = msh.f.Xv(i);
@@ -89,7 +86,7 @@ classdef B_1_1D
                 FV(i,1) = func(B(i))-func(A(i));
             end  
             %  > Appoximated integral (NOT USED).
-            %  [x,j,Q_1D] = B_1_1D.CD_1D(p+1);
+            %  [x,j,Q_1D] = B_1_1D.CD_1D(n);
             %  func  = fn.func;
             %  for i = 1:msh.c.NC
             %      FV(i,1) = B_1_1D.ApproxIntegral(A(i),B(i),func,x,j,Q_1D);

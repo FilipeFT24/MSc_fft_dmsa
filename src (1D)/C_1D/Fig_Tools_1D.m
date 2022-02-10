@@ -13,12 +13,11 @@ classdef Fig_Tools_1D
             set(gca,'TickLabelInterpreter','latex'); 
             set(gca,'FontSize',min(SZ_X,SZ_Y));
             %  > X-Axis.
+            set(gca,'xtick',[])
             xlim_label = [min(xc),max(xc)];
             for ix_ticks = 1:NX+1
                 xticks_label(ix_ticks) = xlim_label(1)-(xlim_label(1)-xlim_label(2))./NX.*(ix_ticks-1);
             end
-            set   (gca,'XAxisLocation','bottom');
-            set   (gca,'XTick',[]);
             xlabel(L_X,'FontSize',SZ_X,'Interpreter','latex'); xlim([xlim_label(1),xlim_label(2)]); xticks(xticks_label);
             %  > Y-Axis.
             if y_w

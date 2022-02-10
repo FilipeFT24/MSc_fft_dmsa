@@ -29,42 +29,29 @@
 ### **2.** Differencing schemes.  
 - **2.1.**
   - **UDS** (Upwind).
-  - **DDS** (Downwind).
   - **CDS** (Central).
+  - **DDS** (Downwind).
 - **2.2.**
-  - **C** (Centered).
-    - Number of neighbours to the left/right.
-      - **1.**
-        - **UDS** (1/0).
-        - **DDS** (0/1).
-        - **CDS** (1/1).
-      - **2.**
-        - **UDS** (3/0).
-        - **DDS** (0/3).
-        - **CDS** (2/2).
-      - **3.**
-        - **UDS** (5/0).
-        - **DDS** (0/5).
-        - **CDS** (3/3).
-      - **4.** 
-        - (...)
-  - **U** (Uncentered).
-    - Number of neighbours to the left/right.
-       - **1.**
-         - **UDS** (1/0).
-         - **DDS** (0/1).
-       - **2.**
-         - **UDS** (2/1).
-         - **DDS** (1/2).
-      - **3.**
-        - **UDS** (4/2).
-        - **DDS** (2/4).
-      - **4.** 
-        - (...)  
+  - Number of neighbours to the left/right.
+    - **1.**
+      - **UDS** (1/0).
+      - **CDS** (1/1).
+      - **DDS** (0/1).     
+    - **2.**
+      - **UDS** (2/1).
+      - **CDS** (2/2).
+      - **DDS** (1/2).
+    - **3.**
+      - **UDS** (3/2).
+      - **CDS** (3/3).
+      - **DDS** (2/3).
+    - **4.** 
+      - (...)
 ## Task list
 - [x] Generate bulk/wall clustered grids.
 - [x] Set Dirichlet/Neumann/Robin boundary conditions.
-- [x] Implement centered/uncentered downwind/upwind  differencing schemes.
+- [&nbsp;] Implement upwind/central/downwind differencing schemes up to order n.
+- [&nbsp;] Implement cell-centered schemes.
 - [&nbsp;] Test error estimators/indicators for p-refinement.
   - [x] **1.**
   - [x] **2.**

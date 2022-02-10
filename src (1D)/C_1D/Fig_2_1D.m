@@ -19,15 +19,28 @@ classdef Fig_2_1D
             Xi = msh.f.Xv(1);
             Xf = msh.f.Xv(end);
             C  = linspecer(9,'qualitative');
-            hold on;
-            P1 = plot(msh.f.Xv,pde.e.f.f(:,1)           ,'-v','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P2 = plot(msh.f.Xv,pde.e.f.f(:,2)           ,'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
-            P3 = line([Xi,Xf],[pde.e.f.n(1,1),pde.e.f.n(1,1)],'Color',C(1,:),'Linewidth',1.0,'Linestyle','--');
-            P4 = line([Xi,Xf],[pde.e.f.n(1,2),pde.e.f.n(1,2)],'Color',C(2,:),'Linewidth',1.0,'Linestyle','-.');
             L  = Fig_2_1D.Set_Labels();
-            set(colorbar,'visible','off');
-            legend([P1,P2,P3,P4],[L{1},L{2},L{3},L{4}],...
-                'Interpreter','latex','Location','Northeast','FontSize',10,'NumColumns',2);
+            %  > Scheme(s) order.
+            for i = 1:msh.f.NF
+                for j = 1:size(msh.s.xf,1)
+                    l(j,i) = length(msh.s.xf{j,i});
+                end
+            end
+            %  > Plot...
+            hold on;
+            if size(pde.e.f.f,2) == 1
+                P{1} = plot(msh.f.Xv,pde.e.f.f(:,1)           ,'-v','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+                P{2} = line([Xi,Xf],[pde.e.f.n(1,1),pde.e.f.n(1,1)],'Color',C(1,:),'Linewidth',1.0,'Linestyle','--');
+                legend([P{1},P{2}],[L{1},L{3}],...
+                    'Interpreter','latex','Location','Northeast','FontSize',10,'NumColumns',2);
+            else
+                P{1} = plot(msh.f.Xv,pde.e.f.f(:,1)           ,'-v','Color',C(1,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+                P{2} = plot(msh.f.Xv,pde.e.f.f(:,2)           ,'-o','Color',C(2,:),'LineWidth',1.5,'MarkerFaceColor','w','MarkerSize',3.5);
+                P{3} = line([Xi,Xf],[pde.e.f.n(1,1),pde.e.f.n(1,1)],'Color',C(1,:),'Linewidth',1.0,'Linestyle','--');
+                P{4} = line([Xi,Xf],[pde.e.f.n(1,2),pde.e.f.n(1,2)],'Color',C(2,:),'Linewidth',1.0,'Linestyle','-.');
+                legend([P{1},P{2},P{3},P{4}],[L{1},L{2},L{3},L{4}],...
+                    'Interpreter','latex','Location','Northeast','FontSize',10,'NumColumns',2);
+            end
             Fig_Tools_1D.ChangeLook_1D(true,true,msh.f.Xv,10,"$x$",L{5},20,12);
         end
         % >> 1.2. ---------------------------------------------------------

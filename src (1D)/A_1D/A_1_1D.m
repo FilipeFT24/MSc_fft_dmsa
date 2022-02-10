@@ -27,27 +27,26 @@ classdef A_1_1D
             % >> 2. Problem setup.
             %  > 1. Flow conditions (v,g).
             %  > 2. Boundary conditions (Dirichlet/Neumann/Robin).
-            inp.pr.v = 100;
-            inp.pr.g = 1;
+            inp.pr.v = 1;
+            inp.pr.g = 10;
             inp.pr.w = "Dirichlet";
             inp.pr.e = "Dirichlet";
                        
             %% > fr.
             % >> 3. Flux reconstruction method.
             %  > 1. Test p-adaptation.
-            %  > 2. Scheme type.
+            %  > 2. Scheme type (convection/diffusion).
             %    ├─ 2.1. Type 1.
-            %        ├─  UDS    (Upwind  differencing scheme).
-            %        ├─  DDS    (Downind differencing scheme).
-            %        └─  CDS    (Central differencing scheme).
-            %    ├─ 2.2. Type 2.
-            %        ├─  C      (Centered).
-            %        └─  U      (Uncentered).
-            %    └─ 2.3. type 3 (Number of neighbours to the left/right).
-            inp.fr.p_adapt = false;
-            inp.fr.type_1  = "CDS";
-            inp.fr.type_2  = "Centered";
-            inp.fr.type_3  = 3;
+            %        ├─  UDS (Upwind  differencing scheme).
+            %        ├─  CDS (Central differencing scheme).
+            %        └─  DDS (Downind differencing scheme).
+            %    └─ 2.2. Type 2.
+            %        └─  Number of neighbours to the left/right.
+            inp.fr.p_adapt  = false;
+            inp.fr.type_1.v = "CDS";
+            inp.fr.type_1.g = "CDS";
+            inp.fr.type_2.v = 2;
+            inp.fr.type_2.g = 2;
         end
     end
 end
