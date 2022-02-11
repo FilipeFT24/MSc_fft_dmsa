@@ -105,32 +105,64 @@ classdef B_2_1D
             for j = 1:n
                 k = 1;
                 for i = 1:m
-                    %  > Increase polynomial order by +1.
+                    %  > Increase method's order.
                     if e.f.f(i,j) > e.f.n(1,j)
-                        stl.p(j,i) = stl.p(j,i)+1;
+                        %  > s.
                         stl_s(j,k) = i;
                         k          = k+1;
-                        stl.t(j,i) = "UDS";
+                        %  > p/t.
+                        [stl.p(j,i),stl.t(j,i)] = B_2_1D.Check_And_Increase(stl.p(j,i),stl.t(j,i),e.f.f(i,j),e.f.f(i+1,j));
                     end
                 end
-                %  > Check "Neighbour rule" (p-version).
-                for i = 1:m
-                    if (i > 1 && i < m) && (stl.p(j,i) < stl.p(j,i-1) && stl.p(j,i) < stl.p(j,i+1))
-                        stl.p(j,i) = stl.p(j,i)+1;
-                        stl_s(j,k) = i;
-                        k          = k+1;
-                        stl.t(j,i) = "UDS";
-                    end
-                end
-                stl.s = sort(stl_s,2);
             end
+            stl.s = stl_s;
+            stl   = B_2_1D.Verify_R2(m,n,stl,e);
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
-        function [] = Rule_1()
+        %  > Check "Irregular rule".
+        function [] = Verify_R1()
         end
         %  > 2.2.2. -------------------------------------------------------
-        function [] = Rule_2()
-        end 
+        %  > Check "Neighbour rule".
+        function [stl] = Verify_R2(m,n,stl,e)
+            for j = 1:n
+                for i = 1:m
+                    switch stl.t(j,i)
+                        %  > Method's order.
+                        case "CDS"
+                            n(i) = 2.*stl.p(j,i);
+                        otherwise
+                            n(i) = 2.*stl.p(j,i)-1;
+                    end 
+                end
+                for i = 1:m
+                    if i == 1 || i == m
+                        continue;
+                    else
+                        %  > Increase method's order if rule 2 is violated...
+                        if n(i) < n(i-1) && n(i) > n(i+1)
+                            [stl.p(j,i),stl.t(j,i)] = B_2_1D.Check_And_Increase(stl.p(j,i),stl.t(j,i),e.f.f(i,j),e.f.f(i+1,j));
+                        end
+                    end
+                end
+            end
+        end
+        %  > 2.2.3. -------------------------------------------------------
+        %  > Check method and increase order accordingly.
+        function [stl_p,stl_t] = Check_And_Increase(stl_p,stl_t,EL,ER)
+            switch stl_t
+                case "CDS"
+                    if EL < ER
+                        stl_t = "UDS";
+                        stl_p = stl_p+1;
+                    else
+                        stl_t = "DDS";
+                        stl_p = stl_p+1;
+                    end
+                otherwise
+                    stl_t = "CDS";
+            end
+        end
     end
 end

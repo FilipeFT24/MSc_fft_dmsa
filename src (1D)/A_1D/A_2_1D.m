@@ -104,11 +104,11 @@ classdef A_2_1D
 
             % >> Loop through selected faces...
             for n = 1:size(stl_s,1)
-                for pp = stl_s(n,:)
+                for o = stl_s(n,:)
                     %  > Auxiliary variables.
-                    p     = stl_p(n,pp);
+                    p     = stl_p(n,o);
                     add_f = false;
-                    switch stl_t(n,pp)
+                    switch stl_t(n,o)
                         case "CDS"
                             LHS = p;
                             RHS = NF+1-p;
@@ -122,27 +122,27 @@ classdef A_2_1D
                             return;
                     end
                     %  > Add...
-                    if pp <= LHS
+                    if o <= LHS
                         %  > ...face(s).
                         add_f = true;
                         bnd_f = 1;
                         stl_f = bnd_f;
                         bnd_i = bnd(1);
                         %  > ...cell(s).
-                        switch stl_t(n,pp)
+                        switch stl_t(n,o)
                             case "CDS"
                                 stl_c = 1:2.*p-1;
                             otherwise
                                 stl_c = 1:2.*(p-1);
                         end
-                    elseif pp >= RHS
+                    elseif o >= RHS
                         %  > ...face(s).
                         add_f = true;
                         bnd_f = NF;
                         stl_f = bnd_f;
                         bnd_i = bnd(2);
                         %  > ...cell(s).
-                        switch stl_t(n,pp)
+                        switch stl_t(n,o)
                             case "CDS"
                                 stl_c = NF+1-2.*p:NC;
                             otherwise
@@ -153,13 +153,13 @@ classdef A_2_1D
                         stl_f = [];
                         bnd_i = string([]);
                         %  > ...cell(s).
-                        switch stl_t(n,pp)
+                        switch stl_t(n,o)
                             case "CDS"
-                                stl_c = pp-p:pp+p-1;
+                                stl_c = o-p:o+p-1;
                             case "UDS"
-                                stl_c = pp-p:pp-1+(p-1);
+                                stl_c = o-p:o-1+(p-1);
                             case "DDS"
-                                stl_c = pp-(p-1):pp+(p-1);
+                                stl_c = o-(p-1):o+(p-1);
                             otherwise
                                 return;
                         end
@@ -178,7 +178,7 @@ classdef A_2_1D
                     %  > Auxiliary variables.
                     len = length(xt);
                     j   = 1:len;
-                    fx  = Xv(pp);
+                    fx  = Xv(o);
                     %  > Df.
                     Df  = zeros(len,len);
                     switch bnd_i
@@ -234,13 +234,13 @@ classdef A_2_1D
                         xf      = vg(n).*Tf; 
                     end
                     %  > Update 'msh' structure...
-                    s.c  {n,pp}  = stl_c;
-                    s.f  {n,pp}  = stl_f;
-                    s.xt {n,pp}  = xt;
-                    s.Ls (n,pp)  = Ls;
-                    s.bnd{n,pp}  = bnd_v;
-                    s.Tf {n,pp}  = Tf;
-                    s.xf {n,pp}  = xf;
+                    s.c  {n,o}  = stl_c;
+                    s.f  {n,o}  = stl_f;
+                    s.xt {n,o}  = xt;
+                    s.Ls (n,o)  = Ls;
+                    s.bnd{n,o}  = bnd_v;
+                    s.Tf {n,o}  = Tf;
+                    s.xf {n,o}  = xf;
                 end
             end
         end
