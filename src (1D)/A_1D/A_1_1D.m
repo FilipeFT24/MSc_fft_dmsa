@@ -42,7 +42,9 @@ classdef A_1_1D
             %        └─  DDS (Downind differencing scheme).
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
-            inp.fr.p_adapt  = true;
+            inp.fr.p_adapt  = false;
+            inp.fr.n        = 5;
+            inp.fr.test_ee  = false;
             inp.fr.type_1.v = "CDS";
             inp.fr.type_1.g = "CDS";
             inp.fr.type_2.v = 1;

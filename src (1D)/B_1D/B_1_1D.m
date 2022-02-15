@@ -4,10 +4,10 @@ classdef B_1_1D
         function [pde] = WrapUp_B_1_1D(msh,v,g,ft)
             % >> Compute...
             %  > ...analytic functions/values.
-            pde.fn = B_1_1D.Set_fn(msh,v,g,ft);
-            pde.sn = B_1_1D.Compute_blkf_blkc(msh,pde.fn);
+            pde.f    = B_1_1D.Set_fn(msh,v,g,ft);
+            pde.a    = B_1_1D.Compute_blkf_blkc(msh,pde.f);
             %  > ...(analytic) source term.
-            pde.FV = B_1_1D.Compute_ST(msh,pde.fn);
+            pde.f.st = B_1_1D.Compute_ST(msh,pde.f);
         end
         
         %% > 1. -----------------------------------------------------------
@@ -20,12 +20,8 @@ classdef B_1_1D
                     f{1} = sin(i.*pi.*x);
                 case "exp"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 100;
+                    i    = 50;
                     f{1} = exp(-i.*((x-c).^2));
-                case "tanh"
-                    c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    a    = 0.05;
-                    f{1} = c.*(1-tanh((c-x)./a));
                 otherwise
                     return;
             end

@@ -91,20 +91,20 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [s] = Stencil_SetUp(msh,s,stl_p,stl_s,stl_t,sn,bnd,v,g)
+        function [s] = Stencil_SetUp(msh,s,stl_p,stl_s,stl_t,a,bnd,v,g)
             %  > Auxiliary variables.
             Xc      = msh.c.Xc;
             NC      = msh.c.NC;
             Xv      = msh.f.Xv;
             NF      = msh.f.NF;
-            f (:,1) = sn.f(:,1);
-            f (:,2) = sn.f(:,2);
+            f (:,1) = a.f(:,1);
+            f (:,2) = a.f(:,2);
             vg  (1) = v;
             vg  (2) = g;
 
             % >> Loop through selected faces...
-            for n = 1:size(stl_s,1)
-                for o = stl_s(n,:)
+            for n = 1:length(stl_s)
+                for o = stl_s{n}
                     %  > Auxiliary variables.
                     p     = stl_p(n,o);
                     add_f = false;
@@ -230,8 +230,7 @@ classdef A_2_1D
                         df      = zeros(1,len);
                         df(1,n) = 1;
                         Inv     = inv(Df);
-                        Tf      = df*Inv;
-                        xf      = vg(n).*Tf; 
+                        xf      = df*Inv;
                     end
                     %  > Update 'msh' structure...
                     s.c  {n,o}  = stl_c;
@@ -239,7 +238,6 @@ classdef A_2_1D
                     s.xt {n,o}  = xt;
                     s.Ls (n,o)  = Ls;
                     s.bnd{n,o}  = bnd_v;
-                    s.Tf {n,o}  = Tf;
                     s.xf {n,o}  = xf;
                 end
             end

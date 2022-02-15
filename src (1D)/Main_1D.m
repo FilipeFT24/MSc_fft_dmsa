@@ -1,5 +1,5 @@
 %% > Clear memory, clean screen, close any figure.
-clear, clc, close all; format default; warning('off');
+clear, clc, close all; format short; warning('off');
 %% > Run...
 % >> ----------------------------------------------------------------------
 %  > Working directories.
@@ -13,7 +13,7 @@ if run_1
     [inp,msh] = A_1D.WrapUp_A_1D(0.01);
     [msh,pde] = B_1D.WrapUp_B_1D(inp,msh);
     %  > Class C.
-    C_1D.WrapUp_C_1D(msh,pde); pde.e.f.n(1,:)
+    C_1D.WrapUp_C_1D(msh,pde); 
 end
 % >> ----------------------------------------------------------------------
 % >> ----------------------------------------------------------------------

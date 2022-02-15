@@ -2,63 +2,83 @@
 ## Top-level directory layout
 ```
 └── src (1D)  
-    ├── A_1D                  # >>> Call 'SubClass' functions.
+    ├── A_1D                  # >>> Call...
     │   ├── A_1_1D            #  >> Set inputs.
-    │   ├── A_2_1D            #  >> Generate grid/set up problem.
-    │   └── A_Tools_1D        #  >> 'Class' Tools.
+    │   ├── A_2_1D            #  >> Generate grid/stencil.
+    │   └── A_Tools_1D        #  >> Tools.
     │
-    ├── B_1D                  # >>> Call 'SubClass' functions.
-    │   ├── B_1_1D            #  >> Call 'SubSubClass' functions.
-    │   └── B_2_1D            #  >> Call 'SubSubClass' functions.
+    ├── B_1D                  # >>> Problem setup/initialization.
+    │   ├── B_1_1D            #  >> Compute analytic solution/source term.
+    │   └── B_2_1D            #  >> Assemble matrices A/B and compute error distribution/norms.
     │
     └── C_1D                  # >>> Call 'Fig_X' functions.
         ├── Fig_0             #  >> Fig_0.
         ├── Fig_1             #  >> Fig_1.
         ├── Fig_2             #  >> Fig_2.
-        ├── Fig_Tools         #  >> Fig_Tools.
+        ├── Fig_Tools         #  >> Fig_Tools_1D.
         └── ...               #  >> ...    
 ```
+#### **Main_1D (1)** - _inp_ structure.
+#### **Main_1D (1)** - _msh_ structure.
+#### **Main_1D (1)** - _pde_ structure.
+```
+pde 
+├── fn                        # >>> Field: Analytic function (symbols/handles).
+│   ├── sym                   #  >> 
+│   ├── f  
+│   ├── func 
+│   └── int   
+├── a                         # >>> Field: Analytic solution.
+│   ├── c                     #  >> ...for each cell.
+│   └── f                     #  >> ...for each face.
+├── x                         # >>> Field: Implicit PDE solution.
+│   ├── c                     #  >> ...for each cell.
+│   └── f                     #  >> ...for each face.
+├── e                         # >>> Field: Implicit PDE solution.   
+|   ├── c                     #  >> ...for each cell (value-wise).
+|   |   ├── c                 #   > Error distribution. 
+│   |   └── n                 #   > Error norms.
+|   ├── f                     #   > ...for each face (value-wise).
+|   |   ├── f                 #   > Error distribution. 
+│   |   └── n                 #   > Error norms.
+|   ├── d                     #   > ...for each cell/face (discretization-wise).
+|   |   ├── c                 #   > Error distribution. 
+|   |   ├── f                 #   > Error distribution. 
+│   |   └── n                 #   > Error norms.
+```      
 
-## Input structure
-### **1.** Flow/boundary conditions.
-- **1.1.** Flow conditions.
-  - **u/Γ** (Convection/Diffusion parameters).
-- **1.2.** Boundary conditions.
-  - **W/E** (West/East faces): Dirichlet/Neumann/Robin.
+#### **A_2_1D (1)** - Differencing schemes.
+- **UDS** (Upwind).
+- **CDS** (Central).
+- **DDS** (Downwind).
 
-### **2.** Differencing schemes.  
-- **2.1.**
-  - **UDS** (Upwind).
-  - **CDS** (Central).
-  - **DDS** (Downwind).
-- **2.2.**
-  - Number of neighbours to the left/right.
-    - **1.**
-      - **UDS** (1/0).
-      - **CDS** (1/1).
-      - **DDS** (0/1).     
-    - **2.**
-      - **UDS** (2/1).
-      - **CDS** (2/2).
-      - **DDS** (1/2).
-    - **3.**
-      - **UDS** (3/2).
-      - **CDS** (3/3).
-      - **DDS** (2/3).
-    - **4.** 
-      - (...)
-## Task list
-- [x] Generate bulk/wall clustered grids.
-- [x] Set Dirichlet/Neumann/Robin boundary conditions.
-- [&nbsp;] Implement upwind/central/downwind differencing schemes up to order n.
-- [&nbsp;] Implement cell-centered schemes.
-- [&nbsp;] Test error estimators/indicators for p-refinement.
-  - [x] **1.**
-  - [x] **2.**
-  - [&nbsp;] **3.**
-- [&nbsp;] Test p-adaptation rules.
-  - [&nbsp;] **1.** Irregular rule.
-  - [&nbsp;] **2.** Neighbour rule.
+#### **A_2_1D (2)** - Number of neighbours to the left/right.
+- **#1.**
+  - **UDS** (1/0).
+  - **CDS** (1/1).
+  - **DDS** (0/1).     
+- **#2.**
+  - **UDS** (2/1).
+  - **CDS** (2/2).
+  - **DDS** (1/2).
+- **#3:**
+  - **UDS** (3/2).
+  - **CDS** (3/3).
+  - **DDS** (2/3).
+- **#4:** 
+  - (...)
+## Features/task list
+- [x] Bulk/wall clustered grids.
+- [x] Dirichlet/Neumann/Robin boundary conditions.
+- [x] Upwind/central/downwind differencing schemes up to order n.
+- [] Cell-centered schemes.
+- [] Error estimators/indicators for p-refinement.
+  - [] **1.**
+  - [] **2.**
+  - [] **3.**
+- [] P-adaptation rules.
+  - [] **1.** Irregular rule.
+  - [] **2.** Neighbour rule.
 
 
 # 2D Code structure
