@@ -101,144 +101,149 @@ classdef A_2_1D
             f (:,2) = a.f(:,2);
             vg  (1) = v;
             vg  (2) = g;
-
+            
             % >> Loop through selected faces...
             for n = 1:length(stl_s)
-                for o = stl_s{n}
-                    %  > Auxiliary variables.
-                    p     = stl_p(n,o);
-                    add_f = false;
-                    switch stl_t(n,o)
-                        case "CDS"
-                            LHS = p;
-                            RHS = NF+1-p;
-                        case "UDS"
-                            LHS = p;
-                            RHS = NF+1-(p-1);
-                        case "DDS"
-                            LHS = p-1;
-                            RHS = NF+1-p;
-                        otherwise
-                            return;
-                    end
-                    %  > Add...
-                    if o <= LHS
-                        %  > ...face(s).
-                        add_f = true;
-                        bnd_f = 1;
-                        stl_f = bnd_f;
-                        bnd_i = bnd(1);
-                        %  > ...cell(s).
-                        switch stl_t(n,o)
+                if isempty(stl_s{n})
+                    continue;
+                else
+                    for q = 1:length(stl_s{n})
+                        %  > Auxiliary variables.
+                        o     = stl_s{n}(q);
+                        p     = stl_p{n}(o);
+                        add_f = false;
+                        switch stl_t{n}(o)
                             case "CDS"
-                                stl_c = 1:2.*p-1;
-                            otherwise
-                                stl_c = 1:2.*(p-1);
-                        end
-                    elseif o >= RHS
-                        %  > ...face(s).
-                        add_f = true;
-                        bnd_f = NF;
-                        stl_f = bnd_f;
-                        bnd_i = bnd(2);
-                        %  > ...cell(s).
-                        switch stl_t(n,o)
-                            case "CDS"
-                                stl_c = NF+1-2.*p:NC;
-                            otherwise
-                                stl_c = NF-2.*(p-1):NC;
-                        end
-                    else
-                        %  > ...face(s).
-                        stl_f = [];
-                        bnd_i = string([]);
-                        %  > ...cell(s).
-                        switch stl_t(n,o)
-                            case "CDS"
-                                stl_c = o-p:o+p-1;
+                                LHS = p;
+                                RHS = NF+1-p;
                             case "UDS"
-                                stl_c = o-p:o-1+(p-1);
+                                LHS = p;
+                                RHS = NF+1-(p-1);
                             case "DDS"
-                                stl_c = o-(p-1):o+(p-1);
+                                LHS = p-1;
+                                RHS = NF+1-p;
                             otherwise
                                 return;
                         end
-                    end
-                    %  > Compute stencil coordinates.
-                    xc = Xc(stl_c);
-                    if ~add_f
-                        xt = xc;
-                    else
-                        xt = [xc,Xv(bnd_f)];
-                    end
-                    %  > Stencil length.
-                    Ls  = (max(xt)-min(xt))./length(stl_c);
-                    
-                    % >> Tf.
-                    %  > Auxiliary variables.
-                    len = length(xt);
-                    j   = 1:len;
-                    fx  = Xv(o);
-                    %  > Df.
-                    Df  = zeros(len,len);
-                    switch bnd_i
-                        case "Dirichlet"
-                            %  > Boundary value.
-                            bnd_v   = f(bnd_f,1);
-                            %  > Df.
-                            Df(j,j) = (xt(j)-fx)'.^(j-1);
-                        case "Neumann"
-                            %  > Boundary value.
-                            bnd_v   = f(bnd_f,2);
-                            %  > Df.
-                            k       = 1:len-1;
-                            Df(k,j) = (xt(k)-fx)'.^(j-1);
-                            l       = len;
-                            m       = k+1;
-                            Df(l,1) = 0;
-                            Df(l,m) = k.*(xt(l)-fx).^(k-1);
-                        case "Robin"
-                            %  > Boundary value.
-                            g_v     = g./v;
-                            bnd_v   = f(bnd_f,1)+g_v.*f(bnd_f,2);
-                            %  > Df.
-                            k       = 1:len-1;
-                            Df(k,j) = (xt(k)-fx)'.^(j-1);
-                            l       = len;
-                            lv  (j) = (xt(l)-fx)'.^(j-1);
-                            m       = k+1;
-                            lg  (1) = 0;
-                            lg  (m) = k.*(xt(l)-fx).^(k-1);
-                            Df(l,j) = lv(j)+g./v.*lg(j);
-                        otherwise
-                            %  > Boundary value.
-                            bnd_v   = [];
-                            %  > Df.
-                            Df(j,j) = (xt(j)-fx)'.^(j-1);
-                    end
-                    if len == 1
-                        %  > 1st order UDS/DDS cannot be used to discretize the diffusive term.
-                        if n == 2
-                            return;
+                        %  > Add...
+                        if o <= LHS
+                            %  > ...face(s).
+                            add_f = true;
+                            bnd_f = 1;
+                            stl_f = bnd_f;
+                            bnd_i = bnd(1);
+                            %  > ...cell(s).
+                            switch stl_t{n}(o)
+                                case "CDS"
+                                    stl_c = 1:2.*p-1;
+                                otherwise
+                                    stl_c = 1:2.*(p-1);
+                            end
+                        elseif o >= RHS
+                            %  > ...face(s).
+                            add_f = true;
+                            bnd_f = NF;
+                            stl_f = bnd_f;
+                            bnd_i = bnd(2);
+                            %  > ...cell(s).
+                            switch stl_t{n}(o)
+                                case "CDS"
+                                    stl_c = NF+1-2.*p:NC;
+                                otherwise
+                                    stl_c = NF-2.*(p-1):NC;
+                            end
                         else
-                            df  = 1;
-                            Inv = inv(Df);
-                            Tf  = df*Inv;
-                            xf  = v.*Tf(n,:);
+                            %  > ...face(s).
+                            stl_f = [];
+                            bnd_i = string([]);
+                            %  > ...cell(s).
+                            switch stl_t{n}(o)
+                                case "CDS"
+                                    stl_c = o-p:o+p-1;
+                                case "UDS"
+                                    stl_c = o-p:o-1+(p-1);
+                                case "DDS"
+                                    stl_c = o-(p-1):o+(p-1);
+                                otherwise
+                                    return;
+                            end
                         end
-                    else
-                        df      = zeros(1,len);
-                        df(1,n) = 1;
-                        Inv     = inv(Df);
-                        xf      = df*Inv;
+                        %  > Compute stencil coordinates.
+                        xc = Xc(stl_c);
+                        if ~add_f
+                            xt = xc;
+                        else
+                            xt = [xc,Xv(bnd_f)];
+                        end
+                        %  > Stencil length.
+                        Ls  = (max(xt)-min(xt))./length(stl_c);
+                        
+                        % >> Tf.
+                        %  > Auxiliary variables.
+                        len = length(xt);
+                        j   = 1:len;
+                        fx  = Xv(o);
+                        %  > Df.
+                        Df  = zeros(len,len);
+                        switch bnd_i
+                            case "Dirichlet"
+                                %  > Boundary value.
+                                bnd_v   = f(bnd_f,1);
+                                %  > Df.
+                                Df(j,j) = (xt(j)-fx)'.^(j-1);
+                            case "Neumann"
+                                %  > Boundary value.
+                                bnd_v   = f(bnd_f,2);
+                                %  > Df.
+                                k       = 1:len-1;
+                                Df(k,j) = (xt(k)-fx)'.^(j-1);
+                                l       = len;
+                                m       = k+1;
+                                Df(l,1) = 0;
+                                Df(l,m) = k.*(xt(l)-fx).^(k-1);
+                            case "Robin"
+                                %  > Boundary value.
+                                g_v     = g./v;
+                                bnd_v   = f(bnd_f,1)+g_v.*f(bnd_f,2);
+                                %  > Df.
+                                k       = 1:len-1;
+                                Df(k,j) = (xt(k)-fx)'.^(j-1);
+                                l       = len;
+                                lv  (j) = (xt(l)-fx)'.^(j-1);
+                                m       = k+1;
+                                lg  (1) = 0;
+                                lg  (m) = k.*(xt(l)-fx).^(k-1);
+                                Df(l,j) = lv(j)+g./v.*lg(j);
+                            otherwise
+                                %  > Boundary value.
+                                bnd_v   = [];
+                                %  > Df.
+                                Df(j,j) = (xt(j)-fx)'.^(j-1);
+                        end
+                        if len == 1
+                            %  > 1st order UDS/DDS cannot be used to discretize the diffusive term.
+                            if n == 2
+                                return;
+                            else
+                                df  = 1;
+                                Inv = inv(Df);
+                                Tf  = df*Inv;
+                                xf  = v.*Tf(n,:);
+                            end
+                        else
+                            df      = zeros(1,len);
+                            df(1,n) = 1;
+                            Inv     = inv(Df);
+                            xf      = df*Inv;
+                        end
+                        %  > Update 'msh' structure...
+                        s.c  {n,o}  = stl_c;
+                        s.f  {n,o}  = stl_f;
+                        s.xt {n,o}  = xt;
+                        s.Ls (n,o)  = Ls;
+                        s.bnd{n,o}  = bnd_v;
+                        s.xf {n,o}  = xf;
                     end
-                    %  > Update 'msh' structure...
-                    s.c  {n,o}  = stl_c;
-                    s.f  {n,o}  = stl_f;
-                    s.xt {n,o}  = xt;
-                    s.Ls (n,o)  = Ls;
-                    s.bnd{n,o}  = bnd_v;
-                    s.xf {n,o}  = xf;
                 end
             end
         end

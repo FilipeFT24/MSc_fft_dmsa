@@ -1,8 +1,8 @@
-classdef B_2_1D
+classdef B_2_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [s,x,ea] = Update_stl(msh,s,stl_p,stl_s,stl_t,A,B,a,bnd,v,g)
+        function [s,x,et_c] = Update_stl(msh,s,stl_p,stl_s,stl_t,A,B,a,bnd,v,g)
             % >> Compute/update...
             %  > ...stencil.
             s  = A_2_1D.Stencil_SetUp(msh,s,stl_p,stl_s,stl_t,a,bnd,v,g);
@@ -44,11 +44,11 @@ classdef B_2_1D
                     end
                 end
             end
-            x.c = A\B;
-            ea  = abs(A*a.c(:,1)-B);
+            x.c  = A\B;
+            et_c = A*a.c(:,1)-B;
         end
         % >> 1.2. ---------------------------------------------------------
-        function [e,x] = Update_pde(msh,a,s,x,ea,v,g)
+        function [e,x] = Update_pde(msh,a,s,x,et_c,v,g)
             % >> Update pde...
             %  > ...face(s).
             for i  = 1:msh.f.NF
@@ -73,70 +73,56 @@ classdef B_2_1D
                 end
             end
             %  > ...cell/face error/error norm(s).
-            [e.c,e.f] = B_2_1D.Compute_Error(msh,a,x,s,ea,v,g);
+            [e.c,e.f,e.t] = B_2_1_1D.Compute_Error(msh,a,x,s,et_c,v,g);
         end
         % >> 1.3. ---------------------------------------------------------
-        function [Ec,Ef] = Compute_Error(msh,a,x,s,ea,v,g)
+        function [Ec,Ef,Et] = Compute_Error(msh,a,x,s,et_c,v,g)
+            %  > Auxiliary variables.
+            vg          = [v,g];
+            
             % >> Cell(s).
-            vg        = [v,g];
-            i         = 1:msh.c.NC;
-            Vol(i,1)  = msh.c.Vol(i);
+            i           = 1:msh.c.NC;
+            Vol   (i,1) = msh.c.Vol(i);
             %  > Absolute error.
-            Ec.c.a(i,1) = ea;
-            Ec.c.c(i,1) = abs(a.c(i,1)-x.c(i,1));
+            ec_c  (i,1) = a.c(i,1)-x.c(i,1);
+            Ec.c        = abs(ec_c);
+            Et.c        = abs(et_c);
             %  > Error norms.
-            Ec_1.a(i,1) = Ec.c.a(i,1).*Vol(i);
-            Ec_1.c(i,1) = Ec.c.c(i,1).*Vol(i);
-            Ec_2.a(i,1) = Ec_1.a(i,1).^2;
-            Ec_2.c(i,1) = Ec_1.c(i,1).^2;
-            Ec.n.a(1,1) = sum(Ec_1.a)./sum(Vol);
-            Ec.n.a(2,1) = sum(sqrt(Ec_2.a))./sum(sqrt(Vol.^2));
-            Ec.n.a(3,1) = max(Ec_1.a);
-            Ec.n.c(2,1) = sum(sqrt(Ec_2.c))./sum(sqrt(Vol.^2));
-            Ec.n.c(1,1) = sum(Ec_1.c)./sum(Vol);
-            Ec.n.c(3,1) = max(Ec_1.c);
+            Ec_1.c(i,1) = Ec.c  (i,1).*Vol(i);
+            Ec_1.t(i,1) = Et.c  (i,1).*Vol(i);
+            Ec_2.c(:,1) = Ec_1.c(:,1).^2;
+            Ec_2.t(:,1) = Ec_1.t(:,1).^2;
+            Ec.n  (1,1) = sum(Ec_1.c)./sum(Vol);
+            Ec.n  (2,1) = sum(sqrt(Ec_2.c))./sum(sqrt(Vol.^2));
+            Ec.n  (3,1) = max(Ec.c);
+            Et.n.c(1,1) = sum(Ec_1.t)./sum(Vol);
+            Et.n.c(2,1) = sum(sqrt(Ec_2.t))./sum(sqrt(Vol.^2));
+            Et.n.c(3,1) = max(Et.c);
             
             % >> Face(s).
             %  > Absolute error: 1. Column #1: Absolute error: phi_f.
             %  >                 2. Column #2: Absolute error: gradphi_f.
             i = 1:msh.f.NF;
             for j = 1:size(x.f.a,2)
-                %  > Absolute error.
+                %  > Stencil length.
                 Ls    (i,j) = s.Ls(j,i);
-                Ef.f.a(i,j) = abs((a.f(i,j)-x.f.a(i,j))).*vg(j);
-                Ef.f.f(i,j) = abs(a.f(i,j)-x.f.f(i,j));
+                %  > Absolute error.
+                ef_f  (i,j) = a.f(i,j)-x.f.f(i,j);
+                ef_t  (i,j) = vg(j).*(a.f(i,j)-x.f.a(i,j));
+                Ef.f  (:,j) = abs(ef_f(:,j));
+                Et.f  (:,j) = abs(ef_t(:,j));
                 %  > Error norms.
-                Ef_1.a(i,j) = Ef.f.a(i,j).*Ls(i,j);
-                Ef_1.f(i,j) = Ef.f.f(i,j).*Ls(i,j);
-                Ef_2.a(i,j) = Ef_1.a(:,j).^2;
-                Ef_2.f(i,j) = Ef_1.f(:,j).^2;
-                Ef.n.a(1,j) = sum(Ef_1.a(:,j))./sum(Ls(:,j));
-                Ef.n.a(2,j) = sum(sqrt(Ef_2.a(:,j)))./sum(sqrt(Ls(:,j).^2));
-                Ef.n.a(3,j) = max(Ef_1.a(:,j)); 
-                Ef.n.f(1,j) = sum(Ef_1.f(:,j))./sum(Ls(:,j));
-                Ef.n.f(2,j) = sum(sqrt(Ef_2.f(:,j)))./sum(sqrt(Ls(:,j).^2));
-                Ef.n.f(3,j) = max(Ef_1.f(:,j)); 
+                Ef_1.f(i,j) = Ef.f(i,j).*Ls(i,j);
+                Ef_1.t(i,j) = Et.f(i,j).*Ls(i,j);
+                Ef_2.f(:,j) = Ef_1.f(:,j).^2;
+                Ef_2.t(:,j) = Ef_1.t(:,j).^2;
+                Ef.n  (1,j) = sum(Ef_1.f(:,j))./sum(Ls(:,j));
+                Ef.n  (2,j) = sum(sqrt(Ef_2.f(:,j)))./sum(sqrt(Ls(:,j).^2));
+                Ef.n  (3,j) = max(Ef.f(:,j));
+                Et.n.f(1,j) = sum(Ef_1.t(:,j))./sum(Ls(:,j));
+                Et.n.f(2,j) = sum(sqrt(Ef_2.t(:,j)))./sum(sqrt(Ls(:,j).^2));
+                Et.n.f(3,j) = max(Et.f(:,j));
             end
-        end
-        
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        function [] = Switch_EE(ee)
-            switch ee
-                case "1"
-                    %  > Select low-order(LO) and high-order(HO) schemes.
-                    LO  = 2;
-                    HO  = 4;
-                    %  > Compute error estimation...
-                    pde = B_2_1D.EE_1(msh,v,g,ft,LO,HO);
-                otherwise
-                    return;
-            end
-        end
-        % >> 2.2. ---------------------------------------------------------
-        %  > 2.2.1. -------------------------------------------------------
-        function [] = EE_1(msh,v,g,ft,LO,HO)
-            [pde,A,B,stl,s] = B_1D.Initialize(msh,v,g,ft,t1,t2);
         end
     end
 end

@@ -28,7 +28,7 @@ classdef A_1_1D
             %  > 1. Flow conditions (v,g).
             %  > 2. Boundary conditions (Dirichlet/Neumann/Robin).
             inp.pr.v = 1;
-            inp.pr.g = 1;
+            inp.pr.g = 100;
             inp.pr.w = "Dirichlet";
             inp.pr.e = "Dirichlet";
                        
@@ -42,13 +42,14 @@ classdef A_1_1D
             %        └─  DDS (Downind differencing scheme).
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
-            inp.fr.p_adapt  = false;
-            inp.fr.n        = 5;
-            inp.fr.test_ee  = false;
-            inp.fr.type_1.v = "CDS";
-            inp.fr.type_1.g = "CDS";
-            inp.fr.type_2.v = 1;
-            inp.fr.type_2.g = 1;
+            inp.fr.p_adapt   = true;
+            inp.fr.allow_odd = false;
+            inp.fr.n         = 2;
+            inp.fr.test_ee   = false;
+            inp.fr.type_1.v  = "CDS";
+            inp.fr.type_1.g  = "CDS";
+            inp.fr.type_2.v  = 1;
+            inp.fr.type_2.g  = 1;
         end
     end
 end
