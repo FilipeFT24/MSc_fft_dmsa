@@ -35,16 +35,16 @@ pde
 │   ├── c                     #  >> ...for each cell.
 │   └── f                     #  >> ...for each face.
 ├── e                         # >>> Field: Implicit PDE solution.   
-|   ├── c                     #  >> ...for each cell (value-wise).
+|   ├── c                     #  >> ...for each cell.
 |   |   ├── c                 #   > Error distribution. 
 │   |   └── n                 #   > Error norms.
-|   ├── f                     #   > ...for each face (value-wise).
+|   ├── f                     #   > ...for each face.
 |   |   ├── f                 #   > Error distribution. 
 │   |   └── n                 #   > Error norms.
-|   ├── d                     #   > ...for each cell/face (discretization-wise).
-|   |   ├── c                 #   > Error distribution. 
-|   |   ├── f                 #   > Error distribution. 
-│   |   └── n                 #   > Error norms.
+|   ├── d                     #   > ...for each cell/face.
+|   |   ├── c                 #   > Truncation error distribution. 
+|   |   ├── f                 #   > Truncation error distribution. 
+│   |   └── n                 #   > Truncation error norms.
 ```      
 
 #### **A_2_1D (1)** - Differencing schemes.

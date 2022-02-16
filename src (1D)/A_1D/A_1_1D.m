@@ -43,10 +43,10 @@ classdef A_1_1D
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
             inp.fr.p_adapt   = true;
-            inp.fr.allow_odd = false;
-            inp.fr.n         = 2;
+            inp.fr.allow_odd = true;
+            inp.fr.n         = 10;
             inp.fr.test_ee   = false;
-            inp.fr.type_1.v  = "CDS";
+            inp.fr.type_1.v  = "UDS";
             inp.fr.type_1.g  = "CDS";
             inp.fr.type_2.v  = 1;
             inp.fr.type_2.g  = 1;

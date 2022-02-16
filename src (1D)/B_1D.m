@@ -16,7 +16,7 @@ classdef B_1D
             t2(1)     = inp.fr.type_2.v;
             t2(2)     = inp.fr.type_2.g;
             
-            [msh,pde] = B_1D.SetUp(msh,v,g,"exp",bnd,p_adapt,allow_odd,n,ee,t1,t2);
+            [msh,pde] = B_1D.SetUp(msh,v,g,"sin",bnd,p_adapt,allow_odd,n,ee,t1,t2);
         end
         
         %% > Auxiliary functions.
@@ -41,7 +41,7 @@ classdef B_1D
             s.xf          = cell (2,msh.f.NF);
         end
         % >> 2. -----------------------------------------------------------
-        function [msh,pde] = SetUp(msh,v,g,ft,bnd,p_adapt,allow_odd,n,ee,tv,tg)
+        function [msh,pde] = SetUp(msh,v,g,ft,bnd,p_adapt,ao,n,ee,tv,tg)
             % >> Select...
             switch ee
                 case false
@@ -60,7 +60,7 @@ classdef B_1D
                                 [s,x,ea]  = B_2_1_1D.Update_stl (msh,s,stl.p,stl.s,stl.t,A,B,pde.a,bnd,v,g);
                                 [e,x]     = B_2_1_1D.Update_pde (msh,pde.a,s,x,ea,v,g);
                                 if i+1 ~= n
-                                    [stl] = B_2_2_1D.Select_f_CD(e.t,stl,allow_odd);
+                                    [stl] = B_2_2_1D.Select_f_CD(ao,stl,e.c.c,e.t);
                                 end
                                 i = i+1;
                             end
