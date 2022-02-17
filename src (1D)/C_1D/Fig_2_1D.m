@@ -23,7 +23,7 @@ classdef Fig_2_1D
             Xvi   = msh.f.Xv(1);
             Xvf   = msh.f.Xv(end);
             C1    = linspecer(9 ,'qualitative');
-            C2    = linspecer(12,'sequential');
+            C2    = linspecer(20,'sequential');
             L     = Fig_2_1D.Set_Labels_1();
             [m,n] = size(msh.s.xf);
             for i = 1:m

@@ -91,7 +91,31 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [s] = Stencil_SetUp(msh,s,stl_p,stl_s,stl_t,a,bnd,v,g)
+        function [stl,s] = SetUp_stl(msh,stl,s,a,bnd,v,g)
+            % >> Assemble stencil.
+            s = A_2_1D.Assemble_stl(msh,stl,stl.s,s,a,bnd,v,g);
+            
+            % >> Check for nil coefficients...
+            %  > If we're trying to use an UDS/DDS for the diffusive term on a uniform grid (boundaries NOT included), use a CDS of higher-order instead.
+            k = 1;
+            for j = 1:size(s.xf,2)
+                xf_nil =  round(s.xf{2,j},3);
+                if_nil = ~xf_nil;
+                %  > Update diffusive term of face 'j'...
+                if nnz(if_nil) > 0
+                    n              = 2;
+                    upd_dt{n}(k,1) = j;
+                    stl.t {n}(j,1) = "CDS";
+                    k              = k+1;
+                end
+            end
+            if k ~=1
+                s = A_2_1D.Assemble_stl(msh,stl,upd_dt,s,a,bnd,v,g);
+            end
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > 2.2.1. -------------------------------------------------------
+        function [s] = Assemble_stl(msh,stl,stl_s,s,a,bnd,v,g)
             %  > Auxiliary variables.
             Xc      = msh.c.Xc;
             NC      = msh.c.NC;
@@ -103,16 +127,16 @@ classdef A_2_1D
             vg  (2) = g;
             
             % >> Loop through selected faces...
-            for n = 1:length(stl_s)
+            for n = 1:size(stl_s,2)
                 if isempty(stl_s{n})
                     continue;
                 else
-                    for q = 1:length(stl_s{n})
+                    for q = 1:size(stl_s{n},1)
                         %  > Auxiliary variables.
                         o     = stl_s{n}(q);
-                        p     = stl_p{n}(o);
+                        p     = stl.p{n}(o);
                         add_f = false;
-                        switch stl_t{n}(o)
+                        switch stl.t{n}(o)
                             case "CDS"
                                 LHS = p;
                                 RHS = NF+1-p;
@@ -133,7 +157,7 @@ classdef A_2_1D
                             stl_f = bnd_f;
                             bnd_i = bnd(1);
                             %  > ...cell(s).
-                            switch stl_t{n}(o)
+                            switch stl.t{n}(o)
                                 case "CDS"
                                     stl_c = 1:2.*p-1;
                                 otherwise
@@ -146,7 +170,7 @@ classdef A_2_1D
                             stl_f = bnd_f;
                             bnd_i = bnd(2);
                             %  > ...cell(s).
-                            switch stl_t{n}(o)
+                            switch stl.t{n}(o)
                                 case "CDS"
                                     stl_c = NF+1-2.*p:NC;
                                 otherwise
@@ -157,7 +181,7 @@ classdef A_2_1D
                             stl_f = [];
                             bnd_i = string([]);
                             %  > ...cell(s).
-                            switch stl_t{n}(o)
+                            switch stl.t{n}(o)
                                 case "CDS"
                                     stl_c = o-p:o+p-1;
                                 case "UDS"
@@ -175,8 +199,6 @@ classdef A_2_1D
                         else
                             xt = [xc,Xv(bnd_f)];
                         end
-                        %  > Stencil length.
-                        Ls  = (max(xt)-min(xt))./length(stl_c);
                         
                         % >> Tf.
                         %  > Auxiliary variables.
@@ -228,13 +250,26 @@ classdef A_2_1D
                                 df  = 1;
                                 Inv = inv(Df);
                                 Tf  = df*Inv;
-                                xf  = v.*Tf(n,:);
+                                xf  = Tf(n,:);
+                                if isempty(stl_c)
+                                    Ls = 0;
+                                else
+                                    switch stl.t{n}(o)
+                                        case "UDS"
+                                            Ls = -Xv(o-1)+Xv(o);
+                                        case "DDS"
+                                            Ls =  Xv(o+1)-Xv(o);
+                                        otherwise
+                                            return;
+                                    end 
+                                end
                             end
                         else
                             df      = zeros(1,len);
                             df(1,n) = 1;
                             Inv     = inv(Df);
                             xf      = df*Inv;
+                            Ls      = (max(xt)-min(xt))./length(stl_c);
                         end
                         %  > Update 'msh' structure...
                         s.c  {n,o}  = stl_c;

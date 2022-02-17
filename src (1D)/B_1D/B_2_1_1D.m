@@ -2,10 +2,10 @@ classdef B_2_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [s,x,et_c] = Update_stl(msh,s,stl_p,stl_s,stl_t,A,B,a,bnd,v,g)
+        function [stl,s,x,et_c] = Update_stl(msh,stl,s,A,B,a,bnd,v,g)
             % >> Compute/update...
             %  > ...stencil.
-            s  = A_2_1D.Stencil_SetUp(msh,s,stl_p,stl_s,stl_t,a,bnd,v,g);
+            [stl,s] = A_2_1D.SetUp_stl(msh,stl,s,a,bnd,v,g);
             %  > ...xf.
             vg = [v,g];
             for j = 1:size(s.f,1)

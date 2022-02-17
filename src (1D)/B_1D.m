@@ -26,12 +26,12 @@ classdef B_1D
             B             = zeros(msh.c.NC,1);
             pde           = B_1_1D.WrapUp_B_1_1D(msh,v,g,ft);
             B             = B+pde.f.st;
-            stl.p{1}(:,1) = repelem(t2(1),msh.f.NF)';
-            stl.p{2}(:,1) = repelem(t2(2),msh.f.NF)';
+            stl.p{1}(:,1) = repelem(t2(1),msh.f.NF);
+            stl.p{2}(:,1) = repelem(t2(2),msh.f.NF);
             stl.s{1}(:,1) = 1:msh.f.NF;
             stl.s{2}(:,1) = 1:msh.f.NF;
-            stl.t{1}(:,1) = repelem(t1(1),msh.f.NF)';
-            stl.t{2}(:,1) = repelem(t1(2),msh.f.NF)';
+            stl.t{1}(:,1) = repelem(t1(1),msh.f.NF);
+            stl.t{2}(:,1) = repelem(t1(2),msh.f.NF);
             s.c           = cell (2,msh.f.NF);
             s.f           = cell (2,msh.f.NF);
             s.xt          = cell (2,msh.f.NF);
@@ -51,16 +51,16 @@ classdef B_1D
                     switch p_adapt
                         case false
                             %  > ...solve PDE.
-                            [s,x,ea] = B_2_1_1D.Update_stl(msh,s,stl.p,stl.s,stl.t,A,B,pde.a,bnd,v,g);
-                            [e,x]    = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
+                            [stl,s,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,bnd,v,g);
+                            [e,x]        = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
                         case true
                             %  > ...solve PDE while...
                             i = 0;
                             while i < n
-                                [s,x,ea]  = B_2_1_1D.Update_stl (msh,s,stl.p,stl.s,stl.t,A,B,pde.a,bnd,v,g);
-                                [e,x]     = B_2_1_1D.Update_pde (msh,pde.a,s,x,ea,v,g);
+                                [stl,s,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,bnd,v,g);
+                                [e,x]        = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
                                 if i+1 ~= n
-                                    [stl] = B_2_2_1D.Select_f_CD(ao,stl,e.c.c,e.t);
+                                    [stl] = B_2_2_1D.Select_fCD(ao,stl,e.c.c,e.t);
                                 end
                                 i = i+1;
                             end
