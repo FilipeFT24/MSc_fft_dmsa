@@ -8,7 +8,7 @@ classdef B_2_2_1D
             [m,n] = size(et.f);
             %  > Step #1: Increase method's order.
             for i = 1:n
-                s{i} = find(et.f(:,i) > et.n.c(1));
+                s{i} = find(et.f(:,i) > et.n.t(1));
             end
             stl = B_2_2_1D.Increase_p(ao,m,n,stl,s,ecc);
             %  > Step #2: Check rules.

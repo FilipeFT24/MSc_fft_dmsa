@@ -251,31 +251,17 @@ classdef A_2_1D
                                 Inv = inv(Df);
                                 Tf  = df*Inv;
                                 xf  = Tf(n,:);
-                                if isempty(stl_c)
-                                    Ls = 0;
-                                else
-                                    switch stl.t{n}(o)
-                                        case "UDS"
-                                            Ls = -Xv(o-1)+Xv(o);
-                                        case "DDS"
-                                            Ls =  Xv(o+1)-Xv(o);
-                                        otherwise
-                                            return;
-                                    end 
-                                end
                             end
                         else
                             df      = zeros(1,len);
                             df(1,n) = 1;
                             Inv     = inv(Df);
                             xf      = df*Inv;
-                            Ls      = (max(xt)-min(xt))./length(stl_c);
                         end
                         %  > Update 'msh' structure...
                         s.c  {n,o}  = stl_c;
                         s.f  {n,o}  = stl_f;
                         s.xt {n,o}  = xt;
-                        s.Ls (n,o)  = Ls;
                         s.bnd{n,o}  = bnd_v;
                         s.xf {n,o}  = xf;
                     end

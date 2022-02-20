@@ -73,56 +73,55 @@ classdef B_2_1_1D
                 end
             end
             %  > ...cell/face error/error norm(s).
-            [e.c,e.f,e.t] = B_2_1_1D.Compute_Error(msh,a,x,s,et_c,v,g);
+            [e.c,e.f,e.t] = B_2_1_1D.Compute_Error(msh,a,x,et_c,v,g);
         end
         % >> 1.3. ---------------------------------------------------------
-        function [Ec,Ef,Et] = Compute_Error(msh,a,x,s,et_c,v,g)
+        function [Ec,Ef,Et] = Compute_Error(msh,a,x,et_c,v,g)
             %  > Auxiliary variables.
-            vg          = [v,g];
+            [m,n] = size(x.f.f);
+            vg    = [v,g];
+            sign  = [-1,1];
+
+            % >> Face(s).
+            for j = 1:n
+                for i = 1:m
+                    %  > Absolute error.
+                    ef_f(i,j) = a.f(i,j)-x.f.f(i,j);
+                    ef_t(i,j) = (a.f(i,j)-x.f.a(i,j)).*vg(j);
+                    Ef.f(i,j) = abs(ef_f(i,j));
+                    Et.f(i,j) = abs(ef_t(i,j));
+                end
+                Ef.n  (1,j) = mean(Ef.f(:,j));
+                Et.n.f(1,j) = mean(Et.f(:,j));
+            end
+            Et.n.t(1,1) = 1./2.*(Et.n.f(1,1)+Et.n.f(1,2));
             
             % >> Cell(s).
-            i           = 1:msh.c.NC;
-            Vol   (i,1) = msh.c.Vol(i);
-            %  > Absolute error.
-            ec_c  (i,1) = a.c(i,1)-x.c(i,1);
-            Ec.c        = abs(ec_c);
-            Et.c        = abs(et_c);
-            %  > Error norms.
-            Ec_1.c(i,1) = Ec.c  (i,1).*Vol(i);
-            Ec_1.t(i,1) = Et.c  (i,1).*Vol(i);
-            Ec_2.c(:,1) = Ec_1.c(:,1).^2;
-            Ec_2.t(:,1) = Ec_1.t(:,1).^2;
+            for i = 1:m-1
+                %  > Absolute error.
+                ec_c  (i,1) = a.c(i,1)-x.c(i,1);
+                Ec.c  (i,1) = abs(ec_c(i));
+                %  > Error transported by convection/diffusion.
+                for j = 1:n+1
+                    if j == 1
+                        Et.c(i,j) = abs(et_c(i));
+                    else
+                        Et.c(i,j) = abs(ef_t(i+1,j-1)-ef_t(i,j-1));
+                    end
+                end
+                Vol   (i,1) = msh.c.Vol(i);
+                %  > Error norms.
+                Ec_1.c(i,1) = Ec.c  (i).*Vol(i);
+                Ec_1.t(i,1) = Et.c  (i).*Vol(i);
+                Ec_2.c(i,1) = Ec_1.c(i).^2;
+                Ec_2.t(i,1) = Ec_1.t(i).^2;
+            end
             Ec.n  (1,1) = sum(Ec_1.c)./sum(Vol);
             Ec.n  (2,1) = sum(sqrt(Ec_2.c))./sum(sqrt(Vol.^2));
             Ec.n  (3,1) = max(Ec.c);
             Et.n.c(1,1) = sum(Ec_1.t)./sum(Vol);
             Et.n.c(2,1) = sum(sqrt(Ec_2.t))./sum(sqrt(Vol.^2));
-            Et.n.c(3,1) = max(Et.c);
-            
-            % >> Face(s).
-            %  > Absolute error: 1. Column #1: Absolute error: phi_f.
-            %  >                 2. Column #2: Absolute error: gradphi_f.
-            i = 1:msh.f.NF;
-            for j = 1:size(x.f.a,2)
-                %  > Stencil length.
-                Ls    (i,j) = s.Ls(j,i);
-                %  > Absolute error.
-                ef_f  (i,j) = a.f(i,j)-x.f.f(i,j);
-                ef_t  (i,j) = vg(j).*(a.f(i,j)-x.f.a(i,j));
-                Ef.f  (:,j) = abs(ef_f(:,j));
-                Et.f  (:,j) = abs(ef_t(:,j));
-                %  > Error norms.
-                Ef_1.f(i,j) = Ef.f(i,j).*Ls(i,j);
-                Ef_1.t(i,j) = Et.f(i,j).*Ls(i,j);
-                Ef_2.f(:,j) = Ef_1.f(:,j).^2;
-                Ef_2.t(:,j) = Ef_1.t(:,j).^2;
-                Ef.n  (1,j) = sum(Ef_1.f(:,j))./sum(Ls(:,j));
-                Ef.n  (2,j) = sum(sqrt(Ef_2.f(:,j)))./sum(sqrt(Ls(:,j).^2));
-                Ef.n  (3,j) = max(Ef.f(:,j));
-                Et.n.f(1,j) = sum(Ef_1.t(:,j))./sum(Ls(:,j));
-                Et.n.f(2,j) = sum(sqrt(Ef_2.t(:,j)))./sum(sqrt(Ls(:,j).^2));
-                Et.n.f(3,j) = max(Et.f(:,j));
-            end
+            Et.n.c(3,1) = max(Et.c(:,1));
         end
     end
 end

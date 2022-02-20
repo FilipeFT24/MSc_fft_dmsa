@@ -17,7 +17,7 @@ classdef Tools_1D
             msh   = orderfields(msh  ,{'d','c','f','s'});
             msh.c = orderfields(msh.c,{'NC','Xc','Vol'});
             msh.f = orderfields(msh.f,{'NF','Xv'});
-            msh.s = orderfields(msh.s,{'c','f','bnd','xt','Ls','Tf','xf','stl'});
+            msh.s = orderfields(msh.s,{'c','f','bnd','xt','Tf','xf','stl'});
         end
     end
 end

@@ -16,7 +16,7 @@ classdef B_1D
             t2(1)     = inp.fr.type_2.v;
             t2(2)     = inp.fr.type_2.g;
             
-            [msh,pde] = B_1D.SetUp(msh,v,g,"sin",bnd,p_adapt,allow_odd,n,ee,t1,t2);
+            [msh,pde] = B_1D.SetUp(msh,v,g,"exp",bnd,p_adapt,allow_odd,n,ee,t1,t2);
         end
         
         %% > Auxiliary functions.
@@ -28,6 +28,8 @@ classdef B_1D
             B             = B+pde.f.st;
             stl.p{1}(:,1) = repelem(t2(1),msh.f.NF);
             stl.p{2}(:,1) = repelem(t2(2),msh.f.NF);
+            stl.p{1}(:,1) = 2;
+            stl.p{2}(:,1) = 2;
             stl.s{1}(:,1) = 1:msh.f.NF;
             stl.s{2}(:,1) = 1:msh.f.NF;
             stl.t{1}(:,1) = repelem(t1(1),msh.f.NF);
@@ -35,7 +37,6 @@ classdef B_1D
             s.c           = cell (2,msh.f.NF);
             s.f           = cell (2,msh.f.NF);
             s.xt          = cell (2,msh.f.NF);
-            s.Ls          = zeros(2,msh.f.NF);
             s.bnd         = cell (2,msh.f.NF);
             s.Tf          = cell (2,msh.f.NF);
             s.xf          = cell (2,msh.f.NF);
@@ -45,9 +46,10 @@ classdef B_1D
             % >> Select...
             switch ee
                 case false
-                    % >> Initialize.
+                    % >> w/ analytic values.
+                    %  > Initialize.
                     [pde,A,B,stl,s] = B_1D.Initialize(msh,v,g,ft,tv,tg);
-                    % >> Set up problem...
+                    %  > Set up problem...
                     switch p_adapt
                         case false
                             %  > ...solve PDE.
@@ -70,16 +72,21 @@ classdef B_1D
                     %  > ...update structures.
                     [msh,pde] = B_1D.Update(msh,pde,stl,s,x,e);
                 case true
+                    % >> w/ error estimators.
+                   
+
+                    
+                    
                 otherwise
                     return;
             end
         end
         % >> 3. -----------------------------------------------------------
-        function [msh,pde] = Update(msh,pde,stl,s,xn,e)
+        function [msh,pde] = Update(msh,pde,stl,s,x,e)
             s.stl = stl;
             msh.s = s;
             msh   = Tools_1D.Sort_struct(msh);
-            pde.x = xn;
+            pde.x = x;
             pde.e = e;
         end
     end

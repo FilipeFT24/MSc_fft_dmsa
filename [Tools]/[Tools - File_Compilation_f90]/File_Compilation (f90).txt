@@ -1,0 +1,2 @@
+F90:
+gfortran -o out FileName.F90 
