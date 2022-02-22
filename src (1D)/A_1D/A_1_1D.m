@@ -27,7 +27,7 @@ classdef A_1_1D
             % >> 2. Problem setup.
             %  > 1. Flow conditions (v,g).
             %  > 2. Boundary conditions (Dirichlet/Neumann/Robin).
-            inp.pr.v = 0;
+            inp.pr.v = 1;
             inp.pr.g = 1;
             inp.pr.w = "Dirichlet";
             inp.pr.e = "Dirichlet";
@@ -44,11 +44,11 @@ classdef A_1_1D
             %        └─  Number of neighbours to the left/right.
             inp.fr.p_adapt   = true;
             inp.fr.allow_odd = true;
-            inp.fr.n         = 1;
+            inp.fr.n         = 2;
             inp.fr.test_ee   = false;
             inp.fr.type_1.v  = "CDS";
             inp.fr.type_1.g  = "CDS";
-            inp.fr.type_2.v  = 1;
+            inp.fr.type_2.v  = 2;
             inp.fr.type_2.g  = 1;
         end
     end

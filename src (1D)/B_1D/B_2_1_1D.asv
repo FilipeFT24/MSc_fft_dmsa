@@ -27,63 +27,59 @@ classdef B_2_1_1D
                     %  > West face contribution.
                     kc_w    {j}  = s.c{j,i};
                     xf_w    {j}  = xf {j,i};
-                    A(i,kc_w{j}) = B_2_1_1D.Assemble_A("w",A(i,kc_w{j}),sign_x(j),xf_w{j},length(kc_w{j}));
+                    A(i,kc_w{j}) = A(i,kc_w{j})-sign_x(j).*xf_w{j}(1:length(kc_w{j}));
                     %  > East face contribution.
                     kc_e    {j}  = s.c{j,i+1};
                     xf_e    {j}  = xf {j,i+1};
-                    A(i,kc_e{j}) = B_2_1_1D.Assemble_A("e",A(i,kc_e{j}),sign_x(j),xf_e{j},length(kc_e{j}));
-                   
+                    A(i,kc_e{j}) = A(i,kc_e{j})+sign_x(j).*xf_e{j}(1:length(kc_e{j}));
+                    
+                    
+                    
+                    
+                    
+                    
                     % >> B.
                     %  > West face contribution.
                     if ismembc(i,bnd_s{j})
-                        fw {j}   = bnd_v{j}(bnd_s{j} == i);
-                        B(i,1)   = B_2_1_1D.Assemble_B("w",B(i,1),sign_x(j),fw{j},xf_w{j},length(kc_w{j}));
+                        fw {j} = bnd_v{j}(bnd_s{j} == i);
+                        B(i,1) = B_2_1D.Assemble_B("w",B(i,1),sign_x(j),fw{j},xf_w{j},length(kc_w{j}));
                     end
                     %  > East face contribution.
                     if ismembc(i+1,bnd_s{j})
-                        fe {j}   = bnd_v{j}(bnd_s{j} == i+1);
-                        B(i,1)   = B_2_1_1D.Assemble_B("e",B(i,1),sign_x(j),fe{j},xf_e{j},length(kc_e{j}));
+                        fe {j} = bnd_v{j}(bnd_s{j} == i+1);
+                        B(i,1) = B_2_1D.Assemble_B("e",B(i,1),fe{j});
                     end
                 end
             end
-            [x,et_c] = B_2_1_1D.SetUp_Solver(A,B,a);
+            x.c  = A\B;
+            et_c = A*a.c(:,1)-B;
         end
         %  > 1.1.1. -------------------------------------------------------
-        function [A] = Assemble_A(str_f,A,sign_x,xf,len_kc)
-            %  > RHS term.
-            RHS = sign_x.*xf(len_kc);
-            %  > Add...
-            switch str_f
-                case "w"
-                    %  > West face contribution.
-                    A = A-RHS;
-                case "e"
-                    %  > East face contribution.
-                    A = A+RHS;
-                otherwise
-                    return;
-            end
+        function [] = Assemble_A()
+            
+            
+            
+            
         end
         %  > 1.1.2. -------------------------------------------------------
         function [B] = Assemble_B(str_f,B,sign_x,f,xf,len_kc)
-            %  > RHS term.
-            RHS = sign_x.*f.*xf(len_kc+1);
-            %  > Add...
             switch str_f
                 case "w"
                     %  > West face contribution.
-                    B = B+RHS;
+                    B = B+sign_x.*f.*xf(len_kc+1);
                 case "e"
                     %  > East face contribution.
-                    B = B-RHS;
+                    B = B-sign_x.*f.*xf(len_kc+1);
                 otherwise
                     return;
             end
         end
         %  > 1.1.3. -------------------------------------------------------
-        function [x,et_c] = SetUp_Solver(A,B,a)
-            x.c  = A\B;
-            et_c = A*a.c(:,1)-B;
+        function [] = SetUp_Solver(stl_s,A,B)
+            
+            
+  
+            
         end
         % >> 1.2. ---------------------------------------------------------
         function [e,x] = Update_pde(msh,a,s,x,et_c,v,g)

@@ -16,7 +16,7 @@ classdef B_1_1D
             syms x;
             switch char(ft)
                 case "sin"
-                    i    = 9;
+                    i    = 3;
                     f{1} = sin(i.*pi.*x);
                 case "exp"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));

@@ -11,12 +11,12 @@ classdef Fig_2_1D
                 if Exp_2
                     Fig_Tools_1D.Export_PDF('ET_4_1 (3)','../[Figures]/[1D]/Fig_2');
                 end
-                figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_2(msh,pde);
-                %  > Export as .pdf.
-                if Exp_2
-                    Fig_Tools_1D.Export_PDF('ET_4_2 (3)','../[Figures]/[1D]/Fig_2');
-                end
+                %  figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
+                %  Fig_2_1D.Plot_2(msh,pde);
+                %  %  > Export as .pdf.
+                %  if Exp_2
+                %      Fig_Tools_1D.Export_PDF('ET_4_2 (3)','../[Figures]/[1D]/Fig_2');
+                %  end
             end
         end
         
@@ -49,7 +49,7 @@ classdef Fig_2_1D
             hold on;
             for j = 1:m
                 P{j}   = plot(msh.f.Xv,pde.e.t.f(:,j)                 ,':o','Color',C1(j,:),'LineWidth',2.0,'MarkerFaceColor',C1(j,:),'MarkerSize',3.5);
-                P{j+m} = line([Xvi,Xvf],[pde.e.t.n.t(1,1),pde.e.t.n.t(1,1)],'Color',C1(j,:),'Linewidth',1.5,'Linestyle','-.');
+                P{j+m} = line([Xvi,Xvf],[pde.e.t.n.f(1,j),pde.e.t.n.f(1,j)],'Color',C1(j,:),'Linewidth',1.5,'Linestyle','-.');
             end
             
             legend([P{:}],[L{:}],...
