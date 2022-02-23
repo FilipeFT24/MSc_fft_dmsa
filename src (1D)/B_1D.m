@@ -16,17 +16,20 @@ classdef B_1D
             t2(1)     = inp.fr.type_2.v;
             t2(2)     = inp.fr.type_2.g;
             
-            [msh,pde] = B_1D.SetUp(msh,v,g,"sin",bnd,p_adapt,allow_odd,n,ee,t1,t2);
+            [msh,pde] = B_1D.SetUp(msh,v,g,"exp",bnd,p_adapt,allow_odd,n,ee,t1,t2);
         end
         
         %% > Auxiliary functions.
         % >> 1. -----------------------------------------------------------
         function [pde,A,B,stl,s] = Initialize(msh,v,g,ft,ee,t1,t2)
+            %  > pde.
+            pde = B_1_1D.WrapUp_B_1_1D(msh,v,g,ft);
             %  > A/B.
-            A     = zeros(msh.c.NC);
-            B     = zeros(msh.c.NC,1);
-            pde   = B_1_1D.WrapUp_B_1_1D(msh,v,g,ft);
-            B     = B+pde.f.st;
+            i = 1:2;
+            for j = i
+                A{j} = zeros(msh.c.NC);
+                B{j} = zeros(msh.c.NC,1);
+            end
             %  > s/stl.
             s.c   = cell(2,msh.f.NF);
             s.f   = cell(2,msh.f.NF);
@@ -35,7 +38,7 @@ classdef B_1D
             s.xf  = cell(2,msh.f.NF);
             switch ee
                 case false
-                    for j = 1:2
+                    for j = i
                         stl.p{j}(:,1) = repelem(t2(j),msh.f.NF);
                         stl.s{j}(:,1) = 1:msh.f.NF;
                         stl.t{j}(:,1) = repelem(t1(j),msh.f.NF);
@@ -74,14 +77,14 @@ classdef B_1D
             switch p_adapt
                 case false
                     %  > ...solve PDE.
-                    [stl,s,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,bnd,v,g);
-                    [e,x]        = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
+                    [stl,s,~,~,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,pde.f.st,bnd,v,g);
+                    [e,x]            = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
                 case true
                     %  > ...solve PDE while (...).
                     i = 0;
                     while i < n
-                        [stl,s,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,bnd,v,g);
-                        [e,x]        = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
+                        [stl,s,A,B,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,pde.f.st,bnd,v,g);
+                        [e,x]            = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
                         if i+1 ~= n
                             stl = B_2_2_1D.Select_fCD(ao,stl,e.c.c,e.t);
                         end

@@ -11,12 +11,12 @@ classdef Fig_2_1D
                 if Exp_2
                     Fig_Tools_1D.Export_PDF('ET_4_1 (3)','../[Figures]/[1D]/Fig_2');
                 end
-                %  figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                %  Fig_2_1D.Plot_2(msh,pde);
-                %  %  > Export as .pdf.
-                %  if Exp_2
-                %      Fig_Tools_1D.Export_PDF('ET_4_2 (3)','../[Figures]/[1D]/Fig_2');
-                %  end
+                figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
+                Fig_2_1D.Plot_2(msh,pde);
+                %  > Export as .pdf.
+                if Exp_2
+                    Fig_Tools_1D.Export_PDF('ET_4_2 (3)','../[Figures]/[1D]/Fig_2');
+                end
             end
         end
         
@@ -55,7 +55,7 @@ classdef Fig_2_1D
             legend([P{:}],[L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',10,'NumColumns',2);
             %  > Axis.
-            set(gca,'YScale','log');
+            %set(gca,'YScale','log');
             Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{8},15,15); 
         end
         %  > 1.1.2. -------------------------------------------------------

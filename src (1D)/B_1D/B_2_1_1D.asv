@@ -2,84 +2,139 @@ classdef B_2_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [stl,s,x,et_c] = Update_stl(msh,stl,s,A,B,a,bnd,v,g)
+        function [stl,s,A,B,x,et_c] = Update_stl(msh,stl,s,A,B,a,st,bnd,v,g)
             %  > Auxiliary variables.
-            NC     = msh.c.NC;
-            vg     = [v,g];
-            sign_x = [1,-1];
-                        
+            NC = msh.c.NC;
+            k  = 1:size(stl.s,2);
+            vg = [v,g];
+            sf = [1,-1];
+            Ac = zeros(NC);
+            Bc = zeros(NC,1);
+                                   
             % >> Compute/update...
             %  > ...stencil.
             [stl,s] = A_2_1D.SetUp_stl(msh,stl,s,a,bnd,v,g);
             %  > ...xf.        
-            for j = 1:size(s.f,1)
-                for i = 1:size(s.f,2)
-                    xf{j,i} = vg(j).*s.xf{j,i};
+            for i = 1:size(s.f,1)
+                for j = 1:size(s.f,2)
+                    xf{i,j} = vg(i).*s.xf{i,j};
                 end
-                bnd_s{j} = find(~cellfun(@isempty,s.f(j,:)));
-                bnd_v{j} = [s.bnd{j,bnd_s{j}}];   
+                bnd_s{i} = find(~cellfun(@isempty,s.f(i,:)));
+                bnd_v{i} = [s.bnd{i,bnd_s{i}}];   
             end
-            %  > ...matrix A (cell dependent coefficients).
-            %  > ...matrix B (face dependent coefficients w/o source term contribution).
-            for i = 1:NC
-                for j = 1:size(s.xf,1)
-                    % >> A.
-                    %  > West face contribution.
-                    kc_w    {j}  = s.c{j,i};
-                    xf_w    {j}  = xf {j,i};
-                    A(i,kc_w{j}) = A(i,kc_w{j})-sign_x(j).*xf_w{j}(1:length(kc_w{j}));
-                    %  > East face contribution.
-                    kc_e    {j}  = s.c{j,i+1};
-                    xf_e    {j}  = xf {j,i+1};
-                    A(i,kc_e{j}) = A(i,kc_e{j})+sign_x(j).*xf_e{j}(1:length(kc_e{j}));
+            %  > ...A/B.
+            for i = k
+                for j = 1:NC
+                    %  > Initialize.
+                    [u,A{i}(j,:),B{i}(j,1)] = ...
+                        B_2_1_1D.Initialize(j,stl.s{i},s.c(i,:),xf(i,:),bnd_s{i},bnd_v{i},NC,A{i}(j,:),B{i}(j,1));
                     
-                    
-                    
-                    
-                    
-                    
-                    % >> B.
-                    %  > West face contribution.
-                    if ismembc(i,bnd_s{j})
-                        fw {j} = bnd_v{j}(bnd_s{j} == i);
-                        B(i,1) = B_2_1D.Assemble_B("w",B(i,1),sign_x(j),fw{j},xf_w{j},length(kc_w{j}));
+                    %  > Update A.
+                    if u.c.uA
+                        A{i}(j,u.w.kc) = B_2_1_1D.Assemble_A("w",A{i}(j,u.w.kc),u.w.Af);
+                        A{i}(j,u.e.kc) = B_2_1_1D.Assemble_A("e",A{i}(j,u.e.kc),u.e.Af); 
                     end
-                    %  > East face contribution.
-                    if ismembc(i+1,bnd_s{j})
-                        fe {j} = bnd_v{j}(bnd_s{j} == i+1);
-                        B(i,1) = B_2_1D.Assemble_B("e",B(i,1),fe{j});
+                    %  > Update B.
+                    if u.w.uB
+                        B{i}(j,1) = B_2_1_1D.Assemble_B("w",B{i}(j,1),u.w.fv,u.w.Bf);
+                    end
+                    if u.e.uB
+                        B{i}(j,1) = B_2_1_1D.Assemble_B("e",B{i}(j,1),u.e.fv,u.e.Bf);
                     end
                 end
+                %  > Add convective/diffusive contributions (cumulative matrices)...
+                Ac = Ac+sf(i).*A{i};
+                Bc = Bc+sf(i).*B{i};
             end
-            x.c  = A\B;
-            et_c = A*a.c(:,1)-B;
+            %  > Add source term...
+            Bc = Bc+st;
+                       
+            %  > Update solution(s)...
+            [x,et_c] = B_2_1_1D.SetUp_Solver(Ac,Bc,unique([s.c{:}])',a);
         end
         %  > 1.1.1. -------------------------------------------------------
-        function [] = Assemble_A()
+        %  > Initialize matrices/matrix coefficients.
+        function [u,A,B] = Initialize(j,stl_s,sc,xf,bnd_s,bnd_v,NC,A,B)
+            %  > Initialize...
+            u.c.uA = false;
+            u.w.uB = false;
+            u.e.uB = false;
             
-            
-            
-            
+            if any(ismembc([j,j+1],stl_s))
+                % >> A.
+                %  > Update...
+                A      = zeros(1,NC);
+                u.c.uA = true;
+                %  > West face contribution.
+                u.w.kc = sc{j};
+                l.w    = length(u.w.kc);
+                u.w.Af = xf{j}(1:l.w);
+                %  > East face contribution.
+                u.e.kc = sc{j+1};
+                l.e    = length(u.e.kc);
+                u.e.Af = xf{j+1}(1:l.e);
+
+                % >> B.
+                if any(ismembc([j,j+1],bnd_s))
+                    %  > Update...
+                    B  = 0;
+                    if ismembc(j,bnd_s)
+                        u.w.uB = true;
+                        u.w.fv = bnd_v(bnd_s == j);
+                        u.w.Bf = xf{j}(l.w+1);
+                    end
+                    if ismembc(j+1,bnd_s)
+                        u.e.uB = true;
+                        u.e.fv = bnd_v(bnd_s == j+1);
+                        u.e.Bf = xf{j+1}(l.e+1);
+                    end
+                end
+            end
         end
-        %  > 1.1.2. -------------------------------------------------------
-        function [B] = Assemble_B(str_f,B,sign_x,f,xf,len_kc)
+        %  > Update matrix A (cell dependent coefficients).
+        function [A] = Assemble_A(str_f,A,xf)
             switch str_f
                 case "w"
                     %  > West face contribution.
-                    B = B+sign_x.*f.*xf(len_kc+1);
+                    A = A-xf;
                 case "e"
                     %  > East face contribution.
-                    B = B-sign_x.*f.*xf(len_kc+1);
+                    A = A+xf;
+                otherwise
+                    return;
+            end
+        end
+        %  > 1.1.2. -------------------------------------------------------
+        %  > Update matrix B (face dependent coefficients w/o source term contribution).
+        function [B] = Assemble_B(str_f,B,f,xf)
+            switch str_f
+                case "w"
+                    %  > West face contribution.
+                    B = B+f.*xf;
+                case "e"
+                    %  > East face contribution.
+                    B = B-f.*xf;
                 otherwise
                     return;
             end
         end
         %  > 1.1.3. -------------------------------------------------------
-        function [] = SetUp_Solver(stl_s,A,B)
+        function [x,et_c] = SetUp_Solver(A,B,eq,a)
             
             
-  
             
+            
+            
+            
+            mm = 1;
+            
+            
+            
+            
+            
+            
+            x.c  = A\B;
+            et_c = A*a.c(:,1)-B;
         end
         % >> 1.2. ---------------------------------------------------------
         function [e,x] = Update_pde(msh,a,s,x,et_c,v,g)
