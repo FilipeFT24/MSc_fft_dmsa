@@ -71,15 +71,15 @@ pde
 - [x] Bulk/wall clustered grids.
 - [x] Dirichlet/Neumann/Robin boundary conditions.
 - [x] Upwind/central/downwind differencing schemes up to order n.
-- [] Cell-centered schemes.
-- [] Error estimators/indicators for p-refinement.
-  - [] **1.**
-  - [] **2.**
-  - [] **3.**
-- [] P-adaptation rules.
-  - [] **1.** Irregular rule.
-  - [] **2.** Neighbour rule.
-
+- [&nbsp;] Error estimators/indicators for p-refinement.
+  - [&nbsp;] **1.** X
+  - [&nbsp;] **2.** X
+  - [&nbsp;] **3.** X
+- [x] P-adaptation rules.
+  - [x] **1.** P-refinement criteria identification.
+  - [x] **2.** Irregular rule.
+  - [x] **3.** Neighbour rule.
+  - [&nbsp;] **4.** Odd-order schemes fix.
 
 # 2D Code structure
 ## Top-level directory layout

@@ -4,12 +4,12 @@ classdef B_2_3_1D
         % >> 1.1. ---------------------------------------------------------
         function [msh,pde] = Check_TE(msh,pde,s,A,B,v,g,bnd)
             %  > Schemes order/type.
-            t1(1)   = "CDS";
+            t1(1)   = "UDS";
             t1(2)   = "CDS";
-            t2(1)   = 1;
+            t2(1)   = 2;
             t2(2)   = 1;
             %  > Number of truncation error terms.
-            nt      = 5;
+            nt      = 2;
             %  > stl.
             [stl,p] = B_2_3_1D.Initialize_stl(msh.f.NF,t1,t2);
             
@@ -19,16 +19,19 @@ classdef B_2_3_1D
                     dfn{i}(:,j) = B_2_3_1D.Compute_dfn(p(i)-1+j,pde.f.f{1},msh.f.Xv);
                 end
             end
-            %  > Solve PDE.
-            [~,s,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,bnd,v,g);
-            [e,~]      = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
+            %  > Solve PDE.            
+            [stl,s,~,~,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,pde.f.st,bnd,v,g);    
+            [e,~]            = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
+            
+            sss = e.t.f(:,2)-e.t.f(:,1);
             
             %  > Compute truncation error (finite number of terms: nt).
             TE = B_2_3_1D.Compute_TE(msh,stl.s,s,p,nt,dfn);
             
             hold on;
             plot(msh.f.Xv,abs(e.t.f(:,1)),'or');
-            plot(msh.f.Xv,abs(TE{1})); set(gca,'YScale','log');
+            plot(msh.f.Xv,abs(TE{1}(:,1))); set(gca,'YScale','log');
+            plot(msh.f.Xv,abs(sss)); set(gca,'YScale','log');
             
         end
         % >> 1.2. ---------------------------------------------------------
@@ -58,9 +61,8 @@ classdef B_2_3_1D
         %  > Compute truncation error terms' magnitude (truncated terms of Df).
         function [TE] = Compute_TE(msh,stl_s,s,p,nt,dfn)
             %  > Auxiliary variables.
-            Xv   = msh.f.Xv;
-            trsh = 10e-12;
-            
+            Xv = msh.f.Xv;
+
             % >> Loop through selected faces...
             for i = 1:size(stl_s,2)
                 if isempty(stl_s{i})
@@ -78,11 +80,9 @@ classdef B_2_3_1D
                         %  > Df_T.
                         Df_T (l,m) = transpose((xt(m)-fx)'.^(p(i)-1+l));
                         %  > Truncation error (TE).
-                        TE{i}(k,l) = transpose(Df_T*s.xf{i,k}').*dfn{i}(k,l);
+                        TE{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*dfn{i}(k,l);
                     end
                 end
-                %  > Set elements below a given treshold to 0.
-                TE{i}(abs(TE{i})<trsh) = 0;
             end
         end
     end

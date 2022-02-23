@@ -27,7 +27,6 @@ classdef Fig_Tools_1D
             end
         end
         % >> 2. -----------------------------------------------------------
-        % >> 3. -----------------------------------------------------------
         function [c_xy] = ToPatch(msh,wdt)
             %  > XY_v.
             i       =  1:msh.f.NF;
@@ -40,7 +39,7 @@ classdef Fig_Tools_1D
                 c_xy{i}(2,[2,3]) = -wdt;
             end
         end
-        % >> 4. -----------------------------------------------------------
+        % >> 3. -----------------------------------------------------------
         function [c] = Colormap_style(L1,L2,SZ_Y)
             c                      =  colorbar();
             c.Location             = 'Eastoutside';
@@ -53,8 +52,7 @@ classdef Fig_Tools_1D
             %  > Colorbar format.
             %  set(c,'xticklabel',cellfun(@(x)sprintf('%.3f',x),num2cell(get(c,'xtick')),'Un',0))
         end
-        % >> 5. -----------------------------------------------------------
-        % >> 6. -----------------------------------------------------------
+        % >> 4. -----------------------------------------------------------
         function [] = Export_PDF(Filename,Directory)
             set     (gcf,'PaperSize',[27.25,20.85],'PaperPosition',[0,0,29.7,21.0]);
             print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r500');

@@ -21,6 +21,7 @@ classdef B_1D
         
         %% > Auxiliary functions.
         % >> 1. -----------------------------------------------------------
+        %  > Initialization routine (for all tests).
         function [pde,A,B,stl,s] = Initialize(msh,v,g,ft,ee,t1,t2)
             %  > pde.
             pde = B_1_1D.WrapUp_B_1_1D(msh,v,g,ft);
@@ -54,6 +55,7 @@ classdef B_1D
         end
         % >> 2. -----------------------------------------------------------
         %  > 2.1 ----------------------------------------------------------
+        %  > Gather rotuines.
         function [msh,pde] = SetUp(msh,v,g,ft,bnd,p_adapt,ao,n,ee,tv,tg)
             %  > Initialize.
             [pde,A,B,stl,s] = B_1D.Initialize(msh,v,g,ft,ee,tv,tg);
@@ -72,15 +74,15 @@ classdef B_1D
             end
         end
         %  > 2.2 ----------------------------------------------------------
+        %  > Set up "standard" and "p-adaptative" routines.
         function [msh,pde] = SetUp_p_adapt(msh,pde,stl,s,A,B,v,g,bnd,p_adapt,ao,n)
-            %  > Set up problem...
             switch p_adapt
                 case false
-                    %  > ...solve PDE.
+                    %  > "Standard" run.
                     [stl,s,~,~,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,pde.f.st,bnd,v,g);
                     [e,x]            = B_2_1_1D.Update_pde(msh,pde.a,s,x,ea,v,g);
                 case true
-                    %  > ...solve PDE while (...).
+                    %  > "p-adaptative" run.
                     i = 0;
                     while i < n
                         [stl,s,A,B,x,ea] = B_2_1_1D.Update_stl(msh,stl,s,A,B,pde.a,pde.f.st,bnd,v,g);
@@ -93,10 +95,13 @@ classdef B_1D
                 otherwise
                     return;
             end
-            %  > ...update structures.
             [msh,pde] = B_1D.Update(msh,pde,stl,s,x,e);
+            
+            %  > Plot...
+            Fig_1_1D.WrapUp_Fig_1_1D(msh,pde);
         end
         % >> 3. -----------------------------------------------------------
+        %  > Update "msh" and "pde" structures.
         function [msh,pde] = Update(msh,pde,stl,s,x,e)
             s.stl = stl;
             msh.s = s;

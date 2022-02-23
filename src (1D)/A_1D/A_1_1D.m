@@ -42,14 +42,16 @@ classdef A_1_1D
             %        └─  DDS (Downind differencing scheme).
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
+            %  > #1: Standard/p-adaptative routines.
             inp.fr.p_adapt   = true;
             inp.fr.allow_odd = true;
-            inp.fr.n         = 2;
-            inp.fr.test_ee   = false;
+            inp.fr.n         = 1;
             inp.fr.type_1.v  = "UDS";
             inp.fr.type_1.g  = "CDS";
             inp.fr.type_2.v  = 1;
             inp.fr.type_2.g  = 1;
+            %  > #2: Test error estimators.
+            inp.fr.test_ee   = true;
         end
     end
 end
