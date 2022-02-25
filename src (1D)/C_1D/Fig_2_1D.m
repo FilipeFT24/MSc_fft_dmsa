@@ -1,114 +1,251 @@
 classdef Fig_2_1D
     methods (Static)
-        %% > Wrap-up Fig_2 (1D).
-        function [] = WrapUp_Fig_2_1D(msh,pde)
+        %% > #1.
+        function [] = WrapUp_Fig_2_1_1D(msh,pde,p,ttm)
             %  > Plot/Export.
             P_1 = true;
             P_2 = true;
-            P_3 = true;
             Exp = false;
             F_1 = "FN_1";
             F_2 = "FN_2";
-            F_2 = "FN_3";
             D_1 = "../[Figures]/[1D]/Fig_2";
             D_2 = "../[Figures]/[1D]/Fig_2";
-            D_3 = "../[Figures]/[1D]/Fig_2";
             %  > Properties.
-            Fig = [1,2,3];
-            fig = Fig_2_1D.Set_fig(Exp);
-            l_1 = false;
-            l_2 = false;
+            Fig = [3,4];
+            fig = Fig_2_1D.Set_fig_1(Exp);
+            p   = [p(1),p(2)-1];
+            l_1 = true;
+            l_2 = true;
             
             if ~Exp
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
                 subplot(1,2,1);
-                Fig_2_1D.Plot_1(fig,l_1,msh,pde);
+                Fig_2_1D.Plot_12_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
                 subplot(1,2,2);
-                Fig_2_1D.Plot_2(fig,l_2,msh,pde);
+                Fig_2_1D.Plot_12_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
             else
                 if P_1
                     figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                    Fig_2_1D.Plot_1(fig,l_1,msh,pde);
+                    Fig_2_1D.Plot_12_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
                     Fig_Tools_1D.Export_PDF(F_1,D_1);
                 end
                 if P_2
                     figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                    Fig_2_1D.Plot_2(fig,l_2,msh,pde);
+                    Fig_2_1D.Plot_12_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
                     Fig_Tools_1D.Export_PDF(F_2,D_2);
                 end
-                if P_3
-                    figure(Fig(3)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                    Fig_2_1D.Plot_3(fig,l_3,msh,pde);
-                    Fig_Tools_1D.Export_PDF(F_3,D_3);
+            end
+        end
+        % >> 1. -----------------------------------------------------------
+        function [] = Plot_12_1(f,l,i,msh,p,et,ttm)
+            %  > Auxiliary variables.
+            C     = linspecer(9,'qualitative');
+            [L,X] = Fig_2_1D.Set_Labels_1(i);
+            trsh  = 10e-16;
+            
+            %  > Plot.
+            hold on;
+            k     = 1;
+            P{1}  = plot(msh.f.Xv,et,':s','Color',C(1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(1,:),'MarkerSize',f.MS_1);
+            for j = 1:size(ttm,2)
+                %  > Remove elements below a given treshold.
+                ij = find(ttm(:,j)<trsh);
+                if ~isempty(ij)
+                    ttm(ij,j) = 0;
+                end
+                if ~all(ttm(:,j) < trsh)
+                    k    = k+1;
+                    P{k} = plot(msh.f.Xv,ttm(:,j),'--o','Color',C(j+1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
+                    switch i
+                        case 1
+                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\phi}|$"]);
+                        case 2
+                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\nabla\phi}|$"]);
+                    end
                 end
             end
-        end
-        
-        %% > 1. -----------------------------------------------------------
-        function [] = Plot_1(f_1,l_1,msh,pde)
-            %  > Auxiliary variables.
-            C  = linspecer(9,'qualitative');
-            L  = Fig_2_1D.Set_Labels_1();
-            m  = size(pde.e.t.f,2);
-            Xv = [msh.f.Xv(1),msh.f.Xv(msh.f.NF)];
-            
-            %  > Plot.
-            hold on;
-            for j = 1:m
-                P{j}   = plot(msh.f.Xv,pde.e.t.f(:,j)          ,':o','Color',C(j,:),'LineWidth',f_1.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',f_1.MS_1);
-                P{j+m} = line(Xv,[pde.e.t.n.f(1,j),pde.e.t.n.f(1,j)],'Color',C(j,:),'Linewidth',f_1.LW_2,'Linestyle','-.');
-            end
             legend([P{:}],[L{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',f_1.FT_1,'NumColumns',2);
+                'Interpreter','latex','Location','Northeast','FontSize',f.FT_1,'NumColumns',1);
             %  > Axis.
-            if l_1
+            if l
                 set(gca,'YScale','log');
             end
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{8},f_1.FT_2,f_1.FT_3);
+            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",X,f.FT_2,f.FT_3);
         end
-        
-        %% > 2. -----------------------------------------------------------
-        function [] = Plot_2(f_2,l_2,msh,pde)
-            %  > Auxiliary variables.
-            C  = linspecer(9,'qualitative');
-            L  = Fig_2_1D.Set_Labels_2();
-            Xv = [msh.f.Xv(1),msh.f.Xv(msh.f.NF)];
-            
-            %  > Plot.
-            hold on;
-            P{1} = plot(msh.c.Xc,pde.e.c.c(:,1)      ,':o','Color',C(1,:),'LineWidth',f_2.LW_1,'MarkerFaceColor',C(1,:),'MarkerSize',f_2.MS_1);
-            P{2} = line(Xv,[pde.e.c.n(1,1),pde.e.c.n(1,1)],'Color',C(1,:),'Linewidth',f_2.LW_2,'Linestyle','-.');
-            legend([P{:}],[L{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',f_2.FT_1,'NumColumns',2);
-            %  > Axis.
-            if l_2
-                set(gca,'YScale','log');
+        % >> 2. -----------------------------------------------------------
+        %  > 2.1. ---------------------------------------------------------
+        function [X,Y] = Set_Labels_1(i)
+            switch i
+                case 1
+                    X = '$|\tau_{\phantom{(j)}}^{\phi}|$';
+                    Y = "$\textrm{Error magnitude}, |\tau^{\phi}|$";
+                    
+                case 2
+                    X = '$|\tau_{\phantom{(j)}}^{\nabla\phi}|$';
+                    Y = "$\textrm{Error magnitude}, |\tau^{\nabla\phi}|$";
             end
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{3},f_2.FT_2,f_2.FT_3);
         end
-        
-        %% > 3. -----------------------------------------------------------
-        % >> 3.1. ---------------------------------------------------------
-        function [L] = Set_Labels_1()
-            L{1} = "$|\tau_{f}^{\phantom{\nabla}\phi}|$";
-            L{2} = "$|\tau_{f}^{\nabla\phi}|$";
-            L{3} = "$|\!|\tau_{f}^{\phantom{\nabla}\phi}|\!|_{1}$";
-            L{4} = "$|\!|\tau_{f}^{\nabla\phi}|\!|_{1}$";
-            L{5} = "$|\!|\bar\tau_{f}^{\phantom{\nabla\phi}}|\!|_{1}$";
-            L{6} = "$|\tau_{c}|$";
-            L{7} = "$|\!|\tau_{c}|\!|_{1}$";
-            L{8} = "$\textrm{Error magnitude}, |\tau^{\phi}|$";
-        end
-        % >> 3.2. ---------------------------------------------------------
-        function [L] = Set_Labels_2()
-            L{1} = "$|e_{c}^{\phantom{\nabla}\phi}|$";
-            L{2} = "$|\!|e_{c}^{\phantom{\nabla}\phi}|\!|_{1}$";
-            L{3} = "$\textrm{Error magnitude}, |e^{\phi}|$";
-        end
-        % >> 3.3. ---------------------------------------------------------
-        function [fig] = Set_fig(Exp)
+        %  > 2.2. ---------------------------------------------------------
+        function [fig] = Set_fig_1(Exp)
             if ~Exp
-                fig.LW_1 = 2.0;
+                fig.LW_1 = 1.75;
+                fig.LW_2 = 1.5;
+                fig.MS_1 = 3.0;
+                fig.FT_1 = 12.5;
+                fig.FT_2 = 12.5;
+                fig.FT_3 = 12.5;
+            else
+                fig.LW_1 = 3.0;
+                fig.LW_2 = 2.5;
+                fig.MS_1 = 5.0;
+                fig.FT_1 = 25.0;
+                fig.FT_2 = 30.0;
+                fig.FT_3 = 30.0;
+            end
+        end
+        %% > #2.
+        function [] = WrapUp_Fig_2_2_1D(msh,pde,p,dfn_1,dfn_2,ttm_1,ttm_2)
+            %  > Plot/Export.
+            P_1 = true;
+            P_2 = true;
+            Exp = false;
+            F_1 = "FN_1";
+            F_2 = "FN_2";
+            D_1 = "../[Figures]/[1D]/Fig_2";
+            D_2 = "../[Figures]/[1D]/Fig_2";
+            %  > Properties.
+            Fig = [3,4];
+            fig = Fig_2_1D.Set_fig_2(Exp);
+            p   = [p(1),p(2)-1];
+            l_1 = true;
+            l_2 = true;
+            
+            if ~Exp
+                figure(Fig(1)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
+                subplot(1,2,1);
+                Fig_2_1D.Plot_12_2(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm_1{1},ttm_2{1});
+                subplot(1,2,2);
+                Fig_2_1D.Plot_12_2(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm_1{2},ttm_2{2});
+                figure(Fig(2)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
+                subplot(1,2,1);
+                Fig_2_1D.Plot_12_3(fig,l_1,msh,p(1),dfn_1{1},dfn_2{1});
+                subplot(1,2,2);
+                Fig_2_1D.Plot_12_3(fig,l_2,msh,p(2),dfn_1{2},dfn_2{2});
+            else
+                if P_1
+                    figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
+                    Fig_2_1D.Plot_12_2(fig,l_1,msh,p(1),pde.e.t.f(:,1),ttm_1{1},ttm_2{1});
+                    Fig_Tools_1D.Export_PDF(F_1,D_1);
+                end
+                if P_2
+                    figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
+                    Fig_2_1D.Plot_12_2(fig,l_4,msh,p(2),pde.e.t.f(:,2),ttm_1{2},ttm_2{2});
+                    Fig_Tools_1D.Export_PDF(F_2,D_2);
+                end
+            end 
+        end
+        % >> 1. -----------------------------------------------------------
+        %  > 1.1. ---------------------------------------------------------
+        function [] = Plot_12_2(f,l,i,msh,p,et,ttm_1,ttm_2)
+            %  > Auxiliary variables.
+            C     = linspecer(9,'qualitative');
+            [X,Y] = Fig_2_1D.Set_Labels_1(i);
+            trsh  = 10e-12;
+            nsh   = 10;
+            
+            %  > Plot.
+            hold on;
+            k   = 0;
+            im  = abs(et) > trsh;
+            PX  = plot(msh.f.Xv(im),et(im),':s','Color',C(1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(1,:),'MarkerSize',f.MS_1);
+            for j = 1:size(ttm_1,2)
+                %  > Remove elements below a given treshold.
+                ij = abs(ttm_1(:,j)) > trsh;
+                if length(find(ttm_1(:,j) > trsh)) > nsh
+                    k    = k+1;
+                    P{k} = plot(msh.f.Xv(ij),ttm_1(ij,j),'-o','Color',C(j+1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
+                    switch i
+                        case 1
+                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\phi\phantom{^{(p)}}}|$"]);
+                        case 2
+                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\nabla\phi}|$"]);
+                    end
+                end
+            end
+            for j = 1:size(ttm_2,2)
+                %  > Remove elements below a given treshold.
+                ik = abs(ttm_2(:,j)) > trsh;
+                if length(find(ttm_2(:,j) > trsh)) > nsh
+                    k    = k+1;
+                    P{k} = plot(msh.f.Xv(ik),ttm_2(ik,j),'--v','Color',C(j+1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
+                    switch i
+                        case 1
+                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\phi^{(p)}}|$"]);
+                        case 2
+                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\nabla\phi^{(p)}}|$"]);
+                    end
+                end
+            end
+            LX{1,1} = X;
+            switch i
+                case 1
+                    bbox = [-0.0070,-0.0600];
+                case 2
+                    bbox = [-0.0070,-0.0975];
+            end
+            legendflex(PX,LX,'buffer',bbox,'bufferunit', 'normalized',...
+                'Interpreter','latex','Location','Northeast','FontSize',f.FT_1,'NumColumns',1);          
+            legend([P{:}],[L{:}],...
+                'Interpreter','latex','Location','Northeast','FontSize',f.FT_1,'NumColumns',2);
+            %  > Axis.
+            if l
+                set(gca,'YScale','log');
+            end
+            ylim([trsh,10^0]);
+            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",Y,f.FT_2,f.FT_3);
+        end
+        %  > 1.2. ---------------------------------------------------------
+        function [] = Plot_12_3(f,l,msh,p,dfn_1,dfn_2)
+            %  > Auxiliary variables.
+            C    = linspecer(9,'qualitative');
+            X    = "$\textrm{Derivative magnitude}, |(\underbrace{\nabla\nabla\ldots\nabla}_{p-1}\phi)_{f}|$";
+            trsh = 10e-16;
+            
+            %  > Plot.
+            hold on;
+            k     = 0;
+            for j = 1:size(dfn_1,2)
+                %  > Remove elements below a given treshold.
+                ij = abs(dfn_1(:,j)) > trsh;
+                if ~all(dfn_1(:,j) < trsh)
+                    k    = k+1;
+                    P{k} = plot(msh.f.Xv(ij),abs(dfn_1(ij,j)),'-s','Color',C(k,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
+                    L{k} = join(["$|\nabla^{\left(",num2str(p+j),"\right)}\phi^{\phantom{\left(p\right)}}|$"]);
+                end
+            end
+            for j = 1:size(dfn_2,2)
+                %  > Remove elements below a given treshold.
+                ij = abs(dfn_2(:,j)) > trsh;
+                if ~all(dfn_2(:,j) < trsh)
+                    k    = k+1;
+                    P{k} = plot(msh.f.Xv(ij),abs(dfn_2(ij,j)),'--o','Color',C(k,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
+                    L{k} = join(["$|\nabla^{\left(",num2str(p+j),"\right)}\phi^{\left(p\right)}|$"]);
+                end
+            end
+            legend([P{:}],[L{:}],...
+                'Interpreter','latex','Location','Northeast','FontSize',f.FT_1,'NumColumns',1);
+            %  > Axis.
+            if l
+                set(gca,'YScale','log');
+            end
+            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",X,f.FT_2,f.FT_3);
+        end
+        % >> 2.
+        % >> 2. -----------------------------------------------------------
+        %  > 2.1. ---------------------------------------------------------
+        function [fig] = Set_fig_2(Exp)
+            if ~Exp
+                fig.LW_1 = 1.75;
                 fig.LW_2 = 1.5;
                 fig.MS_1 = 3.0;
                 fig.FT_1 = 12.5;

@@ -91,14 +91,32 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [stl,s] = SetUp_stl(msh,stl,s,a,bnd,v,g)
+        %  > Initialize 'stl' structure.
+        function [p,s,t] = Initialize_stl(msh,t1,t2)
+            p = repelem(t2,msh.f.NF);
+            s = 1:msh.f.NF;
+            t = repelem(t1,msh.f.NF);
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > Compute method's order.
+        function [p] = Compute_p(stl_p,stl_t)
+            switch stl_t
+                case "CDS"
+                    p = 2.*stl_p;
+                otherwise
+                    p = 2.*stl_p-1;
+            end
+        end
+        % >> 2.3. ---------------------------------------------------------
+        function [stl,s] = SetUp_stl(obj,msh,pde,s,stl)
             % >> Assemble stencil.
-            s = A_2_1D.Assemble_stl(msh,stl,stl.s,s,a,bnd,v,g);
+            s = A_2_1D.Assemble_stl(obj,msh,pde,s,stl,stl.s);
             
             % >> Check for nil coefficients...
             %  > If we're trying to use an UDS/DDS for the diffusive term on a uniform grid (boundaries NOT included), use a CDS of higher-order instead.
             k = 1;
-            for j = 1:size(s.xf,2)
+            l = 1:2;
+            for j = l
                 xf_nil =  round(s.xf{2,j},3);
                 if_nil = ~xf_nil;
                 %  > Update diffusive term of face 'j'...
@@ -110,21 +128,21 @@ classdef A_2_1D
                 end
             end
             if k ~=1
-                s = A_2_1D.Assemble_stl(msh,stl,upd_dt,s,a,bnd,v,g);
+                s = A_2_1D.Assemble_stl(obj,msh,s,stl,upd_dt);
             end
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
-        function [s] = Assemble_stl(msh,stl,stl_s,s,a,bnd,v,g)
+        function [s] = Assemble_stl(obj,msh,pde,s,stl,stl_s)
             %  > Auxiliary variables.
             Xc      = msh.c.Xc;
             NC      = msh.c.NC;
             Xv      = msh.f.Xv;
             NF      = msh.f.NF;
-            f (:,1) = a.f(:,1);
-            f (:,2) = a.f(:,2);
-            vg  (1) = v;
-            vg  (2) = g;
+            f (:,1) = pde.a.f(:,1);
+            f (:,2) = pde.a.f(:,2);
+            vg  (1) = obj.v;
+            vg  (2) = obj.g;
             
             % >> Loop through selected faces...
             for n = 1:size(stl_s,2)
@@ -155,7 +173,7 @@ classdef A_2_1D
                             add_f = true;
                             bnd_f = 1;
                             stl_f = bnd_f;
-                            bnd_i = bnd(1);
+                            bnd_i = obj.bnd(1);
                             %  > ...cell(s).
                             switch stl.t{n}(o)
                                 case "CDS"
@@ -168,7 +186,7 @@ classdef A_2_1D
                             add_f = true;
                             bnd_f = NF;
                             stl_f = bnd_f;
-                            bnd_i = bnd(2);
+                            bnd_i = obj.bnd(2);
                             %  > ...cell(s).
                             switch stl.t{n}(o)
                                 case "CDS"
@@ -261,9 +279,10 @@ classdef A_2_1D
                         %  > Update 'msh' structure...
                         s.c  {n,o}  = stl_c;
                         s.f  {n,o}  = stl_f;
-                        s.xt {n,o}  = xt;
                         s.bnd{n,o}  = bnd_v;
                         s.xf {n,o}  = xf;
+                        s.xt {n,o}  = xt;
+                        s.Inv{n,o}  = Inv;
                     end
                 end
             end

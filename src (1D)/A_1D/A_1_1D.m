@@ -18,9 +18,9 @@ classdef A_1_1D
             inp.msh.lim.Xv_i  = 0;
             inp.msh.lim.Xv_f  = 1;
             inp.msh.h         = h;
-            inp.msh.eg        = "1";
+            inp.msh.eg        = "2";
             inp.msh.s_nu.Nf_X = 0.5;
-            inp.msh.s_nu.Ks_X = 5.0;
+            inp.msh.s_nu.Ks_X = 2.5;
             inp.msh.s_nu.Lc_X = "e";
             
             %% > pr.
@@ -44,14 +44,15 @@ classdef A_1_1D
             %        └─  Number of neighbours to the left/right.
             %  > #1: Standard/p-adaptative routines.
             inp.fr.p_adapt   = true;
-            inp.fr.allow_odd = true;
-            inp.fr.n         = 1;
+            inp.fr.allow_odd = false;
+            inp.fr.n         = 3;
             inp.fr.type_1.v  = "UDS";
             inp.fr.type_1.g  = "CDS";
             inp.fr.type_2.v  = 1;
             inp.fr.type_2.g  = 1;
             %  > #2: Test error estimators.
             inp.fr.test_ee   = true;
+            inp.fr.m         = true;
         end
     end
 end

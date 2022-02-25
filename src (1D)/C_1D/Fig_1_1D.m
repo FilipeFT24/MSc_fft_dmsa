@@ -16,8 +16,8 @@ classdef Fig_1_1D
             %  > Properties.
             Fig = [1,2,3];
             fig = Fig_1_1D.Set_fig(Exp);
-            l_1 = false;
-            l_2 = false;
+            l_1 = true;
+            l_2 = true;
             
             if ~Exp
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
@@ -45,7 +45,7 @@ classdef Fig_1_1D
         end
         
         %% > 1. -----------------------------------------------------------
-        function [] = Plot_1(f_1,l_1,msh,pde)
+        function [] = Plot_1(fig,l_1,msh,pde)
             %  > Auxiliary variables.
             C  = linspecer(9,'qualitative');
             L  = Fig_1_1D.Set_Labels_1();
@@ -54,37 +54,50 @@ classdef Fig_1_1D
             
             %  > Plot.
             hold on;
-            for j = 1:m
-                P{j}   = plot(msh.f.Xv,pde.e.t.f(:,j)          ,':o','Color',C(j,:),'LineWidth',f_1.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',f_1.MS_1);
-                P{j+m} = line(Xv,[pde.e.t.n.f(1,j),pde.e.t.n.f(1,j)],'Color',C(j,:),'Linewidth',f_1.LW_2,'Linestyle','-.');
+            for j = 1:m+1
+                if j ~= m+1
+                    P{j}     = plot(msh.f.Xv,pde.e.t.f(:,j)          ,':o','Color',C(j,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',fig.MS_1);
+                    P{j+m+1} = line(Xv,[pde.e.t.n.f(1,j),pde.e.t.n.f(1,j)],'Color',C(j,:),'Linewidth',fig.LW_2,'Linestyle','-.');
+                else
+                    P{j}     = plot(msh.c.Xc,pde.e.t.c(:,1)          ,':o','Color',C(j,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',fig.MS_1);
+                    P{j+m+1} = line(Xv,[pde.e.t.n.c(1,1),pde.e.t.n.c(1,1)],'Color',C(j,:),'Linewidth',fig.LW_2,'Linestyle','-.');
+                end
             end
             legend([P{:}],[L{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',f_1.FT_1,'NumColumns',2);
+                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',2);
             %  > Axis.
             if l_1
                 set(gca,'YScale','log');
             end
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{8},f_1.FT_2,f_1.FT_3);
+            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{7},fig.FT_2,fig.FT_3);
         end
         
         %% > 2. -----------------------------------------------------------
-        function [] = Plot_2(f_2,l_2,msh,pde)
+        function [] = Plot_2(fig,l_2,msh,pde)
             %  > Auxiliary variables.
             C  = linspecer(9,'qualitative');
             L  = Fig_1_1D.Set_Labels_2();
+            m  = size(pde.e.f.f,2);
             Xv = [msh.f.Xv(1),msh.f.Xv(msh.f.NF)];
             
             %  > Plot.
             hold on;
-            P{1} = plot(msh.c.Xc,pde.e.c.c(:,1)      ,':o','Color',C(1,:),'LineWidth',f_2.LW_1,'MarkerFaceColor',C(1,:),'MarkerSize',f_2.MS_1);
-            P{2} = line(Xv,[pde.e.c.n(1,1),pde.e.c.n(1,1)],'Color',C(1,:),'Linewidth',f_2.LW_2,'Linestyle','-.');
+            for j = 1:m+1
+                if j ~= m+1
+                    P{j}     = plot(msh.f.Xv,pde.e.f.f(:,j)      ,':o','Color',C(j,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',fig.MS_1);
+                    P{j+m+1} = line(Xv,[pde.e.f.n(1,j),pde.e.f.n(1,j)],'Color',C(j,:),'Linewidth',fig.LW_2,'Linestyle','-.');
+                else
+                    P{j}     = plot(msh.c.Xc,pde.e.c.c(:,1)      ,':o','Color',C(j,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',fig.MS_1);
+                    P{j+m+1} = line(Xv,[pde.e.c.n(1,1),pde.e.c.n(1,1)],'Color',C(j,:),'Linewidth',fig.LW_2,'Linestyle','-.');
+                end
+            end
             legend([P{:}],[L{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',f_2.FT_1,'NumColumns',2);
+                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',2);
             %  > Axis.
             if l_2
                 set(gca,'YScale','log');
             end
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{3},f_2.FT_2,f_2.FT_3);
+            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{7},fig.FT_2,fig.FT_3);
         end
         
         %% > 3. -----------------------------------------------------------
@@ -92,18 +105,21 @@ classdef Fig_1_1D
         function [L] = Set_Labels_1()
             L{1} = "$|\tau_{f}^{\phantom{\nabla}\phi}|$";
             L{2} = "$|\tau_{f}^{\nabla\phi}|$";
-            L{3} = "$|\!|\tau_{f}^{\phantom{\nabla}\phi}|\!|_{1}$";
-            L{4} = "$|\!|\tau_{f}^{\nabla\phi}|\!|_{1}$";
-            L{5} = "$|\!|\bar\tau_{f}^{\phantom{\nabla\phi}}|\!|_{1}$";
-            L{6} = "$|\tau_{c}|$";
-            L{7} = "$|\!|\tau_{c}|\!|_{1}$";
-            L{8} = "$\textrm{Error magnitude}, |\tau^{\phi}|$";
+            L{3} = "$|\tau_{c}^{\phantom{\nabla\phi}}|$";
+            L{4} = "$|\!|\tau_{f}^{\phantom{\nabla}\phi}|\!|_{1}$";
+            L{5} = "$|\!|\tau_{f}^{\nabla\phi}|\!|_{1}$";
+            L{6} = "$|\!|\tau_{c}^{\phantom{\nabla\phi}}|\!|_{1}$";
+            L{7} = "$\textrm{Error magnitude}, |\tau|$";
         end
         % >> 3.2. ---------------------------------------------------------
         function [L] = Set_Labels_2()
-            L{1} = "$|e_{c}^{\phantom{\nabla}\phi}|$";
-            L{2} = "$|\!|e_{c}^{\phantom{\nabla}\phi}|\!|_{1}$";
-            L{3} = "$\textrm{Error magnitude}, |e^{\phi}|$";
+            L{1} = "$|e_{f}^{\phantom{\nabla}\phi}|$";
+            L{2} = "$|e_{f}^{\nabla\phi}|$";
+            L{3} = "$|e_{c}^{\phantom{\nabla\phi}}|$";
+            L{4} = "$|\!|e_{f}^{\phantom{\nabla}\phi}|\!|_{1}$";
+            L{5} = "$|\!|e_{f}^{\nabla\phi}|\!|_{1}$";
+            L{6} = "$|\!|e_{c}^{\phantom{\nabla\phi}}|\!|_{1}$";
+            L{7} = "$\textrm{Error magnitude}, |e|$";
         end
         % >> 3.3. ---------------------------------------------------------
         function [fig] = Set_fig(Exp)

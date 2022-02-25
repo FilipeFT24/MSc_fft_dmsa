@@ -4,17 +4,17 @@ classdef B_2_2_1D
         % >> 1.1. ---------------------------------------------------------
         %  > Select faces for convective/diffusive p-refinement based on exact/estimated local truncation error.
         %  > Selection criterion: local mean error (norm-1).
-        function [stl] = Select_fCD(ao,stl,ecc,et)
-            [m,n] = size(et.f);
+        function [stl] = Select_fCD(obj,stl,e)
+            [m,n] = size(e.t.f);
             %  > Step #1: Increase method's order.
             for i = 1:n
-                s{i} = find(et.f(:,i) > et.n.t(1));
+                s{i} = find(e.t.f(:,i) > e.t.n.t(1));
             end
-            stl = B_2_2_1D.Increase_p(ao,m,n,stl,s,ecc);
+            stl = B_2_2_1D.Increase_p(obj.ao,m,n,stl,s,e.c.c);
             %  > Step #2: Check rules.
             R1  = true;
             R2  = true;
-            stl = B_2_2_1D.Check_Rules(R1,R2,ao,m,n,stl,ecc);
+            stl = B_2_2_1D.Check_Rules(R1,R2,obj.ao,m,n,stl,e.c.c);
         end
         %  > 1.1.1. -------------------------------------------------------
         %  > Increase method's order.
@@ -72,22 +72,12 @@ classdef B_2_2_1D
             end
         end
         %  > 1.1.3. -------------------------------------------------------
-        %  > Compute method's order.
-        function [p] = Compute_p(stl_p,stl_t)
-            switch stl_t
-                case "CDS"
-                    p = 2.*stl_p;
-                otherwise
-                    p = 2.*stl_p-1;
-            end
-        end
-        %  > 1.1.4. -------------------------------------------------------
         %  > Group cell faces (...to apply rule #1).
         function [pc] = Group_CellFaces(stl,m,n)
             %  > Compute method's order.
             for i = 1:n
                 for j = 1:m
-                    pf(j,i) = B_2_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
+                    pf(j,i) = A_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
                 end
             end
             %  > Group...
@@ -97,7 +87,7 @@ classdef B_2_2_1D
                 end
             end
         end
-        %  > 1.1.5. -------------------------------------------------------
+        %  > 1.1.4. -------------------------------------------------------
         %  > Check rule #1...
         function [stl] = Rule_1(ao,m,n,stl,ecc,pc)
             for i = 1:n
@@ -125,13 +115,13 @@ classdef B_2_2_1D
                 stl.s{i} = sort(stl.s{i});
             end
         end   
-        %  > 1.1.6. -------------------------------------------------------
+        %  > 1.1.5. -------------------------------------------------------
         %  > Check rule #2...
         function [stl] = Rule_2(ao,m,n,stl,ecc)  
             for i = 1:n
                 %  > Compute method's order.
                 for j = 1:m
-                    p(j,i) = B_2_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
+                    p(j,i) = A_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
                 end
                 %  > Check and increase...
                 for j = 1:m
@@ -144,14 +134,14 @@ classdef B_2_2_1D
                                 B_2_2_1D.Check_t(ao,stl.p{i}(j,1),stl.t{i}(j,1),j,m,ecc);
                             stl.s{i} = cat(1,stl.s{i},j);
                             %  > Update p.
-                            p  (j,i) = B_2_2_1D.Compute_p(stl.p{i}(j,1),stl.t{i}(j,1));
+                            p  (j,i) = A_2_1D.Compute_p(stl.p{i}(j,1),stl.t{i}(j,1));
                         end
                     end
                 end
                 stl.s{i} = sort(stl.s{i});
             end
         end
-        %  > 1.1.7. -------------------------------------------------------
+        %  > 1.1.6. -------------------------------------------------------
         %  > Check rules...
         function [stl] = Check_Rules(R1,R2,ao,m,n,stl,ecc)
             %  > Rule #1.
