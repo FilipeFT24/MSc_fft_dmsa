@@ -1,7 +1,6 @@
 classdef B_2_3_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        % >> 1.1. ---------------------------------------------------------
         %  > Initialize 'stl' structure.
         function [stl,nt,p] = Initialize_stl(msh,flag)
             switch flag
@@ -46,8 +45,9 @@ classdef B_2_3_1D
                     return;
             end
         end
-        % >> 1.2. ---------------------------------------------------------
-        %  > 1.2.1. -------------------------------------------------------
+        %% > 2. -----------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
+        %  > 2.1.1. -------------------------------------------------------
         %  > Compute analytic derivatives up to order n.
         function [dfn] = Compute_dfn_1(msh,pde,p,nt)
             syms x;
@@ -64,27 +64,27 @@ classdef B_2_3_1D
                 end
             end
         end
-        %  > 1.2.2. -------------------------------------------------------
+        %  > 2.1.2. -------------------------------------------------------
         %  > Truncated terms' magnitude (w/ analytic derivatives).
-        function [ttm] = EE_1(obj,msh,pde,s)
+        function [] = EE_1(obj,msh,pde,s)
             %  > Initialize.
             [stl,nt,p]  = B_2_3_1D.Initialize_stl(msh,false);
             %  > Compute tuncated term's magnitude.
-            [pde,s,stl] = B_2_1_1D.Update_pde(obj,msh,pde,s,stl);
+            [pde,s,stl] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl);
             dfn         = B_2_3_1D.Compute_dfn_1(msh,pde,p,nt);
             ttm         = B_2_3_1D.Compute_ttm(msh,s,stl.s,p,nt,dfn);
             %  > Plot.
             Fig_2_1D.WrapUp_Fig_2_1_1D(msh,pde,p-1,ttm);
         end
-        % >> 1.3. ---------------------------------------------------------
-        %  > 1.3.1. -------------------------------------------------------
+        % >> 2.2. ---------------------------------------------------------
+        %  > 2.2.1. -------------------------------------------------------
         %  > Truncated terms' magnitude (w/ higher-order solution).
         function [] = EE_2(obj,msh,pde,s)
             %  > Initialize.
             [stl,nt,p]           = B_2_3_1D.Initialize_stl(msh,true);
             %  > Compute tuncated term's magnitude.
-            [pde_lo,s_lo,stl.lo] = B_2_1_1D.Update_pde(obj,msh,pde,s,stl.lo);
-            [pde_ho,s_ho,stl.ho] = B_2_1_1D.Update_pde(obj,msh,pde,s,stl.ho);
+            [pde_lo,s_lo,stl.lo] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl.lo);
+            [pde_ho,s_ho,stl.ho] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl.ho);
             dfn_1                = B_2_3_1D.Compute_dfn_1(msh,pde_lo,p.lo,nt);
             ttm_1                = B_2_3_1D.Compute_ttm(msh,s_lo,stl.lo.s,p.lo,nt,dfn_1);
             dfn_2                = B_2_3_1D.Compute_dfn_2(pde_ho,nt,p,s_ho);
@@ -92,7 +92,7 @@ classdef B_2_3_1D
             %  > Plot.
             Fig_2_1D.WrapUp_Fig_2_2_1D(msh,pde_lo,p.lo-1,dfn_1,dfn_2,ttm_1,ttm_2);    
         end
-        %  > 1.3.2. -------------------------------------------------------
+        %  > 2.2.2. -------------------------------------------------------
         %  > Compute derivatives w/ higher-order solution up to order n.
         function [dfn] = Compute_dfn_2(pde_ho,nt,p,s_ho)
             [m,n] = size(s_ho.Inv);
@@ -104,12 +104,12 @@ classdef B_2_3_1D
                         l           = k+1-ki;
                         df          = zeros(1,size(s_ho.Inv{i,j},1));
                         df    (1,k) = 1;
-                        dfn{i}(j,l) = df*s_ho.Inv{i,j}*pde_ho.x.v.vx{i,j};
+                        dfn{i}(j,l) = df*s_ho.Inv{i,j}*pde_ho.x.v.f{i,j};
                     end
                 end
             end
         end
-        % >> 1.4. ---------------------------------------------------------
+        % >> 2.3. ---------------------------------------------------------
         %  > Evaluate truncated error terms' magnitude (re-assemble Df).
         function [ttm] = Compute_ttm(msh,s,stl_s,p,nt,dfn)
             for i = 1:size(stl_s,2)
@@ -133,6 +133,13 @@ classdef B_2_3_1D
                 end
                 ttm{i} = abs(ttm{i});
             end
+        end
+        %% > 3. -----------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
+        function [] = EE_3(obj,msh,pde,s)
+            
+            ll = 1;
+            
         end
     end
 end

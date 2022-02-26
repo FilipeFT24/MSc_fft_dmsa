@@ -24,16 +24,16 @@ classdef A_2_1D
             end
             % >> Grid properties.
             %  > Number of cells/faces.
-            msh.c.NC     = NX_c;
-            msh.f.NF     = NX_c+1;
+            msh.c.NC       = NX_c;
+            msh.f.NF       = NX_c+1;
             %  > Cell vertex coordinates.
-            msh.f.Xv     = Xd_x;
+            msh.f.Xv       = Xd_x;
             %  > Xc/Cell volume.
-            i            = 1:msh.c.NC;
-            msh.c.Xc (i) = 1./2.*(msh.f.Xv(i)+msh.f.Xv(i+1));
-            msh.c.Vol(i) = msh.f.Xv(i+1)-msh.f.Xv(i);
+            i              = 1:msh.c.NC;
+            msh.c.Xc (i)   = 1./2.*(msh.f.Xv(i)+msh.f.Xv(i+1));
+            msh.c.Vol(i,1) = msh.f.Xv(i+1)-msh.f.Xv(i);
             %  > Reference length.
-            msh.d.H_ref  = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
+            msh.d.H_ref    = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
         end
         
         %% > 1. -----------------------------------------------------------
@@ -108,7 +108,7 @@ classdef A_2_1D
             end
         end
         % >> 2.3. ---------------------------------------------------------
-        function [stl,s] = SetUp_stl(obj,msh,pde,s,stl)
+        function [s,stl] = SetUp_stl(obj,msh,pde,s,stl)
             % >> Assemble stencil.
             s = A_2_1D.Assemble_stl(obj,msh,pde,s,stl,stl.s);
             

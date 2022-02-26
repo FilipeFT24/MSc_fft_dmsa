@@ -1,5 +1,5 @@
 %% > Clear memory, clean screen, close any figure.
-clear, clc, close all; format short; warning('off');
+clear, clc, close all; format short; beep off; warning('off');
 %% > Run...
 % >> ----------------------------------------------------------------------
 %  > Working directories.

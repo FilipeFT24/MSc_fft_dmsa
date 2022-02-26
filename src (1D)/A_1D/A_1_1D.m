@@ -43,7 +43,7 @@ classdef A_1_1D
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
             %  > #1: Standard/p-adaptative routines.
-            inp.fr.p_adapt   = true;
+            inp.fr.p_adapt   = false;
             inp.fr.allow_odd = false;
             inp.fr.n         = 3;
             inp.fr.type_1.v  = "UDS";
@@ -51,8 +51,7 @@ classdef A_1_1D
             inp.fr.type_2.v  = 1;
             inp.fr.type_2.g  = 1;
             %  > #2: Test error estimators.
-            inp.fr.test_ee   = true;
-            inp.fr.m         = true;
+            inp.fr.test_ee   = false;
         end
     end
 end

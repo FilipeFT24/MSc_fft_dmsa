@@ -11,7 +11,7 @@ classdef B_1D
                     [msh,pde] = B_1D.SetUp_p_adapt(obj,msh,pde,s,stl);
                 case true
                     %  > Check error estimators.
-                    [msh,pde] = B_1D.SetUp_EE(obj,msh,pde,s);
+                    B_1D.SetUp_EE(obj,msh,pde,s);
                 otherwise
                     return;
             end
@@ -38,7 +38,6 @@ classdef B_1D
             obj.t1      = t1;
             obj.t2      = t2;
             obj.ee      = inp.fr.test_ee;
-            obj.m       = inp.fr.m;
         end
         % >> 1. -----------------------------------------------------------
         %  > Initialize problem (for all tests).
@@ -82,12 +81,12 @@ classdef B_1D
             switch obj.p_adapt
                 case false
                     %  > 'Standard' run.
-                    [pde,s,stl] = B_2_1_1D.Update_pde(obj,msh,pde,s,stl);
+                    [pde,s,stl] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl);
                 case true
                     %  > 'p-adaptative' run.
                     i = 0;
                     while i < obj.n
-                        [pde,s,stl] = B_2_1_1D.Update_pde(obj,msh,pde,s,stl);
+                        [pde,s,stl] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl);
                         if i+1 ~= obj.n
                             stl = B_2_2_1D.Select_fCD(obj,stl,pde.e);
                         end
@@ -102,15 +101,13 @@ classdef B_1D
             Fig_1_1D.WrapUp_Fig_1_1D(msh,pde);
         end
         %  > 2.2 ----------------------------------------------------------
-        function [msh,pde] = SetUp_EE(obj,msh,pde,s)
-            if ~obj.m
-                %  > Truncated terms' magnitude (w/ analytic derivatives).
-                ttm = B_2_3_1D.EE_1(obj,msh,pde,s);
-            else
-                %  > Dominant truncated terms' magnitude (w/ higher-order solution).
-                B_2_3_1D.EE_2(obj,msh,pde,s);
-            end
-            
+        function [] = SetUp_EE(obj,msh,pde,s)
+            %  > Truncated terms' magnitude (w/ analytic derivatives).
+            %  B_2_3_1D.EE_1(obj,msh,pde,s);
+            %  > Dominant truncated terms' magnitude (w/ higher-order solution).
+            %  B_2_3_1D.EE_2(obj,msh,pde,s);
+            %  > Dominant truncated terms' magnitude (w/ higher-order solution).
+            B_2_3_1D.EE_3(obj,msh,pde,s);
             
             
             
