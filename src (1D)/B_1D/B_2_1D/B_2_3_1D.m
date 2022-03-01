@@ -6,8 +6,8 @@ classdef B_2_3_1D
             switch flag
                 case false
                     %  > Schemes order/type (v/g).
-                    t1 = ["UDS","CDS"];
-                    t2 = [1,1];
+                    t1 = ["CDS","CDS"];
+                    t2 = [2,2];
                     j  = 1:length(t1);
                     %  > Number of truncated terms.
                     nt = [2,2];
@@ -68,11 +68,11 @@ classdef B_2_3_1D
         %  > Truncated terms' magnitude (w/ analytic derivatives).
         function [] = EE_1(obj,msh,pde,s)
             %  > Initialize.
-            [stl,nt,p]  = B_2_3_1D.Initialize_stl(msh,false);
+            [stl,nt,p]  = B_2_3_1D.Initialize_stl (msh,false);
             %  > Compute tuncated term's magnitude.
             [pde,s,stl] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl);
-            dfn         = B_2_3_1D.Compute_dfn_1(msh,pde,p,nt);
-            ttm         = B_2_3_1D.Compute_ttm(msh,s,stl.s,p,nt,dfn);
+            dfn         = B_2_3_1D.Compute_dfn_1  (msh,pde,p,nt);
+            ttm         = B_2_3_1D.Compute_ttm    (obj,msh,s,stl.s,p,nt,dfn);
             %  > Plot.
             Fig_2_1D.WrapUp_Fig_2_1_1D(msh,pde,p-1,ttm);
         end
@@ -85,10 +85,10 @@ classdef B_2_3_1D
             %  > Compute tuncated term's magnitude.
             [pde_lo,s_lo,stl.lo] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl.lo);
             [pde_ho,s_ho,stl.ho] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl.ho);
-            dfn_1                = B_2_3_1D.Compute_dfn_1(msh,pde_lo,p.lo,nt);
-            ttm_1                = B_2_3_1D.Compute_ttm(msh,s_lo,stl.lo.s,p.lo,nt,dfn_1);
-            dfn_2                = B_2_3_1D.Compute_dfn_2(pde_ho,nt,p,s_ho);
-            ttm_2                = B_2_3_1D.Compute_ttm(msh,s_lo,stl.lo.s,p.lo,nt,dfn_2);
+            dfn_1                = B_2_3_1D.Compute_dfn_1  (msh,pde_lo,p.lo,nt);
+            ttm_1                = B_2_3_1D.Compute_ttm    (obj,msh,s_lo,stl.lo.s,p.lo,nt,dfn_1);
+            dfn_2                = B_2_3_1D.Compute_dfn_2  (pde_ho,nt,p,s_ho);
+            ttm_2                = B_2_3_1D.Compute_ttm    (obj,msh,s_lo,stl.lo.s,p.lo,nt,dfn_2);
             %  > Plot.
             Fig_2_1D.WrapUp_Fig_2_2_1D(msh,pde_lo,p.lo-1,dfn_1,dfn_2,ttm_1,ttm_2);    
         end
@@ -107,31 +107,6 @@ classdef B_2_3_1D
                         dfn{i}(j,l) = df*s_ho.Inv{i,j}*pde_ho.x.v.f{i,j};
                     end
                 end
-            end
-        end
-        % >> 2.3. ---------------------------------------------------------
-        %  > Evaluate truncated error terms' magnitude (re-assemble Df).
-        function [ttm] = Compute_ttm(msh,s,stl_s,p,nt,dfn)
-            for i = 1:size(stl_s,2)
-                if isempty(stl_s{i})
-                    continue;
-                else
-                    for j = 1:size(stl_s{i},1)
-                        %  > Auxiliary variables.
-                        k   = stl_s{i}(j);
-                        xt  = s.xt{i,k};
-                        len = length(xt);
-                        l   = 1:nt(i);
-                        m   = 1:len;
-                        fx  = msh.f.Xv(k);
-                        
-                        %  > Df_T.
-                        Df_T  (l,m) = transpose((xt(m)-fx)'.^(p(i)-1+l));
-                        %  > Truncation error terms.
-                        ttm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*dfn{i}(k,l);
-                    end
-                end
-                ttm{i} = abs(ttm{i});
             end
         end
         %% > 3. -----------------------------------------------------------

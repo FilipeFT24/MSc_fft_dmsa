@@ -4,17 +4,19 @@ classdef B_2_2_1D
         % >> 1.1. ---------------------------------------------------------
         %  > Select faces for convective/diffusive p-refinement based on exact/estimated local truncation error.
         %  > Selection criterion: local mean error (norm-1).
-        function [stl] = Select_fCD(obj,stl,e)
-            [m,n] = size(e.t.f);
-            %  > Step #1: Increase method's order.
+        function [stl] = Adapt_p(obj,stl,e)
+            m = size(e.t.f,1);
+            n = size(e.t.f,2)-1;
+            %  > 1. Increase method's order.
             for i = 1:n
-                s{i} = find(e.t.f(:,i) > e.t.n.t(1));
+                s{i} = find(e.t.f_abs(:,i) > e.t.n_abs.f(3));
             end
             stl = B_2_2_1D.Increase_p(obj.ao,m,n,stl,s,e.c.c);
-            %  > Step #2: Check rules.
-            R1  = true;
-            R2  = true;
-            stl = B_2_2_1D.Check_Rules(R1,R2,obj.ao,m,n,stl,e.c.c);
+            %  > 2. Check rules.
+            R1  = false;
+            R2  = false;
+            R3  = false;
+            stl = B_2_2_1D.Check_Rules(R1,R2,R3,obj.ao,m,n,stl,e.c.c);
         end
         %  > 1.1.1. -------------------------------------------------------
         %  > Increase method's order.
@@ -97,7 +99,7 @@ classdef B_2_2_1D
                     else
                         %  > Evaluated cell (j).
                         je = pc{j,1}(i,:) ;
-                        %  > Minimum elements of cells (j-1) and (j+1).
+                        %  > Maximum elements of cells (j-1) and (j+1).
                         jm = max(pc{j-1,1}(i,:));
                         jp = max(pc{j+1,1}(i,:));
                         %  > Check...
@@ -142,8 +144,12 @@ classdef B_2_2_1D
             end
         end
         %  > 1.1.6. -------------------------------------------------------
+        %  > Check rule #3...
+        function [stl] = Rule_3(stl)  
+        end
+        %  > 1.1.7. -------------------------------------------------------
         %  > Check rules...
-        function [stl] = Check_Rules(R1,R2,ao,m,n,stl,ecc)
+        function [stl] = Check_Rules(R1,R2,R3,ao,m,n,stl,ecc)
             %  > Rule #1.
             switch R1
                 case true
@@ -159,6 +165,13 @@ classdef B_2_2_1D
                     stl = B_2_2_1D.Rule_2(ao,m,n,stl,ecc);
                 otherwise
                     %  > Do not check rule #2...
+            end
+            %  > Rule #3.
+            switch R3
+                case true
+                    stl = B_2_2_1D.Rule_3(stl);
+                otherwise
+                    %  > Do not check rule #3...
             end
         end
     end

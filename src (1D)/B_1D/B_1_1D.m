@@ -17,15 +17,18 @@ classdef B_1_1D
             switch char(ft)
                 case "sin"
                     i    = 3;
-                    f{1} = sin(i.*pi.*x);
+                    f{1} = sin(i.*pi.*x)+cos(i.*pi.*x);
                 case "exp"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 100;
+                    i    = 75;
                     f{1} = exp(-i.*((x-c).^2));
                 otherwise
                     return;
             end
             f{2} = diff(f{1},x);
+            f{3} = diff(f{2},x);
+            f{4} = diff(f{3},x);
+            f{5} = diff(f{4},x);
             func = v.*f{2}-g.*diff(f{2},x);
             intf = int(func);
             
@@ -33,8 +36,14 @@ classdef B_1_1D
             %  > ...symbolic functions/handles.
             fn.sym{1} = f{1};
             fn.sym{2} = f{2};
+            fn.sym{2} = f{3};
+            fn.sym{3} = f{4};
+            fn.sym{4} = f{5};
             fn.f  {1} = matlabFunction(f{1});
             fn.f  {2} = matlabFunction(f{2});
+            fn.f  {3} = matlabFunction(f{3});
+            fn.f  {4} = matlabFunction(f{4});
+            fn.f  {5} = matlabFunction(f{5});
             fn.func   = matlabFunction(func);
             fn.int    = matlabFunction(intf);
         end
@@ -49,6 +58,9 @@ classdef B_1_1D
             j        = 1:msh.f.NF;
             s.f(j,1) = fn.f{1}(msh.f.Xv(j));
             s.f(j,2) = fn.f{2}(msh.f.Xv(j));
+            s.f(j,3) = fn.f{3}(msh.f.Xv(j));
+            s.f(j,4) = fn.f{4}(msh.f.Xv(j));
+            s.f(j,5) = fn.f{5}(msh.f.Xv(j));
         end
         
         %% > 2. -----------------------------------------------------------

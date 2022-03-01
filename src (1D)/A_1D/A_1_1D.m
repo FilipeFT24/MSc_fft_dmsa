@@ -20,7 +20,7 @@ classdef A_1_1D
             inp.msh.h         = h;
             inp.msh.eg        = "2";
             inp.msh.s_nu.Nf_X = 0.5;
-            inp.msh.s_nu.Ks_X = 2.5;
+            inp.msh.s_nu.Ks_X = 4.5;
             inp.msh.s_nu.Lc_X = "e";
             
             %% > pr.
@@ -43,10 +43,10 @@ classdef A_1_1D
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
             %  > #1: Standard/p-adaptative routines.
-            inp.fr.p_adapt   = false;
-            inp.fr.allow_odd = false;
-            inp.fr.n         = 3;
-            inp.fr.type_1.v  = "UDS";
+            inp.fr.p_adapt   = true;
+            inp.fr.allow_odd = true;
+            inp.fr.n         = 5;
+            inp.fr.type_1.v  = "CDS";
             inp.fr.type_1.g  = "CDS";
             inp.fr.type_2.v  = 1;
             inp.fr.type_2.g  = 1;

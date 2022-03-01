@@ -91,13 +91,14 @@ classdef A_2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
+        %  > 2.1.1. -------------------------------------------------------
         %  > Initialize 'stl' structure.
         function [p,s,t] = Initialize_stl(msh,t1,t2)
             p = repelem(t2,msh.f.NF);
             s = 1:msh.f.NF;
             t = repelem(t1,msh.f.NF);
         end
-        % >> 2.2. ---------------------------------------------------------
+        %  > 2.1.2. -------------------------------------------------------
         %  > Compute method's order.
         function [p] = Compute_p(stl_p,stl_t)
             switch stl_t
@@ -105,30 +106,6 @@ classdef A_2_1D
                     p = 2.*stl_p;
                 otherwise
                     p = 2.*stl_p-1;
-            end
-        end
-        % >> 2.3. ---------------------------------------------------------
-        function [s,stl] = SetUp_stl(obj,msh,pde,s,stl)
-            % >> Assemble stencil.
-            s = A_2_1D.Assemble_stl(obj,msh,pde,s,stl,stl.s);
-            
-            % >> Check for nil coefficients...
-            %  > If we're trying to use an UDS/DDS for the diffusive term on a uniform grid (boundaries NOT included), use a CDS of higher-order instead.
-            k = 1;
-            l = 1:2;
-            for j = l
-                xf_nil =  round(s.xf{2,j},3);
-                if_nil = ~xf_nil;
-                %  > Update diffusive term of face 'j'...
-                if nnz(if_nil) > 0
-                    n              = 2;
-                    upd_dt{n}(k,1) = j;
-                    stl.t {n}(j,1) = "CDS";
-                    k              = k+1;
-                end
-            end
-            if k ~=1
-                s = A_2_1D.Assemble_stl(obj,msh,s,stl,upd_dt);
             end
         end
         % >> 2.2. ---------------------------------------------------------
@@ -243,7 +220,7 @@ classdef A_2_1D
                                 Df(l,m) = k.*(xt(l)-fx).^(k-1);
                             case "Robin"
                                 %  > Boundary value.
-                                g_v     = g./v;
+                                g_v     = obj.g./obj.v;
                                 bnd_v   = f(bnd_f,1)+g_v.*f(bnd_f,2);
                                 %  > Df.
                                 k       = 1:len-1;
@@ -253,7 +230,7 @@ classdef A_2_1D
                                 m       = k+1;
                                 lg  (1) = 0;
                                 lg  (m) = k.*(xt(l)-fx).^(k-1);
-                                Df(l,j) = lv(j)+g./v.*lg(j);
+                                Df(l,j) = lv(j)+g_v*lg(j);
                             otherwise
                                 %  > Boundary value.
                                 bnd_v   = [];
@@ -265,26 +242,80 @@ classdef A_2_1D
                             if n == 2
                                 return;
                             else
-                                df  = 1;
-                                Inv = inv(Df);
-                                Tf  = df*Inv;
-                                xf  = Tf(n,:);
+                                df   = 1;
+                                Inv  = inv(Df);
+                                Tf   = df*Inv;
+                                xf   = Tf(n,:);
                             end
                         else
-                            df      = zeros(1,len);
-                            df(1,n) = 1;
-                            Inv     = inv(Df);
-                            xf      = df*Inv;
+                            df       = zeros(1,len);
+                            df(1,n)  = 1;
+                            Inv      = inv(Df);
+                            xf       = df*Inv;
                         end
                         %  > Update 'msh' structure...
-                        s.c  {n,o}  = stl_c;
-                        s.f  {n,o}  = stl_f;
-                        s.bnd{n,o}  = bnd_v;
-                        s.xf {n,o}  = xf;
-                        s.xt {n,o}  = xt;
-                        s.Inv{n,o}  = Inv;
+                        s.c    {n,o} = stl_c;
+                        s.f    {n,o} = stl_f;
+                        s.bnd_i{n,o} = bnd_i;
+                        s.bnd_v{n,o} = bnd_v;
+                        s.xf   {n,o} = xf;
+                        s.xt   {n,o} = xt;
+                        s.Inv  {n,o} = Inv;
                     end
                 end
+            end
+        end
+        %  > 2.2.2. -------------------------------------------------------
+        %  > Evaluate truncated error terms' magnitude (re-assemble Df).
+        function [ttm] = Compute_ttm(obj,msh,s,stl_s,p,nt,dfn)
+            for i = 1:size(stl_s,2)
+                if isempty(stl_s{i})
+                    continue;
+                else
+                    for j = 1:size(stl_s{i},1)
+                        %  > Auxiliary variables.
+                        k   = stl_s{i}(j);
+                        xt  = s.xt{i,k};
+                        fx  = msh.f.Xv(k);
+                        
+                        %  > Df_T.
+                        bnd_i = s.bnd_i{i,j};
+                        switch bnd_i
+                            case "Neumann"
+                                l         = 1:nt(i);
+                                m         = 1:length(xt);
+                                n         = 1:length(xt)-1;
+                                o         = p(i)-1+l;
+                                q         = n-1;
+                                r         = length(xt);
+                                t         = o-1;
+                                Df  (n,l) = (xt(n)-fx)'.^o;
+                                Df  (r,l) = (xt(r)-fx)'.^t.*o;
+                                Df_T(l,m) = transpose(Df(m,l));
+                            case "Robin"
+                                g_v       = obj.g./obj.v;
+                                l         = 1:nt(i);
+                                m         = 1:length(xt);
+                                n         = 1:length(xt)-1;
+                                o         = p(i)-1+l;
+                                q         = n-1;
+                                r         = length(xt);
+                                t         = o-1;
+                                Df  (m,l) = (xt(m)-fx)'.^o;
+                                Df  (r,l) = Df(r,l)+g_v.*(xt(r)-fx)'.^t.*o;
+                                Df  (l,m) = transpose(Df(m,l));
+                            otherwise
+                                l         = 1:nt(i);
+                                m         = 1:length(xt);
+                                n         = p(i)-1+l;
+                                Df  (m,l) = (xt(m)-fx)'.^n;
+                                Df_T(l,m) = transpose(Df(m,l));
+                        end
+                        %  > Truncated terms.
+                        ttm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*dfn{i}(k,l);
+                    end
+                end
+                ttm{i} = abs(ttm{i});
             end
         end
     end

@@ -27,32 +27,6 @@ classdef Fig_Tools_1D
             end
         end
         % >> 2. -----------------------------------------------------------
-        function [c_xy] = ToPatch(msh,wdt)
-            %  > XY_v.
-            i       =  1:msh.f.NF;
-            v_xy(i) =  msh.f.Xv(i);
-            %  > c_xy.
-            for i = 1:msh.c.NC
-                c_xy{i}(1,[1,2]) =  v_xy(i+1);
-                c_xy{i}(1,[3,4]) =  v_xy(i);
-                c_xy{i}(2,[1,4]) =  wdt;
-                c_xy{i}(2,[2,3]) = -wdt;
-            end
-        end
-        % >> 3. -----------------------------------------------------------
-        function [c] = Colormap_style(L1,L2,SZ_Y)
-            c                      =  colorbar();
-            c.Location             = 'Eastoutside';
-            c.Label.Interpreter    = 'latex';
-            c.TickLabelInterpreter = 'latex';
-            c.FontSize             =  SZ_Y;
-            c.AxisLocation         = 'out';
-            c.Label.String         =  L1;
-            AdvancedColormap(L2);
-            %  > Colorbar format.
-            %  set(c,'xticklabel',cellfun(@(x)sprintf('%.3f',x),num2cell(get(c,'xtick')),'Un',0))
-        end
-        % >> 4. -----------------------------------------------------------
         function [] = Export_PDF(Filename,Directory)
             set     (gcf,'PaperSize',[27.25,20.85],'PaperPosition',[0,0,29.7,21.0]);
             print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r500');

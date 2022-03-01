@@ -18,25 +18,25 @@ classdef Fig_2_1D
                 Fig = 3;
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
                 subplot(1,2,1);
-                Fig_2_1D.Plot_12_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
+                Fig_2_1D.Plot_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
                 subplot(1,2,2);
-                Fig_2_1D.Plot_12_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
+                Fig_2_1D.Plot_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
             else
                 Fig = [3,4];
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_12_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
+                Fig_2_1D.Plot_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
                 Fig_Tools_1D.Export_PDF(F_1,D_1);
                 figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_12_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
+                Fig_2_1D.Plot_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
                 Fig_Tools_1D.Export_PDF(F_2,D_2);
             end
         end
         % >> 1. -----------------------------------------------------------
-        function [] = Plot_12_1(f,l,i,msh,p,et,ttm)
+        function [] = Plot_1(f,l,i,msh,p,et,ttm)
             %  > Auxiliary variables.
-            C     = linspecer(9,'qualitative');
+            C        = linspecer(9,'qualitative');
             [L{1},X] = Fig_2_1D.Set_Labels_1(i);
-            trsh  = 10e-16;
+            trsh     = 10e-16;
             
             %  > Plot.
             hold on;
@@ -122,33 +122,33 @@ classdef Fig_2_1D
                 Fig = [5,6];
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
                 subplot(1,2,1);
-                Fig_2_1D.Plot_12_2(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm_1{1},ttm_2{1});
+                Fig_2_1D.Plot_2_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm_1{1},ttm_2{1});
                 subplot(1,2,2);
-                Fig_2_1D.Plot_12_2(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm_1{2},ttm_2{2});
+                Fig_2_1D.Plot_2_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm_1{2},ttm_2{2});
                 figure(Fig(2)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
                 subplot(1,2,1);
-                Fig_2_1D.Plot_12_3(fig,l_3,msh,p(1),dfn_1{1},dfn_2{1});
+                Fig_2_1D.Plot_2_2(fig,l_3,msh,p(1),dfn_1{1},dfn_2{1});
                 subplot(1,2,2);
-                Fig_2_1D.Plot_12_3(fig,l_4,msh,p(2),dfn_1{2},dfn_2{2});
+                Fig_2_1D.Plot_2_2(fig,l_4,msh,p(2),dfn_1{2},dfn_2{2});
             else
                 Fig = [5,6,7,8];
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_12_2(fig,l_1,msh,p(1),pde.e.t.f(:,1),ttm_1{1},ttm_2{1});
+                Fig_2_1D.Plot_2_1(fig,l_1,msh,p(1),pde.e.t.f(:,1),ttm_1{1},ttm_2{1});
                 Fig_Tools_1D.Export_PDF(F_1,D_1);
                 figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_12_2(fig,l_2,msh,p(2),pde.e.t.f(:,2),ttm_1{2},ttm_2{2});
+                Fig_2_1D.Plot_2_1(fig,l_2,msh,p(2),pde.e.t.f(:,2),ttm_1{2},ttm_2{2});
                 Fig_Tools_1D.Export_PDF(F_2,D_2);
                 figure(Fig(3)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_12_3(fig,l_3,msh,p(1),dfn_1{1},dfn_2{1});
+                Fig_2_1D.Plot_2_2(fig,l_3,msh,p(1),dfn_1{1},dfn_2{1});
                 Fig_Tools_1D.Export_PDF(F_3,D_3);
                 figure(Fig(4)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_12_3(fig,l_4,msh,p(2),dfn_1{2},dfn_2{2});
+                Fig_2_1D.Plot_2_2(fig,l_4,msh,p(2),dfn_1{2},dfn_2{2});
                 Fig_Tools_1D.Export_PDF(F_4,D_4);
             end
         end
         % >> 1. -----------------------------------------------------------
         %  > 1.1. ---------------------------------------------------------
-        function [] = Plot_12_2(f,l,i,msh,p,et,ttm_1,ttm_2)
+        function [] = Plot_2_1(f,l,i,msh,p,et,ttm_1,ttm_2)
             %  > Auxiliary variables.
             C     = linspecer(9,'qualitative');
             [X,Y] = Fig_2_1D.Set_Labels_1(i);
@@ -207,7 +207,7 @@ classdef Fig_2_1D
             Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",Y,f.FT_2,f.FT_3);
         end
         %  > 1.2. ---------------------------------------------------------
-        function [] = Plot_12_3(f,l,msh,p,dfn_1,dfn_2)
+        function [] = Plot_2_2(f,l,msh,p,dfn_1,dfn_2)
             %  > Auxiliary variables.
             C    = linspecer(9,'qualitative');
             X    = "$\textrm{Derivative magnitude}, |(\underbrace{\nabla\nabla\ldots\nabla}_{p-1}\phi)_{f}|$";

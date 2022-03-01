@@ -8,7 +8,7 @@ classdef B_1D
             switch obj.ee
                 case false
                     %  > 'Standard' and 'p-adaptative' runs w/ analytic values.
-                    [msh,pde] = B_1D.SetUp_p_adapt(obj,msh,pde,s,stl);
+                    [msh,pde] = B_1D.Run_p(obj,msh,pde,s,stl);
                 case true
                     %  > Check error estimators.
                     B_1D.SetUp_EE(obj,msh,pde,s);
@@ -53,13 +53,14 @@ classdef B_1D
                 B{j} = zeros(msh.c.NC,1);
             end
             %  > s/stl.
-            s.A   = A;
-            s.B   = B;
-            s.c   = cell(2,msh.f.NF);
-            s.f   = cell(2,msh.f.NF);
-            s.bnd = cell(2,msh.f.NF);
-            s.xf  = cell(2,msh.f.NF);
-            s.xt  = cell(2,msh.f.NF);
+            s.A     = A;
+            s.B     = B;
+            s.c     = cell(2,msh.f.NF);
+            s.f     = cell(2,msh.f.NF);
+            s.bnd_i = cell(2,msh.f.NF);
+            s.bnd_v = cell(2,msh.f.NF);
+            s.xf    = cell(2,msh.f.NF);
+            s.xt    = cell(2,msh.f.NF);
             switch obj.ee
                 case false
                     for j = i
@@ -76,19 +77,26 @@ classdef B_1D
         end
         % >> 2. -----------------------------------------------------------
         %  > 2.1 ----------------------------------------------------------
-        %  > Set up 'standard' and 'p-adaptative' runs.
-        function [msh,pde] = SetUp_p_adapt(obj,msh,pde,s,stl)
+        %  > Set up 'p-standard' and 'p-adaptative' runs.
+        function [msh,pde] = Run_p(obj,msh,pde,s,stl)
             switch obj.p_adapt
                 case false
-                    %  > 'Standard' run.
-                    [pde,s,stl] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl);
+                    % >> 'p-standard' run.
+                    [pde,s,stl] = B_2_1_1D.SetUp_p(obj,msh,pde,s,stl);
                 case true
-                    %  > 'p-adaptative' run.
-                    i = 0;
-                    while i < obj.n
-                        [pde,s,stl] = B_2_1_1D.WrapUp_B_2_1_1D(obj,msh,pde,s,stl);
-                        if i+1 ~= obj.n
-                            stl = B_2_2_1D.Select_fCD(obj,stl,pde.e);
+                    % >> 'p-adaptative' run.
+                    [pde,s,stl] = B_2_1_1D.SetUp_p(obj,msh,pde,s,stl);
+                    %  > While...
+                    i = 1;
+                    while 1
+                        %  > Save 'stl' structure.
+                        stl_save{i} = stl;
+                        %  > Adapt...
+                        if i ~= obj.n
+                            [stl]       = B_2_2_1D.Adapt_p(obj,stl,pde.e);
+                            [pde,s,stl] = B_2_1_1D.SetUp_p(obj,msh,pde,s,stl);
+                        else
+                            break;
                         end
                         i = i+1;
                     end
@@ -96,28 +104,27 @@ classdef B_1D
                     return;
             end
             %  > Update structures.
-            [msh,pde] = B_1D.Update(msh,pde,s,stl);
+            [msh,pde] = B_1D.Update(msh,pde,s,stl,stl_save);
             %  > Plot...
-            Fig_1_1D.WrapUp_Fig_1_1D(msh,pde);
+            Fig_1_1D.WrapUp_Fig_1_1_1D(true ,msh,pde);
+            Fig_1_1D.WrapUp_Fig_1_2_1D(false,msh,pde);
         end
         %  > 2.2 ----------------------------------------------------------
         function [] = SetUp_EE(obj,msh,pde,s)
             %  > Truncated terms' magnitude (w/ analytic derivatives).
-            %  B_2_3_1D.EE_1(obj,msh,pde,s);
+            B_2_3_1D.EE_1(obj,msh,pde,s);
             %  > Dominant truncated terms' magnitude (w/ higher-order solution).
             %  B_2_3_1D.EE_2(obj,msh,pde,s);
             %  > Dominant truncated terms' magnitude (w/ higher-order solution).
             B_2_3_1D.EE_3(obj,msh,pde,s);
-            
-            
-            
         end
         % >> 3. -----------------------------------------------------------
         %  > Update 'msh' and 'pde' structures.
-        function [msh,pde] = Update(msh,pde,s,stl)
-            s.stl = stl;
-            msh.s = s;
-            msh   = Tools_1D.Sort_struct(msh);
+        function [msh,pde] = Update(msh,pde,s,stl,stl_save)
+            s.stl      = stl;
+            s.stl_save = stl_save;
+            msh.s      = s;
+            msh        = Tools_1D.Sort_struct(msh);
         end
     end
 end
