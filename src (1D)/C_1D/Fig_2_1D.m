@@ -1,7 +1,7 @@
 classdef Fig_2_1D
     methods (Static)
         %% > #1.
-        function [] = WrapUp_Fig_2_1_1D(msh,pde,p,ttm)
+        function [] = WrapUp_Fig_2_1_1D(msh,pde,p)
             %  > Plot/Export.
             Exp = false;
             F_1 = "FN_1";
@@ -9,53 +9,55 @@ classdef Fig_2_1D
             D_1 = "../[Figures]/[1D]/Fig_2";
             D_2 = "../[Figures]/[1D]/Fig_2";
             %  > Properties.
+            Fig = [1,2];
             fig = Fig_2_1D.Set_fig_1(Exp);
             p   = [p(1),p(2)-1];
             l_1 = true;
             l_2 = true;
             
             if ~Exp
-                Fig = 3;
+                %  > 1/2.
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[150,100,1250,600]);
                 subplot(1,2,1);
-                Fig_2_1D.Plot_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
+                Fig_2_1D.Plot_1(fig,l_1,1,msh,p(1),pde.e.t.f_abs(:,1),pde.tm{1});
                 subplot(1,2,2);
-                Fig_2_1D.Plot_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
+                Fig_2_1D.Plot_1(fig,l_2,2,msh,p(2),pde.e.t.f_abs(:,2),pde.tm{2});
             else
-                Fig = [3,4];
+                %  > 1.
                 figure(Fig(1)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_1(fig,l_1,1,msh,p(1),pde.e.t.f(:,1),ttm{1});
+                Fig_2_1D.Plot_1(fig,l_1,1,msh,p(1),pde.e.t.f_abs(:,1),pde.tm{1});
                 Fig_Tools_1D.Export_PDF(F_1,D_1);
+                %  > 2.
                 figure(Fig(2)); set(gcf,'Units','pixels','Position',[250,100,1050,650]);
-                Fig_2_1D.Plot_1(fig,l_2,2,msh,p(2),pde.e.t.f(:,2),ttm{2});
+                Fig_2_1D.Plot_1(fig,l_2,2,msh,p(2),pde.e.t.f_abs(:,2),pde.tm{2});
                 Fig_Tools_1D.Export_PDF(F_2,D_2);
             end
         end
         % >> 1. -----------------------------------------------------------
-        function [] = Plot_1(f,l,i,msh,p,et,ttm)
+        function [] = Plot_1(f,l,i,msh,p,et,tm)
             %  > Auxiliary variables.
             C        = linspecer(9,'qualitative');
             [L{1},X] = Fig_2_1D.Set_Labels_1(i);
-            trsh     = 10e-16;
+            trsh     = 10e-12;
             
-            %  > Plot.
             hold on;
             k     = 1;
-            P{1}  = plot(msh.f.Xv,et,':s','Color',C(1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(1,:),'MarkerSize',f.MS_1);
-            for j = 1:size(ttm,2)
-                %  > Remove elements below a given treshold.
-                ij = find(ttm(:,j)<trsh);
-                if ~isempty(ij)
-                    ttm(ij,j) = 0;
-                end
-                if ~all(ttm(:,j) < trsh)
+            P{1}  = plot(msh.f.Xv,et,'--s','Color',C(1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(1,:),'MarkerSize',f.MS_1);
+            for j = 1:size(tm,2)
+                %  > tm.
+                m = find(tm(:,j) > trsh);
+                if ~all (tm(:,j) < trsh)
                     k    = k+1;
-                    P{k} = plot(msh.f.Xv,ttm(:,j),'--o','Color',C(j+1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
+                    P{k} = plot(msh.f.Xv,tm(:,j),':o','Color',C(j+1,:),'LineWidth',f.LW_1,'MarkerFaceColor',C(j+1,:),'MarkerSize',f.MS_1);
                     switch i
                         case 1
-                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\phi}|$"]);
+                            L{k} = join(["$|\tau_{f_{\left(",num2str(p+j),"\right)}}^{\phi}|$"]);
                         case 2
-                            L{k} = join(["$|\tau_{\left(",num2str(p+j),"\right)}^{\nabla\phi}|$"]);
+                            L{k} = join(["$|\tau_{f_{\left(",num2str(p+j),"\right)}}^{\nabla\phi}|$"]);
+                    end
+                    if l
+                        y_min(k-1) = min(tm(m,j));
+                        y_max(k-1) = max(tm(m,j));
                     end
                 end
             end
@@ -64,6 +66,8 @@ classdef Fig_2_1D
             %  > Axis.
             if l
                 set(gca,'YScale','log');
+                ylim([10.^(ceil(log10(min(y_min)))-1),...
+                      10.^(ceil(log10(max(y_max)))+1)]);
             end
             Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",X,f.FT_2,f.FT_3);
         end
@@ -72,12 +76,12 @@ classdef Fig_2_1D
         function [X,Y] = Set_Labels_1(i)
             switch i
                 case 1
-                    X = '$|\tau_{\phantom{(j)}}^{\phi}|$';
-                    Y = "$\textrm{Error magnitude}, |\tau^{\phi}|$";
+                    X = '$|\tau_{f_{\phantom{\left(j\right)}}}^{\phi}|$';
+                    Y = "$\textrm{Error magnitude}, |\tau_{f}^{\phi}|$";
                     
                 case 2
-                    X = '$|\tau_{\phantom{(j)}}^{\nabla\phi}|$';
-                    Y = "$\textrm{Error magnitude}, |\tau^{\nabla\phi}|$";
+                    X = '$|\tau_{f_{\phantom{\left(j\right)}}}^{\nabla\phi}|$';
+                    Y = "$\textrm{Error magnitude}, |\tau_{f}^{\nabla\phi}|$";
             end
         end
         %  > 2.2. ---------------------------------------------------------

@@ -2,177 +2,150 @@ classdef B_2_2_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        %  > Select faces for convective/diffusive p-refinement based on exact/estimated local truncation error.
-        %  > Selection criterion: local mean error (norm-1).
+        %  > Select faces for convective/diffusive p-refinement based on exact/estimated local face truncation error.
+        %  > Selection criterion: local mean face truncation error.
         function [stl] = Adapt_p(obj,stl,e)
-            m = size(e.t.f,1);
-            n = size(e.t.f,2)-1;
-            %  > 1. Increase method's order.
-            for i = 1:n
-                s{i} = find(e.t.f_abs(:,i) > e.t.n_abs.f(3));
+            %  > Auxiliary variables.
+            [m,n] = size(e.t.f);
+            
+            %  > Select faces for coarsening(fc)/refinement(fr) and decrease/increase method's order accordingly.
+            for i = 1:n-1
+                fr{i} = find(e.t.f_abs(:,i) > e.t.n_abs.f(n));
             end
-            stl = B_2_2_1D.Increase_p(obj.ao,m,n,stl,s,e.c.c);
-            %  > 2. Check rules.
-            R1  = false;
-            R2  = false;
-            R3  = false;
-            stl = B_2_2_1D.Check_Rules(R1,R2,R3,obj.ao,m,n,stl,e.c.c);
-        end
-        %  > 1.1.1. -------------------------------------------------------
-        %  > Increase method's order.
-        function [stl] = Increase_p(ao,m,n,stl,s,ecc)
-            for i = 1:n
-                stl.s{i} = s{i};
-                if ~isempty(s{i})
+            stl = B_2_2_1D.Change_p(obj,stl,fr);
+            %  > Group faces and update 'stl' structure.
+            if obj.gf
+                %  > Method's order.
+                for i = 1:n-1
                     for j = 1:m
-                        if ismembc(j,s{i})
-                            %  > Update stl.
-                            [stl.p{i}(j,1),stl.t{i}(j,1)] = ...
-                                B_2_2_1D.Check_t(ao,stl.p{i}(j,1),stl.t{i}(j,1),j,m,ecc);
-                        end
+                        p(j,i) = A_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
                     end
+                end
+                %  > Update 'stl' structure.
+                stl = B_2_2_1D.Group_f(obj,stl,p);
+            end
+        end
+        % >> 1.2. ---------------------------------------------------------
+        %  > Decrease/increase method's order accordingly.
+        function [stl] = Change_p(obj,stl,fr)
+            for i = 1:size(fr,2)
+                if isempty(fr{i})
+                    stl.s{i} = [];
+                else
+                    l = 0;
+                    for j = 1:size(fr{i},1)
+                        %  > Auxiliary variables.
+                        k = fr{i}(j);
+                        l = l+1;
+                        
+                        %  > Increase method's order.
+                        [stl.p{i}(k),stl.t{i}(k)] = ...
+                            B_2_2_1D.Increase_p(obj,stl.p{i}(k),stl.t{i}(k));
+                        %  > Add element to 'stl.s'.
+                        stl_s{i}(l,1) = k;
+                    end
+                    stl.s{i} = stl_s{i};
                 end
             end
         end
-        %  > 1.1.2. -------------------------------------------------------
-        %  > Check method's order and increase it accordingly.
-        function [p,t] = Check_t(ao,stl_p,stl_t,j,m,ecc)
+        %  > 1.2.1. -------------------------------------------------------
+        %  > Increase method's order.
+        function [stl_p,stl_t] = Increase_p(obj,stl_p,stl_t)
             %  > Allow uncentered differencing schemes(?).
-            switch ao
+            switch obj.ao
                 case false
                     %  > Allow CDS only.
                     switch stl_t
                         case "CDS"
-                            p = stl_p+1;
+                            stl_p = stl_p+1;
                         otherwise
-                            p = stl_p;
+                            stl_t = "CDS";
                     end
-                    t = "CDS";
                 case true
                     %  > Allow UDS/CDS/DDS.
                     switch stl_t
                         case "CDS"
-                            p = stl_p;
-                            if j-p < 1
-                                t = "DDS";
-                            elseif j+p+1 > m-1
-                                t = "UDS";
-                            else
-                                if ecc(j-p) < ecc(j+p+1)
-                                    t = "UDS";
-                                else
-                                    t = "DDS";
+                            stl_p = stl_p+1;
+                            stl_t = "UDS";
+                        otherwise
+                            stl_t = "CDS";
+                    end
+            end
+        end
+        %  > 1.2.2. -------------------------------------------------------
+        %  > Decrease method's order.
+        function [] = Decrease_p()
+        end
+        % >> 1.3. ---------------------------------------------------------
+        %  > Group faces.
+        function [stl] = Group_f(obj,stl,p)
+            %  > Auxiliary variables.
+            [m,n] = size(p);
+            
+            
+%             hold on;
+%             plot(p(:,1),'-m');
+%             plot(p(:,2),'-c');
+%             
+            
+            %  > Group by order.
+            for i = 1:n
+                k = 0;
+                for j = 1:m
+                    if (j > 1) && (p(j,i) == p(j-1,i))
+                        l            = l+1;
+                        g{i}{k}(l,1) = j;
+                    else
+                        k            = k+1;
+                        l            = 1;
+                        g{i}{k}(l,1) = j;
+                    end
+                end
+            end
+            %  > Increase method's order.
+            for i = 1:n
+                j = size(g{i},2);
+                if j ~= 1
+                    for k = 1:j
+                        v{i}(k,1) = p(g{i}{k}(1),i);
+                    end
+                else
+                    v{i} = p(g{i}{j}(1),i);
+                end
+            end
+            %  > Select refinement groups.
+            for i = 1:n
+                j = size(g{i},2);
+                if j ~= 1
+                    for k = 1:j
+                        if k == 1 || k == j
+                            continue;
+                        else
+                            if (v{i}(k) < v{i}(k-1)) && (v{i}(k) < v{i}(k+1))
+                                for l = 1:size(g{i}{k},1)
+                                    %  > Auxiliary variables.
+                                    s = size(stl.s{i},1);
+                                    o = g{i}{k}(l);
+                                    
+                                    %  > Increase method's order (update fields).
+                                    [stl.p{i}(o),stl.t{i}(o)] = ...
+                                        B_2_2_1D.Increase_p(obj,stl.p{i}(o),stl.t{i}(o));
+                                    stl.s{i}(s+1) = o;
+                                    %  > Update vector p (redundant).
+                                    p(o,i) = A_2_1D.Compute_p(stl.p{i}(o),stl.t{i}(o));
                                 end
                             end
-                            p = p+1;
-                        otherwise
-                            p = stl_p;
-                            t = "CDS";
-                    end
-                otherwise
-                    return;
-            end
-        end
-        %  > 1.1.3. -------------------------------------------------------
-        %  > Group cell faces (...to apply rule #1).
-        function [pc] = Group_CellFaces(stl,m,n)
-            %  > Compute method's order.
-            for i = 1:n
-                for j = 1:m
-                    pf(j,i) = A_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
-                end
-            end
-            %  > Group...
-            for i = 1:m-1
-                for j = 1:n
-                    pc{i,1}(j,:) = [pf(i,j),pf(i+1,j)];
-                end
-            end
-        end
-        %  > 1.1.4. -------------------------------------------------------
-        %  > Check rule #1...
-        function [stl] = Rule_1(ao,m,n,stl,ecc,pc)
-            for i = 1:n
-                for j = 1:m-1
-                    if j == 1 || j == m-1
-                        continue;
-                    else
-                        %  > Evaluated cell (j).
-                        je = pc{j,1}(i,:) ;
-                        %  > Maximum elements of cells (j-1) and (j+1).
-                        jm = max(pc{j-1,1}(i,:));
-                        jp = max(pc{j+1,1}(i,:));
-                        %  > Check...
-                        if all(je < jm) && all(je < jp)
-                            %  > Update stl.
-                            [stl.p{i}(j),stl.t{i}(j)] = ...
-                                B_2_2_1D.Check_t(ao,stl.p{i}(j,1),stl.t{i}(j,1),j,m,ecc);
-                            stl.s{i} = cat(1,stl.s{i},j);
-                            %  > Update pc (redundant).
-                            pc{j-1,1}(i,2) = stl.p{i}(j);
-                            pc{j  ,1}(i,1) = stl.p{i}(j);
                         end
                     end
                 end
                 stl.s{i} = sort(stl.s{i});
             end
-        end   
-        %  > 1.1.5. -------------------------------------------------------
-        %  > Check rule #2...
-        function [stl] = Rule_2(ao,m,n,stl,ecc)  
-            for i = 1:n
-                %  > Compute method's order.
-                for j = 1:m
-                    p(j,i) = A_2_1D.Compute_p(stl.p{i}(j),stl.t{i}(j));
-                end
-                %  > Check and increase...
-                for j = 1:m
-                    if j == 1 || j == m
-                        continue;
-                    else
-                        if p(j,i)+1 <= p(j-1,i) && p(j,i)+1 <= p(j+1,i)
-                            %  > Update stl.
-                            [stl.p{i}(j,1),stl.t{i}(j,1)] = ...
-                                B_2_2_1D.Check_t(ao,stl.p{i}(j,1),stl.t{i}(j,1),j,m,ecc);
-                            stl.s{i} = cat(1,stl.s{i},j);
-                            %  > Update p.
-                            p  (j,i) = A_2_1D.Compute_p(stl.p{i}(j,1),stl.t{i}(j,1));
-                        end
-                    end
-                end
-                stl.s{i} = sort(stl.s{i});
-            end
-        end
-        %  > 1.1.6. -------------------------------------------------------
-        %  > Check rule #3...
-        function [stl] = Rule_3(stl)  
-        end
-        %  > 1.1.7. -------------------------------------------------------
-        %  > Check rules...
-        function [stl] = Check_Rules(R1,R2,R3,ao,m,n,stl,ecc)
-            %  > Rule #1.
-            switch R1
-                case true
-                    %  > Group...
-                    pc  = B_2_2_1D.Group_CellFaces(stl,m,n);
-                    stl = B_2_2_1D.Rule_1(ao,m,n,stl,ecc,pc);
-                otherwise
-                    %  > Do not check rule #1...
-            end
-            %  > Rule #2.
-            switch R2
-                case true
-                    stl = B_2_2_1D.Rule_2(ao,m,n,stl,ecc);
-                otherwise
-                    %  > Do not check rule #2...
-            end
-            %  > Rule #3.
-            switch R3
-                case true
-                    stl = B_2_2_1D.Rule_3(stl);
-                otherwise
-                    %  > Do not check rule #3...
-            end
+            
+%             hold on;
+%             plot(p(:,1),'-r');
+%             plot(p(:,2),'-b');
+            
+            
         end
     end
 end

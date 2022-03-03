@@ -10,7 +10,7 @@ classdef B_2_1_1D
             %  > Update 'e' field.
             [e.c]         = B_2_1_1D.Update_pde_ec(pde.a,x,msh.c.Vol);
             [e.f]         = B_2_1_1D.Update_pde_ef(pde.a,x);
-            [e.t]         = B_2_1_1D.Update_pde_et(obj,msh,s,pde.a,x); 
+            [e.t]         = B_2_1_1D.Update_pde_et(obj,msh,s,pde.a,x.f.a,pde.f.st); 
             %  > Set 'pde' fields.
             pde.x         = x;
             pde.e         = e;
@@ -143,6 +143,18 @@ classdef B_2_1_1D
             s.Ac = Ac;
             s.Bc = Bc;
         end
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         % >> 2.5. ---------------------------------------------------------
         %  > Check for nil coefficients in 's.xf' and decrease/increase method's order accordingly.
         %    If we're trying to use an UDS/DDS for the diffusive term on a uniform grid (boundaries NOT included), use a CDS of higher-order instead.
@@ -177,6 +189,18 @@ classdef B_2_1_1D
                 [s] = A_2_1D.Assemble_stl(obj,msh,pde,s,stl,ij_nil);
             end
         end
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
@@ -239,23 +263,23 @@ classdef B_2_1_1D
         end
         %  > 3.2.3. -------------------------------------------------------
         %  > Update 'pde.e.t' field (truncation error).
-        function [et] = Update_pde_et(obj,msh,s,a,x)
+        function [et] = Update_pde_et(obj,msh,s,a,x_fa,st)
             %  > Weighted (convective/diffusive) components.
             vg = [obj.v,obj.g];
             nc = length(vg);
             i  = 1:nc;
             j  = nc+1;
-            k  = 1:nc+1;
+            k  = 1:j;
             
             % >> Face(s).
             %  > (Weighted) truncation/absolute truncation error distribution.
-            et.f      (:,i) = vg(i).*(a.f(:,i)-x.f.a(:,i));
+            et.f      (:,i) = vg(i).*(a.f(:,i)-x_fa(:,i));
             et.f      (:,j) = et.f(:,j-2)-et.f(:,j-1);
             et.f_abs  (:,k) = abs(et.f);
             %  > Mean/absolute mean truncation error.
             et.n.f    (:,k) = mean(et.f(:,k));
             et.n_abs.f(:,k) = mean(et.f_abs(:,k));
-
+            
             % >> Cell(s).
             %  > Truncation/absolute truncation error distribution.
             %  > Equivalent formulations.
@@ -264,7 +288,7 @@ classdef B_2_1_1D
             %  et.c   (l,1) = et.f(l,j)-et.f(m,j);
             et.c      (:,1) = s.Ac*a.c(:,1)-s.Bc(:,1);
             et.c_abs  (:,1) = abs(et.c);
-                        
+           
             %  > Error/absolute error norms.
             Vol             = msh.c.Vol;
             ec_1            = et.c.*Vol;

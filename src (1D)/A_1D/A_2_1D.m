@@ -93,10 +93,12 @@ classdef A_2_1D
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
         %  > Initialize 'stl' structure.
-        function [p,s,t] = Initialize_stl(msh,t1,t2)
-            p = repelem(t2,msh.f.NF);
-            s = 1:msh.f.NF;
-            t = repelem(t1,msh.f.NF);
+        function [stl] = Initialize_stl(msh,t1,t2)
+            for i = 1:length(t1)
+                stl.p{i}(:,1) = repelem(t2(i),msh.f.NF);
+                stl.s{i}(:,1) = 1:msh.f.NF;
+                stl.t{i}(:,1) = repelem(t1(i),msh.f.NF);
+            end
         end
         %  > 2.1.2. -------------------------------------------------------
         %  > Compute method's order.
@@ -267,25 +269,25 @@ classdef A_2_1D
         end
         %  > 2.2.2. -------------------------------------------------------
         %  > Evaluate truncated error terms' magnitude (re-assemble Df).
-        function [ttm] = Compute_ttm(obj,msh,s,stl_s,p,nt,dfn)
-            for i = 1:size(stl_s,2)
-                if isempty(stl_s{i})
+        function [ttm] = Compute_tm(obj,msh,s,stl,df) 
+            for i = 1:size(stl.s,2)
+                if isempty(stl.s{i})
                     continue;
                 else
-                    for j = 1:size(stl_s{i},1)
+                    for j = 1:size(stl.s{i},1)
                         %  > Auxiliary variables.
-                        k   = stl_s{i}(j);
-                        xt  = s.xt{i,k};
+                        k   = stl.s   {i}(j);
+                        xt  = s.xt    {i,k};
                         fx  = msh.f.Xv(k);
                         
                         %  > Df_T.
                         bnd_i = s.bnd_i{i,j};
                         switch bnd_i
                             case "Neumann"
-                                l         = 1:nt(i);
+                                l         = 1:stl.nt(i);
                                 m         = 1:length(xt);
                                 n         = 1:length(xt)-1;
-                                o         = p(i)-1+l;
+                                o         = stl.o(i)-1+l;
                                 q         = n-1;
                                 r         = length(xt);
                                 t         = o-1;
@@ -305,14 +307,14 @@ classdef A_2_1D
                                 Df  (r,l) = Df(r,l)+g_v.*(xt(r)-fx)'.^t.*o;
                                 Df  (l,m) = transpose(Df(m,l));
                             otherwise
-                                l         = 1:nt(i);
+                                l         = 1:stl.nt(i);
                                 m         = 1:length(xt);
-                                n         = p(i)-1+l;
+                                n         = stl.o(i)-1+l;
                                 Df  (m,l) = (xt(m)-fx)'.^n;
                                 Df_T(l,m) = transpose(Df(m,l));
                         end
                         %  > Truncated terms.
-                        ttm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*dfn{i}(k,l);
+                        ttm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*df{i}(k,l);
                     end
                 end
                 ttm{i} = abs(ttm{i});

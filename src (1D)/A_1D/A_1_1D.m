@@ -1,8 +1,7 @@
 classdef A_1_1D
     methods (Static)
         function [inp] = Set_inp(h)
-            %% > msh.
-            % >> 1. Grid parameters.
+            %% > msh: mesh parameters.
             %    ├─ Limits: (Xv)_i,f.
             %    ├─ Examples:
             %        ├─ Example 1: Uniform.
@@ -18,40 +17,38 @@ classdef A_1_1D
             inp.msh.lim.Xv_i  = 0;
             inp.msh.lim.Xv_f  = 1;
             inp.msh.h         = h;
-            inp.msh.eg        = "2";
+            inp.msh.eg        = "1";
             inp.msh.s_nu.Nf_X = 0.5;
-            inp.msh.s_nu.Ks_X = 4.5;
+            inp.msh.s_nu.Ks_X = 5;
             inp.msh.s_nu.Lc_X = "e";
             
-            %% > pr.
-            % >> 2. Problem setup.
-            %  > 1. Flow conditions (v,g).
-            %  > 2. Boundary conditions (Dirichlet/Neumann/Robin).
-            inp.pr.v = 1;
-            inp.pr.g = 1;
-            inp.pr.w = "Dirichlet";
-            inp.pr.e = "Dirichlet";
+            %% > pr: problem setup.
+            inp.pr.v  = 1;
+            inp.pr.g  = 100;
+            inp.pr.w  = "Dirichlet";
+            inp.pr.e  = "Dirichlet";
+            inp.pr.ft = "1";
                        
-            %% > fr.
-            % >> 3. Flux reconstruction method.
+            %% > fr: flux reconstruction method.
             %  > 1. Test p-adaptation.
             %  > 2. Scheme type (convection/diffusion).
             %    ├─ 2.1. Type 1.
-            %        ├─  UDS (Upwind  differencing scheme).
-            %        ├─  CDS (Central differencing scheme).
-            %        └─  DDS (Downind differencing scheme).
+            %        ├─  UDS (Upwind   differencing scheme).
+            %        ├─  CDS (Central  differencing scheme).
+            %        └─  DDS (Downwind differencing scheme).
             %    └─ 2.2. Type 2.
             %        └─  Number of neighbours to the left/right.
             %  > #1: Standard/p-adaptative routines.
             inp.fr.p_adapt   = true;
-            inp.fr.allow_odd = true;
-            inp.fr.n         = 5;
-            inp.fr.type_1.v  = "CDS";
+            inp.fr.allow_odd = false;
+            inp.fr.n         = 1;
+            inp.fr.gf        = 1;
+            inp.fr.type_1.v  = "UDS";
             inp.fr.type_1.g  = "CDS";
             inp.fr.type_2.v  = 1;
             inp.fr.type_2.g  = 1;
             %  > #2: Test error estimators.
-            inp.fr.test_ee   = false;
+            inp.fr.test_ee   = 0;
         end
     end
 end
