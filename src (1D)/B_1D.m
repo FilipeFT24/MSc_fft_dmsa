@@ -3,58 +3,33 @@ classdef B_1D
         %% > Wrap-up B (1D).
         function [msh,pde] = WrapUp_B_1D(inp,msh)
             %  > Initialize.
-            [obj,pde,s,stl] = B_1D.Initialize(inp,msh);
+            [pde,s,stl] = B_1D.Initialize(inp,msh);
             
-            switch obj.ee
+            switch inp.ee.test
                 case false
                     %  > 'Standard' and 'p-adaptative' runs w/ analytic values.
-                    [msh,pde] = B_1D.Run_p(obj,msh,pde,s,stl);
+                    [msh,pde] = B_1D.Run_p(inp,msh,pde,s,stl);
                 case true
                     %  > Check error estimators.
-                    B_2_3_1D.SetUp_ee(obj,msh,pde,s);
+                    B_1D.SetUp_TX(inp,msh,pde,s);
                 otherwise
                     return;
             end
         end
         
         %% > Auxiliary functions.
-        % >> 0. -----------------------------------------------------------
-        function [obj] = SetUp_obj(inp)
-            %  > Auxiliary variables.
-            bnd_w       = inp.pr.w;
-            bnd_e       = inp.pr.e;
-            t1(1)       = inp.fr.type_1.v;
-            t1(2)       = inp.fr.type_1.g;
-            t2(1)       = inp.fr.type_2.v;
-            t2(2)       = inp.fr.type_2.g;
-            
-            %  > 'obj' structure.
-            obj.v       = inp.pr.v;
-            obj.g       = inp.pr.g;
-            obj.bnd     = [string(bnd_w),string(bnd_e)];
-            obj.ft      = inp.pr.ft;
-            obj.p_adapt = inp.fr.p_adapt;
-            obj.ao      = inp.fr.allow_odd;
-            obj.n       = inp.fr.n;
-            obj.gf      = inp.fr.gf;
-            obj.t1      = t1;
-            obj.t2      = t2;
-            obj.ee      = inp.fr.test_ee;
-        end
         % >> 1. -----------------------------------------------------------
         %  > Initialize problem (for all tests).
-        function [obj,pde,s,stl] = Initialize(inp,msh)
-            %  > obj.
-            obj = B_1D.SetUp_obj(inp);
-            %  > pde.
-            pde = B_1_1D.WrapUp_B_1_1D(msh,obj.v,obj.g,obj.ft);
+        function [pde,s,stl] = Initialize(inp,msh)
+            %  > 'pde'.
+            pde = B_1_1D.Update_pde(inp,msh);
             %  > A/B.
             i = 1:2;
             for j = i
                 A{j} = zeros(msh.c.NC);
                 B{j} = zeros(msh.c.NC,1);
             end
-            %  > s.
+            %  > 's'.
             s.A     = A;
             s.B     = B;
             s.c     = cell(2,msh.f.NF);
@@ -63,10 +38,10 @@ classdef B_1D
             s.bnd_v = cell(2,msh.f.NF);
             s.xf    = cell(2,msh.f.NF);
             s.xt    = cell(2,msh.f.NF);
-            %  > stl.
-            switch obj.ee
+            %  > 'stl'.
+            switch inp.ee.test
                 case false
-                    stl   = A_2_1D.Initialize_stl(msh,obj.t1,obj.t2);
+                    stl   = A_2_1D.Initialize_stl(msh,inp.ps.p,inp.ps.s);
                 case true
                     stl.p = cell(1,2);
                     stl.s = cell(1,2);
@@ -76,23 +51,22 @@ classdef B_1D
             end
         end
         % >> 2. -----------------------------------------------------------
-        %  > 2.1 ----------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
-        function [msh,pde] = Run_p(obj,msh,pde,s,stl)
-            switch obj.p_adapt
+        function [msh,pde] = Run_p(inp,msh,pde,s,stl)
+            switch inp.pa.adapt
                 case false
                     %  > 'p-standard' run.
-                    [pde,s,stl] = B_2_1_1D.SetUp_p(obj,msh,pde,s,stl);
+                    [pde,s] = B_2_1_1D.SetUp_p(inp,msh,pde,s,stl);
                 case true
                     %  > 'p-adaptative' run.
-                    [pde,s,stl] = B_2_1_1D.SetUp_p(obj,msh,pde,s,stl);
+                    [pde,s] = B_2_1_1D.SetUp_p(inp,msh,pde,s,stl);
                     %  > While...
                     i = 0;
                     while 1
                         %  > Adapt...
-                        if i ~= obj.n
-                            [stl]       = B_2_2_1D.Adapt_p(obj,stl,pde.e);
-                            [pde,s,stl] = B_2_1_1D.SetUp_p(obj,msh,pde,s,stl);
+                        if i ~= inp.pa.n
+                            [stl]   = B_2_2_1D.Adapt_p(inp,stl,pde.e);
+                            [pde,s] = B_2_1_1D.SetUp_p(inp,msh,pde,s,stl);
                         else
                             break;
                         end
@@ -101,18 +75,43 @@ classdef B_1D
                 otherwise
                     return;
             end
-            %  > Update structures.
-            [msh,pde] = B_1D.Update(msh,pde,s,stl);
+            %  > Update/sort 'msh' structure.
+            s.stl = stl;
+            msh.s = s;
+            msh   = Tools_1D.Sort_struct(msh);
             %  > Plot...
             Fig_1_1D.WrapUp_Fig_1_1_1D(1,msh,pde);
             Fig_1_1D.WrapUp_Fig_1_2_1D(0,msh,pde);
         end
         % >> 3. -----------------------------------------------------------
-        %  > Update 'msh' and 'pde' structures.
-        function [msh,pde] = Update(msh,pde,s,stl)
-            s.stl = stl;
-            msh.s = s;
-            msh   = Tools_1D.Sort_struct(msh);
+        %  > Set up error estimators run.
+        function [] = SetUp_TX(inp,msh,pde,s)
+            % >> #1.
+            %  > Truncated terms' magnitude (w/ analytic derivatives).
+            if inp.ee.flag(1)
+                B_2_3_1D.T_1(inp,msh,pde,s,[5,5]);
+            end
+            %  > #2.
+            if inp.ee.flag(2)
+                %  > Set schemes order/type (v/g).
+                n        = 2;
+                inp_lo.p = [1,1];     % > LO.
+                inp_ho.p = [3,3];     % > HO.
+                inp_lo.s = ["c","c"]; % > LO.
+                inp_ho.s = ["c","c"]; % > HO.
+                for i = 1:n
+                    p_lo(i) = A_2_1D.Compute_p(inp_lo.p(i),inp_lo.s(i));
+                    p_ho(i) = A_2_1D.Compute_p(inp_ho.p(i),inp_ho.s(i));
+                end
+                inp_lo.o  = p_lo;
+                inp_lo.nt = p_ho-p_lo;
+                %  > Compute runcated terms' magnitude (w/ higher-order solution).
+                B_2_3_1D.EE_2(inp,inp_lo,inp_ho,msh,pde,s);
+            end
+            %  > #3.
+            if inp.ee.flag(3)
+                pde = B_2_3_1D.T_3(inp,msh,pde,s);
+            end
         end
     end
 end

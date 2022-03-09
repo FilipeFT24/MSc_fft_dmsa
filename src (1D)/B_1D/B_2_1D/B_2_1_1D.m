@@ -1,20 +1,26 @@
 classdef B_2_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [pde,s,stl] = SetUp_p(obj,msh,pde,s,stl)
-            %  > Update 's' and 'stl' structures and create 'x' field.
-            [s,stl,x.c]   = B_2_1_1D.Update_s     (obj,msh,pde,s,stl);
-            %  > Update 'x' field.
-            [x.f.a,x.v.a] = B_2_1_1D.Update_pde_x (msh,s,pde.a);
-            [x.f.f,x.v.f] = B_2_1_1D.Update_pde_x (msh,s,x);
-            %  > Update 'e' field.
-            [e.c]         = B_2_1_1D.Update_pde_ec(pde.a,x,msh.c.Vol);
-            [e.f]         = B_2_1_1D.Update_pde_ef(pde.a,x);
-            [e.t]         = B_2_1_1D.Update_pde_et(obj,msh,s,pde.a,x.f.a,pde.f.st); 
-            %  > Set 'pde' fields.
-            pde.x         = x;
-            pde.e         = e;
-            pde.e         = B_2_1_1D.Sort_pde_e(pde.e);
+        function [pde,s] = SetUp_p(inp,msh,pde,s,stl)
+            %  > Update 's' structure and 'x' field.
+            [s]   = B_2_1_1D.Update_s (inp,msh,pde,s,stl);
+            [x.c] = B_2_1_1D.Update_xc(s); 
+            %  > Compute cell/face error.
+            [e.c] = B_2_1_1D.Update_ec(pde.av.c,x.c,msh.c.Vol);
+            [e.f] = B_2_1_1D.Update_ef(pde.av.f,x.c,s);
+            
+            %  > Compute analytic/estimated truncation error.  
+            if ~inp.pa.ee
+                %  > w/ analytic field (nodal values).
+                n.c = pde.av.c;
+                n.f = pde.av.f;
+            else
+                %  > w/ error estimators.
+            end
+            [e.t]   = B_2_1_1D.Update_et_f(inp,s,n);
+            [e.t]   = B_2_1_1D.Update_et_c(inp,msh,e.t);
+            [pde]   = B_2_1_1D.Set_pde    (pde,x,e);
+            [pde.e] = B_2_1_1D.Sort_pde_e (pde.e);
         end
                
         %% > 2. -----------------------------------------------------------
@@ -22,15 +28,15 @@ classdef B_2_1_1D
         %  > Initialize matrix coefficients.
         function [u,A,B] = Initialize_coeffs(j,NC,stl_s,sc,xf,A,B,bnd_s,bnd_v)
             %  > Initialize flags.
-            u.c.uA = false;
-            u.w.uB = false;
-            u.e.uB = false;
+            u.c.uA = 0;
+            u.w.uB = 0;
+            u.e.uB = 0;
             
             if any(ismembc([j,j+1],stl_s))
                 % >> A.
                 %  > Update...
                 A      = zeros(1,NC);
-                u.c.uA = true;
+                u.c.uA = 1;
                 %  > West face contribution.
                 u.w.kc = sc{j};
                 l.w    = length(u.w.kc);
@@ -45,12 +51,12 @@ classdef B_2_1_1D
                     %  > Update...
                     B  = 0;
                     if ismembc(j,bnd_s)
-                        u.w.uB = true;
+                        u.w.uB = 1;
                         u.w.fv = bnd_v(bnd_s == j);
                         u.w.Bf = xf{j}(l.w+1);
                     end
                     if ismembc(j+1,bnd_s)
-                        u.e.uB = true;
+                        u.e.uB = 1;
                         u.e.fv = bnd_v(bnd_s == j+1);
                         u.e.Bf = xf{j+1}(l.e+1);
                     end
@@ -87,17 +93,16 @@ classdef B_2_1_1D
         end
         % >> 2.4. ---------------------------------------------------------
         %  > Update 's' structure.
-        function [s,stl,nc] = Update_s(obj,msh,pde,s,stl)
+        function [s] = Update_s(inp,msh,pde,s,stl)
             %  > Auxiliary variables.
             NC = msh.c.NC;
             k  = 1:size(stl.s,2);
-            vg = [obj.v,-obj.g];
+            vg = [inp.ps.v(1),-inp.ps.v(2)];
             Ac = zeros(NC);
             Bc = zeros(NC,1);
             
             %  > Update stencil and check for nil (i.e. below trsh=10e-6) coefficients in 's.xf'.
-            [s]     = A_2_1D.Assemble_stl(obj,msh,pde,s,stl,stl.s);
-            [s,stl] = B_2_1_1D.Check_nil_coeffs(obj,msh,pde,s,stl,10e-6);           
+            [s] = A_2_1D.Assemble_stl(inp,msh,pde,s,stl,stl.s);
 
             %  > Update  xf.
             for i = 1:size(s.f,1)
@@ -134,108 +139,52 @@ classdef B_2_1_1D
                 Bc = Bc+vg(i).*B{i};
             end
             %  > Add source term.
-            Bc   = Bc+pde.f.st;
-            %  > Nodal solution.
-            nc   = Ac\Bc;
+            Bc   = Bc+pde.fn.st;
             %  > Update fields.
             s.A  = A;
             s.B  = B;
             s.Ac = Ac;
             s.Bc = Bc;
         end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        % >> 2.5. ---------------------------------------------------------
-        %  > Check for nil coefficients in 's.xf' and decrease/increase method's order accordingly.
-        %    If we're trying to use an UDS/DDS for the diffusive term on a uniform grid (boundaries NOT included), use a CDS of higher-order instead.
-        function [s,stl] = Check_nil_coeffs(obj,msh,pde,s,stl,trsh)
-            %  > Initialize.
-            [m,n]     = size(s.xf);
-            flag(1:m) = false;
-            
-            %  > Select faces and update convective/diffusive term(s).
-            for i = 1:m
-                k = 0;
-                for j = 1:n
-                    if any(abs(s.xf{i,j}) < trsh)
-                        k              = k+1;
-                        ij_nil{i}(k,1) = j;
-                        flag  (i)      = true;
-                    end
-                end
-                %  > Overwrite 'stl.p' and/or 'stl.t'.
-                if flag(i)
-                    if i == 1
-                        %  > Convective term.
-                        
-                        
-                    else
-                        %  > Diffusive  term.
-                        stl.t{i}(ij_nil{i}) = "CDS";
-                    end
-                end
-            end
-            if any(flag)
-                [s] = A_2_1D.Assemble_stl(obj,msh,pde,s,stl,ij_nil);
-            end
-        end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
-        %  > Update analytic 'pde.x.(...)' field.
-        function [rf,vf] = Update_pde_x(msh,s,n)
+        %  > 3.1.1. -------------------------------------------------------
+        %  > Update 'pde.x.c' field (nodal solution).
+        function [xc] = Update_xc(s)
+            xc = s.Ac\s.Bc;
+        end
+        %  > 3.1.2. -------------------------------------------------------
+        %  > Update 'pde.x.v' and 'pde.x.f' fields (reconstructed face values).
+        function [vf,xf] = Update_xf(s,x_c)
             %  > Auxiliary variables.
-            l = size(s.xf,1);
-            m = msh.f.NF;
-            
-            %  > Face (reconstructed) values.
+            [m,n] = size(s.xf);
+
             for i = 1:m
-                for j = 1:l
-                    if ~isempty(s.c{j,i})
+                for j = 1:n
+                    if ~isempty(s.c{i,j})
                         %  > Nodal indices/values.
-                        k = s.c{j,i};
-                        v = n.c(k,1);
+                        k = s.c{i,j};
+                        v = x_c(k,1);
                         %  > Add boundary contribution?...
-                        if ~isempty(s.f{j,i})
-                            v =[v;s.bnd_v{j,i}];
+                        if ~isempty(s.f{i,j})
+                            v = [v;s.bnd_v{i,j}];
                         end
                     else
-                        v = s.bnd_v{j,i};
+                        v = s.bnd_v{i,j};
                     end
+                    %  > Nodal values used to reconstruct face.
+                    vf{i,j} = v;
                     %  > Reconstructed face value.
-                    vf{j,i} = v;
-                    rf(i,j) = s.xf{j,i}*v;
+                    xf(j,i) = s.xf{i,j}*v;
                 end
             end
         end
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
         %  > Update 'pde.e.c' field (cell error).
-        function [ec] = Update_pde_ec(a,x,Vol)
+        function [ec] = Update_ec(a_c,x_c,Vol)
             %  > Error/absolute error distribution.
-            ec.c    (:,1) = a.c(:,1)-x.c(:,1);
+            ec.c    (:,1) = a_c(:,1)-x_c(:,1);
             ec.c_abs(:,1) = abs(ec.c);
             %  > Error/absolute error norms.
             ec_1    (:,1) = ec.c.*Vol;
@@ -251,42 +200,54 @@ classdef B_2_1_1D
         end
         %  > 3.2.2. -------------------------------------------------------
         %  > Update 'pde.e.f' field (face error).
-        function [ef] = Update_pde_ef(a,x)
+        function [ef] = Update_ef(a_f,x_c,s)
+            %  > Auxiliary variables.
+            [~,x_ff]      = B_2_1_1D.Update_xf(s,x_c);
             %  > Convective/diffusive components.
-            i = 1:2;
+            i             = 1:size(x_ff,2);
             %  > Error/absolute error distribution.
-            ef.f    (:,i) = a.f(:,i)-x.f.f(:,i);
+            ef.f    (:,i) = a_f(:,i)-x_ff(:,i);
             ef.f_abs(:,i) = abs(ef.f(:,i));
             %  > Mean error/absolute error.
             ef.n    (1,i) = mean(ef.f(:,i));
             ef.n_abs(1,i) = mean(ef.f_abs(:,i));
         end
         %  > 3.2.3. -------------------------------------------------------
-        %  > Update 'pde.e.t' field (truncation error).
-        function [et] = Update_pde_et(obj,msh,s,a,x_fa,st)
+        %  > Update 'pde.e.t.f' field (face truncation error).
+        function [et] = Update_et_f(inp,s,x)
             %  > Weighted (convective/diffusive) components.
-            vg = [obj.v,obj.g];
+            vg = [inp.ps.v(1),inp.ps.v(2)];
             nc = length(vg);
             i  = 1:nc;
-            j  = nc+1;
-            k  = 1:j;
-            
-            % >> Face(s).
+            j  = 1:nc+1;
+            k  = j(end);
+
+            %  > Reconstructed face values (w/ input nodal field).
+            [~,x.s]         = B_2_1_1D.Update_xf(s,x.c);
             %  > (Weighted) truncation/absolute truncation error distribution.
-            et.f      (:,i) = vg(i).*(a.f(:,i)-x_fa(:,i));
-            et.f      (:,j) = et.f(:,j-2)-et.f(:,j-1);
-            et.f_abs  (:,k) = abs(et.f);
+            et.f      (:,i) = vg(i).*(x.f(:,i)-x.s(:,i));
+            et.f      (:,k) = et.f(:,k-2)-et.f(:,k-1);
+            et.f_abs  (:,j) = abs(et.f);
             %  > Mean/absolute mean truncation error.
-            et.n.f    (:,k) = mean(et.f(:,k));
-            et.n_abs.f(:,k) = mean(et.f_abs(:,k));
-            
-            % >> Cell(s).
+            et.n.f    (:,j) = mean(et.f(:,j));
+            et.n_abs.f(:,j) = mean(et.f_abs(:,j));
+        end
+        %  > 3.2.4. -------------------------------------------------------
+        %  > Update 'pde.e.t.c' field (cell truncation error).
+        function [et] = Update_et_c(inp,msh,et)
+            %  > Weighted (convective/diffusive) components.
+            vg = [inp.ps.v(1),inp.ps.v(2)];
+            nc = length(vg);
+            i  = 1:nc;
+            j  = 1:nc+1;
+            k  = nc+1;
+
             %  > Truncation/absolute truncation error distribution.
-            %  > Equivalent formulations.
-            %  l            = 1:msh.c.NC;
-            %  m            = l+1;
-            %  et.c   (l,1) = et.f(l,j)-et.f(m,j);
-            et.c      (:,1) = s.Ac*a.c(:,1)-s.Bc(:,1);
+            %  > Equivalent formulations (need to import s).
+            %  et.c   (:,1) = s.Ac*x.c(:,1)-s.Bc(:,1);
+            l               = 1:msh.c.NC;
+            m               = l+1;
+            et.c      (l,1) = et.f(l,k)-et.f(m,k);
             et.c_abs  (:,1) = abs(et.c);
            
             %  > Error/absolute error norms.
@@ -302,12 +263,34 @@ classdef B_2_1_1D
             et.n_abs.c(2,:) = sum(sqrt(ec_2_abs),1)./sum(sqrt(Vol.^2));
             et.n_abs.c(3,:) = max(et.c_abs);
         end
-        % >> 3.3. ---------------------------------------------------------
+        % >> 3.4. ---------------------------------------------------------
+        %  > 3.4.1. -------------------------------------------------------
+        %  function [et] = Set_et(ef,ec)
+        %      n         = [fieldnames(ef.n)',fieldnames(ec.n)';struct2cell(ef.n)',struct2cell(ec.n)'];
+        %      et.n      = struct(n{:});
+        %      n_abs     = [fieldnames(ef.n_abs)',fieldnames(ec.n_abs)';struct2cell(ef.n_abs)',struct2cell(ec.n_abs)'];
+        %      et.n_abs  = struct(n{:});
+        %      et.f      = ef.f;
+        %      et.f_abs  = ef.f_abs;
+        %      et.c      = ec.c;
+        %      et.c_abs  = ec.c_abs;
+        %  end
+        %  > 3.4.2. -------------------------------------------------------
+        function [pde] = Set_pde(pde,x,e)
+            pde.x = x;
+            pde.e = e;
+        end
+        % >> 3.5. ---------------------------------------------------------
         function [pde_e] = Sort_pde_e(pde_e)
             pde_e   = orderfields(pde_e  ,{'c','f','t'});
             pde_e.c = orderfields(pde_e.c,{'c','c_abs','n','n_abs'});
             pde_e.f = orderfields(pde_e.f,{'f','f_abs','n','n_abs'});
             pde_e.t = orderfields(pde_e.t,{'c','c_abs','f','f_abs','n','n_abs'});
+        end
+        
+        %% > 4. -----------------------------------------------------------
+        % >> 4.1. ---------------------------------------------------------
+        function [] = Set_field()
         end
     end
 end

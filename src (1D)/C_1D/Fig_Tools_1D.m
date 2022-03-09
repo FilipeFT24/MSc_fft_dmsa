@@ -19,7 +19,8 @@ classdef Fig_Tools_1D
                 for ix_ticks = 1:NX+1
                     xticks_label(ix_ticks) = xlim_label(1)-(xlim_label(1)-xlim_label(2))./NX.*(ix_ticks-1);
                 end
-                xlabel(L_X,'FontSize',SZ_X.*1.50,'Interpreter','latex'); xlim([xlim_label(1),xlim_label(2)]); xticks(xticks_label);
+                c = 0.0025;
+                xlabel(L_X,'FontSize',SZ_X.*1.50,'Interpreter','latex'); xlim([xlim_label(1)-c,xlim_label(2)+c]); xticks(xticks_label);
             end
             %  > Y-Axis.
             if y_w
@@ -27,8 +28,26 @@ classdef Fig_Tools_1D
             end
         end
         % >> 2. -----------------------------------------------------------
+        function [fig] = Set_fig(Exp)
+            if ~Exp
+                fig.LW_1 =  1.5;
+                fig.LW_2 =  1.5;
+                fig.MS_1 =  3.0;
+                fig.FT_1 = 14.0;
+                fig.FT_2 = 12.5;
+                fig.FT_3 = 12.5;
+            else
+                fig.LW_1 =  3.0;
+                fig.LW_2 =  2.5;
+                fig.MS_1 =  5.0;
+                fig.FT_1 = 25.0;
+                fig.FT_2 = 30.0;
+                fig.FT_3 = 30.0;
+            end
+        end
+        % >> 3. -----------------------------------------------------------
         function [] = Export_PDF(Filename,Directory)
-            set     (gcf,'PaperSize',[27.25,20.85],'PaperPosition',[0,0,29.7,21.0]);
+            set     (gcf,'PaperSize',[28.50,20.85],'PaperPosition',[0,0,29.7,21.5]);
             print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r500');
             movefile(strcat(Filename,'.pdf'),Directory); 
         end

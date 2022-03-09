@@ -26,7 +26,7 @@ classdef Fig_1_1D
                     subplot(1,2,2);
                     Fig_1_1D.Plot_1_2(fig,l_2,msh,pde);
                     %  > 3.
-                    %  figure(Fig(3)); set(gcf,'Units','pixels','Position',[500,100,600,600]);
+                    %  figure(Fig(3)); set(gcf,'Units','pixels','Position',[250,200,1050,400]);
                     %  Fig_1_1D.Plot_1_3(fig,msh);
                 else
                     %  > 1.
@@ -45,19 +45,19 @@ classdef Fig_1_1D
             %  > Auxiliary variables.
             C    = linspecer(9,'qualitative');
             L    = Fig_1_1D.Set_Labels_1_1();
-            m    = size(pde.e.t.f,2);
             Xv   = [msh.f.Xv(1),msh.f.Xv(msh.f.NF)];
             trsh = 10e-12;
+            m    = size(pde.e.t.f,2);
             
             hold on;
-            for j = 1:m
+            for i = 1:m
                 %  > tau_f.
-                i        = pde.e.t.f_abs(:,j) > trsh;
-                P{j}     = plot(msh.f.Xv,pde.e.t.f_abs(:,j)              ,':o','Color',C(j,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(j,:),'MarkerSize',fig.MS_1);
-                P{j+m+1} = line(Xv,[pde.e.t.n_abs.f(1,j),pde.e.t.n_abs.f(1,j)],'Color',C(j,:),'Linewidth',fig.LW_2,'Linestyle','-');
+                j        = pde.e.t.f_abs(:,i) > trsh;
+                P{i}     = plot(msh.f.Xv,pde.e.t.f_abs(:,i)              ,':o','Color',C(i,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(i,:),'MarkerSize',fig.MS_1);
+                P{i+m+1} = line(Xv,[pde.e.t.n_abs.f(1,i),pde.e.t.n_abs.f(1,i)],'Color',C(i,:),'Linewidth',fig.LW_2,'Linestyle','-');
                 if l_1
-                    y_min(j) = min(pde.e.t.f_abs(i,j));
-                    y_max(j) = max(pde.e.t.f_abs(i,j));
+                    y_min(i) = min(pde.e.t.f_abs(j,i));
+                    y_max(i) = max(pde.e.t.f_abs(j,i));
                 end
             end
             legend([P{:}],[L{:}],...
@@ -68,7 +68,7 @@ classdef Fig_1_1D
                 ylim([10.^(ceil(log10(min(y_min)))-1),...
                       10.^(ceil(log10(max(y_max)))+1)]);
             end
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{end},fig.FT_2,fig.FT_3);
+            Fig_Tools_1D.ChangeLook_1D(1,1,1,msh.f.Xv,10,"$x$",L{end},fig.FT_2,fig.FT_3);
         end
         % >> 2. -----------------------------------------------------------
         function [] = Plot_1_2(fig,l_2,msh,pde)
@@ -76,22 +76,25 @@ classdef Fig_1_1D
             C    = linspecer(9,'qualitative');
             L    = Fig_1_1D.Set_Labels_1_2();
             Xv   = [msh.f.Xv(1),msh.f.Xv(msh.f.NF)];
+            trsh = 10e-12;
             n    = 2;
             
             hold on;
             for i = 1:n
                 if i ~= n
                     %  > e_c.
+                    j        = pde.e.c.c_abs(:,1) > trsh;
                     P{i}     = plot(msh.c.Xc,pde.e.c.c_abs(:,1)              ,':o','Color',C(i,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(i,:),'MarkerSize',fig.MS_1);
                     P{i+n}   = line(Xv,[pde.e.c.n_abs(1,1),pde.e.c.n_abs(1,1)]    ,'Color',C(i,:),'Linewidth',fig.LW_2,'Linestyle','-');
-                    y_min(i) = min(pde.e.c.c_abs(:,1));
-                    y_max(i) = max(pde.e.c.c_abs(:,1));
+                    y_min(i) = min(pde.e.c.c_abs(j,1));
+                    y_max(i) = max(pde.e.c.c_abs(j,1));
                 else
                     %  > tau_c.
+                    k        = pde.e.t.c_abs(:,1) > trsh;
                     P{i}     = plot(msh.c.Xc,pde.e.t.c_abs(:,1)            , '-.o','Color',C(i,:),'LineWidth',fig.LW_1,'MarkerFaceColor',C(i,:),'MarkerSize',fig.MS_1);
                     P{i+n}   = line(Xv,[pde.e.t.n_abs.c(1,1),pde.e.t.n_abs.c(1,1)],'Color',C(i,:),'Linewidth',fig.LW_2,'Linestyle','-');
-                    y_min(i) = min(pde.e.t.c_abs(:,1));
-                    y_max(i) = max(pde.e.t.c_abs(:,1));
+                    y_min(i) = min(pde.e.t.c_abs(k,1));
+                    y_max(i) = max(pde.e.t.c_abs(k,1));
                     
                 end
             end
@@ -101,32 +104,48 @@ classdef Fig_1_1D
             if l_2
                 set(gca,'YScale','log');
                 ylim([10.^(ceil(log10(min(y_min)))-1),...
-                    10.^(ceil(log10(max(y_max)))+1)]);
+                      10.^(ceil(log10(max(y_max)))+1)]);
             end
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{end},fig.FT_2,fig.FT_3);
+            Fig_Tools_1D.ChangeLook_1D(1,1,1,msh.f.Xv,10,"$x$",L{end},fig.FT_2,fig.FT_3);
         end
         % >> 3. -----------------------------------------------------------
         function [] = Plot_1_3(fig,msh)
             %  > Auxiliary variables.
-            C = linspecer(9,'qualitative');
             L = Fig_1_1D.Set_Labels_1_3();
-            m = msh.f.NF;
             n = size(msh.s.stl.p,2);
-            M = ["-o",":d"];
+            N = 5;
             
+            %  > Method's order.
+            for i = 1:n
+                for j = 1:msh.f.NF
+                    p(j,i) = A_2_1D.Compute_p(msh.s.stl.p(j,i),msh.s.stl.t(j,i));
+                end
+            end
+            C = linspecer(max(max(p)),'qualitative');
             hold on;
             for i = 1:n
-                for j = 1:m
-                    p(j,i) = A_2_1D.Compute_p(msh.s.stl.p{i}(j),msh.s.stl.t{i}(j));
+                for j = 1:msh.f.NF
+                    plot(msh.f.Xv(j),(n+1-i)./N,'|','Color',C(p(j,i),:),'MarkerFaceColor',C(p(j,i),:),'MarkerSize',10.0,'Linewidth',2.0);
                 end
-                P{i} = stem(msh.f.Xv,p(:,i),M(i),'Color',C(i,:),'Linewidth',fig.LW_2);
+                un{i} = unique(p(:,i))';
+            end
+            un = unique([un{:}]);
+            hold on;
+            for i = 1:n
+                plot(msh.f.Xv,repelem(i./N,msh.f.NF),'-','Color','k');
+            end
+
+            %  > Legend.
+            hold on;
+            for i = 1:length(un)
+                P  {i} = plot(NaN,NaN,'|','Color',C(un(i),:),'MarkerFaceColor',C(un(i),:),'MarkerSize',10.0,'Linewidth',2.0);
+                L{i,1} = num2str(un(i));
             end
             legend([P{:}],[L{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',2);
+                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',1);
             %  > Axis.
-            ax = get(gca,'yTick'); yticks(unique(round(ax)));
-            ylim([0,max(p,[],'all')+0.5]);
-            Fig_Tools_1D.ChangeLook_1D(true,true,true,msh.f.Xv,10,"$x$",L{end},fig.FT_2,fig.FT_3);
+            Fig_Tools_1D.ChangeLook_1D(0,true,0,msh.f.Xv,10,"$x$","$y$",fig.FT_2,fig.FT_3);
+            ax = gca; box on; ylim([0,1]); set(gca,'YTickLabel',[]); yticks([0,1]);
         end
         % >> 4. -----------------------------------------------------------
         %  > 4.1. ---------------------------------------------------------
@@ -151,7 +170,6 @@ classdef Fig_1_1D
         function [L] = Set_Labels_1_3()
             L{1} = "$\phi_{f}$";
             L{2} = "$\nabla\phi_{f}$";
-            L{3} = "$\textrm{Method's order}$";
         end
         %  > 4.4. ---------------------------------------------------------
         function [fig] = Set_fig_1(Exp)

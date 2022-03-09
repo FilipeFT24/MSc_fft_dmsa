@@ -6,18 +6,18 @@ classdef A_2_1D
             Xv_i = inp.msh.lim.Xv_i;
             Xv_f = inp.msh.lim.Xv_f;
             h    = inp.msh.h;
-            eg   = inp.msh.eg;
+            t    = inp.msh.t;
             
-            switch eg
+            switch t
                 case "1"
                     [NX_c,Xd_x] = A_2_1D.SquareMesh_Uniform(Xv_i,Xv_f,h);
                 case "2"
-                    Nf_X        = inp.msh.s_nu.Nf_X;
-                    Ks_X        = inp.msh.s_nu.Ks_X;
+                    Nf_X        = inp.msh.Nf_X;
+                    Ks_X        = inp.msh.Ks_X;
                     [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_1(Xv_i,Xv_f,h,Nf_X,Ks_X);
                 case "3"
-                    Ks_X        = inp.msh.s_nu.Ks_X;
-                    Lc_X        = inp.msh.s_nu.Lc_X;
+                    Ks_X        = inp.msh.Ks_X;
+                    Lc_X        = inp.msh.Lc_X;
                     [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,Lc_X);
                 otherwise
                     return;
@@ -27,41 +27,38 @@ classdef A_2_1D
             msh.c.NC       = NX_c;
             msh.f.NF       = NX_c+1;
             %  > Cell vertex coordinates.
-            msh.f.Xv       = Xd_x;
+            i              = 1:msh.f.NF;
+            msh.f.Xv(i,1)  = Xd_x;
             %  > Xc/Cell volume.
-            i              = 1:msh.c.NC;
-            msh.c.Xc (i)   = 1./2.*(msh.f.Xv(i)+msh.f.Xv(i+1));
-            msh.c.Vol(i,1) = msh.f.Xv(i+1)-msh.f.Xv(i);
+            j              = 1:msh.c.NC;
+            msh.c.Xc (j,1) = 1./2.*(msh.f.Xv(j)+msh.f.Xv(j+1));
+            msh.c.Vol(j,1) = msh.f.Xv(j+1)-msh.f.Xv(j);
             %  > Reference length.
-            msh.d.H_ref    = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
+            msh.d.h_ref    = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
         end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         function [NX_c,Xd_x] = SquareMesh_Uniform(Xv_i,Xv_f,h)
             % >> Vertex coordinates.
-            %  > Xd.
             NX_c = round(1./h.*(Xv_f-Xv_i));
             Xd_x = linspace(Xv_i,Xv_f,NX_c+1);
         end
         % >> 1.2. ---------------------------------------------------------
         function [NX_c,Xd_x] = SquareMesh_NonUniform_1(Xv_i,Xv_f,h,Nf_X,Ks_X)
-            % >> Transformation parameters.
+            % >> Transformation parameters/vertex coordinates.
             NX_v     = round(1./h.*(Xv_f-Xv_i))+1;
             Nf_Unf_X = linspace(0,1,NX_v);
             Pt_X     = (Nf_X-0)./(1-0);
             B_X      = 1./(2.*Ks_X).*log((1+(exp(Ks_X)-1).*(Pt_X))./(1+(exp(-Ks_X)-1).*(Pt_X)));
             i        = 1:NX_v;
             NF_X     = (Nf_X-0).*(1+sinh(Ks_X.*(Nf_Unf_X(i)-B_X))./sinh(Ks_X.*B_X))+0;
-            
-            % >> Vertex coordinates.
-            %  > Xd.
-            Xd_x = NF_X(1:NX_v).*(Xv_f-Xv_i);
-            NX_c = NX_v-1;
+            Xd_x     = NF_X(1:NX_v).*(Xv_f-Xv_i);
+            NX_c     = NX_v-1;
         end
         % >> 1.3. ---------------------------------------------------------
         function [NX_c,Xd_x] = SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,bnd)
-            % >> Transformation parameters.
+            % >> Transformation parameters/vertex coordinates.
             NX_v   = round(1./h.*(Xv_f-Xv_i))+1;
             Nf_Unf = linspace(0,1,NX_v);
             Bp     = Ks_X+1;
@@ -71,11 +68,8 @@ classdef A_2_1D
             Num(i) = Bp-Bm.*X(i);
             Den(i) = X(i)+1;
             x_h(i) = Num(i)./Den(i);
-            
-            % >> Vertex coordinates.
-            %  > Xd.
-            Xd_x = Xv_i+(Xv_f-Xv_i).*x_h;
-            NX_c = NX_v-1;
+            Xd_x   = Xv_i+(Xv_f-Xv_i).*x_h;
+            NX_c   = NX_v-1;
             
             switch bnd
                 case "w"
@@ -93,35 +87,37 @@ classdef A_2_1D
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
         %  > Initialize 'stl' structure.
-        function [stl] = Initialize_stl(msh,t1,t2)
-            for i = 1:length(t1)
-                stl.p{i}(:,1) = repelem(t2(i),msh.f.NF);
+        function [stl] = Initialize_stl(msh,p,s)
+            for i = 1:length(p)
+                stl.p   (:,i) = repelem(p(i),msh.f.NF);
                 stl.s{i}(:,1) = 1:msh.f.NF;
-                stl.t{i}(:,1) = repelem(t1(i),msh.f.NF);
+                stl.t   (:,i) = repelem(s(i),msh.f.NF);
             end
         end
         %  > 2.1.2. -------------------------------------------------------
         %  > Compute method's order.
         function [p] = Compute_p(stl_p,stl_t)
-            switch stl_t
-                case "CDS"
-                    p = 2.*stl_p;
-                otherwise
-                    p = 2.*stl_p-1;
+            for i = 1:length(stl_p)
+                switch stl_t(i)
+                    case "c"
+                        p(i) = 2.*stl_p(i);
+                    otherwise
+                        p(i) = 2.*stl_p(i)-1;
+                end
             end
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
-        function [s] = Assemble_stl(obj,msh,pde,s,stl,stl_s)
+        function [s] = Assemble_stl(inp,msh,pde,s,stl,stl_s)
             %  > Auxiliary variables.
-            Xc      = msh.c.Xc;
+            Xc      = msh.c.Xc';
             NC      = msh.c.NC;
             Xv      = msh.f.Xv;
             NF      = msh.f.NF;
-            f (:,1) = pde.a.f(:,1);
-            f (:,2) = pde.a.f(:,2);
-            vg  (1) = obj.v;
-            vg  (2) = obj.g;
+            f (:,1) = pde.av.f(:,1);
+            f (:,2) = pde.av.f(:,2);
+            vg  (1) = inp.ps.v  (1);
+            vg  (2) = inp.ps.v  (2);
             
             % >> Loop through selected faces...
             for n = 1:size(stl_s,2)
@@ -131,16 +127,16 @@ classdef A_2_1D
                     for q = 1:size(stl_s{n},1)
                         %  > Auxiliary variables.
                         o     = stl_s{n}(q);
-                        p     = stl.p{n}(o);
+                        p     = stl.p(o,n);
                         add_f = false;
-                        switch stl.t{n}(o)
-                            case "CDS"
+                        switch stl.t(o,n)
+                            case "c"
                                 LHS = p;
                                 RHS = NF+1-p;
-                            case "UDS"
+                            case "u"
                                 LHS = p;
                                 RHS = NF+1-(p-1);
-                            case "DDS"
+                            case "d"
                                 LHS = p-1;
                                 RHS = NF+1-p;
                             otherwise
@@ -152,10 +148,10 @@ classdef A_2_1D
                             add_f = true;
                             bnd_f = 1;
                             stl_f = bnd_f;
-                            bnd_i = obj.bnd(1);
+                            bnd_i = inp.ps.b(1);
                             %  > ...cell(s).
-                            switch stl.t{n}(o)
-                                case "CDS"
+                            switch stl.t(o,n)
+                                case "c"
                                     stl_c = 1:2.*p-1;
                                 otherwise
                                     stl_c = 1:2.*(p-1);
@@ -165,10 +161,10 @@ classdef A_2_1D
                             add_f = true;
                             bnd_f = NF;
                             stl_f = bnd_f;
-                            bnd_i = obj.bnd(2);
+                            bnd_i = inp.ps.b(2);
                             %  > ...cell(s).
-                            switch stl.t{n}(o)
-                                case "CDS"
+                            switch stl.t(o,n)
+                                case "c"
                                     stl_c = NF+1-2.*p:NC;
                                 otherwise
                                     stl_c = NF-2.*(p-1):NC;
@@ -178,12 +174,12 @@ classdef A_2_1D
                             stl_f = [];
                             bnd_i = string([]);
                             %  > ...cell(s).
-                            switch stl.t{n}(o)
-                                case "CDS"
+                            switch stl.t(o,n)
+                                case "c"
                                     stl_c = o-p:o+p-1;
-                                case "UDS"
+                                case "u"
                                     stl_c = o-p:o-1+(p-1);
-                                case "DDS"
+                                case "d"
                                     stl_c = o-(p-1):o+(p-1);
                                 otherwise
                                     return;
@@ -222,7 +218,7 @@ classdef A_2_1D
                                 Df(l,m) = k.*(xt(l)-fx).^(k-1);
                             case "Robin"
                                 %  > Boundary value.
-                                g_v     = obj.g./obj.v;
+                                g_v     = inp.g./inp.v;
                                 bnd_v   = f(bnd_f,1)+g_v.*f(bnd_f,2);
                                 %  > Df.
                                 k       = 1:len-1;
@@ -242,7 +238,8 @@ classdef A_2_1D
                         if len == 1
                             %  > 1st order UDS/DDS cannot be used to discretize the diffusive term.
                             if n == 2
-                                return;
+                                warndlg('1st order UDS/DDS cannot be used to discretize the diffusive term.');
+                                break;
                             else
                                 df   = 1;
                                 Inv  = inv(Df);
@@ -269,22 +266,22 @@ classdef A_2_1D
         end
         %  > 2.2.2. -------------------------------------------------------
         %  > Evaluate truncated error terms' magnitude (re-assemble Df).
-        function [ttm] = Compute_tm(obj,msh,s,stl,df) 
+        function [tm] = Compute_tm(inp,msh,s,stl,df,p,nt) 
             for i = 1:size(stl.s,2)
                 if isempty(stl.s{i})
                     continue;
                 else
                     for j = 1:size(stl.s{i},1)
                         %  > Auxiliary variables.
-                        k   = stl.s   {i}(j);
-                        xt  = s.xt    {i,k};
-                        fx  = msh.f.Xv(k);
+                        k  = stl.s   {i}(j);
+                        xt = s.xt    {i,k};
+                        fx = msh.f.Xv(k);
                         
                         %  > Df_T.
                         bnd_i = s.bnd_i{i,j};
                         switch bnd_i
                             case "Neumann"
-                                l         = 1:stl.nt(i);
+                                l         = 1:nt(i);
                                 m         = 1:length(xt);
                                 n         = 1:length(xt)-1;
                                 o         = stl.o(i)-1+l;
@@ -295,7 +292,7 @@ classdef A_2_1D
                                 Df  (r,l) = (xt(r)-fx)'.^t.*o;
                                 Df_T(l,m) = transpose(Df(m,l));
                             case "Robin"
-                                g_v       = obj.g./obj.v;
+                                g_v       = inp.g./inp.v;
                                 l         = 1:nt(i);
                                 m         = 1:length(xt);
                                 n         = 1:length(xt)-1;
@@ -307,17 +304,17 @@ classdef A_2_1D
                                 Df  (r,l) = Df(r,l)+g_v.*(xt(r)-fx)'.^t.*o;
                                 Df  (l,m) = transpose(Df(m,l));
                             otherwise
-                                l         = 1:stl.nt(i);
+                                l         = 1:nt(i);
                                 m         = 1:length(xt);
-                                n         = stl.o(i)-1+l;
+                                n         = p(i)-1+l;
                                 Df  (m,l) = (xt(m)-fx)'.^n;
                                 Df_T(l,m) = transpose(Df(m,l));
                         end
                         %  > Truncated terms.
-                        ttm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*df{i}(k,l);
+                        tm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*df{i}(k,l);
                     end
                 end
-                ttm{i} = abs(ttm{i});
+                tm{i} = abs(tm{i});
             end
         end
     end
