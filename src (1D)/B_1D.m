@@ -80,8 +80,7 @@ classdef B_1D
             msh.s = s;
             msh   = Tools_1D.Sort_struct(msh);
             %  > Plot...
-            Fig_1_1D.WrapUp_Fig_1_1_1D(1,msh,pde);
-            Fig_1_1D.WrapUp_Fig_1_2_1D(0,msh,pde);
+            Fig_1_1D.Plot(msh,pde);
         end
         % >> 3. -----------------------------------------------------------
         %  > Set up error estimators run.

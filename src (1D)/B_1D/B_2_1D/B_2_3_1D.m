@@ -90,42 +90,45 @@ classdef B_2_3_1D
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
         function [pde] = T_3(inp,msh,pde,s)
-            %  > 'stl'.
-            [m,~] = size(inp.ee.p);
-            [stl] = B_2_3_1D.SetUp_stl(inp,msh);
-            
-            % >> w/ analytic solution.
+            %  > Stencil(s)/PDE solution(s).
+            m   = size(inp.ee.p);
+            stl = B_2_3_1D.SetUp_stl(inp,msh);
             for i = 1:m
-                %  > Stencil/truncation error.
-                sn  {i} = B_2_1_1D.Update_s   (inp,msh,pde,s,stl{i});
-                et_a{i} = B_2_1_1D.Update_et_f(inp,sn{i},pde.av);
-                et_a{i} = B_2_1_1D.Update_et_c(inp,msh,et_a{i});
-                %  > Face values.
-                [~,fv.a{i}.f] = B_2_1_1D.Update_xf(sn{i},pde.av.c);
-                %  > Tau_f(m)-Tau_f(n).
-                if i ~= 1
-                    df.a{i-1} = abs(fv.a{i}.f-fv.a{i-1}.f);
+                sn  {i} = B_2_1_1D.Update_s (inp,msh,pde,s,stl{i});
+                xc(:,i) = B_2_1_1D.Update_xc(sn{i}); 
+            end
+ 
+            % >> Face values.
+            for i = 1:m
+                %  > w/ analytic solution.
+                fv.a{i} = B_2_1_1D.Update_xf(sn{i},pde.av.c);
+                %  > w/ PDE solution: i-th order PDE solution/j-th order stencil coefficients.
+                for j = 1:m
+                    fv.x{i,j} = B_2_1_1D.Update_xf(sn{j},xc(:,i));
                 end
             end
-            
-            % >> w/ PDE solution.
-            for i = 1:m 
-                %  > Nodal solution.
-                cf(:,i) = B_2_1_1D.Update_xc(sn{i});                
-                %  > Reconstructed face values: i-th order nodal solution.
-                %                               j-th order stencil coefficients.
+            %  > Approximated analytic-PDE face value. 
+            for i = 1:m
                 for j = 1:m
-                    %  > Face values.
-                    [~,fv.x{i,j}.f]  = B_2_1_1D.Update_xf(sn{j},cf(:,i));
-                    if j ~= 1
-                        df_xj{i,j-1} = fv.x{i,j}.f-fv.x{i,j-1}.f;
-                        df.xj{i,j-1} = abs(df_xj{i,j-1});
-                    end
+                    df.ax{i,j} = abs(fv.a{j}-fv.x{i,j});
                 end
+            end
+            % >> Truncation error/truncation error difference.
+            for i = 1:m
+                %  > w/ analytic solution.
+                et_a{i} = abs(pde.av.f-fv.a{i});
                 if i ~= 1
-                    for j = m-1
-                        df.xi{i-1,j} = abs(df_xj{i,j}-df_xj{i-1,j});
-                    end
+                    df.a{i-1} = abs(fv.a{i}-fv.a{i-1});
+                end
+                %  > w/ PDE solution.
+                for j = 1:m-1
+                    df.x{i,j} = abs(fv.x{i,j}-fv.x{i,j+1});
+                end
+            end
+            % >> Curve translation difference.
+            for i = 1:m
+                for j = 1:m-1
+                    df.t{i,j} = abs((fv.a{j+1}-fv.x{i,j+1})-(fv.a{j}-fv.x{i,j}));
                 end
             end
             pde.et.av = et_a;

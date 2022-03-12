@@ -2,87 +2,54 @@ classdef A_2_1D
     methods (Static)
         %% > Wrap-up A_2 (1D).
         function [inp,msh] = WrapUp_A_2_1D(inp)
-            % >> Local variables.
-            Xv_i = inp.msh.lim.Xv_i;
-            Xv_f = inp.msh.lim.Xv_f;
+            %  > Auxiliary variables.
+            u    = inp.msh.Uniform;
+            XLim = inp.msh.XLim;
             h    = inp.msh.h;
-            t    = inp.msh.t;
             
-            switch t
-                case "1"
-                    [NX_c,Xd_x] = A_2_1D.SquareMesh_Uniform(Xv_i,Xv_f,h);
-                case "2"
-                    Nf_X        = inp.msh.Nf_X;
-                    Ks_X        = inp.msh.Ks_X;
-                    [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_1(Xv_i,Xv_f,h,Nf_X,Ks_X);
-                case "3"
-                    Ks_X        = inp.msh.Ks_X;
-                    Lc_X        = inp.msh.Lc_X;
-                    [NX_c,Xd_x] = A_2_1D.SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,Lc_X);
+            switch u
+                case true
+                    Xv = A_2_1D.msh_1(XLim,h);
+                case false
+                    Xv = A_2_1D.msh_2(XLim,h,inp.msh.A,inp.msh.c);
                 otherwise
                     return;
             end
-            % >> Grid properties.
-            %  > Number of cells/faces.
-            msh.c.NC       = NX_c;
-            msh.f.NF       = NX_c+1;
-            %  > Cell vertex coordinates.
-            i              = 1:msh.f.NF;
-            msh.f.Xv(i,1)  = Xd_x;
-            %  > Xc/Cell volume.
-            j              = 1:msh.c.NC;
-            msh.c.Xc (j,1) = 1./2.*(msh.f.Xv(j)+msh.f.Xv(j+1));
-            msh.c.Vol(j,1) = msh.f.Xv(j+1)-msh.f.Xv(j);
-            %  > Reference length.
-            msh.d.h_ref    = (msh.f.Xv(msh.f.NF)-msh.f.Xv(1))./msh.c.NC;
+            msh = A_2_1D.Set_Grid(XLim,Xv);
         end
         
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [NX_c,Xd_x] = SquareMesh_Uniform(Xv_i,Xv_f,h)
-            % >> Vertex coordinates.
-            NX_c = round(1./h.*(Xv_f-Xv_i));
-            Xd_x = linspace(Xv_i,Xv_f,NX_c+1);
+        %  > Uniformly spaced grid.
+        function [Xv] = msh_1(XLim,h)
+            NC = round(1./h.*(XLim(2)-XLim(1)));
+            Xv = linspace(XLim(1),XLim(2),NC+1);
         end
         % >> 1.2. ---------------------------------------------------------
-        function [NX_c,Xd_x] = SquareMesh_NonUniform_1(Xv_i,Xv_f,h,Nf_X,Ks_X)
-            % >> Transformation parameters/vertex coordinates.
-            NX_v     = round(1./h.*(Xv_f-Xv_i))+1;
-            Nf_Unf_X = linspace(0,1,NX_v);
-            Pt_X     = (Nf_X-0)./(1-0);
-            B_X      = 1./(2.*Ks_X).*log((1+(exp(Ks_X)-1).*(Pt_X))./(1+(exp(-Ks_X)-1).*(Pt_X)));
-            i        = 1:NX_v;
-            NF_X     = (Nf_X-0).*(1+sinh(Ks_X.*(Nf_Unf_X(i)-B_X))./sinh(Ks_X.*B_X))+0;
-            Xd_x     = NF_X(1:NX_v).*(Xv_f-Xv_i);
-            NX_c     = NX_v-1;
+        %  > Smooth non-uniform grid (transformation taken from reference in PDF).
+        function [Xv] = msh_2(XLim,h,A,c)
+            NC = round(1./h.*(XLim(2)-XLim(1)));
+            T  = (0:NC)./NC;
+            B  = 1./(2.*A).*log((1+(exp(A)-1).*c)./(1-(1-exp(-A)).*c));
+            Xv = c.*(1+sinh(A.*(T-B))./sinh(A.*B));
         end
         % >> 1.3. ---------------------------------------------------------
-        function [NX_c,Xd_x] = SquareMesh_NonUniform_2(Xv_i,Xv_f,h,Ks_X,bnd)
-            % >> Transformation parameters/vertex coordinates.
-            NX_v   = round(1./h.*(Xv_f-Xv_i))+1;
-            Nf_Unf = linspace(0,1,NX_v);
-            Bp     = Ks_X+1;
-            Bm     = Ks_X-1;
-            i      = 1:NX_v;
-            X  (i) = (Bp./Bm).^(1-Nf_Unf(i));
-            Num(i) = Bp-Bm.*X(i);
-            Den(i) = X(i)+1;
-            x_h(i) = Num(i)./Den(i);
-            Xd_x   = Xv_i+(Xv_f-Xv_i).*x_h;
-            NX_c   = NX_v-1;
-            
-            switch bnd
-                case "w"
-                    %  > Do nothing.
-                case "e"
-                    %  > Invert mesh.
-                    fl_x = flip(Xd_x);
-                    Xd_x = ones(1,length(fl_x)).*Xv_i+Xv_f-fl_x;
-                otherwise
-                    return;
-            end
+        %  > Set remaining grid properties.
+        function [msh] = Set_Grid(XLim,Xv)
+            %  > Field: 'c'.
+            NC            = length(Xv)-1;
+            msh.c.NC      = NC;
+            i             = 1:msh.c.NC;
+            msh.c.Xc(i,1) = 1./2.*(Xv(i)+Xv(i+1));
+            msh.c.Vc(i,1) = Xv(i+1)-Xv(i);
+            %  > Field: 'd'.
+            msh.d.href    = 1./NC.*(XLim(2)-XLim(1));
+            %  > Field: 'f'.
+            msh.f.NF      = NC+1;
+            j             = 1:msh.f.NF;
+            msh.f.Xv(j,1) = Xv;
         end
-        
+
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
@@ -97,12 +64,15 @@ classdef A_2_1D
         %  > 2.1.2. -------------------------------------------------------
         %  > Compute method's order.
         function [p] = Compute_p(stl_p,stl_t)
-            for i = 1:length(stl_p)
-                switch stl_t(i)
-                    case "c"
-                        p(i) = 2.*stl_p(i);
-                    otherwise
-                        p(i) = 2.*stl_p(i)-1;
+            [m,n] = size(stl_p);
+            for i = 1:m
+                for j = 1:n
+                    switch stl_t(i,j)
+                        case "c"
+                            p(i,j) = 2.*stl_p(i,j);
+                        otherwise
+                            p(i,j) = 2.*stl_p(i,j)-1;    
+                    end
                 end
             end
         end
@@ -116,8 +86,8 @@ classdef A_2_1D
             NF      = msh.f.NF;
             f (:,1) = pde.av.f(:,1);
             f (:,2) = pde.av.f(:,2);
-            vg  (1) = inp.ps.v  (1);
-            vg  (2) = inp.ps.v  (2);
+            vg  (1) = inp.pv.v  (1);
+            vg  (2) = inp.pv.v  (2);
             
             % >> Loop through selected faces...
             for n = 1:size(stl_s,2)
@@ -148,7 +118,7 @@ classdef A_2_1D
                             add_f = true;
                             bnd_f = 1;
                             stl_f = bnd_f;
-                            bnd_i = inp.ps.b(1);
+                            bnd_i = inp.pv.b(1);
                             %  > ...cell(s).
                             switch stl.t(o,n)
                                 case "c"
@@ -161,7 +131,7 @@ classdef A_2_1D
                             add_f = true;
                             bnd_f = NF;
                             stl_f = bnd_f;
-                            bnd_i = inp.ps.b(2);
+                            bnd_i = inp.pv.b(2);
                             %  > ...cell(s).
                             switch stl.t(o,n)
                                 case "c"
