@@ -11,7 +11,9 @@ classdef Tools_1D
         end
         
         %% > 2. -----------------------------------------------------------      
-        function [msh] = Sort_struct(msh)
+        function [msh] = Set_msh(msh,stl,s)
+            s.stl = stl;
+            msh.s = s;
             msh   = orderfields(msh  ,{'d','c','f','s'});
             msh.c = orderfields(msh.c,{'NC','Xc','Vc'});
             msh.f = orderfields(msh.f,{'NF','Xv'});

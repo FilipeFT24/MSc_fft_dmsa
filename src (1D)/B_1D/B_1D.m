@@ -11,7 +11,7 @@ classdef B_1D
                     [msh,pde] = B_1D.Run_p(inp,msh,pde,s,stl);
                 case true
                     %  > Check error estimators.
-                    B_1D.SetUp_TX(inp,msh,pde,s);
+                    [msh,pde] = B_1D.SetUp_TX(inp,msh,pde,s);
                 otherwise
                     return;
             end
@@ -19,7 +19,7 @@ classdef B_1D
         
         %% > Auxiliary functions.
         % >> 1. -----------------------------------------------------------
-        %  > Initialize problem (for all tests).
+        %    Initialize problem (for all tests).
         function [pde,s,stl] = Initialize(inp,msh)
             %  > 'pde'.
             pde = B_1_1D.Update_pde(inp,msh);
@@ -51,7 +51,7 @@ classdef B_1D
             end
         end
         % >> 2. -----------------------------------------------------------
-        %  > Set up 'p-standard' and 'p-adaptative' runs.
+        %    Set up 'p-standard' and 'p-adaptative' runs.
         function [msh,pde] = Run_p(inp,msh,pde,s,stl)
             switch inp.pa.adapt
                 case false
@@ -75,22 +75,19 @@ classdef B_1D
                 otherwise
                     return;
             end
-            %  > Update/sort 'msh' structure.
-            s.stl = stl;
-            msh.s = s;
-            msh   = Tools_1D.Sort_struct(msh);
+            msh = Tools_1D.Set_msh(msh,stl,s);
             %  > Plot...
             Fig_1_1D.Plot(msh,pde);
         end
         % >> 3. -----------------------------------------------------------
-        %  > Set up error estimators run.
-        function [] = SetUp_TX(inp,msh,pde,s)
-            % >> #1.
-            %  > Truncated terms' magnitude (w/ analytic derivatives).
+        %    Set up error estimators run.
+        function [msh,pde] = SetUp_TX(inp,msh,pde,s)
+            % >> 1.
+            %    Truncated terms' magnitude (w/ analytic derivatives).
             if inp.ee.flag(1)
-                B_2_3_1D.T_1(inp,msh,pde,s,[5,5]);
+                [msh,pde] = B_2_3_1D.T_1(inp,msh,pde,s,[5,5]); 
             end
-            %  > #2.
+            %  > 2.
             if inp.ee.flag(2)
                 %  > Set schemes order/type (v/g).
                 n        = 2;
@@ -107,7 +104,7 @@ classdef B_1D
                 %  > Compute runcated terms' magnitude (w/ higher-order solution).
                 B_2_3_1D.EE_2(inp,inp_lo,inp_ho,msh,pde,s);
             end
-            %  > #3.
+            %  > 3.
             if inp.ee.flag(3)
                 pde = B_2_3_1D.T_3(inp,msh,pde,s);
             end

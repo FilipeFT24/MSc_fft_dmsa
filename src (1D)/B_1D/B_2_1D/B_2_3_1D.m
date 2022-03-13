@@ -15,7 +15,7 @@ classdef B_2_3_1D
 
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        %  > Compute analytic derivatives up to order n.
+        %  > Compute derivatives up to order n (w/ analytic solution).
         function [df] = Compute_dfa(msh,f,p,nt)
             syms x;
             for i = 1:length(p)
@@ -32,19 +32,19 @@ classdef B_2_3_1D
             end
         end
         % >> 2.2. ---------------------------------------------------------
-        %  > Compute magnitude of truncated terms (w/ analytic field).
-        function [] = T_1(inp,msh,pde,s,nt)
-            %  > 'stl'.
-            [stl] = B_2_3_1D.SetUp_stl  (inp,msh);
-            %  > 'p-standard' run.
-            [s]   = B_2_1_1D.Update_s   (inp,msh,pde,s,stl{:});
-            [e_t] = B_2_1_1D.Update_et_f(inp,s,pde.av);
-            %  > Compute truncated terms.
-            [p]   = A_2_1D.Compute_p    (inp.ee.p,inp.ee.s);
-            [dfa] = B_2_3_1D.Compute_dfa(msh,pde.fn.f{1},p,nt);
-            [t_m] = A_2_1D.Compute_tm   (inp,msh,s,stl{:},dfa,p,nt);
-            %  > Plot.
-            Fig_2_1D.WrapUp_Fig_2_1_1D  (msh,e_t,t_m,p-1);
+        %  > Compute magnitude of truncated terms (w/ analytic solution).
+        function [msh,pde] = T_1(inp,msh,pde,s,nt)
+            %  > Stencil
+            stl     = B_2_3_1D.SetUp_stl  (inp,msh);
+            s       = B_2_1_1D.Update_s   (inp,msh,pde,s,stl{:});
+            msh     = Tools_1D.Set_msh    (msh,stl,s);
+            %  > Truncated terms.            
+            pde.e.t = B_2_1_1D.Update_et_f(inp,s,pde.av);
+            p       = A_2_1D.Compute_p    (inp.ee.p,inp.ee.s);
+            df      = B_2_3_1D.Compute_dfa(msh,pde.fn.f{1},p,nt);
+            pde.e.m = A_2_1D.Compute_tm   (inp,msh,s,stl{:},df,p,nt);
+            %  > Plot...
+            Fig_2_1D.Plot(msh,pde,p);
         end
 
         %% > 3. -----------------------------------------------------------
@@ -89,7 +89,7 @@ classdef B_2_3_1D
         
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
-        function [pde] = T_3(inp,msh,pde,s)
+        function [pde,p] = T_3(inp,msh,pde,s)
             %  > Stencil(s)/PDE solution(s).
             m   = size(inp.ee.p);
             stl = B_2_3_1D.SetUp_stl(inp,msh);
@@ -116,9 +116,10 @@ classdef B_2_3_1D
             % >> Truncation error/truncation error difference.
             for i = 1:m
                 %  > w/ analytic solution.
-                et_a{i} = abs(pde.av.f-fv.a{i});
-                if i ~= 1
-                    df.a{i-1} = abs(fv.a{i}-fv.a{i-1});
+                et_a{i}   = abs(pde.av.f-fv.a{i});
+                diff(i,:) = setdiff(1:m,i);
+                for j = 1:m-1
+                    df.a{i,j} = abs(fv.a{i}-fv.a{diff(i,j)});
                 end
                 %  > w/ PDE solution.
                 for j = 1:m-1
@@ -135,8 +136,8 @@ classdef B_2_3_1D
             pde.et.df = df;
             pde.et.fv = fv;
             p         = A_2_1D.Compute_p(inp.ee.p,inp.ee.s);
-            %  > Plot.
-            Fig_2_1D.WrapUp_Fig_2_3_1D(msh,pde,p);
+            %  > Plot...
+            Fig_4_1D.Plot(msh,pde,p);
         end
     end
 end
