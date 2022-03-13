@@ -8,7 +8,7 @@ classdef Fig_Tools_1D
                 fig.MS       =  3.0;                %  > Marker size.
                 fig.FT_1     = 12.5;                %  > Legend.
                 fig.FT_2     = 15.0;                %  > x/y-axis.
-                fig.FT_3     = [25.0,20.0];         %  > x/y-label.
+                fig.FT_3     = [22.5,17.5];         %  > x/y-label.
                 fig.Position = [150,100,1250,600];  %  > Position.
             else
                 fig.LW       =  3.5;                %  > Line.
@@ -86,7 +86,7 @@ classdef Fig_Tools_1D
                 'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',2);
             set(gca,'YScale','log');
             ylim([10.^(ceil(log10(min(YM(:,1))))-1),...
-                  10.^(ceil(log10(max(YM(:,2))))+2)]);
+                  10.^(ceil(log10(max(YM(:,2))))+1)]);
             Fig_Tools_1D.ChangeLook_1D(fig,msh,fig.L2);
         end
         %  > 2.3.2. -------------------------------------------------------

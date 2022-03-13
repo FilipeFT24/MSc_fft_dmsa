@@ -7,15 +7,15 @@ classdef Fig_1_1D
             N   = [1,2];
 
             if ~Exp
-                figure(N(1)); set(gcf,'Units','pixels','Position',fig.Position);
+                figure; set(gcf,'Units','pixels','Position',fig.Position);
                 subplot(1,2,1);
                 Fig_1_1D.Plot_1(msh,pde,fig,Exp,N(1));
                 subplot(1,2,2);
                 Fig_1_1D.Plot_2(msh,pde,fig,Exp,N(2));
             else
-                figure(N(1)); set(gcf,'Units','pixels','Position',fig.Position);
+                figure; set(gcf,'Units','pixels','Position',fig.Position);
                 Fig_1_1D.Plot_1(msh,pde,fig,Exp,N(1));
-                figure(N(2)); set(gcf,'Units','pixels','Position',fig.Position);
+                figure; set(gcf,'Units','pixels','Position',fig.Position);
                 Fig_1_1D.Plot_2(msh,pde,fig,Exp,N(2));
             end
         end

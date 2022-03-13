@@ -38,50 +38,56 @@ classdef A_1_1D
             %             ├─  "u": UDS (Upwind   biased).
             %             ├─  "c": CDS (Central  biased).
             %             └─  "d": DDS (Downwind biased).
-            %% > Variables.
+            %% > Input variables.
             % >> msh.
             inp.msh.Uniform = 0;                     %  > Set uniform grid(?).
-            inp.msh.XLim    = [0,1];                 %  > Grid limits.
-            inp.msh.h       = h;                     %  > Analytic function.
-            inp.msh.A       = 2.5;                   %  > Stretching parameter.
+            inp.msh.XLim    = [0,2];                 %  > Grid limits.
+            inp.msh.h       = h;                     %  > Grid spacing.
+            inp.msh.A       = 5.0;                   %  > Stretching parameter.
             inp.msh.c       = 0.5;                   %  > Clustered location.
             % >> pv.
-            inp.pv.f        = "2";                   %  > Analytic function.
-            inp.pv.b(1)     = "Dirichlet";           %  > Left  boundary condition.
-            inp.pv.b(2)     = "Dirichlet";           %  > Right boundary condition.
-            inp.pv.v(1)     = 1;                     %  > Convection.
-            inp.pv.v(2)     = 1;                     %  > Diffusion.
+            inp.pv.f        = "1";                   %  > Analytic function.
+            inp.pv.b(1)     = "Dirichlet";           %  > BC: West.
+            inp.pv.b(2)     = "Dirichlet";           %  > BC: East.
+            inp.pv.v(1)     = 1;                     %  > Coeff: Convection.
+            inp.pv.v(2)     = 1;                     %  > Coeff: Diffusion.
             % >> ps.
-            inp.ps.p(1)     = 1;                     %  > Convection.
-            inp.ps.p(2)     = 1;                     %  > Diffusion.
-            inp.ps.s(1)     = "c";                   %  > Convection.
-            inp.ps.s(2)     = "c";                   %  > Diffusion.
+            inp.ps.p(1)     = 1;                     %  > Scheme order: Convection.
+            inp.ps.p(2)     = 1;                     %  > Scheme order: Diffusion.
+            inp.ps.s(1)     = "c";                   %  > Scheme type:  Convection.
+            inp.ps.s(2)     = "c";                   %  > Scheme type:  Diffusion.
             % >> pa.
-            inp.pa.adapt    = 0;                     %  > p-adaptation.
-            inp.pa.odd      = 0;                     %  > Use UDS/DDS(?).
-            inp.pa.n        = 0;                     %  > Number of adaptation cycles.
-            inp.pa.ee       = 0;                     %  > Use error estimators to perform adaptation.
+            inp.pa.adapt    = 0;                     %  > Allow p-adaptation(?).
+            inp.pa.odd      = 0;                     %  > Allow UDS/DDS(?).
+            inp.pa.n        = 0;                     %  > Number of cycles.
+            inp.pa.ee       = 0;                     %  > Use error estimators to perform adaptation(?).
             % >> ee.
             inp.ee.test     = 1;                     %  > Test error estimators(?).
-            inp.ee.flag     = [0,0,1];               %  > Test flags.            
+            inp.ee.flag     = [1,0];                 %  > Test flags.            
             if inp.ee.test && nnz(inp.ee.flag) ~= 1
                 inp.ee.test = 0;
             else
                 if inp.ee.flag(1)
-                    inp.ee.p(1)   = 1;               %  > Convection.
-                    inp.ee.p(2)   = 1;               %  > Diffusion.
-                    inp.ee.s(1)   = "c";             %  > Convection.
-                    inp.ee.s(2)   = "c";             %  > Diffusion.
+                    inp.ee.p(:,1) = [1,3];           %  > Scheme order: Convection.
+                    inp.ee.p(:,2) = [1,3];           %  > Scheme order: Diffusion.
+                    inp.ee.s(:,1) = ["c","c"];       %  > Scheme type:  Convection.
+                    inp.ee.s(:,2) = ["c","c"];       %  > Scheme type:  Diffusion.
                 elseif inp.ee.flag(2)
-                elseif inp.ee.flag(3)
-                    inp.ee.p(:,1) = [1,2,3];         %  > Convection.
-                    inp.ee.p(:,2) = [1,2,3];         %  > Diffusion.
-                    inp.ee.s(:,1) = ["c","c","c"];   %  > Convection.
-                    inp.ee.s(:,2) = ["c","c","c"];   %  > Diffusion.
+                    inp.ee.p(:,1) = [1,2,3];         %  > Scheme order: Convection.
+                    inp.ee.p(:,2) = [1,2,3];         %  > Scheme order: Diffusion.
+                    inp.ee.s(:,1) = ["c","c","c"];   %  > Scheme type:  Convection.
+                    inp.ee.s(:,2) = ["c","c","c"];   %  > Scheme type:  Diffusion.
                 else
                     return;
                 end
             end
+            
+            %% > Plotting variables.
+            % >> pl.
+            inp.pl.all   = 1;                        %  > Plot all(?).
+            inp.pl.tt    = 1;                        %  > Plot truncated terms w/ analytic solution(?).
+            inp.pl.nt(1) = 5;                        %  > Numb. of terms: Convection.
+            inp.pl.nt(2) = 5;                        %  > Numb. of terms: Diffusion.
         end
     end
 end

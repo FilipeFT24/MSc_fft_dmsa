@@ -1,28 +1,29 @@
 classdef B_2_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [pde,s] = SetUp_p(inp,msh,pde,s,stl)
+        function [msh,pde] = SetUp_p(inp,msh,pde,s,stl)
             %  > Update 's' structure and 'x' field.
             s   = B_2_1_1D.Update_s (inp,msh,pde,s,stl);
-            x.c = B_2_1_1D.Update_xc(s); 
+            x.c = B_2_1_1D.Update_xc(s);
             %  > Compute cell/face error.
             e.c = B_2_1_1D.Update_ec(pde.av.c,x.c,msh.c.Vc);
             e.f = B_2_1_1D.Update_ef(pde.av.f,x.c,s);
-            
-            %  > Compute analytic/estimated truncation error.  
+            %  > Compute analytic/estimated truncation error.
             if ~inp.pa.ee
-                %  > w/ analytic field (nodal values).
-                n.c = pde.av.c;
-                n.f = pde.av.f;
+                n = pde.av;
             else
-                %  > w/ error estimators.
             end
-            e.t   = B_2_1_1D.Update_et_f(inp,s,n);
-            e.t   = B_2_1_1D.Update_et_c(inp,msh,e.t);
-            pde   = B_2_1_1D.Set_pde    (pde,x,e);
-            pde.e = B_2_1_1D.Sort_pde_e (pde.e);
+            e.t = B_2_1_1D.Update_et_f(s,n);
+            e.t = B_2_1_1D.Update_et_c(msh,s,e.t);
+            
+            %  > Compute truncated terms (if requested)/update structures.
+            if ~inp.pa.adapt && inp.pl.tt
+                dfn_a = B_2_1_1D.Compute_dfA(msh,pde,s.p,inp.pl.nt);
+                e.t.a = A_2_1D.Compute_TTM  (inp,msh,s,stl,dfn_a);
+            end
+            [msh,pde] = B_2_1_1D.Set_struct(msh,pde,s,stl,x,e);
         end
-               
+        
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > Initialize matrix coefficients.
@@ -97,14 +98,11 @@ classdef B_2_1_1D
             %  > Auxiliary variables.
             NC = msh.c.NC;
             k  = 1:size(stl.s,2);
-            vg = [inp.pv.v(1),-inp.pv.v(2)];
             Ac = zeros(NC);
             Bc = zeros(NC,1);
             
-            %  > Update stencil and check for nil (i.e. below trsh=10e-6) coefficients in 's.xf'.
-            s = A_2_1D.Assemble_stl(inp,msh,pde,s,stl,stl.s);
-
-            %  > Update  xf.
+            %  > Update stencil.
+            s  = A_2_1D.Assemble_stl(inp,msh,pde,s,stl,stl.s);
             for i = 1:size(s.f,1)
                 bnd_s{i} = find(~cellfun(@isempty,s.f(i,:)));
                 bnd_v{i} = [s.bnd_v{i,bnd_s{i}}];
@@ -135,8 +133,8 @@ classdef B_2_1_1D
                     B{i} = s.B{i};
                 end
                 %  > Add convective/diffusive contributions (cumulative matrices).
-                Ac = Ac+vg(i).*A{i};
-                Bc = Bc+vg(i).*B{i};
+                Ac = Ac+s.vg(i).*A{i};
+                Bc = Bc+s.vg(i).*B{i};
             end
             %  > Add source term.
             Bc   = Bc+pde.fn.st;
@@ -159,7 +157,7 @@ classdef B_2_1_1D
         function [vf] = Update_xv(s,x_c)
             %  > Auxiliary variables.
             [m,n] = size(s.xf);
-
+            
             for i = 1:m
                 for j = 1:n
                     if ~isempty(s.c{i,j})
@@ -215,6 +213,7 @@ classdef B_2_1_1D
         function [ef] = Update_ef(a_f,x_c,s)
             %  > Auxiliary variables.
             x_ff          = B_2_1_1D.Update_xf(s,x_c);
+            
             %  > Convective/diffusive components.
             i             = 1:size(x_ff,2);
             %  > Error/absolute error distribution.
@@ -226,18 +225,17 @@ classdef B_2_1_1D
         end
         %  > 3.2.3. -------------------------------------------------------
         %  > Update 'pde.e.t.f' field (face truncation error).
-        function [et] = Update_et_f(inp,s,x)
-            %  > Weighted (convective/diffusive) components.
-            vg = [inp.pv.v(1),inp.pv.v(2)];
-            nc = length(vg);
+        function [et] = Update_et_f(s,x)
+            %  > Auxiliary variables.
+            nc = length(s.vg);
             i  = 1:nc;
             j  = 1:nc+1;
             k  = j(end);
-
+            
             %  > Reconstructed face values (w/ input nodal field).
             x.s             = B_2_1_1D.Update_xf(s,x.c);
             %  > (Weighted) truncation/absolute truncation error distribution.
-            et.f      (:,i) = vg(i).*(x.f(:,i)-x.s(:,i));
+            et.f      (:,i) = s.vg(i).*(x.f(:,i)-x.s(:,i));
             et.f      (:,k) = et.f(:,k-2)-et.f(:,k-1);
             et.f_abs  (:,j) = abs(et.f);
             %  > Mean/absolute mean truncation error.
@@ -246,14 +244,11 @@ classdef B_2_1_1D
         end
         %  > 3.2.4. -------------------------------------------------------
         %  > Update 'pde.e.t.c' field (cell truncation error).
-        function [et] = Update_et_c(inp,msh,et)
-            %  > Weighted (convective/diffusive) components.
-            vg = [inp.pv.v(1),inp.pv.v(2)];
-            nc = length(vg);
-            i  = 1:nc;
-            j  = 1:nc+1;
+        function [et] = Update_et_c(msh,s,et)
+            %  > Auxiliary variables.
+            nc = length(s.vg);
             k  = nc+1;
-
+            
             %  > Truncation/absolute truncation error distribution.
             %  > Equivalent formulations (need to import s).
             %  et.c   (:,1) = s.Ac*x.c(:,1)-s.Bc(:,1);
@@ -261,7 +256,7 @@ classdef B_2_1_1D
             m               = l+1;
             et.c      (l,1) = et.f(l,k)-et.f(m,k);
             et.c_abs  (:,1) = abs(et.c);
-           
+            
             %  > Error/absolute error norms.
             Vc              = msh.c.Vc;
             ec_1            = et.c.*Vc;
@@ -275,8 +270,44 @@ classdef B_2_1_1D
             et.n_abs.c(2,:) = sum(sqrt(ec_2_abs),1)./sum(sqrt(Vc.^2));
             et.n_abs.c(3,:) = max(et.c_abs);
         end
-        % >> 3.3. ---------------------------------------------------------
-        %  > 3.3.1. -------------------------------------------------------
+        
+        %% > 4. -----------------------------------------------------------
+        % >> 4.1. ---------------------------------------------------------
+        %  > Compute derivatives (w/ analytic solution).
+        function [df] = Compute_dfA(msh,pde,p,nt)
+            syms x;
+            for i = 1:length(p)
+                for j = 0:nt(i)-1
+                    n      = p(i)+j;
+                    dfn{i} = diff(pde.fn.f{1},x,n);
+                    dfn{i} = matlabFunction(dfn{i});
+                    if nargin(dfn{i}) ~= 0
+                        df{i}(:,j+1) = dfn{i}(msh.f.Xv)./factorial(n);
+                    else
+                        df{i}(:,j+1) = zeros(msh.f.NF,1);
+                    end
+                end
+            end
+        end
+        % >> 4.2. ---------------------------------------------------------
+        %  > Compute derivatives (w/ PDE solution).       
+        function [dfn] = Compute_dfN(s,tt,v)
+            [m,n] = size(s.Inv);
+            for i = 1:m
+                for j = 1:n
+                    k = 0;
+                    for l = tt{i}
+                        k           = k+1;
+                        df          = zeros(1,size(s.Inv{i,j},1));
+                        df    (1,l) = 1;
+                        dfn{i}(j,k) = df*s.Inv{i,j}*v{i,j};
+                    end
+                end
+            end
+        end
+                        
+        %% > 5. -----------------------------------------------------------
+        % >> 5.1. ---------------------------------------------------------
         %  function [et] = Set_et(ef,ec)
         %      n         = [fieldnames(ef.n)',fieldnames(ec.n)';struct2cell(ef.n)',struct2cell(ec.n)'];
         %      et.n      = struct(n{:});
@@ -287,17 +318,17 @@ classdef B_2_1_1D
         %      et.c      = ec.c;
         %      et.c_abs  = ec.c_abs;
         %  end
-        %  > 3.3.2. -------------------------------------------------------
-        function [pde] = Set_pde(pde,x,e)
+        % >> 5.2. ---------------------------------------------------------
+        %  > Update/set structure fields.
+        function [msh,pde] = Set_struct(msh,pde,s,stl,x,e)
+            %  > 'msh'.
+            s.stl = stl;
+            msh.s = s;
+            msh   = Tools_1D.Order_msh(msh);
+            %  > 'pde'.
             pde.x = x;
             pde.e = e;
-        end
-        % >> 3.4. ---------------------------------------------------------
-        function [pde_e] = Sort_pde_e(pde_e)
-            pde_e   = orderfields(pde_e  ,{'c','f','t'});
-            pde_e.c = orderfields(pde_e.c,{'c','c_abs','n','n_abs'});
-            pde_e.f = orderfields(pde_e.f,{'f','f_abs','n','n_abs'});
-            pde_e.t = orderfields(pde_e.t,{'c','c_abs','f','f_abs','n','n_abs'});
+            pde.e = Tools_1D.Order_pde_e(pde.e);
         end
     end
 end

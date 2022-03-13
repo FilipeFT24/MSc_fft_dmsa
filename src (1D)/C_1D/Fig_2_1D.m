@@ -1,48 +1,50 @@
 classdef Fig_2_1D
     methods (Static)
-        function [] = Plot(msh,pde,p)
-            %  > Auxiliary variables.
-            Exp = 0;
-            fig = Fig_Tools_1D.Set_fig(Exp);
-            n   = size(pde.e.m,2);
-            N   = 1:n;
-
-            if ~Exp
-                figure(N(1)); set(gcf,'Units','pixels','Position',fig.Position);
-                for i = 1:n
-                    subplot(1,n,i);
-                    Fig_2_1D.Plot_1(msh,pde,p,i,fig,Exp);
-                end
-            else
-                for i = 1:n
-                    figure(N(i)); set(gcf,'Units','pixels','Position',fig.Position);
-                    Fig_2_1D.Plot_1(msh,pde,p,i,fig,Exp);
+        function [] = Plot(msh,pde,flag)
+            if flag
+                %  > Auxiliary variables.
+                Exp = 0;
+                fig = Fig_Tools_1D.Set_fig(Exp);
+                n   = size(pde.e.t.a,2);
+                N   = 1:n;
+                
+                if ~Exp
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    for i = 1:n
+                        subplot(1,n,i);
+                        Fig_2_1D.Plot_1(msh,pde,i,fig,Exp);
+                    end
+                else
+                    for i = 1:n
+                        figure; set(gcf,'Units','pixels','Position',fig.Position);
+                        Fig_2_1D.Plot_1(msh,pde,i,fig,Exp);
+                    end
                 end
             end
         end
         % >> 1. -----------------------------------------------------------
-        function [] = Plot_1(msh,pde,p,i,fig,Exp)
+        function [] = Plot_1(msh,pde,i,fig,Exp)
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C = linspecer(9,'qualitative');
             str   = Fig_Tools_1D.Switch_Legend(i);
-            for j = 1:size(pde.e.m{i},2)+1
+            for j = 1:size(pde.e.t.a{i},2)+1
                 if j == 1
                     fig.M (j) = "-v";
                     fig.L1{j} = join(["$|\bar{\tau}_{f}^{",str,"\phantom{\left(j\right)}}|$"]);
                 else
                     fig.M (j) = ":o";
-                    fig.L1{j} = join(["$|\bar{\tau}_{f}^{",str,"\left(",num2str(p(i)-i+j-1),"\right)}|$"]);
+                    fig.L1{j} = join(["$|\bar{\tau}_{f}^{",str,"\left(",num2str(msh.s.p(i)-i+j-1),"\right)}|$"]);
                 end
             end
             fig.L2{1} = "$x$";
-            fig.L2{2} = join(["$\textrm{Error magnitude}$"]);
+            fig.L2{2} = "$\textrm{Error magnitude}$";
             
             %  > Plot variables.
-            for j = 1:size(pde.e.m{i},2)+1
+            for j = 1:size(pde.e.t.a{i},2)+1
                 if j == 1
                     Var_1(:,j) = pde.e.t.f_abs(:,i);
                 else
-                    Var_1(:,j) = pde.e.m{i}(:,j-1);
+                    Var_1(:,j) = pde.e.t.a{i}(:,j-1);
                 end
             end
             [fig,P,Y] = Fig_Tools_1D.Var_1(fig,msh.f.Xv,Var_1);

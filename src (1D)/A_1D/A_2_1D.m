@@ -7,12 +7,13 @@ classdef A_2_1D
             u    = inp.msh.Uniform;
             XLim = inp.msh.XLim;
             h    = inp.msh.h;
+            NC   = round(1./h.*(XLim(2)-XLim(1)));
             
             switch u
                 case true
-                    Xv = A_2_1D.msh_1(XLim,h);
+                    Xv = A_2_1D.msh_1(XLim,NC);
                 case false
-                    Xv = A_2_1D.msh_2(XLim,h,inp.msh.A,inp.msh.c);
+                    Xv = A_2_1D.msh_2(XLim,NC,inp.msh.A,inp.msh.c);
                 otherwise
                     return;
             end
@@ -22,17 +23,16 @@ classdef A_2_1D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Uniformly spaced grid.
-        function [Xv] = msh_1(XLim,h)
-            NC = round(1./h.*(XLim(2)-XLim(1)));
+        function [Xv] = msh_1(XLim,NC)
             Xv = linspace(XLim(1),XLim(2),NC+1);
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Smooth non-uniform grid (transformation taken from reference in PDF).
-        function [Xv] = msh_2(XLim,h,A,c)
-            NC = round(1./h.*(XLim(2)-XLim(1)));
+        function [Xv] = msh_2(XLim,NC,A,c)
             T  = (0:NC)./NC;
             B  = 1./(2.*A).*log((1+(exp(A)-1).*c)./(1-(1-exp(-A)).*c));
             Xv = c.*(1+sinh(A.*(T-B))./sinh(A.*B));
+            Xv = XLim(1)+diff(XLim).*Xv;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > Set remaining grid properties.
@@ -64,11 +64,11 @@ classdef A_2_1D
         end
         %  > 2.1.2. -------------------------------------------------------
         %  > Compute method's order.
-        function [p] = Compute_p(stl_p,stl_t)
+        function [p] = Compute_p(stl_p,stl_s)
             [m,n] = size(stl_p);
             for i = 1:m
                 for j = 1:n
-                    switch stl_t(i,j)
+                    switch stl_s(i,j)
                         case "c"
                             p(i,j) = 2.*stl_p(i,j);
                         otherwise
@@ -236,8 +236,11 @@ classdef A_2_1D
             end
         end
         %  > 2.2.2. -------------------------------------------------------
-        %  > Evaluate truncated error terms' magnitude (re-assemble Df).
-        function [tm] = Compute_tm(inp,msh,s,stl,df,p,nt) 
+        %  > Evaluate truncated error terms' magnitude w/ analytic solution (re-assemble Df).
+        function [TTM] = Compute_TTM(inp,msh,s,stl,df)
+            %  > Analytic derivatives.
+            nt = inp.pl.nt;
+
             for i = 1:size(stl.s,2)
                 if isempty(stl.s{i})
                     continue;
@@ -267,7 +270,7 @@ classdef A_2_1D
                                 l         = 1:nt(i);
                                 m         = 1:length(xt);
                                 n         = 1:length(xt)-1;
-                                o         = p(i)-1+l;
+                                o         = s.p(i)-1+l;
                                 q         = n-1;
                                 r         = length(xt);
                                 t         = o-1;
@@ -277,15 +280,15 @@ classdef A_2_1D
                             otherwise
                                 l         = 1:nt(i);
                                 m         = 1:length(xt);
-                                n         = p(i)-1+l;
+                                n         = s.p(i)-1+l;
                                 Df  (m,l) = (xt(m)-fx)'.^n;
                                 Df_T(l,m) = transpose(Df(m,l));
                         end
                         %  > Truncated terms.
-                        tm{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*df{i}(k,l);
+                        TTM{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*df{i}(k,l);
                     end
                 end
-                tm{i} = abs(tm{i});
+                TTM{i} = abs(TTM{i});
             end
         end
     end

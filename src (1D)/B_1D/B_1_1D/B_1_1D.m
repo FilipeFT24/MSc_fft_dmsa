@@ -11,7 +11,7 @@ classdef B_1_1D
             syms x;
             switch char(inp.pv.f)
                 case "1"
-                    i    = 6;
+                    i    = 3;
                     f{1} = sin(i.*pi.*x);
                 case "2"
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
@@ -38,7 +38,7 @@ classdef B_1_1D
             B    (i)   = msh.f.Xv(i+1);
             fn.st(i,1) = fn.i(B(i))-fn.i(A(i));
             
-            %  > Update/sort 'pde' structure.
+            %  > Update 'pde' structure.
             pde.av = av;
             pde.fn = fn;
         end
