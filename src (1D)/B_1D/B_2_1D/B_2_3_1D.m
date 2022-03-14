@@ -21,15 +21,16 @@ classdef B_2_3_1D
             stl   = B_2_3_1D.SetUp_stl(inp,msh);
             for i = 1:m
                 sn{i} = B_2_1_1D.Update_s(inp,msh,pde,s,stl{i});
-                tt{i} = linspace(s.p(1,i)+1,s.p(2,i),diff(s.p(:,i)));
-                nt(i) = length(tt{i});
                 if i ~= m
-                    xc(:,i) = B_2_1_1D.Update_xc(sn{i}); 
+                    xc(:,i)     = B_2_1_1D.Update_xc(sn{i});
+                else
+                    tt{i}       = linspace(sn{i}.p(1,i)+1,sn{i}.p(2,i),diff(sn{i}.p(:,i)));
+                    sn{i}.nt(i) = length(tt{i});
                 end
             end
             %  > Analytic/PDE approximated derivatives.
             v        = B_2_1_1D.Update_xv  (sn{m},xc(:,m-1)); 
-            pde.df.a = B_2_1_1D.Compute_dfA(msh,pde,s.p,nt);
+            pde.df.a = B_2_1_1D.Compute_dfA(sn{m},msh.f.Xv,pde.fn.f{1});
             pde.df.x = B_2_1_1D.Compute_dfN(sn{m},tt,v); 
             %  > Plot...
         end 

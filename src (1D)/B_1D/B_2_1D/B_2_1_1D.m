@@ -16,11 +16,13 @@ classdef B_2_1_1D
             e.t = B_2_1_1D.Update_et_f(s,n);
             e.t = B_2_1_1D.Update_et_c(msh,s,e.t);
             
-            %  > Compute truncated terms (if requested)/update structures.
+            %  > Compute truncated terms (if requested).
             if ~inp.pa.adapt && inp.pl.tt
-                dfn_a = B_2_1_1D.Compute_dfA(msh,pde,s.p,inp.pl.nt);
+                s.nt  = inp.pl.nt;
+                dfn_a = B_2_1_1D.Compute_dfA(s,msh.f.Xv,pde.fn.f{1});
                 e.t.a = A_2_1D.Compute_TTM  (inp,msh,s,stl,dfn_a);
             end
+            %  > Update structures.
             [msh,pde] = B_2_1_1D.Set_struct(msh,pde,s,stl,x,e);
         end
         
@@ -211,10 +213,8 @@ classdef B_2_1_1D
         %  > 3.2.2. -------------------------------------------------------
         %  > Update 'pde.e.f' field (face error).
         function [ef] = Update_ef(a_f,x_c,s)
-            %  > Auxiliary variables.
+            %  > Reconstructed face values (w/ input nodal field).
             x_ff          = B_2_1_1D.Update_xf(s,x_c);
-            
-            %  > Convective/diffusive components.
             i             = 1:size(x_ff,2);
             %  > Error/absolute error distribution.
             ef.f    (:,i) = a_f(:,i)-x_ff(:,i);
@@ -274,17 +274,17 @@ classdef B_2_1_1D
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
         %  > Compute derivatives (w/ analytic solution).
-        function [df] = Compute_dfA(msh,pde,p,nt)
+        function [df] = Compute_dfA(s,Xv,f)
             syms x;
-            for i = 1:length(p)
-                for j = 0:nt(i)-1
-                    n      = p(i)+j;
-                    dfn{i} = diff(pde.fn.f{1},x,n);
+            for i = 1:size(s.p,2)
+                for j = 0:s.nt(i)-1
+                    n      = s.p(i)+j;
+                    dfn{i} = diff(f,x,n);
                     dfn{i} = matlabFunction(dfn{i});
                     if nargin(dfn{i}) ~= 0
-                        df{i}(:,j+1) = dfn{i}(msh.f.Xv)./factorial(n);
+                        df{i}(:,j+1) = dfn{i}(Xv)./factorial(n);
                     else
-                        df{i}(:,j+1) = zeros(msh.f.NF,1);
+                        df{i}(:,j+1) = zeros(size(Xv));
                     end
                 end
             end

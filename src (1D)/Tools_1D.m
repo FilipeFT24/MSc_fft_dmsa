@@ -16,10 +16,10 @@ classdef Tools_1D
             msh   = orderfields(msh  ,{'d','c','f','s'});
             msh.c = orderfields(msh.c,{'NC','Xc','Vc'});
             msh.f = orderfields(msh.f,{'NF','Xv'});
-            if ~isfield(msh.s,'p')
+            if ~(isfield(msh.s,'p') && isfield(msh.s,'nt'))
                 msh.s = orderfields(msh.s,{'c','f','bnd_i','bnd_v','stl','A','B','Ac','Bc','xf','xt','vg','Inv'});
             else
-                msh.s = orderfields(msh.s,{'c','f','bnd_i','bnd_v','stl','A','B','Ac','Bc','xf','xt','Inv','vg','p'});
+                msh.s = orderfields(msh.s,{'c','f','bnd_i','bnd_v','stl','A','B','Ac','Bc','xf','xt','Inv','vg','p','nt'});
             end           
         end
         % >> 2.2. ---------------------------------------------------------

@@ -284,7 +284,7 @@ classdef A_2_1D
                                 Df  (m,l) = (xt(m)-fx)'.^n;
                                 Df_T(l,m) = transpose(Df(m,l));
                         end
-                        %  > Truncated terms.
+                        %  > Term's magnitude.
                         TTM{i}(k,l) = transpose(Df_T(l,m)*s.xf{i,k}').*df{i}(k,l);
                     end
                 end
