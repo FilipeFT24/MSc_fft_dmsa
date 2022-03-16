@@ -1,4 +1,4 @@
-classdef B_2_3_1D
+classdef C_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         %  > Initialize 'stl' structure.

@@ -5,11 +5,11 @@ clear, clc, close all; format short; beep off; warning('off');
 %  > Working directories.
 Tools_1D.Set_Directories();
 %  > Run...
-run_1 = true;
+run_1 = 1;
+run_2 = 0;
 % >> ----------------------------------------------------------------------
 if run_1
-    [inp,msh] = A_2_1D.Set_A(0.01);
-    [msh,pde] = B_1D.WrapUp_B_1D(inp,msh);
+    [inp,msh] = A_1D.Set_A(0.01);
+    [msh,pde] = B_1D.Set_B(inp,msh);
 end
 % >> ----------------------------------------------------------------------
-

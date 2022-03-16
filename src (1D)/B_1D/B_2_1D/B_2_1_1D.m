@@ -3,23 +3,19 @@ classdef B_2_1_1D
         %% > 1. -----------------------------------------------------------
         function [msh,pde] = SetUp_p(inp,msh,pde,s,stl)
             %  > Update 's' structure and 'x' field.
-            s   = B_2_1_1D.Update_s (inp,msh,pde,s,stl);
-            x.c = B_2_1_1D.Update_xc(s);
-            %  > Compute cell/face error.
-            e.c = B_2_1_1D.Update_ec(pde.av.c,x.c,msh.c.Vc);
-            e.f = B_2_1_1D.Update_ef(pde.av.f,x.c,s);
-            %  > Compute analytic/estimated truncation error.
-            if ~inp.pa.ee
-                n = pde.av;
-            else
-            end
-            e.t = B_2_1_1D.Update_et_f(s,n);
-            e.t = B_2_1_1D.Update_et_c(msh,s,e.t);
+            s     = B_2_1_1D.Update_s     (inp,msh,pde,s,stl);
+            x.c   = B_2_1_1D.Update_xc    (s);
+            %  > Compute cell/face errors.
+            e.f   = B_2_1_1D.Update_ef    (s,x.c,pde.av.f);
+            e.c   = B_2_1_1D.Update_ec    (x.c,pde.av.c,msh.c.Vc);
+            e.t.a = B_2_1_1D.Update_et_a_f(s,pde.av);
+            e.t.a = B_2_1_1D.Update_et_c  (msh,e.t.a);
+            e.t.p = B_2_1_1D.Update_et_p_f(inp,msh,pde,s,stl,x.c);
             
             %  > Compute truncated terms (if requested).
             if ~inp.pa.adapt && inp.pl.tt
                 s.nt  = inp.pl.nt;
-                dfn_a = B_2_1_1D.Compute_dfA(s,msh.f.Xv,pde.fn.f{1});
+                dfn_a = B_2_1_1D.Compute_dfA(s,stl,msh.f.Xv,pde.fn.f{1});
                 e.t.a = A_2_1D.Compute_TTM  (inp,msh,s,stl,dfn_a);
             end
             %  > Update structures.
@@ -104,7 +100,7 @@ classdef B_2_1_1D
             Bc = zeros(NC,1);
             
             %  > Update stencil.
-            s  = A_2_1D.Assemble_stl(inp,msh,pde,s,stl,stl.s);
+            s = A_2_1D.Set_s(inp,msh,pde,s,stl);
             for i = 1:size(s.f,1)
                 bnd_s{i} = find(~cellfun(@isempty,s.f(i,:)));
                 bnd_v{i} = [s.bnd_v{i,bnd_s{i}}];
@@ -154,8 +150,7 @@ classdef B_2_1_1D
             xc = s.Ac\s.Bc;
         end
         %  > 3.1.2. -------------------------------------------------------
-        %  > Update 'pde.x.v' and 'pde.x.f' fields (reconstructed face values).
-        %  > xv.
+        %  > Update 'pde.x.v' field (nodal values used to reconstruct face).
         function [vf] = Update_xv(s,x_c)
             %  > Auxiliary variables.
             [m,n] = size(s.xf);
@@ -177,24 +172,36 @@ classdef B_2_1_1D
                 end
             end
         end
-        %  > xf.
+        %  > 3.1.3. -------------------------------------------------------
+        %  > Update 'pde.x.f' field (reconstructed face values).
         function [xf] = Update_xf(s,x_c)
             %  > Auxiliary variables.
             [m,n] = size(s.xf);
             
-            %  > Nodal values used to reconstruct face.
             vf = B_2_1_1D.Update_xv(s,x_c);
             for i = 1:m
                 for j = 1:n
-                    %  > Reconstructed face value.
                     xf(j,i) = s.xf{i,j}*vf{i,j};
                 end
             end
         end
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
-        %  > Update 'pde.e.c' field (cell error).
-        function [ec] = Update_ec(a_c,x_c,Vc)
+        %  > Update 'pde.e.a.f' field (analytic face error).
+        function [ef] = Update_ef(s,x_c,a_f)
+            %  > Reconstructed face values (w/ input nodal field).
+            x_ff          = B_2_1_1D.Update_xf(s,x_c);
+            i             = 1:size(x_ff,2);
+            %  > Error/absolute error distribution.
+            ef.f    (:,i) = a_f(:,i)-x_ff(:,i);
+            ef.f_abs(:,i) = abs(ef.f(:,i));
+            %  > Mean error/absolute error.
+            ef.n    (1,i) = mean(ef.f(:,i));
+            ef.n_abs(1,i) = mean(ef.f_abs(:,i));
+        end
+        %  > 3.2.2. -------------------------------------------------------
+        %  > Update 'pde.e.a.c' field (face cell error).
+        function [ec] = Update_ec(x_c,a_c,Vc)
             %  > Error/absolute error distribution.
             ec.c    (:,1) = a_c(:,1)-x_c(:,1);
             ec.c_abs(:,1) = abs(ec.c);
@@ -210,50 +217,34 @@ classdef B_2_1_1D
             ec.n    (3,1) = max(ec.c);
             ec.n_abs(3,1) = max(ec.c_abs);
         end
-        %  > 3.2.2. -------------------------------------------------------
-        %  > Update 'pde.e.f' field (face error).
-        function [ef] = Update_ef(a_f,x_c,s)
-            %  > Reconstructed face values (w/ input nodal field).
-            x_ff          = B_2_1_1D.Update_xf(s,x_c);
-            i             = 1:size(x_ff,2);
-            %  > Error/absolute error distribution.
-            ef.f    (:,i) = a_f(:,i)-x_ff(:,i);
-            ef.f_abs(:,i) = abs(ef.f(:,i));
-            %  > Mean error/absolute error.
-            ef.n    (1,i) = mean(ef.f(:,i));
-            ef.n_abs(1,i) = mean(ef.f_abs(:,i));
-        end
         %  > 3.2.3. -------------------------------------------------------
-        %  > Update 'pde.e.t.f' field (face truncation error).
-        function [et] = Update_et_f(s,x)
+        %  > Update 'pde.e.t.a.f' field (analytic face truncation error).
+        function [et] = Update_et_a_f(s,x)
             %  > Auxiliary variables.
             nc = length(s.vg);
             i  = 1:nc;
             j  = 1:nc+1;
             k  = j(end);
-            
+
             %  > Reconstructed face values (w/ input nodal field).
             x.s             = B_2_1_1D.Update_xf(s,x.c);
             %  > (Weighted) truncation/absolute truncation error distribution.
             et.f      (:,i) = s.vg(i).*(x.f(:,i)-x.s(:,i));
-            et.f      (:,k) = et.f(:,k-2)-et.f(:,k-1);
+            et.f      (:,k) = sum(et.f(:,i),2);
             et.f_abs  (:,j) = abs(et.f);
             %  > Mean/absolute mean truncation error.
             et.n.f    (:,j) = mean(et.f(:,j));
             et.n_abs.f(:,j) = mean(et.f_abs(:,j));
         end
         %  > 3.2.4. -------------------------------------------------------
-        %  > Update 'pde.e.t.c' field (cell truncation error).
-        function [et] = Update_et_c(msh,s,et)
-            %  > Auxiliary variables.
-            nc = length(s.vg);
-            k  = nc+1;
-            
+        %  > Update 'pde.e.t.(...).c' field (cell truncation error).
+        function [et] = Update_et_c(msh,et)
             %  > Truncation/absolute truncation error distribution.
-            %  > Equivalent formulations (need to import s).
-            %  et.c   (:,1) = s.Ac*x.c(:,1)-s.Bc(:,1);
+            %  > Equivalent formulations (need to import x.c).
+            %  et_c   (:,1) = s.Ac*av.c(:,1)-s.Bc(:,1);
             l               = 1:msh.c.NC;
             m               = l+1;
+            k               = size(et.f,2);
             et.c      (l,1) = et.f(l,k)-et.f(m,k);
             et.c_abs  (:,1) = abs(et.c);
             
@@ -270,15 +261,51 @@ classdef B_2_1_1D
             et.n_abs.c(2,:) = sum(sqrt(ec_2_abs),1)./sum(sqrt(Vc.^2));
             et.n_abs.c(3,:) = max(et.c_abs);
         end
+        %  > 3.2.5. -------------------------------------------------------
+        %  > Update 'pde.e.t.p' field (predicted/estimated error).
+        function [et] = Update_et_p_f(inp,msh,pde,s,stl,x_c)
+            %  > Auxiliary variables.
+            ns = 2;
+            
+            for i = 1:ns+1
+                if i == 1
+                    sn{i} = s;
+                else
+                    for j = 1:size(stl.s,2)
+                        k             = 2;
+                        l             = j*size(stl.s,2)-1;
+                        stl.p   (:,l) = inc(stl.p(:,l),k).i;
+                        stl.s     {j} = transpose(1:msh.f.NF);
+                    end
+                    sn{i} = A_2_1D.Set_s(inp,msh,pde,s,stl);
+                end
+                fv_x{i} = B_2_1_1D.Update_xf(sn{i},x_c);
+                if i ~= 1
+                    for j = 1:size(stl.s,2)
+                        et{i-1}.f(:,j) = sn{i}.vg(j).*(fv_x{i}(:,j)-fv_x{i-1}(:,j));
+                    end
+                    n                  = j+1;
+                    et{i-1}.f    (:,n) = sum (et{i-1}.f,2);
+                    et{i-1}.f_abs      = abs (et{i-1}.f);
+                    et{i-1}.n.f        = mean(et{i-1}.f);
+                    et{i-1}.n_abs.f    = mean(et{i-1}.f_abs);
+                    et{i-1}            = B_2_1_1D.Update_et_c(msh,et{i-1});
+                end
+            end
+        end
         
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
         %  > Compute derivatives (w/ analytic solution).
-        function [df] = Compute_dfA(s,Xv,f)
+        function [df] = Compute_dfA(s,stl,Xv,f)
+            %  > Auxiliary variables.
+            l = size(stl.s,2);
+            
             syms x;
-            for i = 1:size(s.p,2)
+            for i = 1:l
                 for j = 0:s.nt(i)-1
-                    n      = s.p(i)+j;
+                    k      = i*l-1;
+                    n      = stl.p(k)+j+1;
                     dfn{i} = diff(f,x,n);
                     dfn{i} = matlabFunction(dfn{i});
                     if nargin(dfn{i}) ~= 0
@@ -290,9 +317,11 @@ classdef B_2_1_1D
             end
         end
         % >> 4.2. ---------------------------------------------------------
-        %  > Compute derivatives (w/ PDE solution).       
+        %  > Compute derivatives (w/ PDE solution).
         function [dfn] = Compute_dfN(s,tt,v)
+            %  > Auxiliary variables.
             [m,n] = size(s.Inv);
+            
             for i = 1:m
                 for j = 1:n
                     k = 0;
@@ -305,20 +334,8 @@ classdef B_2_1_1D
                 end
             end
         end
-                        
+        
         %% > 5. -----------------------------------------------------------
-        % >> 5.1. ---------------------------------------------------------
-        %  function [et] = Set_et(ef,ec)
-        %      n         = [fieldnames(ef.n)',fieldnames(ec.n)';struct2cell(ef.n)',struct2cell(ec.n)'];
-        %      et.n      = struct(n{:});
-        %      n_abs     = [fieldnames(ef.n_abs)',fieldnames(ec.n_abs)';struct2cell(ef.n_abs)',struct2cell(ec.n_abs)'];
-        %      et.n_abs  = struct(n{:});
-        %      et.f      = ef.f;
-        %      et.f_abs  = ef.f_abs;
-        %      et.c      = ec.c;
-        %      et.c_abs  = ec.c_abs;
-        %  end
-        % >> 5.2. ---------------------------------------------------------
         %  > Update/set structure fields.
         function [msh,pde] = Set_struct(msh,pde,s,stl,x,e)
             %  > 'msh'.

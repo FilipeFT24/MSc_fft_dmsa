@@ -27,13 +27,14 @@ classdef Fig_2_1D
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C = linspecer(9,'qualitative');
             str   = Fig_Tools_1D.Switch_Legend(i);
+            n     = size(pde.av.f,2);
             for j = 1:size(pde.e.t.a{i},2)+1
                 if j == 1
                     fig.M (j) = "-v";
                     fig.L1{j} = join(["$|\bar{\tau}_{f}^{",str,"\phantom{\left(j\right)}}|$"]);
                 else
                     fig.M (j) = ":o";
-                    fig.L1{j} = join(["$|\bar{\tau}_{f}^{",str,"\left(",num2str(msh.s.p(i)-i+j-1),"\right)}|$"]);
+                    fig.L1{j} = join(["$|\bar{\tau}_{f}^{",str,"\left(",num2str(msh.s.stl.p(i*n-1)-i+j),"\right)}|$"]);
                 end
             end
             fig.L2{1} = "$x$";

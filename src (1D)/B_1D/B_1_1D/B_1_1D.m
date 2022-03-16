@@ -9,11 +9,11 @@ classdef B_1_1D
             
             %  > Set analytic function.
             syms x;
-            switch char(inp.pv.f)
-                case "1"
+            switch inp.pv.f
+                case 1
                     i    = 3;
                     f{1} = sin(i.*pi.*x);
-                case "2"
+                case 2
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
                     i    = 50;
                     f{1} = exp(-i.*((x-c).^2));

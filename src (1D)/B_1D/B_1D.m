@@ -1,24 +1,15 @@
 classdef B_1D
     methods(Static)
-        %% > Wrap-up B (1D).
-        function [msh,pde] = WrapUp_B_1D(inp,msh)
-            %  > Initialize.
+        %% > 1. -----------------------------------------------------------
+        function [msh,pde] = Set_B(inp,msh)
+            %  > Initialize...
             [pde,s,stl] = B_1D.Initialize(inp,msh);
-            
-            switch inp.ee.test
-                case false
-                    %  > 'Standard' and 'p-adaptative' runs w/ analytic values.
-                    [msh,pde] = B_1D.Run_p(inp,msh,pde,s,stl);
-                case true
-                    %  > Check error estimators.
-                    [msh,pde] = B_1D.SetUp_TX(inp,msh,pde,s);
-                otherwise
-                    return;
-            end
+            %  > Set up 'standard' and 'p-adaptative' runs.
+            [msh,pde]   = B_1D.Run_p(inp,msh,pde,s,stl);
         end
         
-        %% > Auxiliary functions.
-        % >> 1. -----------------------------------------------------------
+        %% > 2. -----------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
         %  > Initialize problem (for all tests).
         function [pde,s,stl] = Initialize(inp,msh)
             %  > 'pde'.
@@ -43,10 +34,9 @@ classdef B_1D
             %  > 'stl'.
             switch inp.ee.test
                 case false
-                    s.p   = A_2_1D.Compute_p(inp.ps.p,inp.ps.s);
-                    stl   = A_2_1D.Initialize_stl(msh,inp.ps.p,inp.ps.s);
+                    stl   = A_2_1D.Initialize_stl(msh,inp.ps.p,inp.ps.t);
                 case true
-                    s.p   = A_2_1D.Compute_p(inp.ee.p,inp.ee.s);
+                    s.p   = A_2_1D.Compute_p(inp.ee.p,inp.ee.t);
                     stl.p = cell(1,2);
                     stl.s = cell(1,2);
                     stl.t = cell(1,2);
@@ -54,7 +44,7 @@ classdef B_1D
                     return;
             end
         end
-        % >> 2. -----------------------------------------------------------
+        % >> 2.2. ---------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
         function [msh,pde] = Run_p(inp,msh,pde,s,stl)
             switch inp.pa.adapt
@@ -64,19 +54,18 @@ classdef B_1D
                     %  > Plot...
                     if inp.pl.all
                         Fig_1_1D.Plot(msh,pde);
-                        Fig_2_1D.Plot(msh,pde,inp.pl.tt);
+                        Fig_2_1D.Plot(inp,msh,pde);
                     end
                 case true
                     %  > 'p-adaptative' run.
                     [msh,pde] = B_2_1_1D.SetUp_p(inp,msh,pde,s,stl);
                     %  > While...
                     i = 0;
-                    s = msh.s;
                     while 1
                         %  > Adapt...
                         if i ~= inp.pa.n
-                            stl       = B_2_2_1D.Adapt_p(inp,stl,pde.e);
-                            [msh,pde] = B_2_1_1D.SetUp_p(inp,msh,pde,s,stl);
+                            [pde,stl] = B_2_2_1D.Adapt_p(inp,pde,stl);
+                            [msh,pde] = B_2_1_1D.SetUp_p(inp,msh,pde,msh.s,stl);
                         else
                             break;
                         end
@@ -88,16 +77,6 @@ classdef B_1D
                     end
                 otherwise
                     return;
-            end
-        end
-        % >> 3. -----------------------------------------------------------
-        %  > Set up other tests.
-        function [msh,pde] = SetUp_TX(inp,msh,pde,s)
-            if inp.ee.flag(1)
-                pde = B_2_3_1D.T1(inp,msh,pde,s);
-            end
-            if inp.ee.flag(2)
-                pde = B_2_3_1D.T2(inp,msh,pde,s);
             end
         end
     end

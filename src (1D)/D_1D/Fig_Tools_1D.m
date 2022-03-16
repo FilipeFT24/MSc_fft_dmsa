@@ -4,18 +4,18 @@ classdef Fig_Tools_1D
         %  >> 1.1. --------------------------------------------------------
         function [fig] = Set_fig(Exp)
             if ~Exp
-                fig.LW       =  2.0;                %  > Line.
-                fig.MS       =  3.0;                %  > Marker size.
-                fig.FT_1     = 12.5;                %  > Legend.
-                fig.FT_2     = 15.0;                %  > x/y-axis.
-                fig.FT_3     = [22.5,17.5];         %  > x/y-label.
+                fig.LW       =  1.25;               %  > Line.
+                fig.MS       =  4.00;               %  > Marker size.
+                fig.FT_1     = 14.00;               %  > Legend.
+                fig.FT_2     = 15.00;               %  > x/y-axis.
+                fig.FT_3     = [22.50,17.50];       %  > x/y-label.
                 fig.Position = [150,100,1250,600];  %  > Position.
             else
-                fig.LW       =  3.5;                %  > Line.
-                fig.MS       =  5.0;                %  > Marker.
-                fig.FT_1     = 25.0;                %  > Legend.
-                fig.FT_2     = 30.0;                %  > x/y-axis.
-                fig.FT_3     = [42.5,35.0];         %  > x/y-label.
+                fig.LW       =  3.50;               %  > Line.
+                fig.MS       =  5.00;               %  > Marker.
+                fig.FT_1     = 25.00;               %  > Legend.
+                fig.FT_2     = 30.00;               %  > x/y-axis.
+                fig.FT_3     = [42.50,35.00];       %  > x/y-label.
                 fig.Position = [350,100,850,600];   %  > Position.
                 fig.Folder   = "../[Figures]/[1D]"; %  > Destination folder.
             end
@@ -81,9 +81,9 @@ classdef Fig_Tools_1D
         end
         % >> 2.3. ---------------------------------------------------------
         %  > 2.3.1. -------------------------------------------------------
-        function [] = Set_Plot(fig,msh,P,YM)
+        function [] = Set_Plot(fig,msh,P,YM,NC)
             legend([P{:}],[fig.L1{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',2);
+                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
             set(gca,'YScale','log');
             ylim([10.^(ceil(log10(min(YM(:,1))))-1),...
                   10.^(ceil(log10(max(YM(:,2))))+1)]);
