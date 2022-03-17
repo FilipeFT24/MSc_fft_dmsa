@@ -7,8 +7,9 @@ classdef Tools_1D
             addpath(genpath('C_1D'));
             addpath(genpath('D_1D'));
             addpath(genpath('../[Tools]/[Tools - Data]'));
+            addpath(genpath('../[Tools]/[Tools - Mesh generation]'));
             addpath(genpath('../[Tools]/[Tools - Numerical]'));
-            addpath(genpath('../[Tools]/[Tools - Post-processing]'));
+            addpath(genpath('../[Tools]/[Tools - Other stuff]'));
         end
         
         %% > 2. -----------------------------------------------------------
@@ -25,10 +26,15 @@ classdef Tools_1D
         end
         % >> 2.2. ---------------------------------------------------------
         function [pde_e] = Order_pde_e(pde_e)
-            pde_e     = orderfields(pde_e    ,{'c','f','t'});
-            pde_e.c   = orderfields(pde_e.c  ,{'c','c_abs','n','n_abs'});
-            pde_e.f   = orderfields(pde_e.f  ,{'f','f_abs','n','n_abs'});
-            pde_e.t.a = orderfields(pde_e.t.a,{'c','c_abs','f','f_abs','n','n_abs'});  
+            pde_e.a   = orderfields(pde_e.a  ,{'c','f','t'});
+            pde_e.a.c = orderfields(pde_e.a.c,{'c','c_abs','n','n_abs'});
+            pde_e.a.f = orderfields(pde_e.a.f,{'f','f_abs','n','n_abs'});
+            pde_e.a.t = orderfields(pde_e.a.t,{'c','c_abs','f','f_abs','n','n_abs'}); 
+            pde_e.p   = orderfields(pde_e.p  ,{'c','t'});
+            for i = 1:size(pde_e.p.t,2)
+                pde_e.p.c{i} = orderfields(pde_e.p.c{i},{'c','c_abs','n','n_abs'});
+                pde_e.p.t{i} = orderfields(pde_e.p.t{i},{'c','c_abs','f','f_abs','n','n_abs','s'});
+            end
         end
     end
 end

@@ -1,0 +1,16 @@
+INSTRUÇOES PARA USAR CONVECÇAO+DIFUSAO 1D:
+
+- Utilizar a função solver1ddc (a função solver1d, não tem convecção / a função solver1ddc_function só é útil para fazer gráficos de convergência);
+- Ajustar os valores de u_convec e gamma_diff, de modo a escolher o Peclet_L desejado;
+- Escolher a ordem e tamanho de malha e correr;
+
+
+
+NOTAS:
+
+- Só funciona para Dirichlet;
+- Após testes, verficou-se que a correcção diferida não tinha vantagens, por isso o programa resolve directamente;
+- Assim, o metodo2 não é aplicavel, por isso está em comentário;
+- Está a utilizar-se o pré-condionador ILU(0);
+- O solver que está a ser utilizado é o bicgstab;
+- As soluçoes para Peclet_L's muito altos começam a oscilar; 

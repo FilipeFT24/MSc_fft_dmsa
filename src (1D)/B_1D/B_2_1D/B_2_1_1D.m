@@ -3,15 +3,15 @@ classdef B_2_1_1D
         %% > 1. -----------------------------------------------------------
         function [msh,pde] = SetUp_p(inp,msh,pde,s,stl)
             %  > Update 's' structure and 'x' field.
-            s     = B_2_1_1D.Update_s     (inp,msh,pde,s,stl);
-            x.c   = B_2_1_1D.Update_xc    (s);
-            %  > Compute cell/face errors.
-            e.f   = B_2_1_1D.Update_ef    (s,x.c,pde.av.f);
-            e.c   = B_2_1_1D.Update_ec    (x.c,pde.av.c,msh.c.Vc);
-            e.t.a = B_2_1_1D.Update_et_a_f(s,pde.av);
-            e.t.a = B_2_1_1D.Update_et_c  (msh,e.t.a);
-            e.t.p = B_2_1_1D.Update_et_p_f(inp,msh,pde,s,stl,x.c);
-            
+            s     = B_2_1_1D.Update_s   (inp,msh,pde,s,stl);
+            x.c   = B_2_1_1D.Update_xc  (s);
+            %  > Compute cell/face/truncation error distribution/norms.
+            e.a.c = B_2_1_1D.Update_ec_a(x.c,pde.av.c,msh.c.Vc);
+            e.a.f = B_2_1_1D.Update_ef_a(x.c,pde.av.f,s);            
+            e.a.t = B_2_1_1D.Update_et_a(pde.av,s,msh.c.Vc);
+            e.p.t = B_2_1_1D.Update_et_p(inp,msh,pde,x.c,s,stl,2);
+            e.p.c = B_2_1_1D.Update_ec_p(e.p.t,msh.c.Vc);
+
             %  > Compute truncated terms (if requested).
             if ~inp.pa.adapt && inp.pl.tt
                 s.nt  = inp.pl.nt;
@@ -95,7 +95,6 @@ classdef B_2_1_1D
         function [s] = Update_s(inp,msh,pde,s,stl)
             %  > Auxiliary variables.
             NC = msh.c.NC;
-            k  = 1:size(stl.s,2);
             Ac = zeros(NC);
             Bc = zeros(NC,1);
             
@@ -106,7 +105,7 @@ classdef B_2_1_1D
                 bnd_v{i} = [s.bnd_v{i,bnd_s{i}}];
             end
             %  > Update A/B.
-            for i = k
+            for i = 1:size(stl.s,2)
                 if ~isempty(stl.s{i})
                     for j = 1:NC
                         %  > Initialize.
@@ -158,10 +157,9 @@ classdef B_2_1_1D
             for i = 1:m
                 for j = 1:n
                     if ~isempty(s.c{i,j})
-                        %  > Nodal indices/values.
                         k = s.c{i,j};
                         v = x_c(k,1);
-                        %  > Add boundary contribution?...
+                        %  > Add boundary contribution(?).
                         if ~isempty(s.f{i,j})
                             v = [v;s.bnd_v{i,j}];
                         end
@@ -187,110 +185,100 @@ classdef B_2_1_1D
         end
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
-        %  > Update 'pde.e.a.f' field (analytic face error).
-        function [ef] = Update_ef(s,x_c,a_f)
-            %  > Reconstructed face values (w/ input nodal field).
-            x_ff          = B_2_1_1D.Update_xf(s,x_c);
-            i             = 1:size(x_ff,2);
-            %  > Error/absolute error distribution.
-            ef.f    (:,i) = a_f(:,i)-x_ff(:,i);
-            ef.f_abs(:,i) = abs(ef.f(:,i));
-            %  > Mean error/absolute error.
-            ef.n    (1,i) = mean(ef.f(:,i));
-            ef.n_abs(1,i) = mean(ef.f_abs(:,i));
+        %  > Update 'pde.e.a.c' field (cell error distribution/norms).
+        function [ec] = Update_ec_a(xc,ac,Vc)
+            %  > Error distribution.
+            ec.c    (:,1) = ac(:,1)-xc(:,1);
+            ec.c_abs(:,1) = abs(ec.c);
+            %  > Error norms.
+            ec.n          = LX.n(ec.c,Vc);
+            ec.n_abs      = LX.n(ec.c_abs,Vc);
         end
         %  > 3.2.2. -------------------------------------------------------
-        %  > Update 'pde.e.a.c' field (face cell error).
-        function [ec] = Update_ec(x_c,a_c,Vc)
-            %  > Error/absolute error distribution.
-            ec.c    (:,1) = a_c(:,1)-x_c(:,1);
-            ec.c_abs(:,1) = abs(ec.c);
-            %  > Error/absolute error norms.
-            ec_1    (:,1) = ec.c.*Vc;
-            ec_1_abs(:,1) = ec.c_abs.*Vc;
-            ec_2    (:,1) = ec_1.^2;
-            ec_2_abs(:,1) = ec_1_abs.^2;
-            ec.n    (1,1) = sum(ec_1)./sum(Vc);
-            ec.n_abs(1,1) = sum(ec_1_abs)./sum(Vc);
-            ec.n    (2,1) = sum(sqrt(ec_2))./sum(sqrt(Vc.^2));
-            ec.n_abs(2,1) = sum(sqrt(ec_2_abs))./sum(sqrt(Vc.^2));
-            ec.n    (3,1) = max(ec.c);
-            ec.n_abs(3,1) = max(ec.c_abs);
+        %  > Update 'pde.e.a.f' field (face error distribution/norms).
+        function [ef] = Update_ef_a(xc,af,s)
+            %  > Error distribution.
+            i             = 1:size(af,2);
+            xf            = B_2_1_1D.Update_xf(s,xc);
+            ef.f    (:,i) = af(:,i)-xf(:,i);
+            ef.f_abs(:,i) = abs(ef.f(:,i));
+            %  > Error norms.
+            ef.n    (:,i) = LX.n(ef.f(:,i));
+            ef.n_abs(:,i) = LX.n(ef.f_abs(:,i));
         end
         %  > 3.2.3. -------------------------------------------------------
-        %  > Update 'pde.e.t.a.f' field (analytic face truncation error).
-        function [et] = Update_et_a_f(s,x)
-            %  > Auxiliary variables.
-            nc = length(s.vg);
-            i  = 1:nc;
-            j  = 1:nc+1;
-            k  = j(end);
-
-            %  > Reconstructed face values (w/ input nodal field).
+        %  > Update 'pde.e.a.t' field (truncation error distribution/norms).
+        function [et] = Update_et_a(x,s,Vc)
+            %  > Error distribution.
+            [m,n]           = size(s.xf);
             x.s             = B_2_1_1D.Update_xf(s,x.c);
-            %  > (Weighted) truncation/absolute truncation error distribution.
+            i               = 1:m;
+            j               = m+1;
             et.f      (:,i) = s.vg(i).*(x.f(:,i)-x.s(:,i));
-            et.f      (:,k) = sum(et.f(:,i),2);
-            et.f_abs  (:,j) = abs(et.f);
-            %  > Mean/absolute mean truncation error.
-            et.n.f    (:,j) = mean(et.f(:,j));
-            et.n_abs.f(:,j) = mean(et.f_abs(:,j));
+            et.f      (:,j) = sum(et.f(:,i),2);
+            et.f_abs        = abs(et.f);
+            a               = 1:n-1;
+            b               = a+1;
+            et.c      (a,1) = et.f(a,j)-et.f(b,j);
+            et.c_abs  (:,1) = abs(et.c);
+            %  Remark: Equivalent formulation.
+            %  et_c   (:,1)   = s.Ac*av.c(:,1)-s.Bc(:,1);            
+            %  > Error norms.
+            et.n.f          = LX.n(et.f);
+            et.n_abs.f      = LX.n(et.f_abs);
+            et.n.c          = LX.n(et.c,Vc);
+            et.n_abs.c      = LX.n(et.c_abs,Vc);
         end
         %  > 3.2.4. -------------------------------------------------------
-        %  > Update 'pde.e.t.(...).c' field (cell truncation error).
-        function [et] = Update_et_c(msh,et)
-            %  > Truncation/absolute truncation error distribution.
-            %  > Equivalent formulations (need to import x.c).
-            %  et_c   (:,1) = s.Ac*av.c(:,1)-s.Bc(:,1);
-            l               = 1:msh.c.NC;
-            m               = l+1;
-            k               = size(et.f,2);
-            et.c      (l,1) = et.f(l,k)-et.f(m,k);
-            et.c_abs  (:,1) = abs(et.c);
-            
-            %  > Error/absolute error norms.
-            Vc              = msh.c.Vc;
-            ec_1            = et.c.*Vc;
-            ec_1_abs        = et.c_abs.*Vc;
-            ec_2            = ec_1.^2;
-            ec_2_abs        = ec_1_abs.^2;
-            et.n.c    (1,:) = sum(ec_1,1)./sum(Vc);
-            et.n.c    (2,:) = sum(sqrt(ec_2),1)./sum(sqrt(Vc.^2));
-            et.n.c    (3,:) = max(et.c);
-            et.n_abs.c(1,:) = sum(ec_1_abs,1)./sum(Vc);
-            et.n_abs.c(2,:) = sum(sqrt(ec_2_abs),1)./sum(sqrt(Vc.^2));
-            et.n_abs.c(3,:) = max(et.c_abs);
-        end
-        %  > 3.2.5. -------------------------------------------------------
-        %  > Update 'pde.e.t.p' field (predicted/estimated error).
-        function [et] = Update_et_p_f(inp,msh,pde,s,stl,x_c)
-            %  > Auxiliary variables.
-            ns = 2;
-            
-            for i = 1:ns+1
+        %  > Update 'pde.e.p.t' field (predicted/estimated truncation error distribution/norms).
+        function [et] = Update_et_p(inp,msh,pde,xc,s,stl,o)
+            [m,n] = size(s.xf);
+            %  > Stencil coefficients.
+            for i = 1:o+1
                 if i == 1
                     sn{i} = s;
                 else
-                    for j = 1:size(stl.s,2)
-                        k             = 2;
-                        l             = j*size(stl.s,2)-1;
-                        stl.p   (:,l) = inc(stl.p(:,l),k).i;
-                        stl.s     {j} = transpose(1:msh.f.NF);
+                    for j = 1:m
+                        k          = 2;
+                        l          = j*m-1;
+                        stl.p(:,l) = stl.p(:,l)+k;
+                        stl.s  {j} = transpose(1:n);
                     end
-                    sn{i} = A_2_1D.Set_s(inp,msh,pde,s,stl);
+                    sn{i} = A_2_1D.Set_s(inp,msh,pde,s,stl);  
                 end
-                fv_x{i} = B_2_1_1D.Update_xf(sn{i},x_c);
-                if i ~= 1
-                    for j = 1:size(stl.s,2)
-                        et{i-1}.f(:,j) = sn{i}.vg(j).*(fv_x{i}(:,j)-fv_x{i-1}(:,j));
-                    end
-                    n                  = j+1;
-                    et{i-1}.f    (:,n) = sum (et{i-1}.f,2);
-                    et{i-1}.f_abs      = abs (et{i-1}.f);
-                    et{i-1}.n.f        = mean(et{i-1}.f);
-                    et{i-1}.n_abs.f    = mean(et{i-1}.f_abs);
-                    et{i-1}            = B_2_1_1D.Update_et_c(msh,et{i-1});
+                fv{i} = B_2_1_1D.Update_xf(sn{i},xc);
+            end
+            for i = 1:o
+                %  > Error distribution.
+                for j = 1:m
+                    et{i}.f(:,j) = sn{i+1}.vg(j).*(fv{i+1}(:,j)-fv{i}(:,j));
                 end
+                k                = m+1;
+                et{i}.f    (:,k) = sum(et{i}.f(:,1:m),2);
+                et{i}.f_abs      = abs(et{i}.f);
+                a                = 1:n-1; 
+                b                = a+1;
+                et{i}.c          = et{i}.f(a,k)-et{i}.f(b,k);
+                et{i}.c_abs      = abs(et{i}.c);
+                %  > Error norms.
+                et{i}.n.f        = LX.n(et{i}.f);
+                et{i}.n_abs.f    = LX.n(et{i}.f_abs);
+                et{i}.n.c        = LX.n(et{i}.c,msh.c.Vc);
+                et{i}.n_abs.c    = LX.n(et{i}.c_abs,msh.c.Vc);
+                %  > Stencil coefficients.
+                et{i}.s          = sn{i+1};
+            end
+        end
+        %  > 3.2.5. -------------------------------------------------------
+        %  > Update 'pde.e.p.c' field (predicted/estimated truncation error distribution/norms).
+        function [ec] = Update_ec_p(et_p,Vc)
+            for i = 1:size(et_p,2)
+                %  > Error distribution.
+                ec{i}.c       = inv(et_p{i}.s.Ac)*et_p{i}.c;
+                ec{i}.c_abs   = abs(ec{i}.c);
+                %  > Error norms.
+                ec{i}.n.c     = LX.n(ec{i}.c,Vc);
+                ec{i}.n_abs.c = LX.n(ec{i}.c_abs,Vc);
             end
         end
         

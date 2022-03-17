@@ -15,7 +15,7 @@ classdef B_1_1D
                     f{1} = sin(i.*pi.*x);
                 case 2
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 50;
+                    i    = 35;
                     f{1} = exp(-i.*((x-c).^2));
                 otherwise
                     return;

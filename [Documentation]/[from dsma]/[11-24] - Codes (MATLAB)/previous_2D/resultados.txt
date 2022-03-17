@@ -1,0 +1,18 @@
+
+
+Construï¿½ï¿½o da Malha						 Inicio ... 0.109375 ... 0.125000 ... Fim
+
+
+Calculo dos Valores Analiticos			 Inicio ... 0.171875 ... 0.296875 ... Fim
+
+
+Cï¿½lculo dos Valores Numericos			 Inicio ... |||||||| ... |||||||| ... |||
+
+
+	Construção do Stencil				 Inicio ... 0.156250 ... 0.453125 ... Fim
+
+
+	Pontos de Gauss na Face				 Inicio ... 0.078125 ... 0.531250 ... Fim
+
+
+	Reconstrução do Polinomio na Face	 Inicio ... 

@@ -3,10 +3,10 @@ classdef B_2_2_1D
         %% > 1. -----------------------------------------------------------
         %  > Select faces for convective-diffusive p-refinement.
         function [pde,stl] = Adapt_p(inp,pde,stl)
-            [~,n] = size(pde.e.t.p);
+            [~,n] = size(pde.e.p.t);
             for i = 1:n
                 m(i) = 1;
-                f{i} = find(pde.e.t.p{m(i)}.f_abs(:,i) > pde.e.t.p{m(i)}.n_abs.f(n));
+                f{i} = find(pde.e.p.t{m(i)}.f_abs(:,i) > pde.e.p.t{m(i)}.n_abs.f(n));
             end
             stl = B_2_2_1D.Update_stl(inp,stl,f);
         end
@@ -22,7 +22,7 @@ classdef B_2_2_1D
                         k = i*size(f,2)-1;
                         if ~inp.pa.odd
                             l                = n;
-                            stl.p(f{i}(j),k) = inc(stl.p(f{i}(j),k),l).i;
+                            stl.p(f{i}(j),k) = stl.p(f{i}(j),k)+l;
                         end
                     end
                 end

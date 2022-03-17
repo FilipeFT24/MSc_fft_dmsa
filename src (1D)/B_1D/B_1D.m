@@ -1,16 +1,15 @@
 classdef B_1D
     methods(Static)
         %% > 1. -----------------------------------------------------------
+        %  > Initialize problem and set up 'standard'/'p-adaptative' runs.
         function [msh,pde] = Set_B(inp,msh)
-            %  > Initialize...
             [pde,s,stl] = B_1D.Initialize(inp,msh);
-            %  > Set up 'standard' and 'p-adaptative' runs.
             [msh,pde]   = B_1D.Run_p(inp,msh,pde,s,stl);
         end
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        %  > Initialize problem (for all tests).
+        %  > Initialize problem.
         function [pde,s,stl] = Initialize(inp,msh)
             %  > 'pde'.
             pde = B_1_1D.Update_pde(inp,msh);
@@ -32,17 +31,7 @@ classdef B_1D
             s.Inv   = cell(2,msh.f.NF);
             s.vg    = [inp.pv.v(1),-inp.pv.v(2)];
             %  > 'stl'.
-            switch inp.ee.test
-                case false
-                    stl   = A_2_1D.Initialize_stl(msh,inp.ps.p,inp.ps.t);
-                case true
-                    s.p   = A_2_1D.Compute_p(inp.ee.p,inp.ee.t);
-                    stl.p = cell(1,2);
-                    stl.s = cell(1,2);
-                    stl.t = cell(1,2);
-                otherwise
-                    return;
-            end
+            stl     = A_2_1D.Initialize_stl(msh,inp.ps.p,inp.ps.t);
         end
         % >> 2.2. ---------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
@@ -54,7 +43,7 @@ classdef B_1D
                     %  > Plot...
                     if inp.pl.all
                         Fig_1_1D.Plot(msh,pde);
-                        Fig_2_1D.Plot(inp,msh,pde);
+                        Fig_2_1D.Plot(msh,pde,inp.pl.tt);
                     end
                 case true
                     %  > 'p-adaptative' run.

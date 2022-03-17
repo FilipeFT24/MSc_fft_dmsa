@@ -88,3 +88,23 @@ classdef C_1D
         end
     end
 end
+% % >> ee.
+% inp.ee.test     = 0;                           %  > Test error estimators(?).
+% inp.ee.flag     = [0,1];                       %  > Test flags.
+% if inp.ee.test && nnz(inp.ee.flag) ~= 1
+%     inp.ee.test =  0;
+% else
+%     if inp.ee.flag(1)
+%         inp.ee.p(:,1) = [1,2];                 %  > Polynomial order: Convection.
+%         inp.ee.p(:,2) = [1,2];                 %  > Polynomial order: Diffusion.
+%         inp.ee.t(:,1) = ["c","c"];             %  > Polynomial  type: Convection.
+%         inp.ee.t(:,2) = ["c","c"];             %  > Polynomial  type: Diffusion.
+%     elseif inp.ee.flag(2)
+%         inp.ee.p(:,1) = [1,2,3];               %  > Polynomial order: Convection.
+%         inp.ee.p(:,2) = [1,2,3];               %  > Polynomial order: Diffusion.
+%         inp.ee.t(:,1) = ["c","c","c"];         %  > Polynomial  type: Convection.
+%         inp.ee.t(:,2) = ["c","c","c"];         %  > Polynomial  type: Diffusion.
+%     else
+%         return;
+%     end
+% end
