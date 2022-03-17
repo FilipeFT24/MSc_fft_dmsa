@@ -26,6 +26,7 @@ classdef Tools_1D
         end
         % >> 2.2. ---------------------------------------------------------
         function [pde_e] = Order_pde_e(pde_e)
+            pde_e     = orderfields(pde_e    ,{'a','p','eff'});
             pde_e.a   = orderfields(pde_e.a  ,{'c','f','t'});
             pde_e.a.c = orderfields(pde_e.a.c,{'c','c_abs','n','n_abs'});
             pde_e.a.f = orderfields(pde_e.a.f,{'f','f_abs','n','n_abs'});

@@ -11,39 +11,37 @@ classdef Fig_1_1D
                 %  > #1.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
                 subplot(1,2,1);
-                Fig_1_1D.Plot_1_1(msh,pde,fig,Exp,N(1),1);
+                Fig_1_1D.Plot_1_1(msh,pde,fig,Exp,0,N(1),1);
                 subplot(1,2,2);
-                Fig_1_1D.Plot_1_2(msh,pde,fig,Exp,N(2),1);
+                Fig_1_1D.Plot_1_2(msh,pde,fig,Exp,0,N(2),1);
                 %  > #2.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
                 subplot(1,2,1);
-                Fig_1_1D.Plot_2_1(msh,pde,fig,Exp,N(3),1);
+                Fig_1_1D.Plot_2_1(msh,pde,fig,Exp,0,N(3),1);
                 subplot(1,2,2);
-                Fig_1_1D.Plot_2_2(msh,pde,fig,Exp,N(4),1);
+                Fig_1_1D.Plot_2_2(msh,pde,fig,Exp,0,N(4),1);
             else
                 %  > #1.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
-                Fig_1_1D.Plot_1_1(msh,pde,fig,Exp,N(1));
+                Fig_1_1D.Plot_1_1(msh,pde,fig,Exp,0,N(1));
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
-                Fig_1_1D.Plot_1_2(msh,pde,fig,Exp,N(2));
+                Fig_1_1D.Plot_1_2(msh,pde,fig,Exp,0,N(2));
                 %  > #2.
             end
         end
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [] = Plot_1_1(msh,pde,fig,Exp,N,n)
+        function [] = Plot_1_1(msh,pde,fig,Exp,Zoom,N,n)
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C     = linspecer(9,'qualitative');
             fig.M     = repelem(":o",size(pde.e.a.t.f_abs,2)+size(pde.e.a.t.n_abs.f,2));
-            fig.L1{1} = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}|$";
-            fig.L1{2} = "$|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}|$";
-            fig.L1{3} = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}|$";
-            fig.L1{4} = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
-            fig.L1{5} = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}\|_{1}$";
-            fig.L1{6} = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-            fig.L2{1} = "$x$";
-            fig.L2{2} = "$\textrm{Error magnitude}$";
-             
+            fig.L{1}  = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}|$";
+            fig.L{2}  = "$|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}|$";
+            fig.L{3}  = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}|$";
+            fig.L{4}  = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
+            fig.L{5}  = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}\|_{1}$";
+            fig.L{6}  = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
+            
             %  > Plot variables.
             [~,P1,Y1] = Fig_Tools_1D.Var_1(fig,msh.f.Xv,pde.e.p.t{n}.f_abs);
             [~,P2,Y2] = Fig_Tools_1D.Var_2(fig,msh.f.Xv,pde.e.p.t{n}.n_abs.f);
@@ -52,20 +50,23 @@ classdef Fig_1_1D
             %  > Export(?).
             if Exp
                 Fig_Tools_1D.Export_PDF(join(["Fig_1_",num2str(N)]),fig.Folder)
+            end 
+            %  > Zoom(?).
+            if Zoom
+                zp = BaseZoom;
+                zp.plot(Exp);
             end
         end
         % >> 2.2. ---------------------------------------------------------
-        function [] = Plot_1_2(msh,pde,fig,Exp,N,n)
+        function [] = Plot_1_2(msh,pde,fig,Exp,Zoom,N,n)
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C     = linspecer(9,'qualitative');
             fig.M     = repelem(":o",2);
-            fig.L1{1} = "$|e_{c^{\left(p\right)}}|$";
-            fig.L1{2} = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
-            fig.L1{3} = "$\|e_{c^{\left(p\right)}}\|_{1}$";
-            fig.L1{4} = "$\|\bar{\tau}_{c^{\left(p\right)}}\|_{1}$";
-            fig.L2{1} = "$x$";
-            fig.L2{2} = "$\textrm{Error magnitude}$";
-
+            fig.L{1}  = "$|e_{c^{\left(p\right)}}|$";
+            fig.L{2}  = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
+            fig.L{3}  = "$\|e_{c^{\left(p\right)}}\|_{1}$";
+            fig.L{4}  = "$\|\bar{\tau}_{c^{\left(p\right)}}\|_{1}$";
+            
             %  > Plot variables.
             [~,P1,Y1] = Fig_Tools_1D.Var_1(fig,msh.c.Xc,[pde.e.p.c{n}.c_abs  ,pde.e.p.t{n}.c_abs]);
             [~,P2,Y2] = Fig_Tools_1D.Var_2(fig,msh.c.Xc,[pde.e.p.c{n}.n_abs.c,pde.e.p.t{n}.n_abs.c]);
@@ -75,19 +76,22 @@ classdef Fig_1_1D
             if Exp
                 Fig_Tools_1D.Export_PDF(join(["Fig_1_",num2str(N)]),fig.Folder);
             end
+            %  > Zoom(?).
+            if Zoom
+                zp = BaseZoom;
+                zp.plot(Exp);
+            end
         end
         %% > 3. -----------------------------------------------------------
-        function [] = Plot_2_1(msh,pde,fig,Exp,N,n)
+        function [] = Plot_2_1(msh,pde,fig,Exp,Zoom,N,n)
             % >> 2.1. ---------------------------------------------------------
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C     = linspecer(9,'qualitative');
-            fig.L1{1} = "$|\bar{\tau}_{f}^{\phantom{\nabla}\phi}|$";
-            fig.L1{2} = "$|\bar{\tau}_{f}^{\nabla\phi}|$";
-            fig.L1{3} = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phi}|$";
-            fig.L1{4} = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}|$";
-            fig.L2{1} = "$x$";
-            fig.L2{2} = "$\textrm{Error magnitude}$";
-             
+            fig.L{1}  = "$|\bar{\tau}_{f}^{\phantom{\nabla}\phi}|$";
+            fig.L{2}  = "$|\bar{\tau}_{f}^{\nabla\phi}|$";
+            fig.L{3}  = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phi}|$";
+            fig.L{4}  = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}|$";
+
             %  > Plot variables.
             fig.M     = repelem(":o",2);
             [~,P1,Y1] = Fig_Tools_1D.Var_1(fig,msh.f.Xv,pde.e.p.t{n}.f_abs(:,1:2));
@@ -99,18 +103,21 @@ classdef Fig_1_1D
             if Exp
                 Fig_Tools_1D.Export_PDF(join(["Fig_1_",num2str(N)]),fig.Folder)
             end
+            %  > Zoom(?).
+            if Zoom
+                zp = BaseZoom;
+                zp.plot(Exp);
+            end
         end
         % >> 2.2. ---------------------------------------------------------
-        function [] = Plot_2_2(msh,pde,fig,Exp,N,n)
+        function [] = Plot_2_2(msh,pde,fig,Exp,Zoom,N,n)
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C     = linspecer(9,'qualitative');
-            fig.L1{1} = "$|e_{c}|$";
-            fig.L1{2} = "$|\bar{\tau}_{c}|$";
-            fig.L1{3} = "$|e_{c^{\left(p\right)}}|$";
-            fig.L1{4} = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
-            fig.L2{1} = "$x$";
-            fig.L2{2} = "$\textrm{Error magnitude}$";
-
+            fig.L{1}  = "$|e_{c}|$";
+            fig.L{2}  = "$|\bar{\tau}_{c}|$";
+            fig.L{3}  = "$|e_{c^{\left(p\right)}}|$";
+            fig.L{4}  = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
+            
             %  > Plot variables.
             fig.M     = repelem(":o",2);
             [~,P1,Y1] = Fig_Tools_1D.Var_1(fig,msh.c.Xc,[pde.e.a.c.c_abs,pde.e.a.t.c_abs]);
@@ -121,6 +128,11 @@ classdef Fig_1_1D
             %  > Export(?).
             if Exp
                 Fig_Tools_1D.Export_PDF(join(["Fig_1_",num2str(N)]),fig.Folder);
+            end
+            %  > Zoom(?).
+            if Zoom
+                zp = BaseZoom;
+                zp.plot(Exp);
             end
         end
     end

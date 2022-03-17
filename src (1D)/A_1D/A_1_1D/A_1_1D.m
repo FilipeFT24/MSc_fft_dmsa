@@ -46,7 +46,7 @@ classdef A_1_1D
             inp.ps.p        = [1,1];                       %  > Polynomial order: Convection(1)/Diffusion(2).
             inp.ps.t        = [0,0];                       %  > Polynomial  type: Convection(1)/Diffusion(2).
             % >> pa.
-            inp.pa.adapt    = 0;                           %  > Allow p-adaptation(?).
+            inp.pa.adapt    = 1;                           %  > Allow p-adaptation(?).
             inp.pa.odd      = 0;                           %  > Allow UDS/DDS(?).
             inp.pa.n        = 0;                           %  > Number of cycles.
             %% > Plotting variables.

@@ -3,14 +3,16 @@ classdef B_2_1_1D
         %% > 1. -----------------------------------------------------------
         function [msh,pde] = SetUp_p(inp,msh,pde,s,stl)
             %  > Update 's' structure and 'x' field.
-            s     = B_2_1_1D.Update_s   (inp,msh,pde,s,stl);
-            x.c   = B_2_1_1D.Update_xc  (s);
+            s     = B_2_1_1D.Update_s    (inp,msh,pde,s,stl);
+            x.c   = B_2_1_1D.Update_xc   (s);
             %  > Compute cell/face/truncation error distribution/norms.
-            e.a.c = B_2_1_1D.Update_ec_a(x.c,pde.av.c,msh.c.Vc);
-            e.a.f = B_2_1_1D.Update_ef_a(x.c,pde.av.f,s);            
-            e.a.t = B_2_1_1D.Update_et_a(pde.av,s,msh.c.Vc);
-            e.p.t = B_2_1_1D.Update_et_p(inp,msh,pde,x.c,s,stl,2);
-            e.p.c = B_2_1_1D.Update_ec_p(e.p.t,msh.c.Vc);
+            e.a.c = B_2_1_1D.Update_ec_a (x.c,pde.av.c,msh.c.Vc);
+            e.a.f = B_2_1_1D.Update_ef_a (x.c,pde.av.f,s);            
+            e.a.t = B_2_1_1D.Update_et_a (pde.av,s,msh.c.Vc);
+            e.p.t = B_2_1_1D.Update_et_p (inp,msh,pde,x.c,s,stl,2);
+            e.p.c = B_2_1_1D.Update_ec_p (e.p.t,msh.c.Vc);
+            %  > Compute mean effectivity index.
+            eff_i = B_2_1_1D.Update_eff_i(e); 
 
             %  > Compute truncated terms (if requested).
             if ~inp.pa.adapt && inp.pl.tt
@@ -19,7 +21,7 @@ classdef B_2_1_1D
                 e.t.a = A_2_1D.Compute_TTM  (inp,msh,s,stl,dfn_a);
             end
             %  > Update structures.
-            [msh,pde] = B_2_1_1D.Set_struct(msh,pde,s,stl,x,e);
+            [msh,pde] = B_2_1_1D.Set_struct(msh,pde,s,stl,x,e,eff_i);
         end
         
         %% > 2. -----------------------------------------------------------
@@ -267,10 +269,12 @@ classdef B_2_1_1D
                 et{i}.n_abs.c    = LX.n(et{i}.c_abs,msh.c.Vc);
                 %  > Stencil coefficients.
                 et{i}.s          = sn{i+1};
+                %  > Effectivity index.
+                
             end
         end
         %  > 3.2.5. -------------------------------------------------------
-        %  > Update 'pde.e.p.c' field (predicted/estimated truncation error distribution/norms).
+        %  > Update 'pde.e.p.c' field (predicted/estimated global cell discretization error distribution/norms).
         function [ec] = Update_ec_p(et_p,Vc)
             for i = 1:size(et_p,2)
                 %  > Error distribution.
@@ -281,7 +285,28 @@ classdef B_2_1_1D
                 ec{i}.n_abs.c = LX.n(ec{i}.c_abs,Vc);
             end
         end
-        
+        %  > 3.2.6. ------------------------------------------------------- 
+        %  > Compute mean effectivity index (pde.e.a.(...).ef_i).
+        function [eff_i]  = Update_eff_i(e)   
+            n             = 1;
+            eff_i.c.c     = B_2_1_1D.Set_eff_i(e.a.c.c    ,e.p.c{n}.c);
+            eff_i.c.c_abs = B_2_1_1D.Set_eff_i(e.a.c.c_abs,e.p.c{n}.c_abs);
+            eff_i.t.c     = B_2_1_1D.Set_eff_i(e.a.t.c    ,e.p.t{n}.c);
+            eff_i.t.c_abs = B_2_1_1D.Set_eff_i(e.a.t.c_abs,e.p.t{n}.c_abs);
+            eff_i.t.f     = B_2_1_1D.Set_eff_i(e.a.t.f    ,e.p.t{n}.f);
+            eff_i.t.f_abs = B_2_1_1D.Set_eff_i(e.a.t.f_abs,e.p.t{n}.f_abs);
+        end
+        %  > 3.2.6.1. -----------------------------------------------------
+        %  > Auxiliary function.
+        function [eff_i] = Set_eff_i(X,Y)
+            [~,n] = size(X);            
+            for i = 1:n
+                XY (:,i) = X(:,i)./Y(:,i);
+                exc  {i} = isnan(XY(:,i))|isinf(XY(:,i));
+                eff_i(i) = mean(XY(~exc{i},i));
+            end
+        end
+                
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
         %  > Compute derivatives (w/ analytic solution).
@@ -325,15 +350,16 @@ classdef B_2_1_1D
         
         %% > 5. -----------------------------------------------------------
         %  > Update/set structure fields.
-        function [msh,pde] = Set_struct(msh,pde,s,stl,x,e)
+        function [msh,pde] = Set_struct(msh,pde,s,stl,x,e,eff)
             %  > 'msh'.
-            s.stl = stl;
-            msh.s = s;
-            msh   = Tools_1D.Order_msh(msh);
+            s.stl     = stl;
+            msh.s     = s;
+            msh       = Tools_1D.Order_msh(msh);
             %  > 'pde'.
-            pde.x = x;
-            pde.e = e;
-            pde.e = Tools_1D.Order_pde_e(pde.e);
+            pde.x     = x;
+            pde.e     = e;
+            pde.e.eff = eff;
+            pde.e     = Tools_1D.Order_pde_e(pde.e);
         end
     end
 end

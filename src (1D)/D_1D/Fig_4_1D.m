@@ -18,25 +18,25 @@ classdef Fig_4_1D
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     for i = 1:n
                         subplot(1,n,i);
-                        Fig_4_1D.Plot_1(msh,pde,i,p(x,i),x,fig,Exp);
+                        Fig_4_1D.Plot_1(msh,pde,i,p(x,i),x,fig,Exp,0);
                     end
                 end
                 if plot(2)
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     for i = 1:n
                         subplot(1,n,i);
-                        Fig_4_1D.Plot_2(msh,pde,i,p(x,i),x,fig,Exp);
+                        Fig_4_1D.Plot_2(msh,pde,i,p(x,i),x,fig,Exp,0);
                     end
                 end
             else
                 for i = 1:n
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
-                    Fig_4_1D.Plot_1(msh,pde,i,p(x,i),x,fig,Exp);
+                    Fig_4_1D.Plot_1(msh,pde,i,p(x,i),x,fig,Exp,Zoom);
                 end
             end
         end
         % >> 1. -----------------------------------------------------------
-        function [] = Plot_1(msh,pde,i,p,x,fig,Exp)
+        function [] = Plot_1(msh,pde,i,p,x,fig,Exp,Zoom)
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C       = linspecer(9,'qualitative');
             str         = Fig_Tools_1D.Switch_Legend(i);
@@ -45,14 +45,12 @@ classdef Fig_4_1D
             
             for j = 1:k
                 fig.M     (j) = "-v";
-                fig.L1    {j} = join(["$|\tau_{f}^{",str,"\left(",num2str(p(j)),"\right)}|$"]);
+                fig.L     {j} = join(["$|\tau_{f}^{",str,"\left(",num2str(p(j)),"\right)}|$"]);
                 Var_1   (:,j) = pde.et.av{j}(:,i);
                 fig.M   (j+k) = "-.o";
-                fig.L1  {j+k} = join(["$|",str,"_{f\left(a-",num2str(p(j)),"\right)}^{\left(",num2str(l(1)),"\right)}-",str,"_{f\left(a-",num2str(p(j)),"\right)}^{\left(",num2str(l(2)),"\right)}|$"]);
+                fig.L   {j+k} = join(["$|",str,"_{f\left(a-",num2str(p(j)),"\right)}^{\left(",num2str(l(1)),"\right)}-",str,"_{f\left(a-",num2str(p(j)),"\right)}^{\left(",num2str(l(2)),"\right)}|$"]);
                 Var_1 (:,j+k) = pde.et.df.t{x(j),diff(x)}(:,i);
             end
-            fig.L2{1} = "$x$";
-            fig.L2{2} = "$\textrm{Error magnitude}$";
 
             %  > Plot variables.
             [fig,P1,Y1] = Fig_Tools_1D.Var_1(fig,msh.f.Xv,Var_1);           
@@ -62,9 +60,14 @@ classdef Fig_4_1D
             if Exp
                 Fig_Tools_1D.Export_PDF(join(["Fig_1_",num2str(i)]),fig.Folder)
             end
+            %  > Zoom(?).
+            if Zoom
+                zp = BaseZoom;
+                zp.plot(Exp);
+            end
         end
         % >> 2. -----------------------------------------------------------
-        function [] = Plot_2(msh,pde,i,p,x,fig,Exp)
+        function [] = Plot_2(msh,pde,i,p,x,fig,Exp,Zoom)
             %  > Auxiliary variables (colors/labels/etc.).
             fig.C       = linspecer(9,'qualitative');
             str         = Fig_Tools_1D.Switch_Legend(i);
@@ -74,19 +77,17 @@ classdef Fig_4_1D
             for j = 1:k+1
                 if j ~= k+1
                     fig.M       (j) = "-v";
-                    fig.L1      {j} = join(["$|\tau_{f\left(a\right)}^{",str,"\left(",num2str(p(j)),"\right)}|$"]);
+                    fig.L       {j} = join(["$|\tau_{f\left(a\right)}^{",str,"\left(",num2str(p(j)),"\right)}|$"]);
                     Var_1     (:,j) = pde.et.av{j}(:,i);
                     fig.M   (j+k+1) = "-.s";
-                    fig.L1  {j+k+1} = join(["$|\tau_{f}^{",str,"\left(",num2str(l(j)),"/",num2str(l(k+1-j)),"\right)}|$"]);
+                    fig.L   {j+k+1} = join(["$|\tau_{f}^{",str,"\left(",num2str(l(j)),"/",num2str(l(k+1-j)),"\right)}|$"]);
                     Var_1 (:,j+k+1) = pde.et.df.x{j,1}(:,i);
                 else
                     fig.M       (j) = ":o";
-                    fig.L1      {j} = join(["$|\tau_{f\left(a\right)}^{",str,"\left(",num2str(l(1)),"\right)}-\tau_{f\left(a\right)}^{",str,"\left(",num2str(l(2)),"\right)}|$"]);
+                    fig.L       {j} = join(["$|\tau_{f\left(a\right)}^{",str,"\left(",num2str(l(1)),"\right)}-\tau_{f\left(a\right)}^{",str,"\left(",num2str(l(2)),"\right)}|$"]);
                     Var_1     (:,j) = pde.et.df.a{x(1),x(2)-1}(:,i);                    
                 end
             end
-            fig.L2{1} = "$x$";
-            fig.L2{2} = "$\textrm{Error magnitude}$";
 
             %  > Plot variables.
             [fig,P1,Y1] = Fig_Tools_1D.Var_1(fig,msh.f.Xv,Var_1);           
@@ -95,6 +96,11 @@ classdef Fig_4_1D
             %  > Export(?).
             if Exp
                 Fig_Tools_1D.Export_PDF(join(["Fig_1_",num2str(i)]),fig.Folder)
+            end
+            %  > Zoom(?).
+            if Zoom
+                zp = BaseZoom;
+                zp.plot(Exp);
             end
         end
     end
