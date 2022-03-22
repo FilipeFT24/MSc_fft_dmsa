@@ -1,5 +1,5 @@
 %% > Clear memory, clean screen, close any figure.
-clear, clc, close all;
+clear, clc, close all; warning off; beep off;
 %% > Run...
 % >> ----------------------------------------------------------------------
 %  > Working directories.
@@ -10,6 +10,6 @@ run_2 = 0;
 % >> ----------------------------------------------------------------------
 if run_1
     [inp,msh] = A_1D.Set_A(0.01);
-    [msh,pde] = B_1D.Set_B(inp,msh);
+    [obj,msh] = B_1D.Run_p(inp,msh);
 end
 % >> ----------------------------------------------------------------------

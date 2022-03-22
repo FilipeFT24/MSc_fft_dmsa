@@ -18,13 +18,13 @@ classdef Fig_Tools_1D
                 fig.FT_2     = 30.00;               %  > x/y-axis.
                 fig.FT_3     = [42.50,35.00];       %  > x/y-label.
                 fig.FT_4     = 20.00;               %  > x/y-axis  (zoom).
-                fig.Position = [350,100,850,600];   %  > Position.
-                fig.Folder   = "../[Figures]/[1D]"; %  > Destination folder.
+                fig.Position = [350,100,850,600];   %  > Position.  
             end
             fig.c        = 2.5e-03;                 %  > x-axis width.
-            fig.trsh     = 1.0e-12;                 %  > Do not plot below 'trsh'.
-            fig.nsh      = 10;                      %  > Number of elements below 'trsh'.
+            fig.trsh     = 1.0e-10;                 %  > Do not plot below 'trsh'.
+            fig.nsh      = 5;                       %  > Number of elements below 'trsh'.
             fig.NT       = [10,10];                 %  > Number of ticks (x/y-direction).
+            fig.Folder   = "../[Figures]/[1D]";     %  > Destination folder.
             fig.Label{1} = "$x$";
             fig.Label{2} = "$\textrm{Error magnitude}$";
             %  > Markers/line styles.
@@ -53,22 +53,21 @@ classdef Fig_Tools_1D
         end
         %% >> 2. ----------------------------------------------------------
         %  >> 2.1. --------------------------------------------------------
-        function [fig,P,YV] = Var_1(fig,X,Y)
+        function [LY,P,YV] = Var_1(fig,LX,X,Y)
             hold on;
             k = 0;
             for i = 1:size(Y,2)
                 j{i} = Y(:,i) > fig.trsh; Y(~j{i},i) = 0;
                 if nnz(j{i})  > fig.nsh
                     k                 = k+1;
-                    P{k}              = plot(X,Y(:,i),fig.M(i),'Color',fig.C(i,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(i,:),'MarkerSize',fig.MS);
-                    L{k}              = fig.L{i};
+                    LY{k}             = LX{i};
+                    P {k}             = plot(X,Y(:,i),fig.M(i),'Color',fig.C(i,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(i,:),'MarkerSize',fig.MS);
                     [YV(k,1),YV(k,2)] = MinMaxElem(Y(j{i},i));
                 end
             end
-            fig.L1 = L;
         end
         % >> 2.2. ---------------------------------------------------------
-        function [fig,P,YV] = Var_2(fig,X,Y)
+        function [LY,P,YV] = Var_2(fig,LX,X,Y)
             hold on;
             k = 0;
             m = 1;
@@ -76,17 +75,16 @@ classdef Fig_Tools_1D
                 j = Y(m,i) > fig.trsh; Y(~j,i) = 0;
                 if j
                     k                 = k+1;
-                    P{k}              = line([X(1),X(end)],[Y(m,i),Y(m,i)],'Color',fig.C(i,:),'Linewidth',fig.LW,'Linestyle','-');
-                    L{k}              = fig.L{i};
+                    P {k}             = line([X(1),X(end)],[Y(m,i),Y(m,i)],'Color',fig.C(i,:),'Linewidth',fig.LW,'Linestyle','-');
+                    LY{k}             = LX{i};
                     [YV(k,1),YV(k,2)] = MinMaxElem(Y(m,i));
                 end
             end
-            fig.L1 = L;
         end
         % >> 2.3. ---------------------------------------------------------
         %  > 2.3.1. -------------------------------------------------------
-        function [] = Set_Plot(fig,msh,P,YM,NC)
-            legend([P{:}],[fig.L{:}],...
+        function [] = Set_Plot(fig,msh,L,P,YM,NC)
+            legend([P{:}],[L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
             set(gca,'YScale','log');
             ylim([10.^(ceil(log10(min(YM(:,1))))-1),...
@@ -105,6 +103,18 @@ classdef Fig_Tools_1D
             end
         end
         % >> 3. -----------------------------------------------------------
+        function [] = Exp_Or_Zoom(edt,fid,folder)
+            %  > Export(?).
+            if edt(1)
+                Fig_Tools_1D.Export_PDF(fid,folder)
+            end
+            %  > Zoom(?).
+            if edt(2)
+                zp = BaseZoom;
+                zp.plot(edt(1));
+            end
+        end
+        % >> 4. -----------------------------------------------------------
         function [] = Export_PDF(Filename,Directory)
             set     (gcf,'PaperSize',[29.7,21.5],'PaperPosition',[0,0,29.7,21.5]);
             print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r500');

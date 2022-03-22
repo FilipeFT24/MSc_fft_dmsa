@@ -15,7 +15,7 @@ classdef B_1_1D
                     f{1} = sin(i.*pi.*x);
                 case 2
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 35;
+                    i    = 50;
                     f{1} = exp(-i.*((x-c).^2));
                 otherwise
                     return;
@@ -28,15 +28,15 @@ classdef B_1_1D
             
             % >> Compute analytic...
             %  > ...cell values.
-            av.c (:,1) = fn.f{1}(msh.c.Xc);
+            av.c  (:,1) = fn.f{1}(msh.c.Xc);
             %  > ...face values.
-            av.f (:,1) = fn.f{1}(msh.f.Xv);
-            av.f (:,2) = fn.f{2}(msh.f.Xv);
-            %  > ...source term.
-            i          = 1:msh.c.NC;
-            A    (i)   = msh.f.Xv(i);
-            B    (i)   = msh.f.Xv(i+1);
-            fn.st(i,1) = fn.i(B(i))-fn.i(A(i));
+            av.f  (:,1) = fn.f{1}(msh.f.Xv);
+            av.f  (:,2) = fn.f{2}(msh.f.Xv);
+            %  > ...volumetric source term.
+            i           = 1:msh.c.Nc;
+            A     (i)   = msh.f.Xv(i);
+            B     (i)   = msh.f.Xv(i+1);
+            fn.vol(i,1) = fn.i(B(i))-fn.i(A(i));
             
             %  > Update 'pde' structure.
             pde.av = av;

@@ -1,7 +1,7 @@
 classdef Fig_2_1D
     methods (Static)
-        function [] = Plot(msh,pde,flag)
-            if flag
+        function [] = Plot(inp,msh,pde)
+            if inp.pl.tt
                 %  > Auxiliary variables.
                 Exp = 0;
                 fig = Fig_Tools_1D.Set_fig(Exp);

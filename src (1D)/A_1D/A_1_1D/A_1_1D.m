@@ -48,7 +48,7 @@ classdef A_1_1D
             % >> pa.
             inp.pa.adapt    = 1;                           %  > Allow p-adaptation(?).
             inp.pa.odd      = 0;                           %  > Allow UDS/DDS(?).
-            inp.pa.n        = 0;                           %  > Number of cycles.
+            inp.pv.ns       = 2;                           %  > Number of solutions used to "predict" nodal field.
             %% > Plotting variables.
             % >> pl.
             inp.pl.all      = 1;                           %  > Plot all(?).

@@ -14,28 +14,80 @@ classdef Tools_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [msh] = Order_msh(msh)
-            msh   = orderfields(msh  ,{'d','c','f','s'});
-            msh.c = orderfields(msh.c,{'NC','Xc','Vc'});
-            msh.f = orderfields(msh.f,{'NF','Xv'});
-            if ~isfield(msh.s,'nt')
-                msh.s = orderfields(msh.s,{'c','f','bnd_i','bnd_v','stl','A','B','Ac','Bc','xf','xt','vg','Inv'});
-            else
-                msh.s = orderfields(msh.s,{'c','f','bnd_i','bnd_v','stl','A','B','Ac','Bc','xf','xt','vg','Inv','nt'});
-            end           
+        function [obj]  = Sort_obj(obj)
+            obj         = orderfields(obj        ,{'e','m','s','u','x'});
+            obj.e       = orderfields(obj.e      ,{'a','p'});
+            obj.e.a     = orderfields(obj.e.a    ,{'c','t'});
+            obj.e.a.c   = orderfields(obj.e.a.c  ,{'c','c_abs','n','n_abs'});
+            obj.e.a.t   = orderfields(obj.e.a.t  ,{'c','c_abs','f','f_abs','n','n_abs'});
+            obj.e.a.t.n = orderfields(obj.e.a.t.n,{'c','f'});
+            obj.m       = orderfields(obj.m      ,{'Ac','Af','At','Bc','Bf','Bt'});
+            obj.s       = orderfields(obj.s      ,{'bt','bv','c','t','v'});
+            obj.u       = orderfields(obj.u      ,{'p','s'});
+            obj.x       = orderfields(obj.x      ,{'cf','if','nv','vf','xf'});
         end
         % >> 2.2. ---------------------------------------------------------
-        function [pde_e] = Order_pde_e(pde_e)
-            pde_e     = orderfields(pde_e    ,{'a','p','eff'});
-            pde_e.a   = orderfields(pde_e.a  ,{'c','f','t'});
-            pde_e.a.c = orderfields(pde_e.a.c,{'c','c_abs','n','n_abs'});
-            pde_e.a.f = orderfields(pde_e.a.f,{'f','f_abs','n','n_abs'});
-            pde_e.a.t = orderfields(pde_e.a.t,{'c','c_abs','f','f_abs','n','n_abs'}); 
-            pde_e.p   = orderfields(pde_e.p  ,{'c','t'});
-            for i = 1:size(pde_e.p.t,2)
-                pde_e.p.c{i} = orderfields(pde_e.p.c{i},{'c','c_abs','n','n_abs'});
-                pde_e.p.t{i} = orderfields(pde_e.p.t{i},{'c','c_abs','f','f_abs','n','n_abs','s'});
+        function [msh] = Sort_msh(msh)
+            msh     = orderfields(msh    ,{'c','d','f'});
+            msh.c   = orderfields(msh.c  ,{'f','Nc','Vc','Xc'});
+            msh.c.f = orderfields(msh.c.f,{'f','Nf'});
+            msh.f   = orderfields(msh.f  ,{'c','Nf','Xv'});
+        end
+        % >> 2.3. ---------------------------------------------------------
+        function [pde] = Sort_pde(pde)
+            pde     = orderfields(pde   ,{'av','fn'});
+            pde.av  = orderfields(pde.av,{'c','f'});
+            pde.fn  = orderfields(pde.fn,{'f','i','vol'});
+        end
+        
+        %% > 3. ----------------------------------------------------------- 
+        % >> Compute error norms (cell/face L1,L2 and L_infinity norms).
+        %  > Call...
+        function [L] = n(E,V)
+            if nargin == 1
+                L(1,:) = Tools_1D.L1(E);
+                L(2,:) = Tools_1D.L2(E);
+            else
+                L(1,:) = Tools_1D.L1(E,V);
+                L(2,:) = Tools_1D.L2(E,V);
             end
+            L(3,:) = Tools_1D.L3(E);
+        end
+        %  > L1.
+        function [L1] = L1(E,V)
+            if nargin == 1
+                L1 = mean(E);
+            else
+                L1 = sum (E.*V)./sum(V);
+            end
+        end
+        %  > L2.
+        function [L2] = L2(E,V)
+            if nargin == 1
+                L2 = mean(sqrt(E.^2));
+            else
+                L2 = sum (sqrt((E.*V).^2))./sum(sqrt(V.^2));
+            end
+        end
+        %  > L_infinity.
+        function [L3] = L3(E)
+            L3 = max(E);
+        end
+        %% > 4. ----------------------------------------------------------- 
+        % >> Matrix inversion w/ 'p-adaptative' process (...to compute "updated" cell global discretization error).
+        function [y] = p_adapt_inv(opt,str)
+            switch opt
+                case 1
+                    a = str.a;
+                    y = inv(a);
+                case 2
+                    a = str.a;
+                    b = str.b;
+                    i = eye(size(a));
+                    y = a*(i-inv(i+b*a)*b*a);
+                otherwise
+                    return;
+            end                   
         end
     end
 end
