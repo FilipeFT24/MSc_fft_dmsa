@@ -223,6 +223,8 @@ classdef B_2_1_1D
                         end
                     end
                 end
+                m.nnz.Ac(i) = B_2_1_1D.Set_nnz(m.Ac{i});
+                m.nnz.Af(i) = B_2_1_1D.Set_nnz(m.Af{i});
             end 
             %  > Cell(s) to be updated.
             d = unique(cat(1,c{:}));
@@ -239,6 +241,7 @@ classdef B_2_1_1D
                     end
                 end
             end
+            m.nnz.At = B_2_1_1D.Set_nnz(m.At);
         end
         % >> 3.2. ---------------------------------------------------------
         %  > Construct/update matrix B.
@@ -291,7 +294,12 @@ classdef B_2_1_1D
                 end
             end
         end
-     
+        % >> 3.3. ---------------------------------------------------------
+        %  > Compute nnz of each matrix.
+        function [nnz_m] = Set_nnz(m)
+            nnz_m = nnz(m);
+        end
+                   
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
         %  > 4.1.1. -------------------------------------------------------
@@ -393,7 +401,7 @@ classdef B_2_1_1D
             up{i} = u;
             xp{i} = x;
             %  > ...face values w/ lower-order solution.
-            for i = 1:inp.pv.ns
+            for i = 1:inp.pa.ns
                 %  > Update field 'u'.
                 up{i+1}        = B_2_1_1D.Set_upd_p(up{i},all_s);
                 %  > Update...
@@ -403,7 +411,7 @@ classdef B_2_1_1D
                 xp{i+1}        = B_2_1_1D.Update_4(sp{i+1},up{i+1},xp{i+1}); 
             end
             %  > ...predicted/estimated cell/face truncation error distribution/norms.
-            for i = 1:inp.pv.ns
+            for i = 1:inp.pa.ns
                 %  > Error distribution.
                 [m,n] = size(e.p{i}.t.f);
                 for j = 1:n-1

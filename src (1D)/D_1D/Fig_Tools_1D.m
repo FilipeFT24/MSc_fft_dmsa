@@ -2,51 +2,63 @@ classdef Fig_Tools_1D
     methods (Static)
         %% >> 1. ----------------------------------------------------------
         %  >> 1.1. --------------------------------------------------------
-        function [fig] = Set_fig(Exp)
-            if ~Exp
-                fig.LW       =  1.25;               %  > Line.
-                fig.MS       =  4.00;               %  > Marker size.
-                fig.FT_1     = 14.00;               %  > Legend.
-                fig.FT_2     = 15.00;               %  > x/y-axis.
-                fig.FT_3     = [22.50,17.50];       %  > x/y-label.
-                fig.FT_4     = 11.00;               %  > x/y-axis  (zoom).
-                fig.Position = [150,100,1250,600];  %  > Position.
+        function [fig] = Set_fig(run,exp)
+            fig.run = run;                                 %  > Test working directory.
+            if ~exp
+                fig.LW       =  1.25;                      %  > Line.
+                fig.MS       =  4.00;                      %  > Marker size.
+                fig.FT_1     = 14.00;                      %  > Legend.
+                fig.FT_2     = 15.00;                      %  > x/y-axis.
+                if ~run
+                    fig.FT_3 = [22.50,17.50];              %  > x/y-label.
+                else
+                    fig.FT_3 = [15.00,17.50];              %  > x/y-label.
+                end
+                fig.FT_4     = 11.00;                      %  > x/y-axis  (zoom).
+                fig.Position = [150,100,1250,600];         %  > Position.
             else
-                fig.LW       =  3.50;               %  > Line.
-                fig.MS       =  5.00;               %  > Marker.
-                fig.FT_1     = 25.00;               %  > Legend.
-                fig.FT_2     = 30.00;               %  > x/y-axis.
-                fig.FT_3     = [42.50,35.00];       %  > x/y-label.
-                fig.FT_4     = 20.00;               %  > x/y-axis  (zoom).
-                fig.Position = [350,100,850,600];   %  > Position.  
+                fig.LW       =  3.50;                      %  > Line.
+                fig.MS       =  5.00;                      %  > Marker.
+                fig.FT_1     = 25.00;                      %  > Legend.
+                fig.FT_2     = 30.00;                      %  > x/y-axis.
+                fig.FT_3     = [42.50,35.00];              %  > x/y-label.
+                fig.FT_4     = 20.00;                      %  > x/y-axis  (zoom).
+                fig.Position = [350,100,850,600];          %  > Position.  
             end
-            fig.c        = 2.5e-03;                 %  > x-axis width.
-            fig.trsh     = 1.0e-10;                 %  > Do not plot below 'trsh'.
-            fig.nsh      = 5;                       %  > Number of elements below 'trsh'.
-            fig.NT       = [10,10];                 %  > Number of ticks (x/y-direction).
-            fig.Folder   = "../[Figures]/[1D]";     %  > Destination folder.
-            fig.Label{1} = "$x$";
-            fig.Label{2} = "$\textrm{Error magnitude}$";
+            fig.c        = 2.5e-03;                        %  > x-axis width.
+            fig.trsh     = 1.0e-10;                        %  > Do not plot below 'trsh'.
+            fig.nsh      = 5;                              %  > Number of elements below 'trsh'.
+            fig.NT       = [10,10];                        %  > Number of ticks (x/y-direction).
+            fig.Folder   = "../[Figures]/[1D]";            %  > Destination folder.
+            if ~run
+                fig.L{1}    = "$x$";
+                fig.L{2}    = "$\textrm{Error magnitude}$";
+            else
+                fig.L{1}    = "$\textrm{NNZ}$";
+                fig.L{2}    = "$\textrm{Error magnitude}$";
+            end
             %  > Markers/line styles.
             %  M = ['+','o','*','x','v','d','^','s','>','<'];
             %  L = ['-','--',':','-.'];
         end
         %  >> 1.2. --------------------------------------------------------
-        function [] = ChangeLook_1D(fig,msh,L_XY)
+        function [] = ChangeLook_1D(fig,XM,L_XY)
             %  > Other parameters.
-            [xl(1),xl(2)] = MinMaxElem(msh.f.Xv);
+            [xl(1),xl(2)] = MinMaxElem(XM);
             box on;
             set(gcf,'color','w');
             set(gca,'TickLabelInterpreter','latex');
             set(gca,'FontSize',fig.FT_2);
             
             % >> Axis.
-            %  > X-Axis.
-            for i = 1:fig.NT(1)+1
-                xt(i) = xl(1)-(xl(1)-xl(2))./fig.NT(1).*(i-1);
+            if ~fig.run
+                %  > X-Axis.
+                for i = 1:fig.NT(1)+1
+                    xt(i) = xl(1)-(xl(1)-xl(2))./fig.NT(1).*(i-1);
+                end
+                xticks(xt);
+                xlim([xl(1)-fig.c,xl(2)+fig.c]);
             end
-            xticks(xt);
-            xlim([xl(1)-fig.c,xl(2)+fig.c]);
             xlabel(L_XY(1),'FontSize',fig.FT_3(1),'Interpreter','latex');
             %  > Y-Axis.
             ylabel(L_XY(2),'FontSize',fig.FT_3(2),'Interpreter','latex');
@@ -83,21 +95,26 @@ classdef Fig_Tools_1D
         end
         % >> 2.3. ---------------------------------------------------------
         %  > 2.3.1. -------------------------------------------------------
-        function [] = Set_Plot(fig,msh,L,P,YM,NC)
+        function [] = Set_Plot(fig,L,P,XM,YM_1,YM_2,NC)
             legend([P{:}],[L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
+            if fig.run
+                set(gca,'XScale','log');
+            end
             set(gca,'YScale','log');
-            ylim([10.^(ceil(log10(min(YM(:,1))))-1),...
-                  10.^(ceil(log10(max(YM(:,2))))+1)]);
-            Fig_Tools_1D.ChangeLook_1D(fig,msh,fig.Label);
+            ylim([10.^(ceil(log10(min(YM_1(:,1))))+YM_2(1)),...
+                  10.^(ceil(log10(max(YM_1(:,2))))+YM_2(2))]);
+            Fig_Tools_1D.ChangeLook_1D(fig,XM,fig.L);
         end
         %  > 2.3.2. -------------------------------------------------------
-        function [str] = Switch_Legend(i)
+        function [str] = Set_str_1(i)
             switch i
                 case 1
-                    str = "\phi";
+                    str = "1";
                 case 2
-                    str = "\nabla\phi";
+                    str = "2";
+                case 3
+                    str = "\infty";
                 otherwise
                     return;
             end

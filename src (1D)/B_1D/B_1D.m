@@ -5,7 +5,7 @@ classdef B_1D
         function [obj,pde] = Initialize(inp,msh)
             %  > Auxiliary variables.
             n  = length(inp.pv.v);
-            m  = inp.pv.ns;
+            m  = inp.pa.ns;
             Nc = msh.c.Nc;
             Nf = msh.f.Nf;
             
@@ -80,25 +80,14 @@ classdef B_1D
                     [obj,msh] = B_2_2_1D.p_standard(inp,obj,msh,pde);
                     %  > Plot...
                     if inp.pl.all
-                        Fig_1_1D.Plot(obj,msh);
+                        Fig_V1_1_1D.Plot(obj,msh);
                     end
                 case true
                     %  > 'p-standard' run.
                     [obj,msh] = B_2_2_1D.p_adaptative(inp,obj,msh,pde);
-                    %  > Set nnz per cycle...
-                    obj.e     = B_1D.Set_nnz(obj.e,obj.m); 
                 otherwise
                     return;
             end
-        end
-        %  > 1.2.1. -------------------------------------------------------
-        %  > Set nnz per cycle...
-        function [e] = Set_nnz(e,m)
-            for i = 1:size(m,1)
-                for j = 1:size(m(i).Ac,2)
-                    e{i,1}.nnz(j) = nnz(m(i).Ac{j});
-                end
-            end
-        end
+        end        
     end
 end

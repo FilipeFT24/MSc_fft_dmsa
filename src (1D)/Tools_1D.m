@@ -1,6 +1,7 @@
 classdef Tools_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
+        % >> 1.1. ---------------------------------------------------------
         function [] = Set_Directories()
             addpath(genpath('A_1D'));
             addpath(genpath('B_1D'));
@@ -11,9 +12,7 @@ classdef Tools_1D
             addpath(genpath('../[Tools]/[Tools - Numerical]'));
             addpath(genpath('../[Tools]/[Tools - Other stuff]'));
         end
-        
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
+        % >> 1.2. ---------------------------------------------------------
         function [obj]  = Sort_obj(obj)
             obj         = orderfields(obj        ,{'e','m','s','u','x'});
             obj.e       = orderfields(obj.e      ,{'a','p'});
@@ -21,28 +20,40 @@ classdef Tools_1D
             obj.e.a.c   = orderfields(obj.e.a.c  ,{'c','c_abs','n','n_abs'});
             obj.e.a.t   = orderfields(obj.e.a.t  ,{'c','c_abs','f','f_abs','n','n_abs'});
             obj.e.a.t.n = orderfields(obj.e.a.t.n,{'c','f'});
-            obj.m       = orderfields(obj.m      ,{'Ac','Af','At','Bc','Bf','Bt'});
+            obj.m       = orderfields(obj.m      ,{'Ac','Af','At','Bc','Bf','Bt','nnz'});
             obj.s       = orderfields(obj.s      ,{'bt','bv','c','t','v'});
             obj.u       = orderfields(obj.u      ,{'p','s'});
             obj.x       = orderfields(obj.x      ,{'cf','if','nv','vf','xf'});
         end
-        % >> 2.2. ---------------------------------------------------------
+        % >> 1.3. ---------------------------------------------------------
         function [msh] = Sort_msh(msh)
             msh     = orderfields(msh    ,{'c','d','f'});
             msh.c   = orderfields(msh.c  ,{'f','Nc','Vc','Xc'});
             msh.c.f = orderfields(msh.c.f,{'f','Nf'});
             msh.f   = orderfields(msh.f  ,{'c','Nf','Xv'});
         end
-        % >> 2.3. ---------------------------------------------------------
+        % >> 1.4. ---------------------------------------------------------
         function [pde] = Sort_pde(pde)
             pde     = orderfields(pde   ,{'av','fn'});
             pde.av  = orderfields(pde.av,{'c','f'});
             pde.fn  = orderfields(pde.fn,{'f','i','vol'});
         end
         
+        %% > 2. ----------------------------------------------------------- 
+        % >> 2.1. ---------------------------------------------------------
+        %  > Compute error slope.
+        function [s] = Slope(h,e)
+            s = log(e(2)./e(1))./log(h(2)./h(1));
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > Set function.
+        function [a] = Set_f(x,y,n)
+            a = y./x.^(-n);
+        end
+
         %% > 3. ----------------------------------------------------------- 
-        % >> Compute error norms (cell/face L1,L2 and L_infinity norms).
-        %  > Call...
+        % >> 3.1. ---------------------------------------------------------
+        %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = n(E,V)
             if nargin == 1
                 L(1,:) = Tools_1D.L1(E);
@@ -73,8 +84,8 @@ classdef Tools_1D
         function [L3] = L3(E)
             L3 = max(E);
         end
-        %% > 4. ----------------------------------------------------------- 
-        % >> Matrix inversion w/ 'p-adaptative' process (...to compute "updated" cell global discretization error).
+        % >> 3.2. ---------------------------------------------------------
+        %  > Matrix inversion w/ 'p-adaptative' process (...to compute "updated" cell global discretization error).
         function [y] = p_adapt_inv(opt,str)
             switch opt
                 case 1

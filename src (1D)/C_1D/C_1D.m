@@ -1,110 +1,54 @@
 classdef C_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        %  > Initialize 'stl' structure.
-        function [stl] = SetUp_stl(inp,msh)
-            [m,n] = size(inp.ee.p);
-            for i = 1:m
-                for j = 1:n
-                    stl{i}.p   (:,j) = repelem(inp.ee.p(i,j),msh.f.NF);
-                    stl{i}.s{j}(:,1) = 1:msh.f.NF;
-                    stl{i}.t   (:,j) = repelem(inp.ee.s(i,j),msh.f.NF);
+        % >> 1.1. ---------------------------------------------------------
+        function [] = Check_p(load_V)
+            % >> Set working directories.
+            td = '1';
+            wd = 'C_1D/[.mat Files]/';
+            % >> Load(?).
+            if ~load_V
+                %  > Set 'inp' and 'msh' structures.
+                V.inp = A_1D.Set_A1;
+                V.msh = C_1D.Set_msh(25,[1E-1,2.5E-3]);
+                %  > Set up 'p-standard' and 'p-adaptative' runs.
+                switch V.inp.pa.adapt
+                    case false
+                        %  > 'p-standard' run.
+                        for i = 1:size(V.msh,2)
+                            %  > Execute...
+                            [V.obj(i),V.pde(i)] = B_1D.Initialize    (V.inp,V.msh(i));
+                            [V.obj(i),V.msh(i)] = B_2_2_1D.p_standard(V.inp,V.obj(i),V.msh(i),V.pde(i));
+                            %  > Print to terminal...
+                            fprintf("Cycle #%d\n",i);
+                        end
+                    otherwise
+                        return;
                 end
+            else
+                load(['C_1D/[.mat Files]/V',td,'.mat']);
+            end
+            %  > Save structures...
+            if ~load_V
+                C_1D.Save_struct(td,wd,V);
+            end
+            %  > Plot...
+            if V.inp.pl.all
+               Fig_V2_1_1D.Plot(V);
             end
         end
-
-        %% > 2. -----------------------------------------------------------
-        %  > Estimate higher-order derivatives.
-        function [pde] = T1(inp,msh,pde,s)
-            %  > Stencil(s)/PDE solution(s).
-            [m,~] = size(inp.ee.p);
-            stl   = B_2_3_1D.SetUp_stl(inp,msh);
-            for i = 1:m
-                sn{i} = B_2_1_1D.Update_s(inp,msh,pde,s,stl{i});
-                if i ~= m
-                    xc(:,i)     = B_2_1_1D.Update_xc(sn{i});
-                else
-                    tt{i}       = linspace(sn{i}.p(1,i)+1,sn{i}.p(2,i),diff(sn{i}.p(:,i)));
-                    sn{i}.nt(i) = length(tt{i});
-                end
+        % >> 1.2. ---------------------------------------------------------
+        %  > nc  : Number of cycles.
+        %  > h(i): Reference length(s).
+        function [msh] = Set_msh(nc,h)
+            lin_h = linspace(log(h(1)),log(h(2)),nc);
+            for i = 1:length(lin_h)
+                msh(i) = A_1D.Set_A2(exp(1).^(lin_h(i)));
             end
-            %  > Analytic/PDE approximated derivatives.
-            v        = B_2_1_1D.Update_xv  (sn{m},xc(:,m-1)); 
-            pde.df.a = B_2_1_1D.Compute_dfA(sn{m},msh.f.Xv,pde.fn.f{1});
-            pde.df.x = B_2_1_1D.Compute_dfN(sn{m},tt,v); 
-            %  > Plot...
-        end 
-        
-        %% > 3. -----------------------------------------------------------
-        %  > Estimate truncation error.
-        function [pde] = T2(inp,msh,pde,s)
-            % >> Stencil(s)/PDE solution(s).
-            [m,~] = size(inp.ee.p);
-            stl   = B_2_3_1D.SetUp_stl(inp,msh);
-            for i = 1:m
-                sn  {i} = B_2_1_1D.Update_s (inp,msh,pde,s,stl{i});
-                xc(:,i) = B_2_1_1D.Update_xc(sn{i}); 
-            end 
-            % >> Face values.
-            for i = 1:m
-                %  > w/ analytic solution.
-                fv.a{i} = B_2_1_1D.Update_xf(sn{i},pde.av.c);
-                %  > w/ PDE solution: i-th order PDE solution/j-th order stencil coefficients.
-                for j = 1:m
-                    fv.x{i,j} = B_2_1_1D.Update_xf(sn{j},xc(:,i));
-                end
-            end
-            %  > Approximated analytic-PDE face value. 
-            for i = 1:m
-                for j = 1:m
-                    df.ax{i,j} = abs(fv.a{j}-fv.x{i,j});
-                end
-            end
-            % >> Truncation error/truncation error difference.
-            for i = 1:m
-                %  > w/ analytic solution.
-                et_a{i}   = abs(pde.av.f-fv.a{i});
-                diff(i,:) = setdiff(1:m,i);
-                for j = 1:m-1
-                    df.a{i,j} = abs(fv.a{i}-fv.a{diff(i,j)});
-                end
-                %  > w/ PDE solution.
-                for j = 1:m-1
-                    df.x{i,j} = abs(fv.x{i,j}-fv.x{i,j+1});
-                end
-            end
-            % >> Curve translation difference.
-            for i = 1:m
-                for j = 1:m-1
-                    df.t{i,j} = abs((fv.a{j+1}-fv.x{i,j+1})-(fv.a{j}-fv.x{i,j}));
-                end
-            end
-            %  > Update 'pde' structure.
-            pde.et.av = et_a;
-            pde.et.df = df;
-            pde.et.fv = fv;           
-            %  > Plot...
-            Fig_4_1D.Plot(inp,msh,pde);
+        end
+        % >> 1.3. ---------------------------------------------------------
+        function [] = Save_struct(td,wd,V)
+            save(join([wd,'V',td,'.mat']),'V');
         end
     end
 end
-% % >> ee.
-% inp.ee.test     = 0;                           %  > Test error estimators(?).
-% inp.ee.flag     = [0,1];                       %  > Test flags.
-% if inp.ee.test && nnz(inp.ee.flag) ~= 1
-%     inp.ee.test =  0;
-% else
-%     if inp.ee.flag(1)
-%         inp.ee.p(:,1) = [1,2];                 %  > Polynomial order: Convection.
-%         inp.ee.p(:,2) = [1,2];                 %  > Polynomial order: Diffusion.
-%         inp.ee.t(:,1) = ["c","c"];             %  > Polynomial  type: Convection.
-%         inp.ee.t(:,2) = ["c","c"];             %  > Polynomial  type: Diffusion.
-%     elseif inp.ee.flag(2)
-%         inp.ee.p(:,1) = [1,2,3];               %  > Polynomial order: Convection.
-%         inp.ee.p(:,2) = [1,2,3];               %  > Polynomial order: Diffusion.
-%         inp.ee.t(:,1) = ["c","c","c"];         %  > Polynomial  type: Convection.
-%         inp.ee.t(:,2) = ["c","c","c"];         %  > Polynomial  type: Diffusion.
-%     else
-%         return;
-%     end
-% end

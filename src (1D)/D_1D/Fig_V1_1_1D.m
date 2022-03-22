@@ -1,38 +1,39 @@
-classdef Fig_1_1D
+classdef Fig_V1_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         function [] = Plot(obj,msh)
             %  > Auxiliary variables.
-            Exp = 0;
-            fig = Fig_Tools_1D.Set_fig(Exp);
+            run = 0;
+            exp = 0;
+            fig = Fig_Tools_1D.Set_fig(run,exp);
             N   = [1,2,3,4];
             
-            if ~Exp
+            if ~exp
                 %  > #1.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
                 subplot(1,2,1);
-                Fig_1_1D.Plot_1_1(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_1_1(obj,msh,fig,[exp,0]);
                 subplot(1,2,2);
-                Fig_1_1D.Plot_1_2(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_1_2(obj,msh,fig,[exp,0]);
                 %  > #2.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
                 subplot(1,2,1);
-                Fig_1_1D.Plot_2_1(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_2_1(obj,msh,fig,[exp,0]);
                 subplot(1,2,2);
-                Fig_1_1D.Plot_2_2(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_2_2(obj,msh,fig,[exp,0]);
             else
                 %  > #1.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
-                Fig_1_1D.Plot_1_1(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_1_1(obj,msh,fig,[exp,0]);
                 %  > #2.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
-                Fig_1_1D.Plot_1_2(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_1_2(obj,msh,fig,[exp,0]);
                 %  > #3.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
-                Fig_1_1D.Plot_2_1(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_2_1(obj,msh,fig,[exp,0]);
                 %  > #4.
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
-                Fig_1_1D.Plot_2_2(obj,msh,fig,[Exp,0]);
+                Fig_V1_1_1D.Plot_2_2(obj,msh,fig,[exp,0]);
             end
         end
         %% > 2. -----------------------------------------------------------
@@ -56,7 +57,7 @@ classdef Fig_1_1D
             L2{3}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
             [L2,P2,Y2] = Fig_Tools_1D.Var_2(fig,L2,msh.f.Xv,obj.e.p{n}.t.n_abs.f);
             %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot(fig,msh,[L1,L2],[P1,P2],[Y1;Y2],2); 
+            Fig_Tools_1D.Set_Plot(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2); 
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(edt,"Fig_1_1",fig.Folder);
         end
@@ -78,7 +79,7 @@ classdef Fig_1_1D
             L2{2}      = "$\|\bar{\tau}_{c^{\left(p\right)}}\|_{1}$";
             [L2,P2,Y2] = Fig_Tools_1D.Var_2(fig,L2,msh.c.Xc,[obj.e.p{n}.c.n_abs,obj.e.p{n}.t.n_abs.c]);
             %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot(fig,msh,[L1,L2],[P1,P2],[Y1;Y2],2);  
+            Fig_Tools_1D.Set_Plot(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2);  
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(edt,"Fig_1_2",fig.Folder);
         end
@@ -120,7 +121,7 @@ classdef Fig_1_1D
                 [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,L2,msh.f.Xv,obj.e.p{n}.t.f_abs(:,i));        
             end
             %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot(fig,msh,[L1,L2],[P1,P2],[Y1;Y2],2); 
+            Fig_Tools_1D.Set_Plot(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2); 
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(edt,"Fig_1_3",fig.Folder);
         end
@@ -142,7 +143,7 @@ classdef Fig_1_1D
             L2{2}      = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
             [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,L2,msh.c.Xc,[obj.e.p{n}.c.c_abs,obj.e.p{n}.t.c_abs]);
             %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot(fig,msh,[L1,L2],[P1,P2],[Y1;Y2],2); 
+            Fig_Tools_1D.Set_Plot(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2); 
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(edt,"Fig_1_4",fig.Folder);
         end
