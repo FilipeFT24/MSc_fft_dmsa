@@ -26,7 +26,7 @@ classdef Fig_Tools_1D
                 fig.Position = [350,100,850,600];          %  > Position.  
             end
             fig.c        = 2.5e-03;                        %  > x-axis width.
-            fig.trsh     = 1.0e-10;                        %  > Do not plot below 'trsh'.
+            fig.trsh     = 1.0e-12;                        %  > Do not plot below 'trsh'.
             fig.nsh      = 5;                              %  > Number of elements below 'trsh'.
             fig.NT       = [10,10];                        %  > Number of ticks (x/y-direction).
             fig.Folder   = "../[Figures]/[1D]";            %  > Destination folder.

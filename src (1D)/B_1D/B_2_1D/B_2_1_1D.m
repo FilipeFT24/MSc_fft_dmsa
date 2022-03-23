@@ -350,15 +350,15 @@ classdef B_2_1_1D
         end
         % >> 4.2. ---------------------------------------------------------
         %  > 4.2.1. -------------------------------------------------------
-        %  > Update 'pde.e.a.t' field (cell/face truncation error distribution/norms).
-        function [e] = Update_et_a(msh,e,s,u,x)
+        %  > Auxiliary function: update 'pde.e.a.t' field (cell/face truncation error distribution/norms).
+        function [e_a] = Update_et_a(msh,e_a,s,u,x)
             %  > Error distribution.
             [~,n] = size(u.s);
             for i = 1:n
                 if ~isempty(u.s{i})
                     for j = 1:size(u.s{i},1)
                         k            = u.s{i}(j);
-                        e.a.t.f(k,i) = s.v(i).*(x.nv.a.f(k,i)-x.xf.a(k,i));
+                        e_a.t.f(k,i) = s.v(i).*(x.nv.a.f(k,i)-x.xf.a(k,i));
                     end 
                     l{i}(:,1) = unique([msh.f.c{[u.s{i}]}]);
                 end
@@ -366,29 +366,30 @@ classdef B_2_1_1D
             a                    = unique(cat(1,u.s{:}));
             b                    = unique(cat(1,l{:}));
             c                    = b+1;
-            e.a.t.f      (a,n+1) = sum(e.a.t.f(a,1:n),2);
-            e.a.t.f_abs  (a,:)   = abs(e.a.t.f(a,:));
-            e.a.t.c      (b,1)   = e.a.t.f(b,n+1)-e.a.t.f(c,n+1);
-            e.a.t.c_abs  (b,1)   = abs(e.a.t.c(b,1));
+            e_a.t.f      (a,n+1) = sum(e_a.t.f(a,1:n),2);
+            e_a.t.f_abs  (a,:)   = abs(e_a.t.f(a,:));
+            e_a.t.c      (b,1)   = e_a.t.f(b,n+1)-e_a.t.f(c,n+1);
+            e_a.t.c_abs  (b,1)   = abs(e_a.t.c(b,1));
             %  > Error norms.
-            e.a.t.n.f            = Tools_1D.n(e.a.t.f);
-            e.a.t.n_abs.f        = Tools_1D.n(e.a.t.f_abs);
-            e.a.t.n.c            = Tools_1D.n(e.a.t.c,msh.c.Vc);
-            e.a.t.n_abs.c        = Tools_1D.n(e.a.t.c_abs,msh.c.Vc);
+            e_a.t.n.f            = Tools_1D.n(e_a.t.f);
+            e_a.t.n_abs.f        = Tools_1D.n(e_a.t.f_abs);
+            e_a.t.n.c            = Tools_1D.n(e_a.t.c,msh.c.Vc);
+            e_a.t.n_abs.c        = Tools_1D.n(e_a.t.c_abs,msh.c.Vc);
         end
         %  > 4.2.2. -------------------------------------------------------
-        %  > Update 'pde.e.a.c' field (cell global discretization error distribution/norms).
-        function [e] = Update_ec_a(msh,e,x)
+        %  > Auxiliary function: update 'pde.e.a.c' field (cell global discretization error distribution/norms).
+        function [e_a] = Update_ec_a(msh,e_a,x)
             %  > Error distribution.
-            e.a.c.c    (:,1) = x.nv.a.c-x.nv.x.c;
-            e.a.c.c_abs(:,1) = abs(e.a.c.c);
+            e_a.c.c    (:,1) = x.nv.a.c-x.nv.x.c;
+            e_a.c.c_abs(:,1) = abs(e_a.c.c);
             %  > Error norms.
-            e.a.c.n          = Tools_1D.n(e.a.c.c,msh.c.Vc);
-            e.a.c.n_abs      = Tools_1D.n(e.a.c.c_abs,msh.c.Vc);
+            e_a.c.n          = Tools_1D.n(e_a.c.c,msh.c.Vc);
+            e_a.c.n_abs      = Tools_1D.n(e_a.c.c_abs,msh.c.Vc);
         end
         %  > 4.2.3. -------------------------------------------------------
-        %  > Update 'pde.e.p.t' field (predicted/estimated cell/face truncation error distribution/norms).
-        function [e] = Update_et_p(inp,msh,pde,e,s,u,x)
+        %  > Update 'pde.e.a.t' and 'pde.e.p.t' fields (analytic and predicted/estimated cell/face truncation error distribution/norms).
+        %  > Update 'pde.e.a.c' (analytic cell global discretization error distribution/norms).
+        function [e] = Update_et(inp,msh,pde,e,s,u,x)
             %  > Auxiliary variables.
             for i = 1:size(u.s,2)
                 all_s{i}(:,1) = 1:msh.f.Nf;
@@ -415,19 +416,29 @@ classdef B_2_1_1D
                 %  > Error distribution.
                 [m,n] = size(e.p{i}.t.f);
                 for j = 1:n-1
-                    e.p{i}.t.f(:,j) = sp{i}.v(j).*(xp{i+1}.xf.x(:,j)-xp{i}.xf.x(:,j)); 
+                    e.p{i}.t.f  (:,j) = sp{i}.v(j).*(xp{i+1}.xf.x(:,j)-xp{i}.xf.x(:,j)); 
                 end
-                e.p{i}.t.f    (:,n) = sum(e.p{i}.t.f(:,1:n-1),2);
-                e.p{i}.t.f_abs      = abs(e.p{i}.t.f);
-                a                   = 1:m-1; 
-                b                   = a+1;
-                e.p{i}.t.c    (:,1) = e.p{i}.t.f(a,n)-e.p{i}.t.f(b,n);
-                e.p{i}.t.c_abs(:,1) = abs(e.p{i}.t.c(:,1));
+                e.p{i}.t.f      (:,n) = sum(e.p{i}.t.f(:,1:n-1),2);
+                e.p{i}.t.f_abs        = abs(e.p{i}.t.f);
+                a                     = 1:m-1; 
+                b                     = a+1;
+                e.p{i}.t.c      (:,1) = e.p{i}.t.f(a,n)-e.p{i}.t.f(b,n);
+                e.p{i}.t.c_abs  (:,1) = abs(e.p{i}.t.c(:,1));
                 %  > Error norms. 
-                e.p{i}.t.n.f        = Tools_1D.n(e.p{i}.t.f);
-                e.p{i}.t.n_abs.f    = Tools_1D.n(e.p{i}.t.f_abs);
-                e.p{i}.t.n.c        = Tools_1D.n(e.p{i}.t.c,msh.c.Vc);
-                e.p{i}.t.n_abs.c    = Tools_1D.n(e.p{i}.t.c_abs,msh.c.Vc);
+                e.p{i}.t.n.f          = Tools_1D.n(e.p{i}.t.f);
+                e.p{i}.t.n_abs.f      = Tools_1D.n(e.p{i}.t.f_abs);
+                e.p{i}.t.n.c          = Tools_1D.n(e.p{i}.t.c,msh.c.Vc);
+                e.p{i}.t.n_abs.c      = Tools_1D.n(e.p{i}.t.c_abs,msh.c.Vc);
+            end
+            % >> Compare w/ analytic field(?).
+            if ~inp.pa.comp_av
+                nf = 1;
+            else
+                nf = inp.pa.ns;
+            end
+            for i = 1:nf
+                e.a{i} = B_2_1_1D.Update_et_a(msh,e.a{i},sp{i},up{i},xp{i});
+                e.a{i} = B_2_1_1D.Update_ec_a(msh,e.a{i},xp{i});
             end
         end
         %  > 4.2.3.1. -----------------------------------------------------
@@ -457,7 +468,7 @@ classdef B_2_1_1D
                 %  > Error norms.
                 e.p{i}.c.n          = Tools_1D.n(e.p{i}.c.c,msh.c.Vc);
                 e.p{i}.c.n_abs      = Tools_1D.n(e.p{i}.c.c_abs,msh.c.Vc);
-            end            
+            end   
         end
             
         %% > 5. -----------------------------------------------------------

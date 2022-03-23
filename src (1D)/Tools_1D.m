@@ -14,16 +14,16 @@ classdef Tools_1D
         end
         % >> 1.2. ---------------------------------------------------------
         function [obj]  = Sort_obj(obj)
-            obj         = orderfields(obj        ,{'e','m','s','u','x'});
-            obj.e       = orderfields(obj.e      ,{'a','p'});
-            obj.e.a     = orderfields(obj.e.a    ,{'c','t'});
-            obj.e.a.c   = orderfields(obj.e.a.c  ,{'c','c_abs','n','n_abs'});
-            obj.e.a.t   = orderfields(obj.e.a.t  ,{'c','c_abs','f','f_abs','n','n_abs'});
-            obj.e.a.t.n = orderfields(obj.e.a.t.n,{'c','f'});
-            obj.m       = orderfields(obj.m      ,{'Ac','Af','At','Bc','Bf','Bt','nnz'});
-            obj.s       = orderfields(obj.s      ,{'bt','bv','c','t','v'});
-            obj.u       = orderfields(obj.u      ,{'p','s'});
-            obj.x       = orderfields(obj.x      ,{'cf','if','nv','vf','xf'});
+%             obj         = orderfields(obj        ,{'e','m','s','u','x'});
+%             obj.e       = orderfields(obj.e      ,{'a','p'});
+%             obj.e.a     = orderfields(obj.e.a    ,{'c','t'});
+%             obj.e.a.c   = orderfields(obj.e.a.c  ,{'c','c_abs','n','n_abs'});
+%             obj.e.a.t   = orderfields(obj.e.a.t  ,{'c','c_abs','f','f_abs','n','n_abs'});
+%             obj.e.a.t.n = orderfields(obj.e.a.t.n,{'c','f'});
+%             obj.m       = orderfields(obj.m      ,{'Ac','Af','At','Bc','Bf','Bt','nnz'});
+%             obj.s       = orderfields(obj.s      ,{'bt','bv','c','t','v'});
+%             obj.u       = orderfields(obj.u      ,{'p','s'});
+%             obj.x       = orderfields(obj.x      ,{'cf','if','nv','vf','xf'});
         end
         % >> 1.3. ---------------------------------------------------------
         function [msh] = Sort_msh(msh)
@@ -41,11 +41,26 @@ classdef Tools_1D
         
         %% > 2. ----------------------------------------------------------- 
         % >> 2.1. ---------------------------------------------------------
+        %  > Save .mat file.
+        function [] = Save_mat(td,wd,V)
+            save(join([wd,'V',td,'.mat']),'V');
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > Set...
+        %  > nc  : Number of cycles.
+        %  > h(i): Reference length(s).
+        function [msh] = Set_msh(nc,h)
+            lin_h = linspace(log(h(1)),log(h(2)),nc);
+            for i = 1:length(lin_h)
+                msh(i) = A_1D.Set_A2(exp(1).^(lin_h(i)));
+            end
+        end
+        % >> 2.3. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             s = log(e(2)./e(1))./log(h(2)./h(1));
         end
-        % >> 2.2. ---------------------------------------------------------
+        % >> 2.4. ---------------------------------------------------------
         %  > Set function.
         function [a] = Set_f(x,y,n)
             a = y./x.^(-n);

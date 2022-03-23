@@ -1,4 +1,4 @@
-classdef Fig_V2_1_1D
+classdef Fig_V2_2_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         function [] = Plot(V)
@@ -36,7 +36,7 @@ classdef Fig_V2_1_1D
             n = 1;
             for i = 1:size(obj,2)
                 NNZ(i,1) = obj(i).m.nnz.At;
-                V1 (i,:) = obj(i).e.a{n}.t.n_abs.f(j,:);
+                V1 (i,:) = obj(i).e.a.t.n_abs.f(j,:);
                 V2 (i,:) = obj(i).e.p{n}.t.n_abs.f(j,:);
             end
             %  > Plot variables.
@@ -76,8 +76,8 @@ classdef Fig_V2_1_1D
             n = 1;
             for i = 1:size(obj,2)
                 NNZ(i,1) = obj(i).m.nnz.At;
-                V1 (i,1) = obj(i).e.a{n}.c.n_abs(j);
-                V2 (i,1) = obj(i).e.a{n}.t.n_abs.c(j);
+                V1 (i,1) = obj(i).e.a.c.n_abs(j);
+                V2 (i,1) = obj(i).e.a.t.n_abs.c(j);
                 V3 (i,1) = obj(i).e.p{n}.c.n_abs(j);
                 V4 (i,1) = obj(i).e.p{n}.t.n_abs.c(j);
             end

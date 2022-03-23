@@ -15,9 +15,7 @@ classdef B_2_2_1D
             %  > ...field 'x'.
             obj.x        = B_2_1_1D.Update_4   (obj.s,obj.u,obj.x);
             % >> Update cell/face truncation and cell global discretization error distribution/norms.
-            obj.e        = B_2_1_1D.Update_et_a(msh,obj.e,obj.s,obj.u,obj.x);
-            obj.e        = B_2_1_1D.Update_ec_a(msh,obj.e,obj.x);
-            obj.e        = B_2_1_1D.Update_et_p(inp,msh,pde,obj.e,obj.s,obj.u,obj.x);
+            obj.e        = B_2_1_1D.Update_et  (inp,msh,pde,obj.e,obj.s,obj.u,obj.x);
             obj.e        = B_2_1_1D.Update_ec_p(msh,obj.e,obj.m);
             % >> Update structures.
             [obj,msh]    = B_2_1_1D.Set_struct (obj,msh);

@@ -95,9 +95,10 @@ classdef Fig_V1_1_1D
                 i          = 1:2;
                 %  > #1.
                 fig.M      = repelem(":o",2);
+                n          = 1;
                 L1{1}      = "$|\bar{\tau}_{f}^{\phantom{\nabla}\phi}|$";
                 L1{2}      = "$|\bar{\tau}_{f}^{\nabla\phi}|$";
-                [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,L1,msh.f.Xv,obj.e.a.t.f_abs(:,i));
+                [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,L1,msh.f.Xv,obj.e.a{n}.t.f_abs(:,i));
                 %  > #2.
                 fig.M      = repelem("-v",2);
                 n          = 1;
@@ -108,10 +109,11 @@ classdef Fig_V1_1_1D
                 i          = 1:3;
                 %  > #1.
                 fig.M      = repelem(":o",3);
+                n          = 1;
                 L1{1}      = "$|\bar{\tau}_{f}^{\phantom{\nabla}\phi}|$";
                 L1{2}      = "$|\bar{\tau}_{f}^{\nabla\phi}|$";
                 L1{3}      = "$|\bar{\tau}_{f}^{\phantom{\nabla\phi}}|$";
-                [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,L1,msh.f.Xv,obj.e.a.t.f_abs(:,i)); 
+                [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,L1,msh.f.Xv,obj.e.a{n}.t.f_abs(:,i)); 
                 %  > #2.
                 fig.M      = repelem("-v",3);
                 n          = 1;
@@ -133,9 +135,10 @@ classdef Fig_V1_1_1D
             %  > Plot variables.
             %  > #1.
             fig.M      = repelem(":o",2);
+            n          = 1;
             L1{1}      = "$|e_{c}|$";
             L1{2}      = "$|\bar{\tau}_{c}|$";
-            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,L1,msh.c.Xc,[obj.e.a.c.c_abs,obj.e.a.t.c_abs]);
+            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,L1,msh.c.Xc,[obj.e.a{n}.c.c_abs,obj.e.a{n}.t.c_abs]);
             %  > #2.
             fig.M      = repelem("-v",2);
             n          = 1;

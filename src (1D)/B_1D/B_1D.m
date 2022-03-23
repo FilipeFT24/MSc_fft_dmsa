@@ -12,33 +12,54 @@ classdef B_1D
             % >> 'pde'.
             pde = B_1_1D.Update_pde(inp,msh);
             % >> 'obj'.
-            %  > Field: 'e.a' (error w/ analytic field).
-            obj.e.a.t.c       = zeros(Nc,1);
-            obj.e.a.t.c_abs   = zeros(Nc,1);
-            obj.e.a.t.f       = zeros(Nf,n+1);
-            obj.e.a.t.f_abs   = zeros(Nf,n+1);
-            obj.e.a.t.n.c     = zeros(1,3);
-            obj.e.a.t.n_abs.c = zeros(1,3);
-            obj.e.a.t.n.f     = zeros(3,n+1);
-            obj.e.a.t.n_abs.f = zeros(3,n+1);
-            obj.e.a.c.c       = zeros(Nc,1);
-            obj.e.a.c.c_abs   = zeros(Nc,1);
-            obj.e.a.c.n       = zeros(1,3);
-            obj.e.a.c.n_abs   = zeros(1,3);  
-            %  > Field: 'e.p' (error w/ predicted field).
-            for i = 1:m
-                obj.e.p{i}.t.c       = zeros(Nc,1);
-                obj.e.p{i}.t.c_abs   = zeros(Nc,1);
-                obj.e.p{i}.t.f       = zeros(Nf,n+1);
-                obj.e.p{i}.t.f_abs   = zeros(Nf,n+1);
-                obj.e.p{i}.t.n.c     = zeros(1,3);
-                obj.e.p{i}.t.n_abs.c = zeros(1,3);
-                obj.e.p{i}.t.n.f     = zeros(3,n+1);
-                obj.e.p{i}.t.n_abs.f = zeros(3,n+1);
-                obj.e.p{i}.c.c       = zeros(Nc,1);
-                obj.e.p{i}.c.c_abs   = zeros(Nc,1);
-                obj.e.p{i}.c.n       = zeros(1,3);
-                obj.e.p{i}.c.n_abs   = zeros(1,3); 
+            if ~inp.pa.comp_av
+                %  > Fields: 'e.a' (error w/ analytic field)
+                obj.e.a{1}.t.c       = zeros(Nc,1);
+                obj.e.a{1}.t.c_abs   = zeros(Nc,1);
+                obj.e.a{1}.t.f       = zeros(Nf,n+1);
+                obj.e.a{1}.t.f_abs   = zeros(Nf,n+1);
+                obj.e.a{1}.t.n.c     = zeros(1,3);
+                obj.e.a{1}.t.n_abs.c = zeros(1,3);
+                obj.e.a{1}.t.n.f     = zeros(3,n+1);
+                obj.e.a{1}.t.n_abs.f = zeros(3,n+1);
+                obj.e.a{1}.c.c       = zeros(Nc,1);
+                obj.e.a{1}.c.c_abs   = zeros(Nc,1);
+                obj.e.a{1}.c.n       = zeros(1,3);
+                obj.e.a{1}.c.n_abs   = zeros(1,3);
+                %  > Fields: 'e.p' (error w/ predicted field).
+                for i = 1:m
+                    obj.e.p{i}.t.c       = zeros(Nc,1);
+                    obj.e.p{i}.t.c_abs   = zeros(Nc,1);
+                    obj.e.p{i}.t.f       = zeros(Nf,n+1);
+                    obj.e.p{i}.t.f_abs   = zeros(Nf,n+1);
+                    obj.e.p{i}.t.n.c     = zeros(1,3);
+                    obj.e.p{i}.t.n_abs.c = zeros(1,3);
+                    obj.e.p{i}.t.n.f     = zeros(3,n+1);
+                    obj.e.p{i}.t.n_abs.f = zeros(3,n+1);
+                    obj.e.p{i}.c.c       = zeros(Nc,1);
+                    obj.e.p{i}.c.c_abs   = zeros(Nc,1);
+                    obj.e.p{i}.c.n       = zeros(1,3);
+                    obj.e.p{i}.c.n_abs   = zeros(1,3);
+                end
+            else
+                %  > Fields: 'e.a' (error w/ analytic field) and 'e.p' (error w/ predicted field).
+                f = ["a","p"];
+                for i = 1:length(f)
+                    for j = 1:m
+                        obj.e.(f(i)){j}.t.c       = zeros(Nc,1);
+                        obj.e.(f(i)){j}.t.c_abs   = zeros(Nc,1);
+                        obj.e.(f(i)){j}.t.f       = zeros(Nf,n+1);
+                        obj.e.(f(i)){j}.t.f_abs   = zeros(Nf,n+1);
+                        obj.e.(f(i)){j}.t.n.c     = zeros(1,3);
+                        obj.e.(f(i)){j}.t.n_abs.c = zeros(1,3);
+                        obj.e.(f(i)){j}.t.n.f     = zeros(3,n+1);
+                        obj.e.(f(i)){j}.t.n_abs.f = zeros(3,n+1);
+                        obj.e.(f(i)){j}.c.c       = zeros(Nc,1);
+                        obj.e.(f(i)){j}.c.c_abs   = zeros(Nc,1);
+                        obj.e.(f(i)){j}.c.n       = zeros(1,3);
+                        obj.e.(f(i)){j}.c.n_abs   = zeros(1,3);
+                    end
+                end
             end
             %  > Field: 'm' (matrices).
             for i = 1:n
