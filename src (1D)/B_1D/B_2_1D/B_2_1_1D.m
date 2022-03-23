@@ -21,7 +21,7 @@ classdef B_2_1_1D
         %  > Update nodal/face values.
         function [x] = Update_4(s,u,x)
             x        = B_2_1_1D.Update_xv(s,u,x);
-            x        = B_2_1_1D.Update_xf(u,x); 
+            x        = B_2_1_1D.Update_xf(u,x);
         end
         
         %% > 2. -----------------------------------------------------------
@@ -33,7 +33,7 @@ classdef B_2_1_1D
             Xv = msh.f.Xv;
             Nf = msh.f.Nf;
             nv = size(u.s,2);
-
+            
             for i = 1:nv
                 if isempty(u.s{i})
                     continue;
@@ -46,7 +46,7 @@ classdef B_2_1_1D
                         %  > Check polynomial order (odd/even).
                         nb = ceil(u.p(m,j)./2);
                         nl = -nb;
-                        nr =  nb; 
+                        nr =  nb;
                         if ~rem(u.p(m,i),2)
                             if u.p(m,k) < 0
                                 %  > UDS.
@@ -92,8 +92,8 @@ classdef B_2_1_1D
                         %  > Update 's' field.
                         s.c {m,i} = sc;
                         s.t {m,i} = xt;
-                        s.bt{m,i} = bt; 
-                        s.bv{m,i} = bv; 
+                        s.bt{m,i} = bt;
+                        s.bv{m,i} = bv;
                     end
                 end
             end
@@ -129,7 +129,7 @@ classdef B_2_1_1D
                         b.xt  = s.t {a,i};
                         b.bt  = s.bt{a,i};
                         b.g_v = inp.pv.v(2)./inp.pv.v(1);
-                        Df    = B_2_1_1D.Assemble_Df(b); 
+                        Df    = B_2_1_1D.Assemble_Df(b);
                         %  > cf.
                         if length(b.xt) == 1
                             if i == 2
@@ -149,10 +149,10 @@ classdef B_2_1_1D
                         end
                         %  > Update 'x' field.
                         x.cf{a,i}   = cf;
-                        x.if{a,i}   = Inv; 
+                        x.if{a,i}   = Inv;
                     end
                 end
-            end  
+            end
         end
         %  > 2.2.1. -------------------------------------------------------
         %  > Assemble matrix Df.
@@ -186,7 +186,7 @@ classdef B_2_1_1D
                     Df(j,j) = (b.xt(j)-b.f)'.^(j-1);
             end
         end
-       
+        
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
         %  > Construct/update matrix A.
@@ -225,7 +225,7 @@ classdef B_2_1_1D
                 end
                 m.nnz.Ac(i) = B_2_1_1D.Set_nnz(m.Ac{i});
                 m.nnz.Af(i) = B_2_1_1D.Set_nnz(m.Af{i});
-            end 
+            end
             %  > Cell(s) to be updated.
             d = unique(cat(1,c{:}));
             
@@ -253,7 +253,7 @@ classdef B_2_1_1D
                     for j = 1:size(u.s{i},1)
                         %  > Face index.
                         a = u.s{i}(j);
-                        if ~isempty(s.bv{a,i}) 
+                        if ~isempty(s.bv{a,i})
                             %  > Overwrite/update field...
                             m.Bf{i}(j,1) = x.cf{a,i}(end).*s.bv{a,i};
                         end
@@ -299,15 +299,14 @@ classdef B_2_1_1D
         function [nnz_m] = Set_nnz(m)
             nnz_m = nnz(m);
         end
-                   
+        
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
-        %  > 4.1.1. -------------------------------------------------------
         %  > Update 'obj.x.xc' field (nodal solution).
         function [c] = Update_xc(At,Bt)
             c = At\Bt;
         end
-        %  > 4.1.2. -------------------------------------------------------
+        % >> 4.2. ---------------------------------------------------------
         %  > Update 'obj.x.xv' field (nodal values used to reconstruct face).
         function [x] = Update_xv(s,u,x)
             for i = 1:size(u.s,2)
@@ -335,7 +334,7 @@ classdef B_2_1_1D
                 end
             end
         end
-        %  > 4.1.3. -------------------------------------------------------
+        % >> 4.3. ---------------------------------------------------------
         %  > Update 'pde.x.f' field (reconstructed face values).
         function [x] = Update_xf(u,x)
             for i = 1:size(u.s,2)
@@ -348,9 +347,44 @@ classdef B_2_1_1D
                 end
             end
         end
-        % >> 4.2. ---------------------------------------------------------
-        %  > 4.2.1. -------------------------------------------------------
-        %  > Auxiliary function: update 'pde.e.a.t' field (cell/face truncation error distribution/norms).
+        
+        %% > 5. -----------------------------------------------------------
+        % >> 5.1. ---------------------------------------------------------
+        %  > Update 'pde.e.p{i}.t' field (predicted/estimated cell/face truncation error distribution/norms).
+        function [e_p] = Update_et_p(msh,e_p,sp_l,xp_l,xp_r)
+            %  > Error distribution.
+            [m,n] = size(e_p.t.f);
+            for j = 1:n-1
+                e_p.t.f  (:,j) = sp_l.v(j).*(xp_r.xf.x(:,j)-xp_l.xf.x(:,j));
+            end
+            e_p.t.f      (:,n) = sum(e_p.t.f(:,1:n-1),2);
+            e_p.t.f_abs        = abs(e_p.t.f);
+            a                  = 1:m-1;
+            b                  = a+1;
+            e_p.t.c      (:,1) = e_p.t.f(a,n)-e_p.t.f(b,n);
+            %  > ... divide cell truncation error by cell volume.
+            e_p.t.c      (:,1) = e_p.t.c./msh.c.Vc;
+            e_p.t.c_abs  (:,1) = abs(e_p.t.c(:,1));
+            %  > Error norms.
+            e_p.t.n.f          = Tools_1D.n(e_p.t.f);
+            e_p.t.n_abs.f      = Tools_1D.n(e_p.t.f_abs);
+            e_p.t.n.c          = Tools_1D.n(e_p.t.c,msh.c.Vc);
+            e_p.t.n_abs.c      = Tools_1D.n(e_p.t.c_abs,msh.c.Vc);
+        end
+        % >> 5.2. ---------------------------------------------------------
+        %  > Update 'pde.e.p{i}.c' field (predicted/estimated cell global discretization error distribution/norms).
+        function [e_p] = Update_ec_p(msh,e_p,m)
+            %  > Error distribution.
+            e_p.c.c    (:,1) = inv(m.At)*(e_p.t.c);
+            %  > ... multiply cell global discretization error by cell volume.
+            e_p.c.c    (:,1) = e_p.c.c.*msh.c.Vc;
+            e_p.c.c_abs(:,1) = abs(e_p.c.c(:,1));
+            %  > Error norms.
+            e_p.c.n          = Tools_1D.n(e_p.c.c,msh.c.Vc);
+            e_p.c.n_abs      = Tools_1D.n(e_p.c.c_abs,msh.c.Vc);
+        end
+        % >> 5.3. ---------------------------------------------------------
+        %  > Update 'pde.e.a{i}.t' field (analytic cell/face truncation error distribution/norms).
         function [e_a] = Update_et_a(msh,e_a,s,u,x)
             %  > Error distribution.
             [~,n] = size(u.s);
@@ -359,7 +393,7 @@ classdef B_2_1_1D
                     for j = 1:size(u.s{i},1)
                         k            = u.s{i}(j);
                         e_a.t.f(k,i) = s.v(i).*(x.nv.a.f(k,i)-x.xf.a(k,i));
-                    end 
+                    end
                     l{i}(:,1) = unique([msh.f.c{[u.s{i}]}]);
                 end
             end
@@ -369,6 +403,8 @@ classdef B_2_1_1D
             e_a.t.f      (a,n+1) = sum(e_a.t.f(a,1:n),2);
             e_a.t.f_abs  (a,:)   = abs(e_a.t.f(a,:));
             e_a.t.c      (b,1)   = e_a.t.f(b,n+1)-e_a.t.f(c,n+1);
+            %  > ... divide cell truncation error by cell volume.
+            e_a.t.c      (b,1)   = e_a.t.c(b,1)./msh.c.Vc(b);
             e_a.t.c_abs  (b,1)   = abs(e_a.t.c(b,1));
             %  > Error norms.
             e_a.t.n.f            = Tools_1D.n(e_a.t.f);
@@ -376,8 +412,8 @@ classdef B_2_1_1D
             e_a.t.n.c            = Tools_1D.n(e_a.t.c,msh.c.Vc);
             e_a.t.n_abs.c        = Tools_1D.n(e_a.t.c_abs,msh.c.Vc);
         end
-        %  > 4.2.2. -------------------------------------------------------
-        %  > Auxiliary function: update 'pde.e.a.c' field (cell global discretization error distribution/norms).
+        % >> 5.4. ---------------------------------------------------------
+        %  > Update 'pde.e.a{i}.c' field (analytic cell global discretization error distribution/norms).
         function [e_a] = Update_ec_a(msh,e_a,x)
             %  > Error distribution.
             e_a.c.c    (:,1) = x.nv.a.c-x.nv.x.c;
@@ -386,62 +422,55 @@ classdef B_2_1_1D
             e_a.c.n          = Tools_1D.n(e_a.c.c,msh.c.Vc);
             e_a.c.n_abs      = Tools_1D.n(e_a.c.c_abs,msh.c.Vc);
         end
-        %  > 4.2.3. -------------------------------------------------------
-        %  > Update 'pde.e.a.t' and 'pde.e.p.t' fields (analytic and predicted/estimated cell/face truncation error distribution/norms).
-        %  > Update 'pde.e.a.c' (analytic cell global discretization error distribution/norms).
-        function [e] = Update_et(inp,msh,pde,e,s,u,x)
+        % >> 5.5. ---------------------------------------------------------
+        %  > Update 'pde.e{i}.(...)' field.
+        function [e] = Update_e(inp,msh,pde,e,m,s,u,x)
             %  > Auxiliary variables.
             for i = 1:size(u.s,2)
                 all_s{i}(:,1) = 1:msh.f.Nf;
             end
-          
-            % >> Compute/assign...
-            %  > ...fields.
+            ns = inp.pa.ns;
+            
+            % >> Assign/update fields 'm', 's', 'u' and 'x'.
             i     = 1;
-            sp{i} = s; 
+            sp{i} = s;
+            mp{i} = m;
             up{i} = u;
             xp{i} = x;
-            %  > ...face values w/ lower-order solution.
-            for i = 1:inp.pa.ns
-                %  > Update field 'u'.
+            for i = 1:ns
                 up{i+1}        = B_2_1_1D.Set_upd_p(up{i},all_s);
-                %  > Update...
-                sp{i+1}        = B_2_1_1D.Update_1(inp,msh,pde,sp{i},up{i+1});
-                xp{i+1}        = B_2_1_1D.Update_2(inp,msh,sp{i+1},up{i+1},xp{i});
-                xp{i+1}.nv.x.c = x.nv.x.c;
-                xp{i+1}        = B_2_1_1D.Update_4(sp{i+1},up{i+1},xp{i+1}); 
-            end
-            %  > ...predicted/estimated cell/face truncation error distribution/norms.
-            for i = 1:inp.pa.ns
-                %  > Error distribution.
-                [m,n] = size(e.p{i}.t.f);
-                for j = 1:n-1
-                    e.p{i}.t.f  (:,j) = sp{i}.v(j).*(xp{i+1}.xf.x(:,j)-xp{i}.xf.x(:,j)); 
+                sp{i+1}        = B_2_1_1D.Update_1 (inp,msh,pde,sp{i},up{i+1});
+                xp{i+1}        = B_2_1_1D.Update_2 (inp,msh,sp{i+1},up{i+1},xp{i});
+                if i ~= ns
+                    mp{i+1}    = B_2_1_1D.Update_3 (msh,pde,mp{i},sp{i+1},up{i+1},xp{i+1});
                 end
-                e.p{i}.t.f      (:,n) = sum(e.p{i}.t.f(:,1:n-1),2);
-                e.p{i}.t.f_abs        = abs(e.p{i}.t.f);
-                a                     = 1:m-1; 
-                b                     = a+1;
-                e.p{i}.t.c      (:,1) = e.p{i}.t.f(a,n)-e.p{i}.t.f(b,n);
-                e.p{i}.t.c_abs  (:,1) = abs(e.p{i}.t.c(:,1));
-                %  > Error norms. 
-                e.p{i}.t.n.f          = Tools_1D.n(e.p{i}.t.f);
-                e.p{i}.t.n_abs.f      = Tools_1D.n(e.p{i}.t.f_abs);
-                e.p{i}.t.n.c          = Tools_1D.n(e.p{i}.t.c,msh.c.Vc);
-                e.p{i}.t.n_abs.c      = Tools_1D.n(e.p{i}.t.c_abs,msh.c.Vc);
+                xp{i+1}.nv.x.c = x.nv.x.c;
+                xp{i+1}        = B_2_1_1D.Update_4 (sp{i+1},up{i+1},xp{i+1});
             end
-            % >> Compare w/ analytic field(?).
+            % >> pde.e.p.
+            %  > pde.e.p{i}.t(...).
+            %  > pde.e.p{i}.c(...).
+            for i = 1:ns
+                e.p{i} = B_2_1_1D.Update_et_p(msh,e.p{i},sp{i},xp{i},xp{i+1});
+                e.p{i} = B_2_1_1D.Update_ec_p(msh,e.p{i},mp{i});
+            end
+            % >> pde.e.a.
             if ~inp.pa.comp_av
                 nf = 1;
             else
-                nf = inp.pa.ns;
+                nf = ns;
             end
+            %  > pde.e.a{i}.t(...).
+            %  > pde.e.a{i}.c(...).
             for i = 1:nf
+                if inp.pa.comp_av && i ~= 1
+                    xp{i}.nv.x.c = B_2_1_1D.Update_xc(mp{i}.At,mp{i}.Bt);
+                end
                 e.a{i} = B_2_1_1D.Update_et_a(msh,e.a{i},sp{i},up{i},xp{i});
                 e.a{i} = B_2_1_1D.Update_ec_a(msh,e.a{i},xp{i});
             end
         end
-        %  > 4.2.3.1. -----------------------------------------------------
+        %  > 5.5.1. -------------------------------------------------------
         %  > Auxiliary function (increase method's order).
         function [u] = Set_upd_p(u,u_s)
             A = 2;
@@ -454,24 +483,10 @@ classdef B_2_1_1D
                     end
                 end
                 u.s{i} = u_s{i};
-            end                       
+            end
         end
-        %  > 4.2.4. -------------------------------------------------------
-        %  > Update 'pde.e.p.c' field (predicted/estimated cell global discretization error distribution/norms).
-        function [e] = Update_ec_p(msh,e,m)
-            for i = 1:size(e.p,2)
-                %  > Error distribution.
-                str.a               = m.At;
-                inv_a               = Tools_1D.p_adapt_inv(1,str);
-                e.p{i}.c.c    (:,1) = inv_a*e.p{i}.t.c;
-                e.p{i}.c.c_abs(:,1) = abs(e.p{i}.c.c(:,1));
-                %  > Error norms.
-                e.p{i}.c.n          = Tools_1D.n(e.p{i}.c.c,msh.c.Vc);
-                e.p{i}.c.n_abs      = Tools_1D.n(e.p{i}.c.c_abs,msh.c.Vc);
-            end   
-        end
-            
-        %% > 5. -----------------------------------------------------------
+        
+        %% > 6. -----------------------------------------------------------
         %  > Update/set structure fields.
         function [obj,msh] = Set_struct(obj,msh)
             obj = Tools_1D.Sort_obj(obj);

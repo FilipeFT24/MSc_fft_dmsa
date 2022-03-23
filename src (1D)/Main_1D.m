@@ -4,17 +4,15 @@ clear, clc, close all; warning off; beep off;
 % >> ----------------------------------------------------------------------
 %  > Working directories.
 Tools_1D.Set_Directories;
-%  > Run...
-run_1 = 0;
-run_2 = 1;
+run = [0,1];
 % >> ----------------------------------------------------------------------
-if run_1
+if run(1)
     [inp]     = A_1D.Set_A1;
-    [msh]     = A_1D.Set_A2(1.0E-2);
+    [msh]     = A_1D.Set_A2(1.0E-3);
     [obj,msh] = B_1D.Run_p (inp,msh);
 end
 % >> ----------------------------------------------------------------------
-if run_2
+if run(2)
     C_1D.Check_P1(1,1);
     C_1D.Check_P2(0,1);
 end

@@ -5,20 +5,19 @@ classdef B_2_2_1D
         %  > 'Standard' run.
         function [obj,msh] = p_standard(inp,obj,msh,pde)
             % >> Update fields 'm', 's' and 'x'.
-            obj.s        = B_2_1_1D.Update_1   (inp,msh,pde,obj.s,obj.u);
-            obj.x        = B_2_1_1D.Update_2   (inp,msh,obj.s,obj.u,obj.x);
-            obj.m        = B_2_1_1D.Update_3   (msh,pde,obj.m,obj.s,obj.u,obj.x);
+            obj.s        = B_2_1_1D.Update_1  (inp,msh,pde,obj.s,obj.u);
+            obj.x        = B_2_1_1D.Update_2  (inp,msh,obj.s,obj.u,obj.x);
+            obj.m        = B_2_1_1D.Update_3  (msh,pde,obj.m,obj.s,obj.u,obj.x);
             % >> Update...
             %  > ...solution.
             obj.x.nv.a   = pde.av;
-            obj.x.nv.x.c = B_2_1_1D.Update_xc  (obj.m.At,obj.m.Bt);
+            obj.x.nv.x.c = B_2_1_1D.Update_xc (obj.m.At,obj.m.Bt);
             %  > ...field 'x'.
-            obj.x        = B_2_1_1D.Update_4   (obj.s,obj.u,obj.x);
+            obj.x        = B_2_1_1D.Update_4  (obj.s,obj.u,obj.x);
             % >> Update cell/face truncation and cell global discretization error distribution/norms.
-            obj.e        = B_2_1_1D.Update_et  (inp,msh,pde,obj.e,obj.s,obj.u,obj.x);
-            obj.e        = B_2_1_1D.Update_ec_p(msh,obj.e,obj.m);
+            obj.e        = B_2_1_1D.Update_e  (inp,msh,pde,obj.e,obj.m,obj.s,obj.u,obj.x);
             % >> Update structures.
-            [obj,msh]    = B_2_1_1D.Set_struct (obj,msh);
+            [obj,msh]    = B_2_1_1D.Set_struct(obj,msh);
         end
         
         %% > 2. -----------------------------------------------------------
