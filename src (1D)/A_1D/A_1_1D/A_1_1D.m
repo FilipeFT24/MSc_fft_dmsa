@@ -29,7 +29,7 @@ classdef A_1_1D
             %% > Input variables.
             % >> pv.
             inp.pv.f       = 2;                           %  > f.
-            inp.pv.b       = ["Dirichlet","Dirichlet"];   %  > BC: West(1)/East(2).
+            inp.pv.b       = ["Dirichlet","Dirichlet"];     %  > BC: West(1)/East(2).
             inp.pv.v       = [1,1];                       %  > Coeffs: Convection(1)/Diffusion(2).
             % >> ps. 
             inp.ps.p       = [1,1];                       %  > Polynomial order: Convection(1)/Diffusion(2).
@@ -61,7 +61,7 @@ classdef A_1_1D
             inp.Uniform = 1;                              %  > Set uniform grid(?).
             inp.XLim    = [0,1];                          %  > Grid limits.
             inp.h       = h;                              %  > Grid size.
-            inp.A       = 3.5;                            %  > Stretching parameter.
+            inp.A       = 2.5;                            %  > Stretching parameter.
             inp.c       = 0.5;                            %  > Clustered location.
         end
     end

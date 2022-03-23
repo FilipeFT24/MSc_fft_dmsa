@@ -40,25 +40,5 @@ classdef C_1D
                 end
             end
         end
-        
-        %% > 2. -----------------------------------------------------------
-        % >> 1.1. ---------------------------------------------------------
-        function [] = Check_P2(run,load_V)
-            % >> Run(?).
-            if run
-                % >> Set working directories.
-                td = '2';
-                wd = 'C_1D/[.mat Files]/';
-                % >> Load(?).
-                %  > Save structures...
-                if ~load_V
-                    Tools_1D.Save_mat(td,wd,V);
-                end
-                %  > Plot...
-                if V.inp.pl.all
-                    Fig_V2_2_1D.Plot(V);
-                end
-            end
-        end
     end
 end

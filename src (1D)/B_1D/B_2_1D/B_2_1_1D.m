@@ -351,48 +351,47 @@ classdef B_2_1_1D
         %% > 5. -----------------------------------------------------------
         % >> 5.1. ---------------------------------------------------------
         %  > Update 'pde.e.p{i}.t' field (predicted/estimated cell/face truncation error distribution/norms).
-        function [e_p] = Update_et_p(msh,e_p,sp_l,xp_l,xp_r)
+        function [e_pt] = Update_et_p(msh,e_pt,sp_l,xp_l,xp_r)
             %  > Error distribution.
-            [m,n] = size(e_p.t.f);
+            [m,n] = size(e_pt.f);
             for j = 1:n-1
-                e_p.t.f  (:,j) = sp_l.v(j).*(xp_r.xf.x(:,j)-xp_l.xf.x(:,j));
+                e_pt.f  (:,j) = sp_l.v(j).*(xp_r.xf.x(:,j)-xp_l.xf.x(:,j));
             end
-            e_p.t.f      (:,n) = sum(e_p.t.f(:,1:n-1),2);
-            e_p.t.f_abs        = abs(e_p.t.f);
-            a                  = 1:m-1;
-            b                  = a+1;
-            e_p.t.c      (:,1) = e_p.t.f(a,n)-e_p.t.f(b,n);
+            e_pt.f      (:,n) = sum(e_pt.f(:,1:n-1),2);
+            e_pt.f_abs        = abs(e_pt.f);
+            a                 = 1:m-1;
+            b                 = a+1;
+            e_pt.c      (:,1) = e_pt.f(a,n)-e_pt.f(b,n);
             %  > ... divide cell truncation error by cell volume.
-            e_p.t.c      (:,1) = e_p.t.c./msh.c.Vc;
-            e_p.t.c_abs  (:,1) = abs(e_p.t.c(:,1));
+            e_pt.c      (:,1) = e_pt.c./msh.c.Vc;
+            e_pt.c_abs  (:,1) = abs(e_pt.c(:,1));
             %  > Error norms.
-            e_p.t.n.f          = Tools_1D.n(e_p.t.f);
-            e_p.t.n_abs.f      = Tools_1D.n(e_p.t.f_abs);
-            e_p.t.n.c          = Tools_1D.n(e_p.t.c,msh.c.Vc);
-            e_p.t.n_abs.c      = Tools_1D.n(e_p.t.c_abs,msh.c.Vc);
+            e_pt.n.f          = Tools_1D.n(e_pt.f);
+            e_pt.n_abs.f      = Tools_1D.n(e_pt.f_abs);
+            e_pt.n.c          = Tools_1D.n(e_pt.c,msh.c.Vc);
+            e_pt.n_abs.c      = Tools_1D.n(e_pt.c_abs,msh.c.Vc);
         end
         % >> 5.2. ---------------------------------------------------------
         %  > Update 'pde.e.p{i}.c' field (predicted/estimated cell global discretization error distribution/norms).
-        function [e_p] = Update_ec_p(msh,e_p,m)
+        function [e_pc] = Update_ec_p(msh,e_pc,e_pt,m)
             %  > Error distribution.
-            e_p.c.c    (:,1) = inv(m.At)*(e_p.t.c);
+            e_pc.c    (:,1) = inv(m.At)*(e_pt.c.*msh.c.Vc);
             %  > ... multiply cell global discretization error by cell volume.
-            e_p.c.c    (:,1) = e_p.c.c.*msh.c.Vc;
-            e_p.c.c_abs(:,1) = abs(e_p.c.c(:,1));
+            e_pc.c_abs(:,1) = abs(e_pc.c(:,1));
             %  > Error norms.
-            e_p.c.n          = Tools_1D.n(e_p.c.c,msh.c.Vc);
-            e_p.c.n_abs      = Tools_1D.n(e_p.c.c_abs,msh.c.Vc);
+            e_pc.n          = Tools_1D.n(e_pc.c,msh.c.Vc);
+            e_pc.n_abs      = Tools_1D.n(e_pc.c_abs,msh.c.Vc);
         end
         % >> 5.3. ---------------------------------------------------------
         %  > Update 'pde.e.a{i}.t' field (analytic cell/face truncation error distribution/norms).
-        function [e_a] = Update_et_a(msh,e_a,s,u,x)
+        function [e_at] = Update_et_a(msh,e_at,s,u,x)
             %  > Error distribution.
             [~,n] = size(u.s);
             for i = 1:n
                 if ~isempty(u.s{i})
                     for j = 1:size(u.s{i},1)
                         k            = u.s{i}(j);
-                        e_a.t.f(k,i) = s.v(i).*(x.nv.a.f(k,i)-x.xf.a(k,i));
+                        e_at.f(k,i) = s.v(i).*(x.nv.a.f(k,i)-x.xf.a(k,i));
                     end
                     l{i}(:,1) = unique([msh.f.c{[u.s{i}]}]);
                 end
@@ -400,29 +399,43 @@ classdef B_2_1_1D
             a                    = unique(cat(1,u.s{:}));
             b                    = unique(cat(1,l{:}));
             c                    = b+1;
-            e_a.t.f      (a,n+1) = sum(e_a.t.f(a,1:n),2);
-            e_a.t.f_abs  (a,:)   = abs(e_a.t.f(a,:));
-            e_a.t.c      (b,1)   = e_a.t.f(b,n+1)-e_a.t.f(c,n+1);
+            e_at.f      (a,n+1) = sum(e_at.f(a,1:n),2);
+            e_at.f_abs  (a,:)   = abs(e_at.f(a,:));
+            e_at.c      (b,1)   = e_at.f(b,n+1)-e_at.f(c,n+1);
             %  > ... divide cell truncation error by cell volume.
-            e_a.t.c      (b,1)   = e_a.t.c(b,1)./msh.c.Vc(b);
-            e_a.t.c_abs  (b,1)   = abs(e_a.t.c(b,1));
+            e_at.c      (b,1)   = e_at.c(b,1)./msh.c.Vc(b);
+            e_at.c_abs  (b,1)   = abs(e_at.c(b,1));
             %  > Error norms.
-            e_a.t.n.f            = Tools_1D.n(e_a.t.f);
-            e_a.t.n_abs.f        = Tools_1D.n(e_a.t.f_abs);
-            e_a.t.n.c            = Tools_1D.n(e_a.t.c,msh.c.Vc);
-            e_a.t.n_abs.c        = Tools_1D.n(e_a.t.c_abs,msh.c.Vc);
+            e_at.n.f            = Tools_1D.n(e_at.f);
+            e_at.n_abs.f        = Tools_1D.n(e_at.f_abs);
+            e_at.n.c            = Tools_1D.n(e_at.c,msh.c.Vc);
+            e_at.n_abs.c        = Tools_1D.n(e_at.c_abs,msh.c.Vc);
         end
         % >> 5.4. ---------------------------------------------------------
         %  > Update 'pde.e.a{i}.c' field (analytic cell global discretization error distribution/norms).
-        function [e_a] = Update_ec_a(msh,e_a,x)
+        function [e_ac] = Update_ec_a(msh,e_ac,x)
             %  > Error distribution.
-            e_a.c.c    (:,1) = x.nv.a.c-x.nv.x.c;
-            e_a.c.c_abs(:,1) = abs(e_a.c.c);
+            e_ac.c    (:,1) = x.nv.a.c-x.nv.x.c;
+            e_ac.c_abs(:,1) = abs(e_ac.c);
             %  > Error norms.
-            e_a.c.n          = Tools_1D.n(e_a.c.c,msh.c.Vc);
-            e_a.c.n_abs      = Tools_1D.n(e_a.c.c_abs,msh.c.Vc);
+            e_ac.n          = Tools_1D.n(e_ac.c,msh.c.Vc);
+            e_ac.n_abs      = Tools_1D.n(e_ac.c_abs,msh.c.Vc);
         end
         % >> 5.5. ---------------------------------------------------------
+        %  > Update 'pde.e.t{i}.d' field.
+        function [e_d] = Update_et_d(msh,e_al,e_ar,e_d)
+            %  > Error distribution.
+            e_d.f         = e_ar.f-e_al.f;
+            e_d.f_abs     = abs(e_d.f);
+            e_d.c         = e_ar.f(:,size(e_ar.f,2))-e_al.f(:,size(e_al.f,2));
+            e_d.c_abs     = abs(e_d.f_abs);
+            %  > Error norms.
+            e_d.t.n.f     = Tools_1D.n(e_d.f);
+            e_d.t.n_abs.f = Tools_1D.n(e_d.f_abs);
+            e_d.t.n.c     = Tools_1D.n(e_d.c,msh.c.Vc);
+            e_d.t.n_abs.c = Tools_1D.n(e_d.c_abs,msh.c.Vc);           
+        end
+        % >> 5.6. ---------------------------------------------------------
         %  > Update 'pde.e{i}.(...)' field.
         function [e] = Update_e(inp,msh,pde,e,m,s,u,x)
             %  > Auxiliary variables.
@@ -441,9 +454,7 @@ classdef B_2_1_1D
                 up{i+1}        = B_2_1_1D.Set_upd_p(up{i},all_s);
                 sp{i+1}        = B_2_1_1D.Update_1 (inp,msh,pde,sp{i},up{i+1});
                 xp{i+1}        = B_2_1_1D.Update_2 (inp,msh,sp{i+1},up{i+1},xp{i});
-                if i ~= ns
-                    mp{i+1}    = B_2_1_1D.Update_3 (msh,pde,mp{i},sp{i+1},up{i+1},xp{i+1});
-                end
+                mp{i+1}        = B_2_1_1D.Update_3 (msh,pde,mp{i},sp{i+1},up{i+1},xp{i+1});
                 xp{i+1}.nv.x.c = x.nv.x.c;
                 xp{i+1}        = B_2_1_1D.Update_4 (sp{i+1},up{i+1},xp{i+1});
             end
@@ -451,8 +462,8 @@ classdef B_2_1_1D
             %  > pde.e.p{i}.t(...).
             %  > pde.e.p{i}.c(...).
             for i = 1:ns
-                e.p{i} = B_2_1_1D.Update_et_p(msh,e.p{i},sp{i},xp{i},xp{i+1});
-                e.p{i} = B_2_1_1D.Update_ec_p(msh,e.p{i},mp{i});
+                e.p{i}.t = B_2_1_1D.Update_et_p(msh,e.p{i}.t,sp{i},xp{i},xp{i+1});
+                e.p{i}.c = B_2_1_1D.Update_ec_p(msh,e.p{i}.c,e.p{i}.t,mp{i});
             end
             % >> pde.e.a.
             if ~inp.pa.comp_av
@@ -462,13 +473,13 @@ classdef B_2_1_1D
             end
             %  > pde.e.a{i}.t(...).
             %  > pde.e.a{i}.c(...).
-            for i = 1:nf
+            for i = 1:nf+1
                 if inp.pa.comp_av && i ~= 1
                     xp{i}.nv.x.c = B_2_1_1D.Update_xc(mp{i}.At,mp{i}.Bt);
                 end
-                e.a{i} = B_2_1_1D.Update_et_a(msh,e.a{i},sp{i},up{i},xp{i});
-                e.a{i} = B_2_1_1D.Update_ec_a(msh,e.a{i},xp{i});
-            end
+                e.a{i}.t = B_2_1_1D.Update_et_a(msh,e.a{i}.t,sp{i},up{i},xp{i});
+                e.a{i}.c = B_2_1_1D.Update_ec_a(msh,e.a{i}.c,xp{i});
+            end  
         end
         %  > 5.5.1. -------------------------------------------------------
         %  > Auxiliary function (increase method's order).
