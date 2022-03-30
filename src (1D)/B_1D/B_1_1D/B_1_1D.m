@@ -4,18 +4,20 @@ classdef B_1_1D
         %  > Compute analytic functions/values/source term.
         function [pde] = Update_pde(inp,msh)
             %  > Auxiliary variables.
-            v = inp.pv.v(1);
-            g = inp.pv.v(2);
+            Nc = msh.c.Nc;
+            Xv = msh.f.Xv;
+            v  = inp.pv.v(1);
+            g  = inp.pv.v(2);
             
             %  > Set analytic function.
             syms x;
             switch inp.pv.f
                 case 1
-                    i    = 3;
-                    f{1} = sin(i.*pi.*x);
+                    i    = 9;
+                    f{1} = sin(i.*pi.*(x-0.5));
                 case 2
                     c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 50;
+                    i    = 10;
                     f{1} = exp(-i.*((x-c).^2));
                 otherwise
                     return;
@@ -46,21 +48,33 @@ classdef B_1_1D
         %% > 2. -----------------------------------------------------------
         %  > 1D GQ functions (NOT USED).
         % >> 2.1. ---------------------------------------------------------
-        function [x,j,Q_1D] = GQ_1D(ng)
+        function [gq] = GQ(n,f)
             syms a b csi;
-            x    = a.*(1-csi)./2+b.*(1+csi)./2;
-            x    = matlabFunction(x);
-            j    = (b-a)./2;
-            j    = matlabFunction(j);
-            Q_1D = quadGaussLegendre(ng);
+            gq.n   = n;
+            x      = a.*(1-csi)./2+b.*(1+csi)./2;
+            gq.x   = matlabFunction(x);
+            j      = (b-a)./2;
+            gq.j   = matlabFunction(j);
+            gq.GQ  = quadGaussLegendre(n);
+            gq.cn  = factorial(n).^4./((2.*n+1).*(factorial(2.*n).^3));
+            syms x;
+            fn     = f;
+            gq.fn  = matlabFunction(fn);
+            dn     = diff(f,x,2.*n);
+            gq.dn  = matlabFunction(dn);
         end
         % >> 2.2. ---------------------------------------------------------
-        function [I] = Ap_I(a,b,f,x,j,Q_1D)
+        function [I] = Ap_I(gq,x)
+            n = length(gq.GQ.Points);
             I = 0;
-            for i = 1:length(Q_1D.Points)
-                x_CD(i) = x(a,b,Q_1D.Points(i));
-                I       = I+Q_1D.Weights(i).*j(a,b).*f(x_CD(i));
+            for j = 1:n
+                y(j) = gq.x(x(1),x(2),gq.GQ.Points(j));
+                I    = I+gq.j(x(1),x(2)).*gq.GQ.Weights(j).*gq.fn(y(j));
             end
+        end
+        % >> 2.3. ---------------------------------------------------------
+        function [en] = en(gq,x)
+            en = gq.cn.*(x(2)-x(1)).^(2.*gq.n+1).*max(gq.dn(x(1)),gq.dn(x(2)));
         end
     end
 end

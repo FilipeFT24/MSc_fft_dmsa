@@ -4,8 +4,9 @@ classdef Fig_Tools_1D
         %  >> 1.1. --------------------------------------------------------
         function [fig] = Set_fig(run,exp)
             fig.run = run;                                    %  > Test working directory.
+            fig.exp = exp;                                    %  > Export figure(?).
             if ~exp
-                fig.LW       =  1.25;                         %  > Line.
+                fig.LW       =  2.00;                         %  > Line.
                 fig.MS       =  4.00;                         %  > Marker size.
                 fig.FT_1     = 14.00;                         %  > Legend.
                 fig.FT_2     = 15.00;                         %  > x/y-axis.
@@ -17,20 +18,20 @@ classdef Fig_Tools_1D
                 fig.FT_4     = 11.00;                         %  > x/y-axis  (zoom).
                 fig.Position = [150,100,1250,600];            %  > Position.
             else
-                fig.LW       =  3.50;                         %  > Line.
-                fig.MS       =  5.00;                         %  > Marker.
-                fig.FT_1     = 25.00;                         %  > Legend.
+                fig.LW       =  4.00;                         %  > Line.
+                fig.MS       =  7.50;                         %  > Marker.
+                fig.FT_1     = 27.50;                         %  > Legend.
                 fig.FT_2     = 30.00;                         %  > x/y-axis.
-                fig.FT_3     = [42.50,35.00];                 %  > x/y-label.
+                fig.FT_3     = [45.00,35.00];                 %  > x/y-label.
                 fig.FT_4     = 20.00;                         %  > x/y-axis  (zoom).
                 fig.Position = [350,100,850,600];             %  > Position.
             end
             fig.trsh     = 1.0e-12;                           %  > Do not plot below 'trsh'.
-            fig.nsh      = 5;                                 %  > Number of elements below 'trsh'.
+            fig.nsh      = 0;                                 %  > Number of elements below 'trsh'.
             fig.NT       = [10,10];                           %  > Number of ticks (x/y-direction).
             fig.Folder   = "../[Figures]/[1D]";               %  > Destination folder.
             if ~run
-                fig.c       = 2.5e-03;                        %  > x-axis width.
+                fig.c       = 5.0e-03;                        %  > x-axis width.
                 fig.L{1}    = "$x$";                          %  > x-axis label.
                 fig.L{2}    = "$\textrm{Error magnitude}$";   %  > y-axis label.
             else
@@ -70,7 +71,7 @@ classdef Fig_Tools_1D
             hold on;
             k = 0;
             for i = 1:size(Y,2)
-                j{i} = Y(:,i) > fig.trsh; Y(~j{i},i) = 0;
+                j{i} = Y(:,i) > fig.trsh; Y(~j{i},i) = 10e-20;
                 if nnz(j{i})  > fig.nsh
                     k                 = k+1;
                     LY{k}             = LX{i};
@@ -95,7 +96,16 @@ classdef Fig_Tools_1D
         end
         % >> 2.3. ---------------------------------------------------------
         %  > 2.3.1. -------------------------------------------------------
-        function [] = Set_Plot(fig,L,P,XM,YM_1,YM_2,NC)
+        function [] = Set_Plot_1(fig,y,XM)
+            Fig_Tools_1D.ChangeLook_1D(fig,XM,fig.L);
+            ax = gca; box off;
+            dX = [XM(1),XM(end)];
+            dY = [-y,y];
+            xlim(dX); xticks(dX); set(gca,'XTickLabel',[]);
+            ylim(dY); yticks(dY); set(gca,'YTickLabel',[]); ax.YAxis.Visible = 'off';
+        end
+        %  > 2.3.2. -------------------------------------------------------
+        function [] = Set_Plot_2(fig,L,P,XM,YM_1,YM_2,NC)
             legend([P{:}],[L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
             if fig.run
@@ -106,7 +116,7 @@ classdef Fig_Tools_1D
                   10.^(ceil(log10(max(YM_1(:,2))))+YM_2(2))]);
             Fig_Tools_1D.ChangeLook_1D(fig,XM,fig.L);
         end
-        %  > 2.3.2. -------------------------------------------------------
+        %  > 2.3.3. -------------------------------------------------------
         function [str] = Set_str_1(i)
             switch i
                 case 1
@@ -119,16 +129,30 @@ classdef Fig_Tools_1D
                     return;
             end
         end
-        % >> 3. -----------------------------------------------------------
-        function [] = Exp_Or_Zoom(edt,fid,folder)
-            %  > Export(?).
-            if edt(1)
-                Fig_Tools_1D.Export_PDF(fid,folder)
+        function [str] = Set_str_2(i)
+            switch i
+                case 1
+                    str = "\phi";
+                case 2
+                    str = "\nabla\phi";
+                otherwise
+                    return;
             end
+        end
+        %  > 2.3.4. -------------------------------------------------------
+        function [a] = Set_f(x,y,n)
+            a = y./x.^(-n);
+        end
+        % >> 3. -----------------------------------------------------------
+        function [] = Exp_Or_Zoom(fig,zoom,fid)
             %  > Zoom(?).
-            if edt(2)
+            if zoom
                 zp = BaseZoom;
-                zp.plot(edt(1));
+                zp.plot(fig);
+            end
+            %  > Export(?).
+            if fig.exp
+                Fig_Tools_1D.Export_PDF(fid,fig.Folder);
             end
         end
         % >> 4. -----------------------------------------------------------

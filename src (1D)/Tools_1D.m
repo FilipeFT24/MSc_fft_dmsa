@@ -38,36 +38,9 @@ classdef Tools_1D
             pde.av  = orderfields(pde.av,{'c','f'});
             pde.fn  = orderfields(pde.fn,{'f','i','vol'});
         end
-        
-        %% > 2. ----------------------------------------------------------- 
-        % >> 2.1. ---------------------------------------------------------
-        %  > Save .mat file.
-        function [] = Save_mat(td,wd,V)
-            save(join([wd,'V',td,'.mat']),'V');
-        end
-        % >> 2.2. ---------------------------------------------------------
-        %  > Set...
-        %  > nc  : Number of cycles.
-        %  > h(i): Reference length(s).
-        function [msh] = Set_msh(nc,h)
-            lin_h = linspace(log(h(1)),log(h(2)),nc);
-            for i = 1:length(lin_h)
-                msh(i) = A_1D.Set_A2(exp(1).^(lin_h(i)));
-            end
-        end
-        % >> 2.3. ---------------------------------------------------------
-        %  > Compute error slope.
-        function [s] = Slope(h,e)
-            s = log(e(2)./e(1))./log(h(2)./h(1));
-        end
-        % >> 2.4. ---------------------------------------------------------
-        %  > Set function.
-        function [a] = Set_f(x,y,n)
-            a = y./x.^(-n);
-        end
 
-        %% > 3. ----------------------------------------------------------- 
-        % >> 3.1. ---------------------------------------------------------
+        %% > 2. -----------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = n(E,V)
             if nargin == 1
@@ -99,7 +72,7 @@ classdef Tools_1D
         function [L3] = L3(E)
             L3 = max(E);
         end
-        % >> 3.2. ---------------------------------------------------------
+        % >> 2.2. ---------------------------------------------------------
         %  > Matrix inversion w/ 'p-adaptative' process (...to compute "updated" cell global discretization error).
         function [y] = p_adapt_inv(opt,str)
             switch opt
@@ -115,5 +88,8 @@ classdef Tools_1D
                     return;
             end                   
         end
+        
+        %% > 3. -----------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
     end
 end

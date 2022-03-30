@@ -11,31 +11,50 @@ classdef B_1D
             % >> 'pde'.
             pde = B_1_1D.Update_pde(inp,msh);
             % >> 'obj'.
-            %  > Fields: 'e.a' (error w/ analytic field) and 'e.p' (error w/ predicted field).
-            f = ["a","d","p"];
+            %  > Fields: 'e.a', 'e.d', 'e.p' and 'e.t'.
+            f = ["a","p","d","t"];
             for i = 1:length(f)
-                if i == 1
-                    if ~inp.pa.comp_av
-                        m = 2;
+                %  > Fields: 'a' and 'p'.
+                if i <= 2
+                    if i == 1
+                        if ~inp.pa.comp_av
+                            m = 2;
+                        else
+                            m = inp.pa.ns+1;
+                        end
                     else
-                        m = inp.pa.ns+1;
+                        m = inp.pa.ns;
                     end
-                else
-                    m = inp.pa.ns;
+                    for j = 1:m
+                        obj.e.(f(i)){j}.t.c       = zeros(Nc,1);
+                        obj.e.(f(i)){j}.t.c_abs   = zeros(Nc,1);
+                        obj.e.(f(i)){j}.t.f       = zeros(Nf,n+1);
+                        obj.e.(f(i)){j}.t.f_abs   = zeros(Nf,n+1);
+                        obj.e.(f(i)){j}.t.n.c     = zeros(1,3);
+                        obj.e.(f(i)){j}.t.n_abs.c = zeros(1,3);
+                        obj.e.(f(i)){j}.t.n.f     = zeros(3,n+1);
+                        obj.e.(f(i)){j}.t.n_abs.f = zeros(3,n+1);
+                        obj.e.(f(i)){j}.c.c       = zeros(Nc,1);
+                        obj.e.(f(i)){j}.c.c_abs   = zeros(Nc,1);
+                        obj.e.(f(i)){j}.c.n       = zeros(1,3);
+                        obj.e.(f(i)){j}.c.n_abs   = zeros(1,3);
+                    end
                 end
-                for j = 1:m
-                    obj.e.(f(i)){j}.t.c       = zeros(Nc,1);
-                    obj.e.(f(i)){j}.t.c_abs   = zeros(Nc,1);
-                    obj.e.(f(i)){j}.t.f       = zeros(Nf,n+1);
-                    obj.e.(f(i)){j}.t.f_abs   = zeros(Nf,n+1);
-                    obj.e.(f(i)){j}.t.n.c     = zeros(1,3);
-                    obj.e.(f(i)){j}.t.n_abs.c = zeros(1,3);
-                    obj.e.(f(i)){j}.t.n.f     = zeros(3,n+1);
-                    obj.e.(f(i)){j}.t.n_abs.f = zeros(3,n+1);
-                    obj.e.(f(i)){j}.c.c       = zeros(Nc,1);
-                    obj.e.(f(i)){j}.c.c_abs   = zeros(Nc,1);
-                    obj.e.(f(i)){j}.c.n       = zeros(1,3);
-                    obj.e.(f(i)){j}.c.n_abs   = zeros(1,3);
+                %  > Field: 'd'.
+                if i == 3
+                    for j = 1:inp.pa.ns
+                        obj.e.(f(i)){j}.t.f       = zeros(Nf,n);
+                        obj.e.(f(i)){j}.t.f_abs   = zeros(Nf,n);
+                        obj.e.(f(i)){j}.t.n.f     = zeros(3,n);
+                        obj.e.(f(i)){j}.t.n_abs.f = zeros(3,n);
+                    end
+                end
+                %  > Field 't'.
+                if i == 4 && inp.pt.tt
+                    obj.e.(f(i)).c       = cell(1,n);
+                    obj.e.(f(i)).c_abs   = cell(1,n);
+                    obj.e.(f(i)).f       = cell(1,n);
+                    obj.e.(f(i)).f_abs   = cell(1,n);
                 end
             end
             %  > Field: 'm' (matrices).
@@ -45,26 +64,26 @@ classdef B_1D
                 obj.m.Bc{i} = zeros(Nc,1);
                 obj.m.Bf{i} = zeros(Nf,1);
             end
-            obj.m.At        = zeros(Nc);
-            obj.m.Bt        = pde.fn.vol;
+            obj.m.At     = zeros(Nc);
+            obj.m.Bt     = pde.fn.vol;
             %  > Field: 's' (stencil coordinates,etc.).
-            obj.s.c         = cell (Nf,n);
-            obj.s.t         = cell (Nf,n);
-            obj.s.bt        = cell (Nf,n);
-            obj.s.bv        = cell (Nf,n);
-            obj.s.v         = [inp.pv.v(1),-inp.pv.v(2)];
+            obj.s.c      = cell (Nf,n);
+            obj.s.t      = cell (Nf,n);
+            obj.s.bt     = cell (Nf,n);
+            obj.s.bv     = cell (Nf,n);
+            obj.s.v      = [inp.pv.v(1),-inp.pv.v(2)];
             %  > Field: 'u' (update stencil).
-            obj.u           = A_2_1D.Initialize_upd(msh,inp.ps.p,inp.ps.t);
+            obj.u        = A_2_1D.Initialize_upd(msh,inp.ps.p,inp.ps.t);
             %  > Field: 'x' (nodal solution/ stencil coefficients,etc.).
-            obj.x.nv.a.c    = zeros(Nc,1);
-            obj.x.nv.a.f    = zeros(Nf,1);
-            obj.x.nv.x.c    = zeros(Nc,1);
-            obj.x.cf        = cell (Nf,n);
-            obj.x.vf.a      = cell (Nf,n);
-            obj.x.vf.x      = cell (Nf,n);
-            obj.x.xf.a      = zeros(Nf,n);
-            obj.x.xf.x      = zeros(Nf,n);
-            obj.x.if        = cell (Nf,n);                      
+            obj.x.nv.a.c = zeros(Nc,1);
+            obj.x.nv.a.f = zeros(Nf,1);
+            obj.x.nv.x.c = zeros(Nc,1);
+            obj.x.cf     = cell (Nf,n);
+            obj.x.vf.a   = cell (Nf,n);
+            obj.x.vf.x   = cell (Nf,n);
+            obj.x.xf.a   = zeros(Nf,n);
+            obj.x.xf.x   = zeros(Nf,n);
+            obj.x.if     = cell (Nf,n);
         end
         % >> 1.2. ---------------------------------------------------------
         function [obj,msh] = Run_p(inp,msh)
@@ -77,8 +96,15 @@ classdef B_1D
                     %  > 'p-standard' run.
                     [obj,msh] = B_2_2_1D.p_standard(inp,obj,msh,pde);
                     %  > Plot...
+                    
                     if inp.pl.all
                         Fig_V1_1_1D.Plot(obj,msh);
+                        if inp.pl.msh
+                            Fig_V1_0_1D.Plot(msh);
+                        end
+                        if inp.pt.tt
+                            Fig_V1_2_1D.Plot(inp,obj,msh);
+                        end
                     end
                 case true
                     %  > 'p-standard' run.
@@ -86,6 +112,6 @@ classdef B_1D
                 otherwise
                     return;
             end
-        end        
+        end
     end
 end
