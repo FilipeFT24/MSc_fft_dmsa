@@ -43,7 +43,6 @@ classdef A_2_1D
         end
 
         %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
         %  > Initialize 'upd' structure.
         function [upd] = Initialize_upd(msh,p,t)
             %  > Auxiliary variables.

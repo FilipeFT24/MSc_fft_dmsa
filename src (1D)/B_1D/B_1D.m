@@ -96,19 +96,15 @@ classdef B_1D
                     %  > 'p-standard' run.
                     [obj,msh] = B_2_2_1D.p_standard(inp,obj,msh,pde);
                     %  > Plot...
-                    
-                    if inp.pl.all
-                        Fig_V1_1_1D.Plot(obj,msh);
-                        if inp.pl.msh
-                            Fig_V1_0_1D.Plot(msh);
-                        end
-                        if inp.pt.tt
-                            Fig_V1_2_1D.Plot(inp,obj,msh);
-                        end
+                    Fig_V1_1_1D.Plot(obj,msh);
+                    if inp.pt.tt
+                        Fig_V1_2_1D.Plot(inp,obj,msh);
                     end
                 case true
                     %  > 'p-standard' run.
                     [obj,msh] = B_2_2_1D.p_adaptative(inp,obj,msh,pde);
+                    %  > Plot...
+                    Fig_V1_1_1D.Plot(obj,msh);
                 otherwise
                     return;
             end

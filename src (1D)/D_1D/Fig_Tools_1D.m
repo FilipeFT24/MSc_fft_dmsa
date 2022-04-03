@@ -8,7 +8,7 @@ classdef Fig_Tools_1D
             if ~exp
                 fig.LW       =  2.00;                         %  > Line.
                 fig.MS       =  4.00;                         %  > Marker size.
-                fig.FT_1     = 14.00;                         %  > Legend.
+                fig.FT_1     = 15.00;                         %  > Legend.
                 fig.FT_2     = 15.00;                         %  > x/y-axis.
                 if ~run
                     fig.FT_3 = [22.50,17.50];                 %  > x/y-label.
@@ -20,13 +20,17 @@ classdef Fig_Tools_1D
             else
                 fig.LW       =  4.00;                         %  > Line.
                 fig.MS       =  7.50;                         %  > Marker.
-                fig.FT_1     = 27.50;                         %  > Legend.
+                fig.FT_1     = 22.50;                         %  > Legend.
                 fig.FT_2     = 30.00;                         %  > x/y-axis.
-                fig.FT_3     = [45.00,35.00];                 %  > x/y-label.
+                if ~run
+                    fig.FT_3     = [45.00,35.00];             %  > x/y-label.
+                else
+                    fig.FT_3     = [35.00,35.00];             %  > x/y-label.
+                end
                 fig.FT_4     = 20.00;                         %  > x/y-axis  (zoom).
                 fig.Position = [350,100,850,600];             %  > Position.
             end
-            fig.trsh     = 1.0e-12;                           %  > Do not plot below 'trsh'.
+            fig.trsh     = 1.0e-15;                           %  > Do not plot below 'trsh'.
             fig.nsh      = 0;                                 %  > Number of elements below 'trsh'.
             fig.NT       = [10,10];                           %  > Number of ticks (x/y-direction).
             fig.Folder   = "../[Figures]/[1D]";               %  > Destination folder.
@@ -68,14 +72,21 @@ classdef Fig_Tools_1D
         %% >> 2. ----------------------------------------------------------
         %  >> 2.1. --------------------------------------------------------
         function [LY,P,YV] = Var_1(fig,M,LX,X,Y)
+            %  > Auxiliary variables.
+            a = size(X,2);
+            b = size(Y,2);
+            if a < b
+                X = repelem(X,1,b);
+            end
+            
             hold on;
             k = 0;
-            for i = 1:size(Y,2)
-                j{i} = Y(:,i) > fig.trsh; Y(~j{i},i) = 10e-20;
+            for i = 1:b
+                j{i} = Y(:,i) > fig.trsh; Y(~j{i},i) = 0;
                 if nnz(j{i})  > fig.nsh
                     k                 = k+1;
                     LY{k}             = LX{i};
-                    P {k}             = plot(X,Y(:,i),M(i),'Color',fig.C(i,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(i,:),'MarkerSize',fig.MS);
+                    P {k}             = plot(X(:,i),Y(:,i),M(i),'Color',fig.C(i,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(i,:),'MarkerSize',fig.MS);
                     [YV(k,1),YV(k,2)] = MinMaxElem(Y(j{i},i));
                 end
             end
@@ -138,10 +149,6 @@ classdef Fig_Tools_1D
                 otherwise
                     return;
             end
-        end
-        %  > 2.3.4. -------------------------------------------------------
-        function [a] = Set_f(x,y,n)
-            a = y./x.^(-n);
         end
         % >> 3. -----------------------------------------------------------
         function [] = Exp_Or_Zoom(fig,zoom,fid)

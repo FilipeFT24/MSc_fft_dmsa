@@ -4,24 +4,12 @@ classdef B_1_1D
         %  > Compute analytic functions/values/source term.
         function [pde] = Update_pde(inp,msh)
             %  > Auxiliary variables.
-            Nc = msh.c.Nc;
-            Xv = msh.f.Xv;
             v  = inp.pv.v(1);
             g  = inp.pv.v(2);
             
             %  > Set analytic function.
             syms x;
-            switch inp.pv.f
-                case 1
-                    i    = 9;
-                    f{1} = sin(i.*pi.*(x-0.5));
-                case 2
-                    c    = 1./2.*(max(msh.f.Xv)-min(msh.f.Xv));
-                    i    = 10;
-                    f{1} = exp(-i.*((x-c).^2));
-                otherwise
-                    return;
-            end
+            f   {1} = inp.pv.f(x);
             f   {2} = diff(f{1},x);
             func    = v.*f{2}-g.*diff(f{2},x);
             fn.f{1} = matlabFunction(f{1});
