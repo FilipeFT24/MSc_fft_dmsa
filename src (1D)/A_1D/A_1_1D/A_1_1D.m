@@ -53,16 +53,15 @@ classdef A_1_1D
             f              = exp(-i.*((x-c).^2));         %  > f.
             inp.pv.f       = matlabFunction(f);           %  > f handle.
             inp.pv.b       = ["Dirichlet","Dirichlet"];   %  > BC: West(1)/East(2).
-            inp.pv.v       = [1,1];                       %  > Coeffs: Convection(1)/Diffusion(2).
+            inp.pv.v       = [0,1];                       %  > Coeffs: Convection(1)/Diffusion(2).
             % >> ps.
             inp.ps.p       = [1,1];                       %  > Polynomial order: Convection(1)/Diffusion(2).
             inp.ps.t       = [0,0];                       %  > Polynomial  type: Convection(1)/Diffusion(2).
             inp.ps.add     = 1;
             % >> pa.
-            inp.pa.adapt   = 1;                           %  > Allow p-adaptation(?).
+            inp.pa.adapt   = 0;                           %  > Allow p-adaptation(?).
             inp.pa.odd     = 0;                           %  > Allow UDS/DDS(?).
-            inp.pa.ns      = 3;                           %  > Number of solutions used to "predict" nodal field.
-            inp.pa.comp_av = 1;                           %  > Compare w/ analytic values(?).
+            inp.pa.ns      = 1;                           %  > Number of solutions used to "predict" nodal field (>1 to predict "future" field).
             % >> tt.
             inp.pt.tt      = 0;                           %  > Compute truncated terms' magnitude(?).
             inp.pt.nt      = [3,3];                       %  > Numb. of terms: Convection(1)/Diffusion(2).

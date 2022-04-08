@@ -3,31 +3,49 @@ classdef B_2_1_1D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Update stencil coordinates,etc.
-        function [s] = Update_1(inp,msh,pde,s,u,add)
-            s        = B_2_1_1D.Update_sc(inp,msh,pde,s,u,add);
+        function [s] = Update_1(inp,msh,f,s,u,add_b)
+            s        = B_2_1_1D.Update_sc(inp,msh,f,s,u,add_b);
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update stencil coefficients,etc.
-        function [x] = Update_2(inp,msh,s,u,x)
-            x        = B_2_1_1D.Update_sx(inp,msh,s,u,x);
+        function [x] = Update_2(msh,s,u,x)
+            x        = B_2_1_1D.Update_sx(msh,s,u,x);
         end
         % >> 1.3. ---------------------------------------------------------
         %  > Update matrices.
-        function [m] = Update_3(msh,pde,m,s,u,x)
+        function [m] = Update_3(msh,f,m,s,u,x)
             m        = B_2_1_1D.Update_mA(msh,m,s,u,x);
-            m        = B_2_1_1D.Update_mB(msh,pde,m,s,u,x);
+            m        = B_2_1_1D.Update_mB(msh,f,m,s,u,x);
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Update nodal/face values.
-        function [x] = Update_4(s,u,x)
-            x        = B_2_1_1D.Update_xv(s,u,x);
-            x        = B_2_1_1D.Update_xf(u,x);
+        function [x] = Update_4(s,u,x,fld_u)
+            x        = B_2_1_1D.Update_xv(s,u,x,fld_u);
+            x        = B_2_1_1D.Update_xf(u,x,fld_u);
+        end
+        % >> 1.5. ---------------------------------------------------------
+        %  > Update '1', '2' and '3'.
+        function [s,x,m] = Update_123(inp,msh,f,m,s,u,x,add_b)
+            s            = B_2_1_1D.Update_1(inp,msh,f,s,u,add_b);
+            x            = B_2_1_1D.Update_2(msh,s,u,x);
+            m            = B_2_1_1D.Update_3(msh,f,m,s,u,x);
+        end        
+        % >> 1.6. ---------------------------------------------------------
+        %  > Update all...
+        function [e,f,s,u,x] = Update_all(inp,msh,e,f,m,s,u,x,add_b,fld_u)
+            % >> Update fields 'm', 's' and 'x'.
+            [s,x,m] = B_2_1_1D.Update_123(inp,msh,f,m,s,u,x,add_b);
+            % >> Update field 'x'.
+            x.nv.x.c = B_2_1_1D.Update_xc(m.At,m.Bt);
+            x        = B_2_1_1D.Update_4 (s,u,x,fld_u);
+            % >> Update field 'e'.
+            e        = B_2_1_1D.Update_e (inp,msh,e,f,m,s,u,x,add_b);
         end
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > Construct/update stencil coordinates.
-        function [s] = Update_sc(inp,msh,pde,s,u,add)
+        function [s] = Update_sc(inp,msh,f,s,u,add)
             %  > Auxiliary variables.
             Xc = msh.c.Xc;
             Xv = msh.f.Xv;
@@ -71,7 +89,7 @@ classdef B_2_1_1D
                             end
                             %  > Boundary type/value.
                             bt = inp.pv.b(1);
-                            bv = B_2_1_1D.Set_bnd_v(inp,pde.av.f,1,bt);
+                            bv = B_2_1_1D.Set_bnd_v(inp,f.av.f,1,bt);
                             %  > Stencil coordinates.
                             xt = [Xc(sc);Xv(1)]';
                         elseif any(ns >= Nf)
@@ -86,7 +104,7 @@ classdef B_2_1_1D
                             end
                             %  > Boundary type/value.
                             bt = inp.pv.b(2);
-                            bv = B_2_1_1D.Set_bnd_v(inp,pde.av.f,Nf,bt);
+                            bv = B_2_1_1D.Set_bnd_v(inp,f.av.f,Nf,bt);
                             %  > Stencil coordinates.
                             xt = [Xc(sc);Xv(Nf)]';
                         else
@@ -123,7 +141,7 @@ classdef B_2_1_1D
         end
         % >> 2.2. ---------------------------------------------------------
         %  > Construct/update stencil coefficients.
-        function [x] = Update_sx(inp,msh,s,u,x)
+        function [x] = Update_sx(msh,s,u,x)
             %  > Auxiliary variables.
             Xv = msh.f.Xv;
             
@@ -136,7 +154,7 @@ classdef B_2_1_1D
                         b.f   = Xv  (a);
                         b.xt  = s.t {a,i};
                         b.bt  = s.bt{a,i};
-                        b.g_v = inp.pv.v(2)./inp.pv.v(1);
+                        b.g_v = abs(s.v(2)./s.v(1));
                         Df    = B_2_1_1D.Assemble_Df(b);
                         %  > cf.
                         if length(b.xt) == 1
@@ -144,19 +162,20 @@ classdef B_2_1_1D
                                 warndlg('1st order UDS/DDS cannot be used to discretize the diffusive term.');
                                 break;
                             else
-                                df  = 1;
-                                Inv = inv(Df);
-                                Tf  = df*Inv;
-                                cf  = Tf(n,:);
+%                                %  > remove...
+%                                 df  = 1;
+%                                 Inv = inv(Df);
+%                                 Tf  = df*Inv;
+%                                 cf  = Tf(n,:);
                             end
                         else
                             df      = zeros(1,length(b.xt));
                             df(1,i) = 1;
                             Inv     = inv(Df);
-                            cf      = df*Inv;
+                            Tf      = df*Inv;
                         end
                         %  > Update 'x' field.
-                        x.cf{a,i}   = cf;
+                        x.Tf{a,i}   = Tf;
                         x.if{a,i}   = Inv;
                     end
                 end
@@ -212,7 +231,7 @@ classdef B_2_1_1D
                         b            = s.c{a,i};
                         %  > Overwrite/update field...
                         m.Af{i}(a,:) = zeros(1,Nc);
-                        m.Af{i}(a,b) = x.cf{a,i}(1:length(b));
+                        m.Af{i}(a,b) = x.Tf{a,i}(1:length(b));
                     end
                     %  > Cell indices to be updated.
                     c{i}(:,1) = unique([msh.f.c{u.s{i}}]);
@@ -253,7 +272,7 @@ classdef B_2_1_1D
         end
         % >> 3.2. ---------------------------------------------------------
         %  > Construct/update matrix B.
-        function [m] = Update_mB(msh,pde,m,s,u,x)
+        function [m] = Update_mB(msh,f,m,s,u,x)
             % >> Set face equation(s) and construct/update B (face dependent coefficient matrix w/ source term contribution).
             for i = 1:size(u.s,2)
                 %  > Bf (face contributions).
@@ -263,7 +282,7 @@ classdef B_2_1_1D
                         a = u.s{i}(j);
                         if ~isempty(s.bv{a,i})
                             %  > Overwrite/update field...
-                            m.Bf{i}(j,1) = x.cf{a,i}(end).*s.bv{a,i};
+                            m.Bf{i}(j,1) = x.Tf{a,i}(end).*s.bv{a,i};
                         end
                     end
                 end
@@ -294,7 +313,7 @@ classdef B_2_1_1D
                 for i = 1:size(d,1)
                     %  > Overwrite/update field...
                     e         = d(i);
-                    m.Bt(e,1) = pde.fn.vol(e);
+                    m.Bt(e,1) = f.fv(e);
                     %  > Add convective/diffusive contributions...
                     for j = 1:size(u.s,2)
                         m.Bt(e,1) = m.Bt(e,1)+s.v(j).*m.Bc{j}(e,1);
@@ -310,187 +329,160 @@ classdef B_2_1_1D
         
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
-        %  > Update 'obj.x.xc' field (nodal solution).
-        function [c] = Update_xc(At,Bt)
-            c = At\Bt;
+        %  > Update 'x.nv.x.c' field (nodal solution).
+        function [d] = Update_xc(At,Bt)
+            d = At\(Bt);
         end
         % >> 4.2. ---------------------------------------------------------
-        %  > Update 'obj.x.xv' field (nodal values used to reconstruct face).
-        function [x] = Update_xv(s,u,x)
-            for i = 1:size(u.s,2)
-                if ~isempty(u.s{i})
-                    for j = 1:size(u.s{i},1)
-                        k = u.s{i}(j);
-                        %  > Overwrite/update field...
-                        if ~isempty(s.c{k,i})
-                            %  > Cell contribution(s).
-                            l   = s.c{k,i};
-                            v.a = x.nv.a.c(l,1);
-                            v.x = x.nv.x.c(l,1);
-                            %  > Boundary contribution(s).
-                            if ~isempty(s.bv{k,i})
-                                v.a = [v.a;s.bv{k,i}];
-                                v.x = [v.x;s.bv{k,i}];
+        %  > Update 'x.vf' field (nodal values used to fit face polynomial).
+        function [x] = Update_xv(s,u,x,fld_u)
+            for i = 1:length(fld_u)  
+                j = fld_u(i);
+                for k = 1:size(u.s,2)
+                    if ~isempty(u.s{k})
+                        for l = 1:size(u.s{k},1)
+                            m = u.s{k}(l);
+                            %  > Overwrite/update field...
+                            if ~isempty(s.c{m,k})
+                                %  > Cell contribution(s).
+                                n     = s.c{m,k};
+                                v.(j) = x.nv.(j).c(n,1);
+                                %  > Boundary contribution(s).
+                                if ~isempty(s.bv{m,k})
+                                    v.(j) = [v.(j);s.bv{m,k}];
+                                end
+                            else
+                                v.(j) = s.bv{m,k};
                             end
-                        else
-                            v.a = s.bv{k,i};
-                            v.x = s.bv{k,i};
+                            x.vf.(j){m,k} = v.(j);
                         end
-                        x.vf.a{k,i} = v.a;
-                        x.vf.x{k,i} = v.x;
                     end
                 end
             end
         end
         % >> 4.3. ---------------------------------------------------------
-        %  > Update 'pde.x.f' field (reconstructed face values).
-        function [x] = Update_xf(u,x)
-            for i = 1:size(u.s,2)
-                if ~isempty(u.s{i})
-                    for j = 1:size(u.s{i},1)
-                        k           = u.s{i}(j);
-                        x.xf.a(k,i) = x.cf{k,i}*x.vf.a{k,i};
-                        x.xf.x(k,i) = x.cf{k,i}*x.vf.x{k,i};
+        %  > Update 'x.cf', 'x.ff' and 'x.xf' (fitted face coefficients/function handles/values).
+        function [x] = Update_xf(u,x,fld_u)
+            for i = 1:length(fld_u)
+                j = fld_u(i);
+                for k = 1:size(u.s,2)
+                    if ~isempty(u.s{k})
+                        for l = 1:size(u.s{k},1)
+                            m = u.s{k}(l);
+                            %  > 'x.xf' and 'x.cf'.
+                            x.xf.(j)(m,k) = x.Tf{m,k}*x.vf.(j){m,k};
+                            x.cf.(j){m,k} = x.if{m,k}*x.vf.(j){m,k};
+                            %  > 'x.ff'.
+                            %x.ff.(j){m,k} = B_2_1_1D.fit(x.cf.(j){m,k},k);  
+                        end
                     end
                 end
             end
         end
-        
+
         %% > 5. -----------------------------------------------------------
         % >> 5.1. ---------------------------------------------------------
-        %  > Update 'pde.e.p{i}.t.(...)' field (predicted/estimated cell/face truncation error distribution/norms).
-        function [e_pt] = Update_et_p(msh,e_pt,sp_l,xp_l,xp_r)
-            %  > Error distribution.
-            [m,n] = size(e_pt.f);
-            for j = 1:n-1
-                e_pt.f  (:,j) = sp_l.v(j).*(xp_r.xf.x(:,j)-xp_l.xf.x(:,j));
+        %  > Update 'e.p(...)' field (predicted/estimated cell/face truncation error distribution/norms).
+        function [ep] = Update_ep(ep,mp_o,sp_o,xp_o,xp_n,Vc)
+            %  > \tau_f(\phi) & \tau(\nabla\phi).
+            for i = 1:size(ep.t.f,2)-1
+                ep.t.f(:,i) = sp_o.v(i).*(xp_n.xf.x(:,i)-xp_o.xf.x(:,i));
             end
-            e_pt.f      (:,n) = sum(e_pt.f(:,1:n-1),2);
-            e_pt.f_abs        = abs(e_pt.f);
-            a                 = 1:m-1;
-            b                 = a+1;
-            e_pt.c      (:,1) = e_pt.f(a,n)-e_pt.f(b,n);
-            %  > ... divide cell truncation error by cell volume.
-            e_pt.c      (:,1) = e_pt.c;
-            e_pt.c_abs  (:,1) = abs(e_pt.c(:,1));
-            %  > Error norms.
-            e_pt.n.f          = Tools_1D.n(e_pt.f);
-            e_pt.n_abs.f      = Tools_1D.n(e_pt.f_abs);
-            e_pt.n.c          = Tools_1D.n(e_pt.c,msh.c.Vc);
-            e_pt.n_abs.c      = Tools_1D.n(e_pt.c_abs,msh.c.Vc);
+            %  > Update remaining error fields...
+            ep = Tools_1D.Set_e(ep,mp_o,Vc); 
         end
         % >> 5.2. ---------------------------------------------------------
-        %  > Update 'pde.e.p{i}.c.(...)' field (predicted/estimated cell global discretization error distribution/norms).
-        function [e_pc] = Update_ec_p(msh,e_pc,e_pt,m)
-            %  > Error distribution.
-            e_pc.c    (:,1) = inv(m.At)*e_pt.c;
-            %  > ... multiply cell global discretization error by cell volume.
-            e_pc.c_abs(:,1) = abs(e_pc.c(:,1));
-            %  > Error norms.
-            e_pc.n          = Tools_1D.n(e_pc.c,msh.c.Vc);
-            e_pc.n_abs      = Tools_1D.n(e_pc.c_abs,msh.c.Vc);
+        %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
+        function [ea] = Update_ea(ea,mp_o,sp_o,xp_o,Vc)
+            %  > \tau_f(\phi) & \tau(\nabla\phi).
+            for i = 1:size(ea.t.f,2)-1
+                ea.t.f(:,i) = sp_o.v(i).*(xp_o.nv.a.f(:,i)-xp_o.xf.a(:,i));
+            end
+            %  > Update remaining error fields...
+            ea = Tools_1D.Set_e(ea,mp_o,Vc); 
         end
         % >> 5.3. ---------------------------------------------------------
-        %  > Update 'pde.e.a{i}.t.(...)' field (analytic cell/face truncation error distribution/norms).
-        function [e_at] = Update_et_a(msh,e_at,s,u,x)
+        %  > Update 'e.d(...)' field.
+        function [ed] = Update_ed(ea,ed,ep,Vc)
+            %  > Field.
+            f         = ["c","t"];
+            g{1}(1)   = "c";
+            g{2}(1,:) = ["c","f"];
             %  > Error distribution.
-            [~,n] = size(u.s);
-            for i = 1:n
-                if ~isempty(u.s{i})
-                    for j = 1:size(u.s{i},1)
-                        k           = u.s{i}(j);
-                        e_at.f(k,i) = s.v(i).*(x.nv.a.f(k,i)-x.xf.a(k,i));
-                    end
-                    l{i}(:,1) = unique([msh.f.c{[u.s{i}]}]);
+            for i = 1:size(g,2)
+                a = f(i);
+                for j = 1:size(g{i},2)
+                    b          = g{i}(j);
+                    c          = strcat(b,"_abs");
+                    ed.(a).(b) = ea.(a).(b)-ep.(a).(b);
+                    ed.(a).(c) = abs(ed.(a).(b));
                 end
             end
-            a                   = unique(cat(1,u.s{:}));
-            b                   = unique(cat(1,l{:}));
-            c                   = b+1;
-            e_at.f      (a,n+1) = sum(e_at.f(a,1:n),2);
-            e_at.f_abs  (a,:)   = abs(e_at.f(a,:));
-            e_at.c      (b,1)   = e_at.f(b,n+1)-e_at.f(c,n+1);
-            %  > ... divide cell truncation error by cell volume.
-            e_at.c      (b,1)   = e_at.c(b,1);
-            e_at.c_abs  (b,1)   = abs(e_at.c(b,1));
             %  > Error norms.
-            e_at.n.f            = Tools_1D.n(e_at.f);
-            e_at.n_abs.f        = Tools_1D.n(e_at.f_abs);
-            e_at.n.c            = Tools_1D.n(e_at.c,msh.c.Vc);
-            e_at.n_abs.c        = Tools_1D.n(e_at.c_abs,msh.c.Vc);
+            ed.c.n       = Tools_1D.Set_n(ed.c.c,Vc);
+            ed.c.n_abs   = Tools_1D.Set_n(ed.c.c_abs,Vc);
+            ed.t.n.c     = Tools_1D.Set_n(ed.t.c,Vc);
+            ed.t.n.f     = Tools_1D.Set_n(ed.t.f);
+            ed.t.n_abs.c = Tools_1D.Set_n(ed.t.c_abs,Vc);
+            ed.t.n_abs.f = Tools_1D.Set_n(ed.t.f_abs);           
         end
-        % >> 5.4. ---------------------------------------------------------
-        %  > Update 'pde.e.a{i}.c.(...)' field (analytic cell global discretization error distribution/norms).
-        function [e_ac] = Update_ec_a(msh,e_ac,x)
-            %  > Error distribution.
-            e_ac.c    (:,1) = x.nv.a.c-x.nv.x.c;
-            e_ac.c_abs(:,1) = abs(e_ac.c);
-            %  > Error norms.
-            e_ac.n          = Tools_1D.n(e_ac.c,msh.c.Vc);
-            e_ac.n_abs      = Tools_1D.n(e_ac.c_abs,msh.c.Vc);
-        end
-        % >> 5.5. ---------------------------------------------------------
-        %  > Update 'pde.e.d{i}.t.(...)' field.
-        function [e_dt] = Update_et_d(el_at,er_at,e_dt,e_pt)
-            %  > Error distribution.
-            n            = 1:size(e_dt.f,2);
-            da_f         = el_at.f(:,n)-er_at.f(:,n);
-            da_f_abs     = abs(da_f);
-            e_dt.f       = e_pt.f(:,n)-da_f;
-            e_dt.f_abs   = abs(e_dt.f);
-            %  > Error norms.
-            e_dt.n.f     = Tools_1D.n(e_dt.f);
-            e_dt.n_abs.f = Tools_1D.n(e_dt.f_abs);           
-        end
-        % >> 5.6 ---------------------------------------------------------
-        %  > Update 'pde.e.(...)' field.
-        function [e] = Update_e(inp,msh,pde,e,m,s,u,x,add)
+        % >> 5.4 ---------------------------------------------------------
+        %  > Update 'e.(...)' field.
+        function [e] = Update_e(inp,msh,e,f,m,s,u,x,add_b) 
             %  > Auxiliary variables.
             for i = 1:size(u.s,2)
                 all_s{i}(:,1) = 1:msh.f.Nf;
             end
-            ns = inp.pa.ns;
-            
-            % >> Assign/update fields 'm', 's', 'u' and 'x'.
-            i     = 1;
-            sp{i} = s;
-            mp{i} = m;
-            up{i} = u;
-            xp{i} = x;
-            for i = 1:ns
-                up{i+1}        = B_2_1_1D.Set_upd_p(up{i},all_s);
-                sp{i+1}        = B_2_1_1D.Update_1 (inp,msh,pde,sp{i},up{i+1},add);
-                xp{i+1}        = B_2_1_1D.Update_2 (inp,msh,sp{i+1},up{i+1},xp{i});
-                mp{i+1}        = B_2_1_1D.Update_3 (msh,pde,mp{i},sp{i+1},up{i+1},xp{i+1});
-                xp{i+1}.nv.x.c = x.nv.x.c;
-                xp{i+1}        = B_2_1_1D.Update_4 (sp{i+1},up{i+1},xp{i+1});
-            end
-            % >> pde.e.p{i}.
-            %  > pde.e.p{i}.t(...).
-            %  > pde.e.p{i}.c(...).
-            for i = 1:ns
-                e.p{i}.t = B_2_1_1D.Update_et_p(msh,e.p{i}.t,sp{i},xp{i},xp{i+1});
-                e.p{i}.c = B_2_1_1D.Update_ec_p(msh,e.p{i}.c,e.p{i}.t,mp{i});
-            end
-            % >> pde.e.a{i}.
-            if ~inp.pa.comp_av
-                nf = 1;
-            else
-                nf = ns;
-            end
-            %  > pde.e.a{i}.t(...).
-            %  > pde.e.a{i}.c(...).
-            for i = 1:nf+1
-                if inp.pa.comp_av && i ~= 1
-                    xp{i}.nv.x.c = B_2_1_1D.Update_xc(mp{i}.At,mp{i}.Bt);
+            fld = ["a","x"];
+
+            for i = 1:inp.pa.ns
+                %  > Initialize...
+                if i == 1
+                    mp_o = m;
+                    sp_o = s;
+                    up_o = u;
+                    xp_o = x;
+                    ea_o = e.a{i};
+                    ed_o = e.d{i};
+                    ep_o = e.p{i};
+                    ea_n = ea_o;
+                    ed_n = ed_o;
+                    ep_n = ep_o;
                 end
-                e.a{i}.t = B_2_1_1D.Update_et_a(msh,e.a{i}.t,sp{i},up{i},xp{i});
-                e.a{i}.c = B_2_1_1D.Update_ec_a(msh,e.a{i}.c,xp{i});
-            end  
-            % >> pde.e.d{i}.
-            %  > pde.e.d{i}.t(...).
-            for i = 1:nf
-                e.d{i}.t = B_2_1_1D.Update_et_d(e.a{i}.t,e.a{i+1}.t,e.d{i}.t,e.p{i}.t);
+                % >> Assign/update fields 'e', 'm', 's', 'u' and 'x'.
+                %  > 'm', 's', 'u' and 'x'.
+                
+                
+                
+                
+                
+                
+                up_n = B_2_1_1D.Set_upd_p(up_o,all_s);
+                sp_n = B_2_1_1D.Update_1 (inp,msh,f,sp_o,up_n,add_b);
+                xp_n = B_2_1_1D.Update_2 (msh,sp_n,up_n,xp_o);
+                mp_n = B_2_1_1D.Update_3 (msh,f,mp_o,sp_n,up_n,xp_n);
+                xp_n = B_2_1_1D.Update_4 (sp_n,up_n,xp_n,fld); 
+                
+                %  > e.
+                Vc     = msh.c.Vc;
+                ea_n   = B_2_1_1D.Update_ea(ea_n,mp_o,sp_o,xp_o,Vc);
+                ep_n   = B_2_1_1D.Update_ep(ep_n,mp_o,sp_o,xp_o,xp_n,Vc);
+                ed_n   = B_2_1_1D.Update_ed(ea_n,ed_n,ep_n,Vc);
+                % >> Assign...
+                %  > Update next cycle.
+                if i ~= inp.pa.ns
+                    mp_o = mp_n;
+                    sp_o = sp_n;
+                    up_o = up_n;
+                    xp_o = xp_n;
+                    ea_o = ea_n;
+                    ed_o = ed_n;
+                    ep_o = ep_n;
+                end
+                %  > e.
+                e.a{i} = ea_n;
+                e.d{i} = ed_n;
+                e.p{i} = ep_n;
             end
         end
         %  > 5.6.1. -------------------------------------------------------

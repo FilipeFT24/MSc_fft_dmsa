@@ -3,18 +3,10 @@ classdef Fig_V1_0_1D
         %% > 1. -----------------------------------------------------------
         function [] = Plot(msh)
             %  > Auxiliary variables.
-            exp  = 0;
-            fig  = Fig_Tools_1D.Set_fig(0,exp);
-            
-            figure; set(gcf,'Units','pixels','Position',fig.Position);
-            Fig_V1_0_1D.Plot_1(msh,fig);
-        end
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        function [] = Plot_1(msh,fig)
-            %  > Auxiliary variables.
+            exp   = 0;
+            fig   = Fig_Tools_1D.Set_fig(0,exp);
             fig.C = linspecer(9,'qualitative');
-            if ~fig.exp
+            if ~exp
                 a = 3.5;
                 b = 1;
             else
@@ -22,6 +14,7 @@ classdef Fig_V1_0_1D
                 b = 1;
             end
             
+            figure; set(gcf,'Units','pixels','Position',fig.Position);
             %  > Plot variables.
             hold on;
             plot(msh.f.Xv,repelem(-b,msh.f.Nf),'-','Color','k','MarkerFaceColor','k','MarkerSize',   fig.MS,'Linewidth',fig.LW./25.0);

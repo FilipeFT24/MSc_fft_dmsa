@@ -1,64 +1,54 @@
 classdef B_2_2_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        % >> 1.1. ---------------------------------------------------------
-        %  > 'p-standard' run.
-        function [obj,msh] = p_standard(inp,obj,msh,pde)
-            % >> Update fields 'm', 's' and 'x'.
-            add_i        = inp.ps.add;
-            obj.s        = B_2_1_1D.Update_1   (inp,msh,pde,obj.s,obj.u,add_i);
-            obj.x        = B_2_1_1D.Update_2   (inp,msh,obj.s,obj.u,obj.x);
-            obj.m        = B_2_1_1D.Update_3   (msh,pde,obj.m,obj.s,obj.u,obj.x);
-            % >> Update field 'x'.
-            obj.x.nv.a   = pde.av;
-            obj.x.nv.x.c = B_2_1_1D.Update_xc  (obj.m.At,obj.m.Bt);
-            obj.x        = B_2_1_1D.Update_4   (obj.s,obj.u,obj.x);
-            % >> Update cell/face truncation and cell global discretization error distribution/norms.
-            add_f        = 0;
-            obj.e        = B_2_1_1D.Update_e   (inp,msh,pde,obj.e,obj.m,obj.s,obj.u,obj.x,add_f);
-            % >> Compute tuncated terms' magnitude(?).
-            if inp.pt.tt
-                obj.e.t = B_2_2_1D.p_truncation(inp,msh,pde,obj.e.t,obj.s,obj.u,obj.x);
-            end
-            % >> Update structures.
-            [obj,msh]    = B_2_1_1D.Set_struct (obj,msh);
+        % >> 'p-standard' run.
+        function [obj] = p_standard(inp,msh,obj)
+            %  > Auxiliary variables.
+            add_b      = inp.ps.add;
+            fld_u      = ["a","x"];
+            obj.x.nv.a = obj.f.av;
+            
+            %  > Update fields 'e', 'f', 's', 'u' and 'x'.
+            [obj.e,obj.f,obj.s,obj.u,obj.x] = ...
+                B_2_1_1D.Update_all(inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x,add_b,fld_u);
         end
-       
+        
         %% > 2. -----------------------------------------------------------
+        % >> 'p-adaptative' run.
         % >> 2.1. ---------------------------------------------------------
-        %  > 'p-adaptative' run.
-        function [obj,msh] = p_adaptative(inp,obj,msh,pde)
-            i = 0;
-            while i <2
+        function [obj,msh] = p_adaptative(inp,obj,msh,fld)
+            %  > Auxiliary variables.
+            add_b      = inp.ps.add;
+            fld_u      = ["a","x"];
+            obj.x.nv.a = obj.f.av;
+            i          = 0;
+            while 1
                 %  > Update cycle count...
                 i = i+1;
-                % >> Update fields 'm', 's' and 'x'.
-                add_i            = inp.ps.add;
-                obj.s            = B_2_1_1D.Update_1   (inp,msh,pde,obj.s,obj.u,add_i);
-                obj.x            = B_2_1_1D.Update_2   (inp,msh,obj.s,obj.u,obj.x);
-                obj.m            = B_2_1_1D.Update_3   (msh,pde,obj.m,obj.s,obj.u,obj.x);
-                % >> Update field 'x'.
-                flag_1           = B_2_2_1D.Solve_AX_B (i);
+                %  > Update fields 'm', 's' and 'x'.
+                [obj.s,obj.x,obj.m] = ...
+                    B_2_1_1D.Update_123(inp,msh,obj.f,obj.m,obj.s,obj.u,obj.x,add_b);
+                %  > Update field 'x'.
+                flag_1           = B_2_2_1D.Solve_AX_B(i);
                 if flag_1
-                    obj.x.nv.a   = pde.av;
-                    obj.x.nv.x.c = B_2_1_1D.Update_xc  (obj.m.At,obj.m.Bt);
+                    obj.x.nv.x.c = B_2_1_1D.Update_xc (obj.m.At,obj.m.Bt);
                 end
-                obj.x            = B_2_1_1D.Update_4   (obj.s,obj.u,obj.x);
-                % >> Update cell/face truncation and cell global discretization error distribution/norms.
-                add_f            = 0;
-                obj.e            = B_2_1_1D.Update_e   (inp,msh,pde,obj.e,obj.m,obj.s,obj.u,obj.x,add_f);
-                % >> Set structures.
+                obj.x            = B_2_1_1D.Update_4  (obj.s,obj.u,obj.x,fld_u);
+                %  > Update field 'e'.               
+                obj.e            = B_2_1_1D.Update_e  (inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x,add_b);
+                %  > Assign structures.
                 obj_m(i,:)       = obj.m;
-                obj_e(i,:)       = obj.e.p;
-                %  >> Stop adaptation(?).
-                flag_2           = B_2_2_1D.Stop       (i,obj_e{i,1}.c.n_abs);
+                obj_e(i,:)       = obj.e;
+                %   > Stop adaptation(?).
+                flag_2           = B_2_2_1D.Stop      (i,obj.e.(fld){1}.c.n_abs);
                 if ~flag_2
-                    obj.u        = B_2_2_1D.Update_u   (obj_e{i,1},obj.u);
+                    obj.u        = B_2_2_1D.Update_u  (obj.e.(fld){1},obj.u);
                 else
                     obj.m        = obj_m;
                     obj.e        = obj_e;
                     break;
                 end
+                fprintf("Loop: #%3d\n",i);
             end
         end
         % >> 2.2. ---------------------------------------------------------
@@ -68,14 +58,20 @@ classdef B_2_2_1D
         %  > lambda: Parameter used to establish a treshold for the maximum face truncation error (group selection).        
         function [u_s] = Select_f(e)
             %  > Auxiliary variables.
-            nf     = 2;
+            nf     = 1;
             lambda = 0.95;
             nv     = size(e.t.f_abs,2);
+            u_s    = cell(1,nv-1);
+            sf     = find(e.t.f_abs(:,nv) > lambda.*max(e.t.f_abs(:,nv)));
             
-            [~,iM] = maxk(e.t.f_abs(:,1:nv-1),nf);
+            %if ismembc(1,sf)
+            %    sf = [1,2,3,4,5,6]';
+            %    disp(3);
+            %end
+            
             for i  = 1:nv-1
-                u_s{i}(:,1) = sort(iM(:,i));
-            end
+                u_s{i} = sf;
+            end            
         end
         %  > 2.2.2. -------------------------------------------------------
         %  > Decrease/increase method's order (update field 'u').
@@ -114,11 +110,16 @@ classdef B_2_2_1D
         %  > ec_M_L3: Maximum cell global discretization error (L_infinity norm).
         function [flag] = Stop(c,ec_abs)
             %  > Auxiliary variables.
-            nc_M = 3;
-            ec_m = 1e-10;
+            nc_M = 50;
+            ec_m = 1.0E-10;
             
             if c > nc_M || ec_abs(1) <= ec_m
                 flag = 1;
+                if c > nc_M
+                    fprintf("Stopping criterion: max. number of cycles.\n");
+                elseif ec_abs(1) <= ec_m
+                    fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
+                end
             else
                 flag = 0;
             end

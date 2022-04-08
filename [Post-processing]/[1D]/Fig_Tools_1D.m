@@ -7,7 +7,7 @@ classdef Fig_Tools_1D
             fig.exp = exp;                                    %  > Export figure(?).
             if ~exp
                 fig.LW       =  2.00;                         %  > Line.
-                fig.MS       =  4.00;                         %  > Marker size.
+                fig.MS       =  3.50;                         %  > Marker size.
                 fig.FT_1     = 15.00;                         %  > Legend.
                 fig.FT_2     = 15.00;                         %  > x/y-axis.
                 if ~run
@@ -30,7 +30,7 @@ classdef Fig_Tools_1D
                 fig.FT_4     = 20.00;                         %  > x/y-axis  (zoom).
                 fig.Position = [350,100,850,600];             %  > Position.
             end
-            fig.trsh     = 1.0e-15;                           %  > Do not plot below 'trsh'.
+            fig.trsh     = 1.0e-12;                           %  > Do not plot below 'trsh'.
             fig.nsh      = 0;                                 %  > Number of elements below 'trsh'.
             fig.NT       = [10,10];                           %  > Number of ticks (x/y-direction).
             fig.Folder   = "../[Figures]/[1D]";               %  > Destination folder.
