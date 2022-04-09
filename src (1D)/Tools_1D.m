@@ -10,6 +10,14 @@ classdef Tools_1D
             addpath(genpath('../[Tools]')); 
         end
         % >> 1.2. ---------------------------------------------------------
+        %  > 1.2.1. -------------------------------------------------------
+        function [msh] = Sort_msh(msh)
+            msh     = orderfields(msh    ,{'c','d','f'});
+            msh.c   = orderfields(msh.c  ,{'f','Nc','Vc','Xc'});
+            msh.c.f = orderfields(msh.c.f,{'f','Nf'});
+            msh.f   = orderfields(msh.f  ,{'c','Nf','Xv'});
+        end
+        %  > 1.2.2. -------------------------------------------------------
         function [obj]  = Sort_obj(obj)
             obj         = orderfields(obj        ,{'e','m','s','u','x'});
             obj.e       = orderfields(obj.e      ,{'a','p'});
@@ -22,20 +30,7 @@ classdef Tools_1D
             obj.u       = orderfields(obj.u      ,{'p','s'});
             obj.x       = orderfields(obj.x      ,{'cf','if','nv','vf','xf'});
         end
-        % >> 1.3. ---------------------------------------------------------
-        function [msh] = Sort_msh(msh)
-            msh     = orderfields(msh    ,{'c','d','f'});
-            msh.c   = orderfields(msh.c  ,{'f','Nc','Vc','Xc'});
-            msh.c.f = orderfields(msh.c.f,{'f','Nf'});
-            msh.f   = orderfields(msh.f  ,{'c','Nf','Xv'});
-        end
-        % >> 1.4. ---------------------------------------------------------
-        function [pde] = Sort_pde(pde)
-            pde     = orderfields(pde   ,{'av','fn'});
-            pde.av  = orderfields(pde.av,{'c','f'});
-            pde.fn  = orderfields(pde.fn,{'f','i','vol'});
-        end
-
+        
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
@@ -74,10 +69,6 @@ classdef Tools_1D
             e.t.n_abs.f    = Tools_1D.Set_n(e.t.f_abs);
             e.t.n.c        = Tools_1D.Set_n(e.t.c,Vc);
             e.t.n_abs.c    = Tools_1D.Set_n(e.t.c_abs,Vc);
-        end
-        % >> 2.3. ---------------------------------------------------------
-        %  >
-        function [] = pol_shp()
         end
     end
 end

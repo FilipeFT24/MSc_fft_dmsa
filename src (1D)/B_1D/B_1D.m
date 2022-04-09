@@ -67,6 +67,8 @@ classdef B_1D
                     %  > 'p-standard' run.
                     obj_p = B_1D.Initialize    (inp,msh);
                     obj   = B_2_2_1D.p_standard(inp,msh,obj_p);
+                    %  > Plot...
+                    Fig_V1_1_1D.Plot(inp,msh,obj);
                 case true
                     %  > 'p-adaptative' run.
                     fld_adapt   = "p";
@@ -75,11 +77,11 @@ classdef B_1D
                         j       = fld_adapt(i);
                         obj.(j) = B_2_2_1D.p_adaptative(inp,obj_adapt,msh,j);
                     end
+                    %  > Plot...
+                    Fig_V1_2_1D.Plot(inp,obj,msh);
                 otherwise
                     return;
             end
-            %  > Plot...
-            Fig_V1_1_1D.Plot(inp,obj,msh);
         end
     end
 end

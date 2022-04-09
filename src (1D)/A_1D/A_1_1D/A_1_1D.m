@@ -53,7 +53,7 @@ classdef A_1_1D
             f              = exp(-i.*((x-c).^2));         %  > f.
             inp.pv.f       = matlabFunction(f);           %  > f handle.
             inp.pv.b       = ["Dirichlet","Dirichlet"];   %  > BC: West(1)/East(2).
-            inp.pv.v       = [0,1];                       %  > Coeffs: Convection(1)/Diffusion(2).
+            inp.pv.v       = [1,1];                       %  > Coeffs: Convection(1)/Diffusion(2).
             % >> ps.
             inp.ps.p       = [1,1];                       %  > Polynomial order: Convection(1)/Diffusion(2).
             inp.ps.t       = [0,0];                       %  > Polynomial  type: Convection(1)/Diffusion(2).

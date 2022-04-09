@@ -3,45 +3,46 @@ classdef Fig_Tools_1D
         %% >> 1. ----------------------------------------------------------
         %  >> 1.1. --------------------------------------------------------
         function [fig] = Set_fig(run,exp)
-            fig.run = run;                                    %  > Test working directory.
-            fig.exp = exp;                                    %  > Export figure(?).
+            fig.run = run;                                     %  > Test working directory.
+            fig.exp = exp;                                     %  > Export figure(?).
+            fig.C   = linspecer(9,'qualitative');              %  > Colors.
             if ~exp
-                fig.LW       =  2.00;                         %  > Line.
-                fig.MS       =  3.50;                         %  > Marker size.
-                fig.FT_1     = 15.00;                         %  > Legend.
-                fig.FT_2     = 15.00;                         %  > x/y-axis.
+                fig.LW       =  2.00;                          %  > Line.
+                fig.MS       =  3.50;                          %  > Marker size.
+                fig.FT_1     = 15.00;                          %  > Legend.
+                fig.FT_2     = 15.00;                          %  > x/y-axis.
                 if ~run
-                    fig.FT_3 = [22.50,17.50];                 %  > x/y-label.
+                    fig.FT_3 = [22.50,17.50];                  %  > x/y-label.
                 else
-                    fig.FT_3 = [15.00,17.50];                 %  > x/y-label.
+                    fig.FT_3 = [15.00,17.50];                  %  > x/y-label.
                 end
-                fig.FT_4     = 11.00;                         %  > x/y-axis  (zoom).
-                fig.Position = [150,100,1250,600];            %  > Position.
+                fig.FT_4     = 11.00;                          %  > x/y-axis  (zoom).
+                fig.Position = [150,100,1250,600];             %  > Position.
             else
-                fig.LW       =  4.00;                         %  > Line.
-                fig.MS       =  7.50;                         %  > Marker.
-                fig.FT_1     = 22.50;                         %  > Legend.
-                fig.FT_2     = 30.00;                         %  > x/y-axis.
+                fig.LW       =  4.00;                          %  > Line.
+                fig.MS       =  7.50;                          %  > Marker.
+                fig.FT_1     = 22.50;                          %  > Legend.
+                fig.FT_2     = 30.00;                          %  > x/y-axis.
                 if ~run
-                    fig.FT_3     = [45.00,35.00];             %  > x/y-label.
+                    fig.FT_3 = [45.00,35.00];                  %  > x/y-label.
                 else
-                    fig.FT_3     = [35.00,35.00];             %  > x/y-label.
+                    fig.FT_3 = [35.00,35.00];                  %  > x/y-label.
                 end
-                fig.FT_4     = 20.00;                         %  > x/y-axis  (zoom).
-                fig.Position = [350,100,850,600];             %  > Position.
+                fig.FT_4     = 20.00;                          %  > x/y-axis  (zoom).
+                fig.Position = [350,100,850,600];              %  > Position.
             end
-            fig.trsh     = 1.0e-12;                           %  > Do not plot below 'trsh'.
-            fig.nsh      = 0;                                 %  > Number of elements below 'trsh'.
-            fig.NT       = [10,10];                           %  > Number of ticks (x/y-direction).
-            fig.Folder   = "../[Figures]/[1D]";               %  > Destination folder.
+            fig.trsh         = 1.0e-12;                        %  > Do not plot below 'trsh'.
+            fig.nsh          = 0;                              %  > Number of elements below 'trsh'.
+            fig.NT           = [10,10];                        %  > Number of ticks (x/y-direction).
+            fig.Folder       = "../[Figures]/[1D]";            %  > Destination folder.
             if ~run
-                fig.c       = 5.0e-03;                        %  > x-axis width.
-                fig.L{1}    = "$x$";                          %  > x-axis label.
-                fig.L{2}    = "$\textrm{Error magnitude}$";   %  > y-axis label.
+                fig.c        = 5.0e-03;                        %  > x-axis width.
+                fig.L{1}     = "$x$";                          %  > x-axis label.
+                fig.L{2}     = "$\textrm{Error magnitude}$";   %  > y-axis label.
             else
-                fig.c       = 0;                              %  > x-axis width.
-                fig.L{1}    = "$\textrm{NNZ}$";               %  > x-axis label.
-                fig.L{2}    = "$\textrm{Error magnitude}$";   %  > y-axis label.
+                fig.c        = 0;                              %  > x-axis width.
+                fig.L{1}     = "$\textrm{NNZ}$";               %  > x-axis label.
+                fig.L{2}     = "$\textrm{Error magnitude}$";   %  > y-axis label.
             end
             %  > Markers/line styles.
             %  M = ['+','o','*','x','v','d','^','s','>','<'];
@@ -56,17 +57,14 @@ classdef Fig_Tools_1D
             set(gca,'TickLabelInterpreter','latex');
             set(gca,'FontSize',fig.FT_2);
             
-            % >> Axis.
+            %  > Axis.
             if ~fig.run
-                %  > X-Axis.
-                for i = 1:fig.NT(1)+1
-                    xt(i) = xl(1)-(xl(1)-xl(2))./fig.NT(1).*(i-1);
-                end
-                xticks(xt); 
+                i     = 1:fig.NT(1)+1;
+                xt(i) = xl(1)-(xl(1)-xl(2))./fig.NT(1).*(i-1);
+                xticks(xt);
             end
-            xlim([xl(1)-fig.c,xl(2)+fig.c]);
+            xlim  ([xl(1)-fig.c,xl(2)+fig.c]);
             xlabel(L_XY(1),'FontSize',fig.FT_3(1),'Interpreter','latex');
-            %  > Y-Axis.
             ylabel(L_XY(2),'FontSize',fig.FT_3(2),'Interpreter','latex');
         end
         %% >> 2. ----------------------------------------------------------
@@ -131,11 +129,9 @@ classdef Fig_Tools_1D
         function [str] = Set_str_1(i)
             switch i
                 case 1
-                    str = "1";
+                    str = "\phantom{\nabla}\phi";
                 case 2
-                    str = "2";
-                case 3
-                    str = "\infty";
+                    str = "\nabla\phi";
                 otherwise
                     return;
             end
@@ -143,9 +139,11 @@ classdef Fig_Tools_1D
         function [str] = Set_str_2(i)
             switch i
                 case 1
-                    str = "\phi";
+                    str = "1";
                 case 2
-                    str = "\nabla\phi";
+                    str = "2";
+                case 3
+                    str = "\infty";
                 otherwise
                     return;
             end
