@@ -38,16 +38,14 @@ classdef B_1_1D
             obj_f.ps = B_1_1D.pol_shape;
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > Create function handle of \phi and \nabla\phi with 100 terms (polynomial shape). 
+        %  > Create function handle of \phi and \nabla\phi with 25 terms (polynomial shape). 
         function [func] = pol_shape()
             syms x f;
-            n       = 100;
+            n       = 25;
             l_1     = 1:n;
             func{1} = (x-f).^(l_1-1);
-            func{1} = matlabFunction(func{1});
             l_2     = 1:n-1;
             func{2} = l_2.*(x-f).^(l_2-1);
-            func{2} = matlabFunction(func{2});
         end
         
         %% > 2. -----------------------------------------------------------

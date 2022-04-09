@@ -38,8 +38,8 @@ classdef Fig_V1_1_1D
                         subplot(1,2,1);
                         Fig_V1_1_1D.Plot_3_1(inp,obj,msh,fig,n,0);
                         fig = Fig_Tools_1D.Set_fig(0,exp);
-                        %subplot(1,2,2);
-                        %Fig_V1_1_1D.Plot_3_2(inp,obj,msh,fig,n,0);
+                        subplot(1,2,2);
+                        Fig_V1_1_1D.Plot_3_2(inp,obj,msh,fig,n,0);
                     end
                 end
             else
@@ -172,7 +172,7 @@ classdef Fig_V1_1_1D
             %  > Auxiliary variables.
             fig.C = linspecer(9,'qualitative');
             %fld   = ["a","p"];
-            fld   = "a";
+            fld   = "p";
             
             %  > Set variables to plot...
             for i = 1:length(fld)
@@ -202,7 +202,7 @@ classdef Fig_V1_1_1D
             L2{1}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
             L2{2}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}\|_{1}$";
             L2{3}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-            [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,M2,L2,nnz.a,V.a);
+            [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,M2,L2,nnz.p,V.p);
             %  > Set axis/legend,etc.
             Fig_Tools_1D.Set_Plot_2(fig,L2,P2,x_l,Y2,[-1,1],2);
             %Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],x_l,[Y1;Y2],[-1,1],2);

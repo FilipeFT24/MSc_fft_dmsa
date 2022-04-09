@@ -54,13 +54,6 @@ classdef B_1D
             obj.x.nv.x.c = zeros(Nc,1);
             obj.x.cf.a   = cell (Nf,n);
             obj.x.cf.x   = cell (Nf,n);
-            
-            
-            
-            
-            
-            obj.x.ff.a   = cell (Nf,n);
-            obj.x.ff.x   = cell (Nf,n); 
             obj.x.vf.a   = cell (Nf,n);
             obj.x.vf.x   = cell (Nf,n);
             obj.x.xf.a   = zeros(Nf,n);
@@ -68,16 +61,16 @@ classdef B_1D
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
-        function [msh,obj] = Run_p(inp,msh)
+        function [obj] = Run_p(inp,msh)
             switch inp.pa.adapt
                 case false
                     %  > 'p-standard' run.
-                    obj = B_1D.Initialize    (inp,msh);
-                    obj = B_2_2_1D.p_standard(inp,msh,obj);
+                    obj_p = B_1D.Initialize    (inp,msh);
+                    obj   = B_2_2_1D.p_standard(inp,msh,obj_p);
                 case true
                     %  > 'p-adaptative' run.
-                    fld_adapt   = "a";
-                    obj_adapt   = B_1D.Initialize      (inp,msh);
+                    fld_adapt   = "p";
+                    obj_adapt   = B_1D.Initialize(inp,msh);
                     for i       = 1:length(fld_adapt)
                         j       = fld_adapt(i);
                         obj.(j) = B_2_2_1D.p_adaptative(inp,obj_adapt,msh,j);
@@ -85,7 +78,7 @@ classdef B_1D
                 otherwise
                     return;
             end
-            % >> Plot...
+            %  > Plot...
             Fig_V1_1_1D.Plot(inp,obj,msh);
         end
     end

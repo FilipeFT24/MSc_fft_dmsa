@@ -5,18 +5,18 @@ classdef B_2_2_1D
         function [obj] = p_standard(inp,msh,obj)
             %  > Auxiliary variables.
             add_b      = inp.ps.add;
-            fld_u      = ["a","x"];
+            f_sol      = 1;
             obj.x.nv.a = obj.f.av;
             
             %  > Update fields 'e', 'f', 's', 'u' and 'x'.
-            [obj.e,obj.f,obj.s,obj.u,obj.x] = ...
-                B_2_1_1D.Update_all(inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x,add_b,fld_u);
+            [obj.m,obj.s,obj.x] = B_2_1_1D.Update_all(inp,msh,obj.f,obj.m,obj.s,obj.u,obj.x,add_b,f_sol);
+            [obj.e]             = B_2_1_1D.Update_e  (inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x,add_b);
         end
         
         %% > 2. -----------------------------------------------------------
         % >> 'p-adaptative' run.
         % >> 2.1. ---------------------------------------------------------
-        function [obj,msh] = p_adaptative(inp,obj,msh,fld)
+        function [obj] = p_adaptative(inp,obj,msh,fld)
             %  > Auxiliary variables.
             add_b      = inp.ps.add;
             fld_u      = ["a","x"];
@@ -33,7 +33,7 @@ classdef B_2_2_1D
                 if flag_1
                     obj.x.nv.x.c = B_2_1_1D.Update_xc (obj.m.At,obj.m.Bt);
                 end
-                obj.x            = B_2_1_1D.Update_4  (obj.s,obj.u,obj.x,fld_u);
+                obj.x            = B_2_1_1D.Update_4  (obj.f,obj.s,obj.u,obj.x,fld_u);
                 %  > Update field 'e'.               
                 obj.e            = B_2_1_1D.Update_e  (inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x,add_b);
                 %  > Assign structures.
@@ -110,7 +110,7 @@ classdef B_2_2_1D
         %  > ec_M_L3: Maximum cell global discretization error (L_infinity norm).
         function [flag] = Stop(c,ec_abs)
             %  > Auxiliary variables.
-            nc_M = 50;
+            nc_M = 30;
             ec_m = 1.0E-10;
             
             if c > nc_M || ec_abs(1) <= ec_m
