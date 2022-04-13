@@ -31,14 +31,14 @@ classdef Fig_Tools_1D
                 fig.FT_4     = 20.00;                          %  > x/y-axis  (zoom).
                 fig.Position = [350,100,850,600];              %  > Position.
             end
-            fig.trsh         = 1.0e-12;                        %  > Do not plot below 'trsh'.
+            fig.trsh         = 1.0e-16;                        %  > Do not plot below 'trsh'.
             fig.nsh          = 0;                              %  > Number of elements below 'trsh'.
             fig.NT           = [10,10];                        %  > Number of ticks (x/y-direction).
             fig.Folder       = "../[Figures]/[1D]";            %  > Destination folder.
             if ~run
-                fig.c        = 5.0e-03;                        %  > x-axis width.
+                fig.c        = 0;                              %  > x-axis width.
                 fig.L{1}     = "$x$";                          %  > x-axis label.
-                fig.L{2}     = "$\textrm{Error magnitude}$";   %  > y-axis label.
+                fig.L{2}     = "";                             %  > y-axis label.
             else
                 fig.c        = 0;                              %  > x-axis width.
                 fig.L{1}     = "$\textrm{NNZ}$";               %  > x-axis label.
@@ -49,7 +49,7 @@ classdef Fig_Tools_1D
             %  L = ['-','--',':','-.'];
         end
         %  >> 1.2. --------------------------------------------------------
-        function [] = ChangeLook_1D(fig,XM,L_XY)
+        function [] = ChangeLook_1D(fig,fx,XM,L_XY)
             %  > Other parameters.
             [xl(1),xl(2)] = MinMaxElem(XM);
             box on;
@@ -58,7 +58,7 @@ classdef Fig_Tools_1D
             set(gca,'FontSize',fig.FT_2);
             
             %  > Axis.
-            if ~fig.run
+            if fx
                 i     = 1:fig.NT(1)+1;
                 xt(i) = xl(1)-(xl(1)-xl(2))./fig.NT(1).*(i-1);
                 xticks(xt);
@@ -90,7 +90,21 @@ classdef Fig_Tools_1D
             end
         end
         % >> 2.2. ---------------------------------------------------------
-        function [LY,P,YV] = Var_2(fig,M,LX,X,Y)
+        function [LY,P1,YV] = Var_2(fig,M1,LX,X1,Y1)           
+            [X2(1),X2(2)] = MinMaxElem(X1);
+            hold on;
+            k = 0;
+            for i = 1:size(Y1,2)
+                k                 = k+1;
+                LY{k}             = LX{i};
+                P1{k}             = fplot(Y1{1,i},X2,M1(1,i),'Color',fig.C(i,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(i,:),'MarkerSize',fig.MS);
+                P2{k}             =  plot(X1,Y1{2,i},M1(2,i),'Color',fig.C(i,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(i,:),'MarkerSize',fig.MS);
+                [YV(k,1),YV(k,2)] = MinMaxElem(Y1{2,i});
+                disp(Y1{2,i}(5));
+            end
+        end
+        % >> 2.3. ---------------------------------------------------------
+        function [LY,P,YV] = Var_3(fig,M,LX,X,Y)
             hold on;
             k = 0;
             for i = 1:size(Y,2)
@@ -105,6 +119,7 @@ classdef Fig_Tools_1D
         end
         % >> 2.3. ---------------------------------------------------------
         %  > 2.3.1. -------------------------------------------------------
+        %  > msh.
         function [] = Set_Plot_1(fig,y,XM)
             Fig_Tools_1D.ChangeLook_1D(fig,XM,fig.L);
             ax = gca; box off;
@@ -114,16 +129,23 @@ classdef Fig_Tools_1D
             ylim(dY); yticks(dY); set(gca,'YTickLabel',[]); ax.YAxis.Visible = 'off';
         end
         %  > 2.3.2. -------------------------------------------------------
-        function [] = Set_Plot_2(fig,L,P,XM,YM_1,YM_2,NC)
+        %  > var.
+        function [] = Set_Plot_2(fig,L,P,fx,XM,YM_1,YM_2,NC)
             legend([P{:}],[L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
             if fig.run
                 set(gca,'XScale','log');
             end
             set(gca,'YScale','log');
-            ylim([10.^(ceil(log10(min(YM_1(:,1))))+YM_2(1)),...
-                  10.^(ceil(log10(max(YM_1(:,2))))+YM_2(2))]);
-            Fig_Tools_1D.ChangeLook_1D(fig,XM,fig.L);
+            if ~isempty(YM_1) && ~isempty(YM_2)
+                a = 10.^(ceil(log10(min(YM_1(:,1))))+YM_2(1));
+                b = 10.^(ceil(log10(max(YM_1(:,2))))+YM_2(2));
+                if a < fig.trsh
+                    a = fig.trsh;
+                end
+                ylim([a,b]);
+            end
+            Fig_Tools_1D.ChangeLook_1D(fig,fx,XM,fig.L);
         end
         %  > 2.3.3. -------------------------------------------------------
         function [str] = Set_str_1(i)
@@ -137,6 +159,16 @@ classdef Fig_Tools_1D
             end
         end
         function [str] = Set_str_2(i)
+            switch i
+                case 1
+                    str = "\phi";
+                case 2
+                    str = "\nabla\phi";
+                otherwise
+                    return;
+            end
+        end
+        function [str] = Set_str_3(i)
             switch i
                 case 1
                     str = "1";

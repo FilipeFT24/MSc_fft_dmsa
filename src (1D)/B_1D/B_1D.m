@@ -7,6 +7,8 @@ classdef B_1D
             n  = length(inp.pv.v);
             Nc = msh.c.Nc;
             Nf = msh.f.Nf;
+            v  = inp.pv.v(1);
+            g  = inp.pv.v(2);
                  
             %  > Fields: 'e.a', 'e.d' and 'e.p'.
             f = ["a","p","d"];
@@ -41,12 +43,12 @@ classdef B_1D
             %  > Field: 's' (stencil coordinates,etc.).
             obj.s.c      = cell (Nf,n);
             obj.s.t      = cell (Nf,n);
-            obj.s.bt     = cell (Nf,n);
-            obj.s.bv     = cell (Nf,n);
-            obj.s.v      = [inp.pv.v(1),-inp.pv.v(2)];
+            obj.s.v      = [v,-g];
+            obj.s.gv     = g./v;
             %  > Field: 'u' (update stencil).
-            obj.u        = A_2_1D.Initialize_upd(msh,inp.ps.p,inp.ps.t);
+            obj.u        = A_2_1D.Initialize_upd(msh,inp.pv.p);
             %  > Field: 'x' (nodal solution/ stencil coefficients,etc.).
+            obj.x.Df     = cell (Nf,n);
             obj.x.if     = cell (Nf,n);
             obj.x.Tf     = cell (Nf,n);
             obj.x.nv.a.c = zeros(Nc,1);
@@ -56,8 +58,10 @@ classdef B_1D
             obj.x.cf.x   = cell (Nf,n);
             obj.x.vf.a   = cell (Nf,n);
             obj.x.vf.x   = cell (Nf,n);
-            obj.x.xf.a   = zeros(Nf,n);
-            obj.x.xf.x   = zeros(Nf,n); 
+            obj.x.xf.a   = zeros(Nf,n);   %  > Face  nodal values (w/ '.a').
+            obj.x.xf.x   = zeros(Nf,n);   %  > Face  nodal values (w/ '.x').
+            obj.x.xt.a   = cell (Nf,n);   %  > Total nodal values (w/ '.a').
+            obj.x.xt.x   = cell (Nf,n);   %  > Total nodal values (w/ '.x').
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
@@ -68,7 +72,13 @@ classdef B_1D
                     obj_p = B_1D.Initialize    (inp,msh);
                     obj   = B_2_2_1D.p_standard(inp,msh,obj_p);
                     %  > Plot...
-                    Fig_V1_1_1D.Plot(inp,msh,obj);
+                    plot  = [1,0];
+                    if plot(1)
+                        Fig_V1_1_1D.Plot(inp,msh,obj);
+                    end
+                    if plot(2)
+                        Fig_V1_2_1D.Plot(inp,msh,obj);
+                    end
                 case true
                     %  > 'p-adaptative' run.
                     fld_adapt   = "p";
@@ -78,7 +88,7 @@ classdef B_1D
                         obj.(j) = B_2_2_1D.p_adaptative(inp,obj_adapt,msh,j);
                     end
                     %  > Plot...
-                    Fig_V1_2_1D.Plot(inp,obj,msh);
+                    Fig_V1_3_1D.Plot(inp,obj,msh);
                 otherwise
                     return;
             end

@@ -2,27 +2,26 @@ classdef B_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        %  > Compute analytic functions/values/source term.
+        %  > Set analytic function/boundary values/(volumetric) source term/etc.
         function [obj_f] = Update_func(inp,msh)
             %  > Auxiliary variables.
-            Xc = msh.c.Xc;
             Nc = msh.c.Nc;
+            Nf = msh.f.Nf;
+            Xc = msh.c.Xc;
             Xv = msh.f.Xv;
             v  = inp.pv.v(1);
             g  = inp.pv.v(2);
             
             % >> Set...
-            %  > ...analytic function.
+            %  > ...analytic function handles.
             syms x;
             f_1      = inp.pv.f(x);
             f_2      = diff(f_1,x);
             f_3      = diff(f_2,x);
             h        = v.*f_2-g.*f_3;
-            %  > ... function handles.
-            f  {1}   = matlabFunction(f_1);
-            f  {2}   = matlabFunction(f_2);
+            f    {1} = matlabFunction(f_1);
+            f    {2} = matlabFunction(f_2);
             i        = matlabFunction(int(h));
-            % >> Compute...
             %  > ...analytic cell/face values.
             a.c(:,1) = f{1}(Xc);
             a.f(:,1) = f{1}(Xv);
@@ -30,24 +29,32 @@ classdef B_1_1D
             %  > ...analytic (volumetric) source term.
             j        = 1:Nc;
             fv (j,1) = i(Xv(j+1))-i(Xv(j));
-
+            %  > ...boundary types/values.
+            bd.t     = inp.pv.b;
+            bd.x     = [Xv(1),Xv(Nf)];
+            bd.v     = B_1_1D.Set_bd_v(bd.t,bd.x,f,g./v);
+            
             % >> Update...
             obj_f.av = a;
             obj_f.fh = f;
             obj_f.fv = fv;
-            obj_f.ps = B_1_1D.pol_shape;
+            obj_f.bd = bd;
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > Create function handle of \phi and \nabla\phi with 25 terms (polynomial shape). 
-        function [func] = pol_shape()
-            syms x f;
-            n       = 25;
-            l_1     = 1:n;
-            func{1} = (x-f).^(l_1-1);
-            l_2     = 1:n-1;
-            func{2} = l_2.*(x-f).^(l_2-1);
+        %  > Set boundary values.
+        function [bd_v] = Set_bd_v(bd_t,bd_x,f,gv)
+            for i = 1:length(bd_t) 
+                switch bd_t(i)
+                    case "Dirichlet"
+                        bd_v(i) = f{1}(bd_x(i));
+                    case "Neumann"
+                        bd_v(i) = f{2}(bd_x(i));
+                    case "Robin"
+                        bd_v(i) = f{1}(bd_x(i))+gv.*f{2}(bd_x(i));
+                end
+            end
         end
-        
+               
         %% > 2. -----------------------------------------------------------
         %  > 1D GQ functions (NOT USED).
         % >> 2.1. ---------------------------------------------------------

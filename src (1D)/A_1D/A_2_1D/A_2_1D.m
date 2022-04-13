@@ -44,21 +44,10 @@ classdef A_2_1D
 
         %% > 2. -----------------------------------------------------------
         %  > Initialize 'upd' structure.
-        function [upd] = Initialize_upd(msh,p,t)
-            %  > Auxiliary variables.
-            l  = length(p);
-            Nf = msh.f.Nf;
-                       
-            for i = 1:l
-                j = i*l-1;
-                k = i*l;
-                if ~rem(p(i),2)
-                    upd.p(:,k) = ones (Nf,1).*t(i);
-                else
-                    upd.p(:,k) = zeros(Nf,1);
-                end
-                upd.p    (:,j) = repelem(p(i),Nf);
-                upd.s{i} (:,1) = 1:Nf;
+        function [upd] = Initialize_upd(msh,p)         
+            for i = 1:length(p)
+                upd.p    (:,i) = repelem(p(i),msh.f.Nf);
+                upd.s{i} (:,1) = 1:msh.f.Nf;
             end
         end
     end

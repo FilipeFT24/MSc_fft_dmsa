@@ -1,238 +1,214 @@
 classdef Fig_V1_2_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [] = Plot(inp,obj,msh)
+        function [] = Plot(inp,msh,obj)
             %  > Auxiliary variables.
             exp = 0;
-            j   = 1;
-            n   = 1;
+            fig = Fig_Tools_1D.Set_fig(0,exp);
+            x.a = 1;  %  > Convection(1)/Diffusion(2).
+            x.b = 6; %  > Face index(f).
+            
+%             
+%             face   = msh.f.Xv(x.b);
+%             xc_loc = msh.c.Xc(obj.s.c{x.b,x.a});
+%             xc_fac = [0.09,0.11];
+%             cell   = [1,2,5,6];
+%             fac    = [3,4];
+%             for i  = 1:6
+%                 D(cell,i) = (xc_loc-face).^(i-1);
+%             end
+%             for i  = 1:6
+%                 if i == 1
+%                     D(fac ,i) = 0;
+%                 else
+%                     D(fac ,i) = (i-1).*(xc_fac-face).^(i-2);
+%                 end
+%             end
+%             phi_s(cell,1) = obj.x{1}.nv.x.c(obj.s.c{x.b,x.a}); 
+%             val = [0.0806386944967543;0.0768327862357099];
+%             phi_s(fac ,1) = val;
+%            
+%             
+%             
+%             
+%             
+%             
+%             
+% %             Ds = D([1,3,4,6],[1,2,3,4]);
+% %             phis_s = phi_s([1,3,4,6]);
+% %             
+%             %coeffs{1} = 0;%inv(Ds)*phis_s;
+            coeffs = 0;%inv(D)*phi_s;
+            
+            
             
             if ~exp
-                if ~inp.pa.adapt
-                    % >> 'p-standard' run.
-                    fig  = Fig_Tools_1D.Set_fig(0,exp);
-                    plot = [0,1];
-                    %  > #1.
-                    if plot(1)
-                        figure; set(gcf,'Units','pixels','Position',fig.Position);
-                        subplot(1,2,1);
-                        Fig_V1_1_1D.Plot_1_1(obj,msh,fig,j,n,0);
-                        subplot(1,2,2);
-                        Fig_V1_1_1D.Plot_1_2(obj,msh,fig,j,n,0);
-                    end
-                    %  > #2.
-                    if plot(2)
-                        figure; set(gcf,'Units','pixels','Position',fig.Position);
-                        subplot(1,2,1);
-                        Fig_V1_1_1D.Plot_2_1(obj.e,msh,fig,j,n,0);
-                        subplot(1,2,2);
-                        Fig_V1_1_1D.Plot_2_2(obj,msh,fig,j,n,0);
-                    end
-                else
-                    % >> 'p-adaptative' run.
-                    plot = [1,0];
-                    %  > #1.
-                    if plot(1)
-                        fig = Fig_Tools_1D.Set_fig(1,exp);
-                        figure; set(gcf,'Units','pixels','Position',fig.Position);
-                        subplot(1,2,1);
-                        Fig_V1_1_1D.Plot_3_1(inp,obj,msh,fig,n,0);
-                        fig = Fig_Tools_1D.Set_fig(0,exp);
-                        subplot(1,2,2);
-                        Fig_V1_1_1D.Plot_3_2(inp,obj,msh,fig,n,0);
-                    end
-                end
-            else
+                figure; set(gcf,'Units','pixels','Position',fig.Position);
+                subplot(1,2,1);
+                Fig_V1_2_1D.Plot_1_1(msh.c.Xc,msh.f.Xv,obj,x,fig,0,coeffs);
+                subplot(1,2,2);
+                Fig_V1_2_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj,x,fig,0,coeffs);
             end
         end
-
+        
         %% > 2. -----------------------------------------------------------
-        % >> 'p-standard' run.
         % >> 2.1. ---------------------------------------------------------
-        function [] = Plot_1_1(obj_ep,msh,fig,j,n,zoom)
-            %  > Auxiliary variables.
-            fig.C = linspecer(9,'qualitative');
-            
-            %  > Plot variables.
-            %  > #1.
-            M1         = repelem("--o",3);
-            L1{1}      = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}|$";
-            L1{2}      = "$|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}|$";
-            L1{3}      = "$|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}|$";
-            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,msh.f.Xv,obj_ep.t.f_abs);
-            %  > #2.
-            M2         = repelem("-",3);
-            L2{1}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
-            L2{2}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}\|_{1}$";
-            L2{3}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-            [L2,P2,Y2] = Fig_Tools_1D.Var_2(fig,M2,L2,msh.f.Xv,obj_ep.t.n_abs.f(j,:));
-            %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2); 
-            %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,"Fig_V1_1_1");
+        %  > 2.1.1. ------------------------------------------------------- 
+        function [func] = Tools_1(obj,a,b,coeffs)
+            for i = 1:size(obj.x,2)
+                %  > func_f(A).
+                c         = length(obj.x{i}.cf.a{b,a});
+                x         = Fig_V1_2_1D.Set_var(a,c);
+                func.a{i} = obj.f.ps{a}(x.d)*obj.x{i}.cf.a{b,a}(x.e);
+                %  > func_f(p).
+                c         = length(obj.x{i}.cf.x{b,a});
+                x         = Fig_V1_2_1D.Set_var(a,c);
+                
+                %if i == 2
+                %    func.f{i} = obj.f.ps{a}(x.d)*coeffs(x.e);
+                %else
+                   %func.f{i} = obj.f.ps{a}(x.d)*coeffs{1}(x.e);
+                   func.f{i} = obj.f.ps{a}(x.d)*obj.x{i}.cf.x{b,a}(x.e);
+                %end
+                
+            end
+        end
+        %  > 2.1.2. -------------------------------------------------------
+        function [x] = Set_var(a,c)
+            switch a
+                case 1
+                    d = 1:c;
+                    e = d;
+                case 2
+                    d = 1:c-1;
+                    e = d+1;
+                otherwise
+                    return;
+            end
+            x.d = d;
+            x.e = e;
         end
         % >> 2.2. ---------------------------------------------------------
-        function [] = Plot_1_2(obj,msh,fig,j,n,zoom)
-            %  > Auxiliary variables.
-            fig.C = linspecer(9,'qualitative');
-
-            %  > Plot variables.
-            %  > #1.
-            M1         = repelem("--o",2);
-            L1{1}      = "$|e_{c^{\left(p\right)}}|$";
-            L1{2}      = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
-            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,msh.c.Xc,[obj.e.p{n}.c.c_abs,obj.e.p{n}.t.c_abs]);
-            %  > #2.
-            M2         = repelem("-",2);
-            L2{1}      = "$\|e_{c^{\left(p\right)}}\|_{1}$";
-            L2{2}      = "$\|\bar{\tau}_{c^{\left(p\right)}}\|_{1}$";
-            [L2,P2,Y2] = Fig_Tools_1D.Var_2(fig,M2,L2,msh.c.Xc,[obj.e.p{n}.c.n_abs(j),obj.e.p{n}.t.n_abs.c(j)]);
-            %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2);  
-            %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,"Fig_V1_1_2");
+        %  > \tau_f(x).
+        function [V] = Tools_2(obj,a,b,f,y,coeffs)
+            func  = Fig_V1_2_1D.Tools_1(obj,a,b,coeffs); 
+            for i = 1:size(obj.x,2)-1
+                %  > d\tau_f(A).
+                x(1)       = func.a{i+1}-func.a{i};
+                tau_f.a{i} = matlabFunction(abs(x(1)));
+                %  > d\tau_f(p).
+                x(2)       = func.f{i+1}-func.f{i};
+                tau_f.p{i} = matlabFunction(abs(x(2)));
+                %  > d\tau_f(d).
+                x(3)       = func.a{i+1}-func.f{i+1};
+                x(4)       = func.a{i}  -func.f{i};
+                tau_f.d{i} = matlabFunction(abs(x(3)-x(4)));
+            end
+            V = Fig_V1_2_1D.Tools_4([tau_f.a,tau_f.p,tau_f.d],f,y);
         end
         % >> 2.3. ---------------------------------------------------------
-        function [] = Plot_2_1(obj_e,msh,fig,j,n,zoom)
-            %  > Auxiliary variables.
-            fig.C = linspecer(9,'qualitative');
-            
-            %  > Plot variables.
-            %  > #1.
-            M1         = ["--o",":v","-.d","--o",":v","-.d"];
-            L1{1}      = "$|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{\phantom{\nabla}\phi}|$";
-            L1{2}      = "$|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{\phantom{\nabla}\phi}|$";
-            L1{3}      = "$|\bar{\tau}_{f^{\left(a-p\right)}}^{\phantom{\nabla}\phi}|$";
-            L1{4}      = "$|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{\nabla\phi}|$";
-            L1{5}      = "$|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{\nabla\phi}|$";
-            L1{6}      = "$|\bar{\tau}_{f^{\left(a-p\right)}}^{\nabla\phi}|$";
-            Xv         = repelem(msh.f.Xv,1,6);
-            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,...
-                [obj_e.a{n}.t.f_abs(:,1),obj_e.p{n}.t.f_abs(:,1),obj_e.d{n}.t.f_abs(:,1),...
-                 obj_e.a{n}.t.f_abs(:,2),obj_e.p{n}.t.f_abs(:,2),obj_e.d{n}.t.f_abs(:,2)]);
-            %  > #2.
-            M2         = repelem("-",6);
-            L2{1}      = "$\|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{\phantom{\nabla}\phi}\|_{1}$";
-            L2{2}      = "$\|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{\phantom{\nabla}\phi}\|_{1}$";
-            L2{3}      = "$\|\bar{\tau}_{f^{\left(a-p\right)}}^{\phantom{\phi}}\|_{1}$";
-            L2{4}      = "$\|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{\nabla\phi}\|_{1}$";
-            L2{5}      = "$\|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{\nabla\phi}\|_{1}$";
-            L2{6}      = "$\|\bar{\tau}_{f^{\left(a-p\right)}}^{\nabla\phi}\|_{1}$";
-            Xv         = repelem(msh.f.Xv,1,6);
-            [L2,P2,Y2] = Fig_Tools_1D.Var_2(fig,M2,L2,Xv,...
-                [obj_e.a{n}.t.n_abs.f(j,1),obj_e.p{n}.t.n_abs.f(j,1),obj_e.d{n}.t.n_abs.f(j,1),...
-                 obj_e.a{n}.t.n_abs.f(j,2),obj_e.p{n}.t.n_abs.f(j,2),obj_e.d{n}.t.n_abs.f(j,2)]);
-            %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2);
-            %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,"Fig_V1_1_3");
+        %  > dfunc_f(x).
+        function [V] = Tools_3(obj,a,b,f,y,coeffs)
+            func  = Fig_V1_2_1D.Tools_1(obj,a,b,coeffs);
+            for i = 1:size(obj.x,2)
+                %  > f-func_f(p).
+                %d_f{i} = matlabFunction(abs(diff(diff(diff(diff(func.f{i+1}))))));
+                %d_f{i+1} = matlabFunction(abs(diff(diff(diff(diff(func.a{i+1}))))));
+                d_f{i} = matlabFunction(abs(obj.f.fh{a}-func.f{i}));
+            end
+            V = Fig_V1_2_1D.Tools_4(d_f,f,y);
         end
         % >> 2.4. ---------------------------------------------------------
-        function [] = Plot_2_2(obj,msh,fig,j,n,zoom)
-            %  > Auxiliary variables (colors/labels/etc.).
-            fig.C = linspecer(9,'qualitative');
-            
-            %  > Plot variables.
-            %  > #1.
-            M1         = ["--o","--o",":v",":v"];
-            L1{1}      = "$|e_{c^{\left(a\right)}}|$";
-            L1{2}      = "$|e_{c^{\left(p\right)}}|$";
-            L1{3}      = "$|\bar{\tau}_{c^{\left(a\right)}}|$";
-            L1{4}      = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
-            Xc         = repelem(msh.c.Xc,1,4);
-            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,Xc,...
-                [obj.e.a{n}.c.c_abs,obj.e.p{n}.c.c_abs,obj.e.a{n}.t.c_abs,obj.e.p{n}.t.c_abs]);
-            %  > #2.
-            M2         = repelem("-",4);
-            L2{1}      = "$\|e_{c^{\left(a\right)}}\|_{1}$";
-            L2{2}      = "$\|e_{c^{\left(p\right)}}\|_{1}$";
-            L2{3}      = "$\|\bar{\tau}_{c^{\left(a\right)}}\|_{1}$";
-            L2{4}      = "$\|\bar{\tau}_{c^{\left(p\right)}}\|_{1}$";
-            Xc         = repelem(msh.c.Xc,1,4);
-            [L2,P2,Y2] = Fig_Tools_1D.Var_2(fig,M2,L2,Xc,...
-                [obj.e.a{n}.c.n_abs(1),obj.e.p{n}.c.n_abs(j),obj.e.a{n}.t.n_abs.c(1),obj.e.p{n}.t.n_abs.c(j)]);
-            %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],msh.f.Xv,[Y1;Y2],[-1,1],2); 
-            %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,"Fig_V1_1_4");
-        end
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        %% > 3. -----------------------------------------------------------
-        % >> 'p-adaptative' run.
-        % >> 3.1. ---------------------------------------------------------
-        function [] = Plot_3_1(inp,obj,msh,fig,n,zoom)
-            %  > Auxiliary variables.
-            fig.C = linspecer(9,'qualitative');
-            %fld   = ["a","p"];
-            fld   = "p";
-            
-            %  > Set variables to plot...
-            for i = 1:length(fld)
-                j = fld(i);
-                %  > nnz.
-                for k = 1:size(obj.(j).m,1)
-                    nnz.(j)(k,1) = obj.(j).m(k).nnz.Ac(1);
-                    nnz.(j)(k,2) = obj.(j).m(k).nnz.Ac(2);
-                    nnz.(j)(k,3) = obj.(j).m(k).nnz.At;
+        function [V] = Tools_4(v,f,y)
+            syms x;
+            for i = 1:size(v,2)
+                switch nargin(v{i})
+                    case 0
+                        V{1,i} = @(x)(feval(v{i})).*x.^(0);
+                        V{2,i} = repelem(feval(v{i}),length(y))';
+                    case 1
+                        V{1,i} = v{i}(x);
+                        V{2,i} = v{i}(y);
+                    case 2
+                        V{1,i} = v{i}(f,x);
+                        V{2,i} = v{i}(f,y);
+                    otherwise
+                        return;
                 end
-                [x.(j)(1),x.(j)(2)] = MinMaxElem(nnz.(j));
-                %  > e.
-                l = 1;
-                for k = 1:size(obj.(j).m,1)
-                    V.(j)(k,:)   = obj.(j).e(k).(j){n}.t.n_abs.f(l,:);
-                end 
             end
-            [x_l(1),x_l(2)] = MinMaxElem(x.(fld));
-            
-      
-%             M1         = ["-o","-o","-o"];
-%             L1{1}      = "$\|\bar{\tau}_{f^{\left(a\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
-%             L1{2}      = "$\|\bar{\tau}_{f^{\left(a\right)}}^{\nabla\phi}\|_{1}$";
-%             L1{3}      = "$\|\bar{\tau}_{f^{\left(a\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-%             [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,nnz.a,V.a);
-            M2         = [":v",":v",":v"];
-            L2{1}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
-            L2{2}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}\|_{1}$";
-            L2{3}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-            [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,M2,L2,nnz.p,V.p);
-            %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,L2,P2,x_l,Y2,[-1,1],2);
-            %Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],x_l,[Y1;Y2],[-1,1],2);
-            %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,"X");
         end
-        
-        %%%%%%%%%%%%%%%%%%%
-        function [] = Plot_3_2(inp,obj,msh,fig,n,zoom)
+ 
+        %% > 3. -----------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
+        %  > 3.1.1. -------------------------------------------------------
+        function [] = Plot_1_1(Xc,Xv,obj,x,fig,zoom,coeffs)
             %  > Auxiliary variables.
-            fig.C = linspecer(9,'qualitative');
-
-            V = obj.p.e(size(obj.p.e,1)).p{n}.t.f_abs(:,1:2);
-            V = [V,obj.p.e(size(obj.p.e,1)).a{n}.t.f_abs(:,1:2)];
+            fid = "V1_2_1D (1)";
+            a   = x.a;
+            b   = x.b;
+            c   = Xv(b);
+            X1  = sort([Xc(b-4:b+3);c]);
             
-   
-            M2         = [":v",":v","-o","-o"];
+            %  > Select variables.
+            M1(1,:)    = ["-",":","--"];
+            M1(2,:)    = ["o","v","s"];
+            L1         = Fig_V1_2_1D.Set_Legend_1(a);
+            V1         = Fig_V1_2_1D.Tools_2(obj,a,b,c,X1,coeffs);
+            %  > Plot variables.
+            [L1,P1,Y1] = Fig_Tools_1D.Var_2(fig,M1,L1,X1,V1);
+            f          = xline([c,c],'Color',fig.C(4,:),'Linewidth',fig.LW./10,'Linestyle',"-");
             
-            L2{1}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
-            L2{2}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\nabla\phi}\|_{1}$";
-            %L2{3}      = "$\|\bar{\tau}_{f^{\left(p\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-            L2{3}      = "$\|\bar{\tau}_{f^{\left(a\right)}}^{\phantom{\nabla}\phi}\|_{1}$";
-            L2{4}      = "$\|\bar{\tau}_{f^{\left(a\right)}}^{\nabla\phi}\|_{1}$";
-            %L2{6}      = "$\|\bar{\tau}_{f^{\left(a\right)}}^{\phantom{\nabla\phi}}\|_{1}$";
-            [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,M2,L2,msh.f.Xv,V);
-            %  > Set axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,L2,P2,msh.f.Xv,Y2,[-1,1],2);
-            %Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],x_l,[Y1;Y2],[-1,1],2);
+            %  > Axis/legend,etc.
+            Fig_Tools_1D.Set_Plot_2(fig,L1,P1,0,X1,Y1,[-1,1],1);
             %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,"X");
+            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end
-    end
+        %  > 3.1.2. -------------------------------------------------------
+        function [L] = Set_Legend_1(a)
+            S    = Fig_Tools_1D.Set_str_1(a);
+            L{1} = join(["$|\bar{\tau}_{f^{\left(a\right)}}^{",S,"}\left(x\right)|$"]);
+            L{2} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S,"}\left(x\right)|$"]);
+            L{3} = join(["$|\bar{\tau}_{f^{\left(d\right)}}^{",S,"}\left(x\right)|$"]);
+        end 
+        % >> 3.2. ---------------------------------------------------------
+        %  > 3.2.1. -------------------------------------------------------
+        function [] = Plot_1_2(Xc,Xv,obj,x,fig,zoom,coeffs)
+            %  > Auxiliary variables.
+            fid = "V1_2_1D (2)";
+            a   = x.a;
+            b   = x.b;
+            c   = Xv(b);
+            X1  = sort([Xc(b-4:b+3);c]);
+            
+            %  > Select variables.
+            M1(1,:)    = ["-",":"];
+            M1(2,:)    = ["o","v"];
+            L1         = Fig_V1_2_1D.Set_Legend_2(a);
+            V1         = Fig_V1_2_1D.Tools_3(obj,a,b,c,X1,coeffs);
+            %  > Plot variables.
+            [L1,P1,Y1] = Fig_Tools_1D.Var_2(fig,M1,L1,X1,V1);
+            f          = xline([c,c],'Color',fig.C(4,:),'Linewidth',fig.LW./10,'Linestyle',"-");
+            
+            %  > Axis/legend,etc.
+            Fig_Tools_1D.Set_Plot_2(fig,L1,P1,0,X1,Y1,[-5,1],1);
+            %  > Export(?)/Zoom(?).
+            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
+        end
+        %  > 3.2.2. -------------------------------------------------------
+        function [L] = Set_Legend_2(a)
+            S    = Fig_Tools_1D.Set_str_2(a);
+            L{1} = join(["$|",S,"_{f^{\left(a\right)}}^{\left(p^{-}\right)}\left(x\right)-",S,"_{f^{\left(p\right)}}^{\left(p^{-}\right)}\left(x\right)|$"]);
+            L{2} = join(["$|",S,"_{f^{\left(a\right)}}^{\left(p^{+}\right)}\left(x\right)-",S,"_{f^{\left(p\right)}}^{\left(p^{+}\right)}\left(x\right)|$"]);
+        end
+        % >> 1.2. ---------------------------------------------------------
+        %  > Create function handle of \phi and \nabla\phi with 25 terms (polynomial shape).
+        function [func] = pol_shape()
+            syms x f;
+            n       = 25;
+            l_1     = 1:n;
+            func{1} = (x-f).^(l_1-1);
+            l_2     = 1:n-1;
+            func{2} = l_2.*(x-f).^(l_2-1);
+        end
+    end    
 end

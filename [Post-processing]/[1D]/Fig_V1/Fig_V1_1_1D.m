@@ -11,9 +11,9 @@ classdef Fig_V1_1_1D
             if ~exp
                 figure; set(gcf,'Units','pixels','Position',fig.Position);
                 subplot(1,2,1);
-                Fig_V1_1_1D.Plot_1(msh.f.Xv,obj.e,x,fig,0);
+                Fig_V1_1_1D.Plot_1_1(msh.f.Xv,obj.e,x,fig,0);
                 subplot(1,2,2);
-                Fig_V1_1_1D.Plot_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0);
+                Fig_V1_1_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0); 
             else
             end
         end
@@ -21,7 +21,7 @@ classdef Fig_V1_1_1D
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
-        function [] = Plot_1(Xv,obj_e,x,fig,zoom)
+        function [] = Plot_1_1(Xv,obj_e,x,fig,zoom)
             %  > Auxiliary variables.
             fid   = "V1_1_1D (1)";
             j     = x.a;
@@ -58,10 +58,10 @@ classdef Fig_V1_1_1D
             end
             %  > Plot variables.
             [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,V1);
-            [L2,P2,Y2]  = Fig_Tools_1D.Var_2(fig,M2,L2,Xv,V2);
+            [L2,P2,Y2]  = Fig_Tools_1D.Var_3(fig,M2,L2,Xv,V2);
 
             %  > Axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],Xv,[Y1;Y2],[-1,1],2);
+            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,1],2);
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end
@@ -77,7 +77,7 @@ classdef Fig_V1_1_1D
                             L{1} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S(1),"}|$"]);
                             L{2} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S(2),"}|$"]);
                         otherwise
-                            S(3) = Fig_Tools_1D.Set_str_2(n);
+                            S(3) = Fig_Tools_1D.Set_str_3(n);
                             L{1} = join(["$\|\bar{\tau}_{f^{\left(p\right)}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
                             L{2} = join(["$\|\bar{\tau}_{f^{\left(p\right)}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
                     end
@@ -92,7 +92,7 @@ classdef Fig_V1_1_1D
                             L{5} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{",S(2),"}|$"]);
                             L{6} = join(["$|\bar{\tau}_{f^{\left(a-p\right)}}^{",S(2),"}|$"]);
                         otherwise
-                            S(3) = Fig_Tools_1D.Set_str_2(n);
+                            S(3) = Fig_Tools_1D.Set_str_3(n);
                             L{1} = join(["$\|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
                             L{2} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
                             L{3} = join(["$\|\bar{\tau}_{f^{\left(a-p\right)}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
@@ -106,7 +106,7 @@ classdef Fig_V1_1_1D
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
-        function [] = Plot_2(Xc,Xv,obj_e,x,fig,zoom)
+        function [] = Plot_1_2(Xc,Xv,obj_e,x,fig,zoom)
             %  > Auxiliary variables.
             fid   = "V1_1_1D (2)";
             j     = x.a;
@@ -141,10 +141,10 @@ classdef Fig_V1_1_1D
             end
             %  > Plot variables.
             [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xc,V1);
-            [L2,P2,Y2]  = Fig_Tools_1D.Var_2(fig,M2,L2,Xc,V2);
+            [L2,P2,Y2]  = Fig_Tools_1D.Var_3(fig,M2,L2,Xc,V2);
 
             %  > Axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],Xv,[Y1;Y2],[-1,1],2);
+            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,1],2);
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end
@@ -158,7 +158,7 @@ classdef Fig_V1_1_1D
                             L{1} = "$|e_{c^{\left(p\right)}}|$";
                             L{2} = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
                         otherwise
-                            S(1) = Fig_Tools_1D.Set_str_2(n);
+                            S(1) = Fig_Tools_1D.Set_str_3(n);
                             L{1} = join(["$\|e_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
                             L{2} = join(["$\|\bar{\tau}_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
                     end
@@ -171,7 +171,7 @@ classdef Fig_V1_1_1D
                             L{3} = "$|\bar{\tau}_{c^{\left(a\right)}}|$";
                             L{4} = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
                         otherwise
-                            S(1) = Fig_Tools_1D.Set_str_2(n);
+                            S(1) = Fig_Tools_1D.Set_str_3(n);
                             L{1} = join(["$\|e_{c^{\left(a\right)}}\|_{_{",S(1),"}}$"]);
                             L{2} = join(["$\|e_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
                             L{3} = join(["$\|\bar{\tau}_{c^{\left(a\right)}}\|_{_{",S(1),"}}$"]);
@@ -180,6 +180,6 @@ classdef Fig_V1_1_1D
                 otherwise
                     return;
             end
-        end
+        end   
     end
 end
