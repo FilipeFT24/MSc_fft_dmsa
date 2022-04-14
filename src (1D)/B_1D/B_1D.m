@@ -53,14 +53,13 @@ classdef B_1D
             %  > Field: 'u' (update stencil).
             obj.u        = A_2_1D.Initialize_upd(msh,inp.pv.p);
             %  > Field: 'x' (nodal solution/ stencil coefficients,etc.).
-            obj.x.Df     = cell (Nf,n);
             obj.x.if     = cell (Nf,n);
             obj.x.Tf     = cell (Nf,n);
+            obj.x.cf.a   = cell (Nf,n);   %  > Unnecessary.
+            obj.x.cf.x   = cell (Nf,n);   %  > Unnecessary.
             obj.x.nv.a.c = zeros(Nc,1);
             obj.x.nv.a.f = zeros(Nf,1);
             obj.x.nv.x.c = zeros(Nc,1);
-            obj.x.cf.a   = cell (Nf,n);
-            obj.x.cf.x   = cell (Nf,n);
             obj.x.vf.a   = cell (Nf,n);
             obj.x.vf.x   = cell (Nf,n);
             obj.x.xf.a   = zeros(Nf,n);
@@ -73,10 +72,9 @@ classdef B_1D
                 case false
                     %  > 'p-standard' run.
                     obj_p = B_1D.Initialize    (inp,msh);
-                    obj_p.u.p(15,:) = 3;
                     obj   = B_2_2_1D.p_standard(inp,msh,obj_p);
                     %  > Plot...
-                    Fig_V1_1_1D.Plot(inp,msh,obj,[1,1]);
+                    Fig_V1_1_1D.Plot(inp,msh,obj,[1,0]);
                     Fig_V1_2_1D.Plot(inp,msh,obj,0); 
                 case true
                     %  > 'p-adaptative' run.

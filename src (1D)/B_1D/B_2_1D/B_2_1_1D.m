@@ -20,20 +20,28 @@ classdef B_2_1_1D
         % >> 1.4. ---------------------------------------------------------
         %  > Update nodal/face values, etc.
         function [x] = Update_4(f,s,u,x)
-            x        = B_2_1_1D.Update_xv(f,s,u,x);
             x        = B_2_1_1D.Update_cf(u,x);
+            x        = B_2_1_1D.Update_xv(f,s,u,x);           
             x        = B_2_1_1D.Update_xf(u,x);
         end
         % >> 1.5. ---------------------------------------------------------
         %  > Update all.
-        function [m,s,x] = Update_all(inp,msh,f,m,s,u,x,add_b,fs)
+        function [m,s,x] = Update_all(inp,msh,f,m,s,u,x,add_b,upd)
+            %  > Update stencil.
             s            = B_2_1_1D.Update_1 (inp,msh,f,s,u,add_b);
             x            = B_2_1_1D.Update_2 (msh,f,s,u,x);
-            m            = B_2_1_1D.Update_3 (msh,f,m,s,u,x);
-            if fs
+            %  > Update matrices(?).
+            if upd(1)
+                m        = B_2_1_1D.Update_3 (msh,f,m,s,u,x);
+            end
+            %  > Update nodal solution(?).
+            if upd(2)
                 x.nv.x.c = B_2_1_1D.Update_xc(m.At,m.Bt);
             end
-            x            = B_2_1_1D.Update_4 (f,s,u,x);
+            %  > Update face values(?).
+            if upd(3)
+                x        = B_2_1_1D.Update_4 (f,s,u,x);
+            end
         end
         
         %% > 2. -----------------------------------------------------------
@@ -100,7 +108,6 @@ classdef B_2_1_1D
                         Inv       = inv(Df);
                         Tf        = df*Inv;
                         %  > Update 'x' field.
-                        x.Df{j,i} = Df;
                         x.if{j,i} = Inv;
                         x.Tf{j,i} = Tf;
                     end
@@ -249,6 +256,19 @@ classdef B_2_1_1D
             xc = At\(Bt);
         end
         % >> 4.2. ---------------------------------------------------------
+        %  > Update 'x.cf' field (fitted polynomial coefficients).
+        function [x] = Update_cf(u,x)
+            for i = u.f
+                for j = 1:size(u.s,2)
+                    if ~isempty(u.s{j})
+                        for k = u.s{j}'
+                            x.cf.(i){k,j} = x.if{k,j}*x.vf.(i){k,j};
+                        end
+                    end
+                end
+            end
+        end
+        % >> 4.3. ---------------------------------------------------------
         %  > Update 'x.vf' field (nodal values used to fit face polynomial).
         function [x] = Update_xv(f,s,u,x)
             for i = u.f
@@ -262,19 +282,6 @@ classdef B_2_1_1D
                             end
                             %  > Cell contribution(s).
                             x.vf.(i){k,j}(~l,1) = x.nv.(i).c(s.c{k,j});
-                        end
-                    end
-                end
-            end
-        end
-        % >> 4.3. ---------------------------------------------------------
-        %  > Update 'x.cf' field (fitted polynomial coefficients).
-        function [x] = Update_cf(u,x)
-            for i = u.f
-                for j = 1:size(u.s,2)
-                    if ~isempty(u.s{j})
-                        for k = u.s{j}'
-                            x.cf.(i){k,j} = x.if{k,j}*x.vf.(i){k,j};
                         end
                     end
                 end
@@ -297,23 +304,41 @@ classdef B_2_1_1D
         %% > 5. -----------------------------------------------------------
         % >> 5.1. ---------------------------------------------------------
         %  > Update 'e.p(...)' field (predicted/estimated cell/face truncation error distribution/norms).
-        function [ep] = Update_ep(ep,f,m,s,u,x,Vc,fs)
+        function [ed,ep,x] = Update_ed_ep(ea,ed,ep,f,m,s,u,x,Vc,fs)
+            %  > Auxiliary variables.
+            v  = s{1}.v;
+            
             %  > \tau_f(\phi), \tau(\nabla\phi), \tau_f and \tau_c.
-            ep = Tools_1D.Set_1_e(ep,s{1}.v,x{1}.xf.x,x{2}.xf.x);
+            ep = Tools_1D.Set_1_e(ep,v,x{1}.xf.x,x{2}.xf.x);
             %  > Update remaining error fields...
-            if ~fs
-                ep = Tools_1D.Set_2_e(ep,m{2},Vc);
-            else
-                %  > Add \tau_c(p) as source term (RHS).
-                xc = B_2_1_1D.Update_xc(m{1}.At,m{1}.Bt+ep.t.c);
-                %  > Update cell values...
-                for i = 1:size(x,2)
-                    u{i}.f      = "x";
-                    x{i}.nv.x.c = xc;
-                    x{i}        = B_2_1_1D.Update_4(f,s{i},u{i},x{i});
+            if ~fs(2)
+                if ~fs(1)
+                    %  > w/ LO (j=2).
+                    j = 2;
+                else
+                    %  > w/ HO (j=1).
+                    j = 1;
                 end
-                ep = Tools_1D.Set_1_e(ep,s{1}.v,x{1}.xf.x,x{2}.xf.x);
-                ep = Tools_1D.Set_2_e(ep,m{2},Vc);
+                ep = Tools_1D.Set_2_e(ep,m{j},Vc);
+            else
+                %  > Add as source(?).
+                j  = 1;
+                x  = B_2_1_1D.Add_ep_tc(ep,f,m{j},s,u,x);
+                ep = Tools_1D.Set_1_e  (ep,v,x{1}.xf.x,x{2}.xf.x);
+                ep = Tools_1D.Set_2_e  (ep,m{j},Vc);
+            end
+            ed = B_2_1_1D.Update_ed(ea,ed,ep,Vc);
+        end
+        %  > 5.1.1. -------------------------------------------------------
+        %  > Auxiliary function (add \tau_c(p) as source on the RHS).  
+        function [x] = Add_ep_tc(ep,f,m,s,u,x)
+            %  > Update cell values...
+            xc = B_2_1_1D.Update_xc(m.At,m.Bt+ep.t.c);
+            %  > Update "x.(...).x" field only.
+            for i = 1:size(x,2)
+                u{i}.f      = "x";   
+                x{i}.nv.x.c = xc;
+                x{i}        = B_2_1_1D.Update_4(f,s{i},u{i},x{i});
             end
         end
         % >> 5.2. ---------------------------------------------------------
@@ -355,35 +380,47 @@ classdef B_2_1_1D
             %  > Auxiliary variables.
             Nf    = msh.f.Nf;
             Vc    = msh.c.Vc;
+            %  > Options.
+            fs(1) = 0;   %  > Use higher-order solution(?).
+            fs(2) = 1;   %  > Add lower-order (predicted) cell truncation error as source term(?).
+            if all(fs)   %  > Allow only w/ lower-order solution.
+                return;
+            end
+                        
+            %  > Assign...
+            if ~fs(1)
+                x.nv.x.c = B_2_1_1D.Update_xc(m.At,m.Bt);
+                x        = B_2_1_1D.Update_4 (f,s,u,x);
+            end
             ms{1} = m;
             ss{1} = s;
             us{1} = u;
             xs{1} = x;
-            %  > Options...
-            fs_1  = 0;
-            fs_2  = 1;
             ns    = inp.pa.ns;
-            
             %  > #1: Update stencil...
             for i = 1:ns
                 %  > Update fields 'm', 's', 'u' and 'x'.
                 u       = B_2_1_1D.Set_upd_p (u,Nf);
-                [m,s,x] = B_2_1_1D.Update_all(inp,msh,f,m,s,u,x,add_b,fs_1);
-                %  > Assign fields 'xs', 'ss', 'us' and 'xs'.                
+                [m,s,x] = B_2_1_1D.Update_all(inp,msh,f,m,s,u,x,add_b,[1,fs(1),1]);
+                %  > Assign fields 'ms', 'ss', 'us' and 'xs'.               
+                if fs(1)
+                    xs{i}.nv.x.c = x.nv.x.c;
+                    xs{i}        = B_2_1_1D.Update_4(f,ss{i},us{i},xs{i});
+                end
                 ms{i+1} = m;
                 ss{i+1} = s;
                 us{i+1} = u;
                 xs{i+1} = x;
             end
-            %  > #2: Update field 'e.a'.
+            %  > #2: Update field 'e.a': if the (predicted) cell truncation error is added as a source term, no need to update matrices, since e=A(LO)\(\tau_c).
             for i = 1:ns+1
-                e.a{i}  = B_2_1_1D.Update_ea(e.a{i},ms{i},ss{i},xs{i},Vc);
+                e.a{i} = B_2_1_1D.Update_ea(e.a{i},ms{i},ss{i},xs{i},Vc);
             end
-            %  > #3: Update fields 'e.p' and 'e.d'.
+            %  > #3: Update fields 'e.d', 'e.p' and 'xs'.
             for i = 1:ns
-                j       = i:i+1;
-                e.p{i}  = B_2_1_1D.Update_ep(e.p{i},f,ms(j),ss(j),us(j),xs(j),Vc,fs_2);
-                e.d{i}  = B_2_1_1D.Update_ed(e.a{i},e.d{i},e.p{i},Vc);
+                j                     = i:i+1;
+                [e.d{i},e.p{i},xs(j)] = ...
+                    B_2_1_1D.Update_ed_ep(e.a{i},e.d{i},e.p{i},f,ms(j),ss(j),us(j),xs(j),Vc,fs);
             end
         end
         %  > 5.4.1. -------------------------------------------------------

@@ -152,17 +152,21 @@ classdef Fig_V1_1_1D
                 V2  (2) = obj_e.p{n}.t.n_abs.c(j);
             else
                 %  > #1 (Error distribution).
-                M1      = ["--o","--o",":v",":v"];
+                M1      = ["--o",":v","-.d","--o",":v","-.d"];
                 V1(:,1) = obj_e.a{n}.c.c_abs;
                 V1(:,2) = obj_e.p{n}.c.c_abs;
-                V1(:,3) = obj_e.a{n}.t.c_abs;
-                V1(:,4) = obj_e.p{n}.t.c_abs;
+                V1(:,3) = obj_e.d{n}.c.c_abs;
+                V1(:,4) = obj_e.a{n}.t.c_abs;
+                V1(:,5) = obj_e.p{n}.t.c_abs;
+                V1(:,6) = obj_e.d{n}.t.c_abs;
                 %  > #2 (Error norms).
-                M2      = repelem("-",4);
+                M2      = repelem("-",6);
                 V2  (1) = obj_e.a{n}.c.n_abs  (j);
                 V2  (2) = obj_e.p{n}.c.n_abs  (j);
-                V2  (3) = obj_e.a{n}.t.n_abs.c(j);
-                V2  (4) = obj_e.p{n}.t.n_abs.c(j);
+                V2  (3) = obj_e.d{n}.c.n_abs  (j);
+                V2  (4) = obj_e.a{n}.t.n_abs.c(j);
+                V2  (5) = obj_e.p{n}.t.n_abs.c(j);
+                V2  (6) = obj_e.d{n}.t.n_abs.c(j);
             end
             %  > Plot variables.
             [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xc,V1);
@@ -191,16 +195,20 @@ classdef Fig_V1_1_1D
                     %  > w/  analytic.
                     switch n
                         case 0
-                            L{1} = "$|e_{c^{\left(a\right)}}|$";
-                            L{2} = "$|e_{c^{\left(p\right)}}|$";
-                            L{3} = "$|\bar{\tau}_{c^{\left(a\right)}}|$";
-                            L{4} = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
+                            L{1} = "$|e_{c^{\left(a\right)\phantom{-p}}}|$";
+                            L{2} = "$|e_{c^{\left(p\right)\phantom{-a}}}|$";
+                            L{3} = "$|e_{c^{\left(a-p\right)}}|$";
+                            L{4} = "$|\bar{\tau}_{c^{\left(a\right)\phantom{-p}}}|$";
+                            L{5} = "$|\bar{\tau}_{c^{\left(p\right)\phantom{-a}}}|$";
+                            L{6} = "$|\bar{\tau}_{c^{\left(a-p\right)}}|$";
                         otherwise
                             S(1) = Fig_Tools_1D.Set_str_3(n);
-                            L{1} = join(["$\|e_{c^{\left(a\right)}}\|_{_{",S(1),"}}$"]);
-                            L{2} = join(["$\|e_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
-                            L{3} = join(["$\|\bar{\tau}_{c^{\left(a\right)}}\|_{_{",S(1),"}}$"]);
-                            L{4} = join(["$\|\bar{\tau}_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
+                            L{1} = join(["$\|e_{c^{\left(a\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
+                            L{2} = join(["$\|e_{c^{\left(p\right)\phantom{-a}}}\|_{_{",S(1),"}}$"]);
+                            L{3} = join(["$\|e_{c^{\left(a-p\right)}}\|_{_{",S(1),"}}$"]);
+                            L{4} = join(["$\|\bar{\tau}_{c^{\left(a\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
+                            L{5} = join(["$\|\bar{\tau}_{c^{\left(p\right)\phantom{-a}}}\|_{_{",S(1),"}}$"]);
+                            L{6} = join(["$\|\bar{\tau}_{c^{\left(a-p\right)}}\|_{_{",S(1),"}}$"]);
                     end
                 otherwise
                     return;

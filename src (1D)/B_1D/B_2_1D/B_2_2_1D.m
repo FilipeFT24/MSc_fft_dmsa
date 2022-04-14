@@ -5,11 +5,11 @@ classdef B_2_2_1D
         function [obj] = p_standard(inp,msh,obj)
             %  > Auxiliary variables.
             add_b      = inp.pv.add;
-            fs         = 1;
+            upd        = [1,0,0];
             obj.x.nv.a = obj.f.av;
             
             %  > Update fields 'e', 'f', 's', 'u' and 'x'.
-            [obj.m,obj.s,obj.x] = B_2_1_1D.Update_all(inp,msh,obj.f,obj.m,obj.s,obj.u,obj.x,add_b,fs);
+            [obj.m,obj.s,obj.x] = B_2_1_1D.Update_all(inp,msh,obj.f,obj.m,obj.s,obj.u,obj.x,add_b,upd);
             [obj.e,obj.x]       = B_2_1_1D.Update_e  (inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x,add_b);
         end
         
