@@ -14,7 +14,12 @@ classdef B_1D
             f = ["a","p","d"];
             for i = 1:length(f)
                 j = f(i);
-                for k = 1:inp.pa.ns
+                if i == 1
+                    ns = inp.pa.ns+1;
+                else
+                    ns = inp.pa.ns;
+                end
+                for k = 1:ns
                     obj.e.(j){k}.t.c       = zeros(Nc,1);
                     obj.e.(j){k}.t.c_abs   = zeros(Nc,1);
                     obj.e.(j){k}.t.f       = zeros(Nf,n+1);
@@ -58,10 +63,8 @@ classdef B_1D
             obj.x.cf.x   = cell (Nf,n);
             obj.x.vf.a   = cell (Nf,n);
             obj.x.vf.x   = cell (Nf,n);
-            obj.x.xf.a   = zeros(Nf,n);   %  > Face  nodal values (w/ '.a').
-            obj.x.xf.x   = zeros(Nf,n);   %  > Face  nodal values (w/ '.x').
-            obj.x.xt.a   = cell (Nf,n);   %  > Total nodal values (w/ '.a').
-            obj.x.xt.x   = cell (Nf,n);   %  > Total nodal values (w/ '.x').
+            obj.x.xf.a   = zeros(Nf,n);
+            obj.x.xf.x   = zeros(Nf,n);
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
@@ -70,15 +73,11 @@ classdef B_1D
                 case false
                     %  > 'p-standard' run.
                     obj_p = B_1D.Initialize    (inp,msh);
+                    obj_p.u.p(15,:) = 3;
                     obj   = B_2_2_1D.p_standard(inp,msh,obj_p);
                     %  > Plot...
-                    plot  = [1,0];
-                    if plot(1)
-                        Fig_V1_1_1D.Plot(inp,msh,obj);
-                    end
-                    if plot(2)
-                        Fig_V1_2_1D.Plot(inp,msh,obj);
-                    end
+                    Fig_V1_1_1D.Plot(inp,msh,obj,[1,1]);
+                    Fig_V1_2_1D.Plot(inp,msh,obj,0); 
                 case true
                     %  > 'p-adaptative' run.
                     fld_adapt   = "p";

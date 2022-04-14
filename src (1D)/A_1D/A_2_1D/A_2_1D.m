@@ -44,7 +44,8 @@ classdef A_2_1D
 
         %% > 2. -----------------------------------------------------------
         %  > Initialize 'upd' structure.
-        function [upd] = Initialize_upd(msh,p)         
+        function [upd] = Initialize_upd(msh,p)  
+            upd.f = ["a","x"];
             for i = 1:length(p)
                 upd.p    (:,i) = repelem(p(i),msh.f.Nf);
                 upd.s{i} (:,1) = 1:msh.f.Nf;

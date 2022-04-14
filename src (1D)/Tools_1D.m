@@ -47,15 +47,23 @@ classdef Tools_1D
         end
         % >> 2.2. ---------------------------------------------------------
         %  > Compute remaining error fields (based on the convective/diffusive facial components).
-        function [e] = Set_e(e,m,Vc)
-            % >> Error distribution.
+        %  > 2.2.1. -------------------------------------------------------
+        function [e] = Set_1_e(e,v,x,y)
+            %  > \tau_f(\phi) and \tau(\nabla\phi).
+            [a,b] = size(e.t.f);
+            for i = 1:b-1
+                e.t.f(:,i) = v(i).*(y(:,i)-x(:,i));
+            end
             %  > \tau_f.
-            [a,b]          = size(e.t.f);
-            e.t.f    (:,b) = sum (e.t.f(:,1:b-1),2);
+            e.t.f    (:,b) = sum(e.t.f(:,1:b-1),2);
             %  > \tau_c.
             for i = 1:a-1
                 e.t.c(i,1) = e.t.f(i,b)-e.t.f(i+1,b);
             end
+        end
+        %  > 2.2.2. -------------------------------------------------------
+        function [e] = Set_2_e(e,m,Vc)
+            % >> Error distribution.
             %  > e_c.
             e.c.c    (:,1) = m.At\e.t.c;
             %  > abs().
@@ -69,6 +77,6 @@ classdef Tools_1D
             e.t.n_abs.f    = Tools_1D.Set_n(e.t.f_abs);
             e.t.n.c        = Tools_1D.Set_n(e.t.c,Vc);
             e.t.n_abs.c    = Tools_1D.Set_n(e.t.c_abs,Vc);
-        end
+        end 
     end
 end

@@ -1,7 +1,7 @@
 classdef Fig_V1_2_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [] = Plot(inp,msh,obj)
+        function [] = Plot(inp,msh,obj,plot)
             %  > Auxiliary variables.
             exp = 0;
             fig = Fig_Tools_1D.Set_fig(0,exp);
@@ -41,13 +41,14 @@ classdef Fig_V1_2_1D
             coeffs = 0;%inv(D)*phi_s;
             
             
-            
             if ~exp
-                figure; set(gcf,'Units','pixels','Position',fig.Position);
-                subplot(1,2,1);
-                Fig_V1_2_1D.Plot_1_1(msh.c.Xc,msh.f.Xv,obj,x,fig,0,coeffs);
-                subplot(1,2,2);
-                Fig_V1_2_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj,x,fig,0,coeffs);
+                if plot(1)
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    subplot(1,2,1);
+                    Fig_V1_2_1D.Plot_1_1(msh.c.Xc,msh.f.Xv,obj,x,fig,0,coeffs);
+                    subplot(1,2,2);
+                    Fig_V1_2_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj,x,fig,0,coeffs);
+                end
             end
         end
         

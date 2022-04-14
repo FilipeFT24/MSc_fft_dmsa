@@ -46,7 +46,7 @@ classdef A_1_1D
             i              = v(2);
             f              = exp(-i.*((x-c).^2));         %  > f.
             inp.pv.f       = matlabFunction(f);           %  > f handle.
-            inp.pv.b       = ["Dirichlet","Robin"];       %  > BC: West(1)/East(2).
+            inp.pv.b       = ["Dirichlet","Dirichlet"];   %  > BC: West(1)/East(2).
             inp.pv.v       = [1,1];                       %  > Coeffs: Convection(1)/Diffusion(2).
             inp.pv.p       = [1,1];                       %  > Polynomial order: Convection(1)/Diffusion(2).
             if any(rem(inp.pv.p,2) == 0)                  %  > Allow only p=1,3,5,etc.

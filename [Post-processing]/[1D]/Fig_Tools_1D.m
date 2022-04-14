@@ -31,14 +31,14 @@ classdef Fig_Tools_1D
                 fig.FT_4     = 20.00;                          %  > x/y-axis  (zoom).
                 fig.Position = [350,100,850,600];              %  > Position.
             end
-            fig.trsh         = 1.0e-16;                        %  > Do not plot below 'trsh'.
+            fig.trsh         = 1.0e-12;                        %  > Do not plot below 'trsh'.
             fig.nsh          = 0;                              %  > Number of elements below 'trsh'.
             fig.NT           = [10,10];                        %  > Number of ticks (x/y-direction).
             fig.Folder       = "../[Figures]/[1D]";            %  > Destination folder.
             if ~run
                 fig.c        = 0;                              %  > x-axis width.
                 fig.L{1}     = "$x$";                          %  > x-axis label.
-                fig.L{2}     = "";                             %  > y-axis label.
+                fig.L{2}     = "$\textrm{Error magnitude}$";   %  > y-axis label.
             else
                 fig.c        = 0;                              %  > x-axis width.
                 fig.L{1}     = "$\textrm{NNZ}$";               %  > x-axis label.

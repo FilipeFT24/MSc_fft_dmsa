@@ -1,7 +1,7 @@
 classdef Fig_V1_1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [] = Plot(inp,msh,obj)
+        function [] = Plot(inp,msh,obj,plot)
             %  > Auxiliary variables.
             exp = 0;
             fig = Fig_Tools_1D.Set_fig(0,exp);
@@ -9,12 +9,37 @@ classdef Fig_V1_1_1D
             x.b = 1; %  >   {n}.
             
             if ~exp
-                figure; set(gcf,'Units','pixels','Position',fig.Position);
-                subplot(1,2,1);
-                Fig_V1_1_1D.Plot_1_1(msh.f.Xv,obj.e,x,fig,0);
-                subplot(1,2,2);
-                Fig_V1_1_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0); 
+                if plot(1)
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    subplot(1,2,1);
+                    Fig_V1_1_1D.Plot_1_1(msh.f.Xv,obj.e,x,fig,0);
+                    subplot(1,2,2);
+                    Fig_V1_1_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0);
+                end
+                if plot(2)
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    subplot(1,2,1);
+                    x.a = 1;
+                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
+                    subplot(1,2,2);
+                    x.a = 2;
+                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
+                end
             else
+                if plot(1)
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    Fig_V1_1_1D.Plot_1_1(msh.f.Xv,obj.e,x,fig,0);
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    Fig_V1_1_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0);
+                end
+                if plot(2)
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    x.a = 1;
+                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    x.a = 2;
+                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
+                end
             end
         end
         
@@ -59,9 +84,9 @@ classdef Fig_V1_1_1D
             %  > Plot variables.
             [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,V1);
             [L2,P2,Y2]  = Fig_Tools_1D.Var_3(fig,M2,L2,Xv,V2);
-
+            
             %  > Axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,1],2);
+            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,3],2);
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end
@@ -142,7 +167,7 @@ classdef Fig_V1_1_1D
             %  > Plot variables.
             [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xc,V1);
             [L2,P2,Y2]  = Fig_Tools_1D.Var_3(fig,M2,L2,Xc,V2);
-
+            
             %  > Axis/legend,etc.
             Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,1],2);
             %  > Export(?)/Zoom(?).
@@ -180,6 +205,41 @@ classdef Fig_V1_1_1D
                 otherwise
                     return;
             end
-        end   
+        end
+        %% > 3. -----------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
+        %  > 3.1.1. -------------------------------------------------------
+        function [] = Plot_2_X(Xv,obj,x,fig,zoom)
+            %  > Auxiliary variables.
+            fid = "V1_1_1D (3/4)";
+            j   = x.a;
+            n   = x.b;
+            
+            %  > Select variables.
+            L1      = Fig_V1_1_1D.Set_Legend_3(j);
+            M1      = ["--o","--v","-.d",":o",":v"];
+            V1(:,1) = obj.x{n}  .xf.a(:,j)-obj.x{n}  .xf.x(:,j); %  n    (a-p).
+            V1(:,2) = obj.x{n+1}.xf.a(:,j)-obj.x{n+1}.xf.x(:,j); %  n+1  (a-p).
+            V1(:,3) = V1(:,1)-V1(:,2);                           %  dn   (a-p).
+            V1(:,4) = obj.x{n+1}.xf.a(:,j)-obj.x{n}  .xf.a(:,j); % \tau_f(a).
+            V1(:,5) = obj.x{n+1}.xf.x(:,j)-obj.x{n}  .xf.x(:,j); % \tau_f(p).
+            V1      = abs(V1);
+            %  > Plot variables.
+            [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,V1);
+            
+            %  > Axis/legend,etc.
+            Fig_Tools_1D.Set_Plot_2(fig,L1,P1,1,Xv,Y1,[-1,1],2);
+            %  > Export(?)/Zoom(?).
+            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
+        end
+        %  > 3.1.2. -------------------------------------------------------
+        function [L] = Set_Legend_3(j)
+            S    = Fig_Tools_1D.Set_str_2(j);
+            L{1} = join(["$|",S,"_{f_{\left(a-m\right)}}^{\left(m\right)\phantom{-n}}|$"]);
+            L{2} = join(["$|",S,"_{f_{\left(a-m\right)}}^{\left(n\right)\phantom{-m}}|$"]);
+            L{3} = join(["$|",S,"_{f_{\left(a-m\right)}}^{\left(m-n\right)}|$"]);
+            L{4} = join(["$|\bar{\tau}_{f^{\left(a\right)}}^{",S,"}|$"]);
+            L{5} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S,"}|$"]);
+        end
     end
 end
