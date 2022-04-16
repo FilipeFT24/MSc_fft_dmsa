@@ -11,27 +11,26 @@ classdef B_1D
             g  = inp.pv.v(2);
                  
             %  > Fields: 'e.a', 'e.d' and 'e.p'.
-            f = ["a","p","d"];
-            for i = 1:length(f)
-                j = f(i);
-                if i == 1
-                    ns = inp.pa.ns+1;
-                else
-                    ns = inp.pa.ns;
+            for i = ["a","da","p","d"]
+                switch i
+                    case "a"
+                        ns = inp.pa.ns+1;
+                    otherwise
+                        ns = inp.pa.ns;
                 end
-                for k = 1:ns
-                    obj.e.(j){k}.t.c       = zeros(Nc,1);
-                    obj.e.(j){k}.t.c_abs   = zeros(Nc,1);
-                    obj.e.(j){k}.t.f       = zeros(Nf,n+1);
-                    obj.e.(j){k}.t.f_abs   = zeros(Nf,n+1);
-                    obj.e.(j){k}.t.n.c     = zeros(1,3);
-                    obj.e.(j){k}.t.n_abs.c = zeros(1,3);
-                    obj.e.(j){k}.t.n.f     = zeros(3,n+1);
-                    obj.e.(j){k}.t.n_abs.f = zeros(3,n+1);
-                    obj.e.(j){k}.c.c       = zeros(Nc,1);
-                    obj.e.(j){k}.c.c_abs   = zeros(Nc,1);
-                    obj.e.(j){k}.c.n       = zeros(1,3);
-                    obj.e.(j){k}.c.n_abs   = zeros(1,3);
+                for j = 1:ns
+                    obj.e.(i){j}.t.c       = zeros(Nc,1);
+                    obj.e.(i){j}.t.c_abs   = zeros(Nc,1);
+                    obj.e.(i){j}.t.f       = zeros(Nf,n+1);
+                    obj.e.(i){j}.t.f_abs   = zeros(Nf,n+1);
+                    obj.e.(i){j}.t.n.c     = zeros(1,3);
+                    obj.e.(i){j}.t.n_abs.c = zeros(1,3);
+                    obj.e.(i){j}.t.n.f     = zeros(3,n+1);
+                    obj.e.(i){j}.t.n_abs.f = zeros(3,n+1);
+                    obj.e.(i){j}.c.c       = zeros(Nc,1);
+                    obj.e.(i){j}.c.c_abs   = zeros(Nc,1);
+                    obj.e.(i){j}.c.n       = zeros(1,3);
+                    obj.e.(i){j}.c.n_abs   = zeros(1,3);
                 end
             end
             %  > Field: 'f' (analytic function).
@@ -55,15 +54,13 @@ classdef B_1D
             %  > Field: 'x' (nodal solution/ stencil coefficients,etc.).
             obj.x.if     = cell (Nf,n);
             obj.x.Tf     = cell (Nf,n);
-            obj.x.cf.a   = cell (Nf,n);   %  > Unnecessary.
-            obj.x.cf.x   = cell (Nf,n);   %  > Unnecessary.
-            obj.x.nv.a.c = zeros(Nc,1);
             obj.x.nv.a.f = zeros(Nf,1);
-            obj.x.nv.x.c = zeros(Nc,1);
-            obj.x.vf.a   = cell (Nf,n);
-            obj.x.vf.x   = cell (Nf,n);
-            obj.x.xf.a   = zeros(Nf,n);
-            obj.x.xf.x   = zeros(Nf,n);
+            for i = ["a","x"]
+                obj.x.cf.(i)   = cell (Nf,n);   %  > Unnecessary.
+                obj.x.vf.(i)   = cell (Nf,n);
+                obj.x.xf.(i)   = zeros(Nf,n);
+                obj.x.nv.(i).c = zeros(Nc,1);
+            end
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up 'p-standard' and 'p-adaptative' runs.
@@ -72,10 +69,10 @@ classdef B_1D
                 case false
                     %  > 'p-standard' run.
                     obj_p = B_1D.Initialize    (inp,msh);
-                    obj   = B_2_2_1D.p_standard(inp,msh,obj_p);
+                    obj   = B_2_2_1D.p_standard(inp,msh,obj_p);                    
                     %  > Plot...
-                    Fig_V1_1_1D.Plot(inp,msh,obj,[1,0]);
-                    Fig_V1_2_1D.Plot(inp,msh,obj,0); 
+                    Fig_V1_1_1D.Plot(inp,msh,obj,0);
+                    Fig_V1_2_1D.Plot(inp,msh,obj,1);
                 case true
                     %  > 'p-adaptative' run.
                     fld_adapt   = "p";

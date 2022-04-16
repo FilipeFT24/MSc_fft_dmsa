@@ -9,36 +9,19 @@ classdef Fig_V1_1_1D
             x.b = 1; %  >   {n}.
             
             if ~exp
-                if plot(1)
+                if plot
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     subplot(1,2,1);
                     Fig_V1_1_1D.Plot_1_1(msh.f.Xv,obj.e,x,fig,0);
                     subplot(1,2,2);
                     Fig_V1_1_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0);
-                end
-                if plot(2)
-                    figure; set(gcf,'Units','pixels','Position',fig.Position);
-                    subplot(1,2,1);
-                    x.a = 1;
-                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
-                    subplot(1,2,2);
-                    x.a = 2;
-                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
                 end
             else
-                if plot(1)
+                if plot
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     Fig_V1_1_1D.Plot_1_1(msh.f.Xv,obj.e,x,fig,0);
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     Fig_V1_1_1D.Plot_1_2(msh.c.Xc,msh.f.Xv,obj.e,x,fig,0);
-                end
-                if plot(2)
-                    figure; set(gcf,'Units','pixels','Position',fig.Position);
-                    x.a = 1;
-                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
-                    figure; set(gcf,'Units','pixels','Position',fig.Position);
-                    x.a = 2;
-                    Fig_V1_1_1D.Plot_2_X(msh.f.Xv,obj,x,fig,0);
                 end
             end
         end
@@ -48,42 +31,49 @@ classdef Fig_V1_1_1D
         %  > 2.1.1. -------------------------------------------------------
         function [] = Plot_1_1(Xv,obj_e,x,fig,zoom)
             %  > Auxiliary variables.
-            fid   = "V1_1_1D (1)";
-            j     = x.a;
-            n     = x.b;
-            p_all = 1;
-            L1    = Fig_V1_1_1D.Set_Legend_1(p_all,0);
-            L2    = Fig_V1_1_1D.Set_Legend_1(p_all,x.a);
+            fid  = "V1_1_1D (1)";
+            j    = x.a;
+            n    = x.b;
+            plot = [1,0];
+            L1   = Fig_V1_1_1D.Set_Legend_1(plot,0);
+            L2   = Fig_V1_1_1D.Set_Legend_1(plot,x.a);
             
             %  > Select variables.
-            if ~p_all
+            if ~plot(1)
                 %  > #1 (Error distribution).
                 M1 = repelem(":v",2);
                 V1 = obj_e.p{n}.t.f_abs  (:,1:2);
                 %  > #2 (Error norms).
-                M2 = repelem("-",6);
+                M2 = repelem("-",2);
                 V2 = obj_e.p{n}.t.n_abs.f(j,1:2);
             else
-                %  > #1 (Error distribution).
-                M1      = ["--o",":v","-.d","--o",":v","-.d"];
-                V1(:,1) = obj_e.a{n}.t.f_abs  (:,1);
-                V1(:,2) = obj_e.p{n}.t.f_abs  (:,1);
-                V1(:,3) = obj_e.d{n}.t.f_abs  (:,1);
-                V1(:,4) = obj_e.a{n}.t.f_abs  (:,2);
-                V1(:,5) = obj_e.p{n}.t.f_abs  (:,2);
-                V1(:,6) = obj_e.d{n}.t.f_abs  (:,2);
-                %  > #2 (Error norms).
-                M2      = repelem("-",6);
-                V2  (1) = obj_e.a{n}.t.n_abs.f(j,1);
-                V2  (2) = obj_e.p{n}.t.n_abs.f(j,1);
-                V2  (3) = obj_e.d{n}.t.n_abs.f(j,1);
-                V2  (4) = obj_e.a{n}.t.n_abs.f(j,2);
-                V2  (5) = obj_e.p{n}.t.n_abs.f(j,2);
-                V2  (6) = obj_e.d{n}.t.n_abs.f(j,2);
+                if ~plot(2)
+                    %  > #1 (Error distribution).
+                    M1 = ["--o",":v","-.d","--o",":v","-.d"];
+                    f1 = ["da","p","d"];
+                    f2 = ["c","t"];
+                    %  > #2 (Error norms).
+                    M2 = repelem("-",6);
+                else
+                    %  > #1 (Error distribution).
+                    M1 = ["--o","--s",":v","-.d","--o","--s",":v","-.d"];
+                    f1 = ["a","da","p","d"];
+                    f2 = ["c","t"];
+                    %  > #2 (Error norms).
+                    M2 = repelem("-",8);
+                end
+                l1 = length(f1);
+                l2 = length(f2);
+                for a = 1:l2
+                    for b = 1:l1
+                        V1(:,l1*(a-1)+b) = obj_e.(f1(b)){n}.t.f_abs  (:,a);
+                        V2(  l1*(a-1)+b) = obj_e.(f1(b)){n}.t.n_abs.f(j,a);  
+                    end
+                end
             end
             %  > Plot variables.
-            [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,V1);
-            [L2,P2,Y2]  = Fig_Tools_1D.Var_3(fig,M2,L2,Xv,V2);
+            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,V1);
+            [L2,P2,Y2] = Fig_Tools_1D.Var_3(fig,M2,L2,Xv,V2);
             
             %  > Axis/legend,etc.
             Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,3],2);
@@ -91,39 +81,71 @@ classdef Fig_V1_1_1D
             Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end
         %  > 2.1.2. -------------------------------------------------------
-        function [L] = Set_Legend_1(f,n)
+        function [L] = Set_Legend_1(plot,n)
             S(1) = Fig_Tools_1D.Set_str_1(1);
             S(2) = Fig_Tools_1D.Set_str_1(2);
-            switch f
+            switch plot(1)
                 case 0
                     %  > w/o analytic.
                     switch n
                         case 0
                             L{1} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S(1),"}|$"]);
                             L{2} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S(2),"}|$"]);
-                        otherwise
+                        case 1
                             S(3) = Fig_Tools_1D.Set_str_3(n);
                             L{1} = join(["$\|\bar{\tau}_{f^{\left(p\right)}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
                             L{2} = join(["$\|\bar{\tau}_{f^{\left(p\right)}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                        otherwise
+                            return;
                     end
                 case 1
                     %  > w/  analytic.
                     switch n
                         case 0
-                            L{1} = join(["$|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{",S(1),"}|$"]);
-                            L{2} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{",S(1),"}|$"]);
-                            L{3} = join(["$|\bar{\tau}_{f^{\left(a-p\right)}}^{",S(1),"}|$"]);
-                            L{4} = join(["$|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{",S(2),"}|$"]);
-                            L{5} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{",S(2),"}|$"]);
-                            L{6} = join(["$|\bar{\tau}_{f^{\left(a-p\right)}}^{",S(2),"}|$"]);
-                        otherwise
+                            switch plot(2)
+                                case 0
+                                    L{1} = join(["$|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(1),"}|$"]);
+                                    L{2} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(1),"}|$"]);
+                                    L{3} = join(["$|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(1),"}|$"]);
+                                    L{4} = join(["$|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(2),"}|$"]);
+                                    L{5} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(2),"}|$"]);
+                                    L{6} = join(["$|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(2),"}|$"]);
+                                case 1
+                                    L{1} = join(["$|\bar{\tau}_{f^{\left(a\right)\phantom{-dp}}}^{",S(1),"}|$"]);
+                                    L{2} = join(["$|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(1),"}|$"]);
+                                    L{3} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(1),"}|$"]);
+                                    L{4} = join(["$|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(1),"}|$"]);
+                                    L{5} = join(["$|\bar{\tau}_{f^{\left(a\right)\phantom{-dp}}}^{",S(2),"}|$"]);
+                                    L{6} = join(["$|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(2),"}|$"]);
+                                    L{7} = join(["$|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(2),"}|$"]);
+                                    L{8} = join(["$|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(2),"}|$"]);
+                                otherwise
+                                    return;
+                            end 
+                        case 1
                             S(3) = Fig_Tools_1D.Set_str_3(n);
-                            L{1} = join(["$\|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
-                            L{2} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
-                            L{3} = join(["$\|\bar{\tau}_{f^{\left(a-p\right)}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
-                            L{4} = join(["$\|\bar{\tau}_{f^{\left(a\right)\phantom{-p}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
-                            L{5} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-p}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
-                            L{6} = join(["$\|\bar{\tau}_{f^{\left(a-p\right)}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                            switch plot(2)
+                                case 0                               
+                                    L{1} = join(["$\|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{2} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{3} = join(["$\|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{4} = join(["$\|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                    L{5} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                    L{6} = join(["$\|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                case 1
+                                    L{1} = join(["$\|\bar{\tau}_{f^{\left(a\right)\phantom{-dp}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{2} = join(["$\|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{3} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{4} = join(["$\|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(1),"}\|_{_{",S(3),"}}$"]);
+                                    L{5} = join(["$\|\bar{\tau}_{f^{\left(a\right)\phantom{-dp}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                    L{6} = join(["$\|\bar{\tau}_{f^{\left(da\right)\phantom{-p}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                    L{7} = join(["$\|\bar{\tau}_{f^{\left(p\right)\phantom{-da}}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                    L{8} = join(["$\|\bar{\tau}_{f^{\left(da-p\right)}}^{",S(2),"}\|_{_{",S(3),"}}$"]);
+                                otherwise
+                                    return;
+                            end
+                        otherwise
+                            return;
                     end
                 otherwise
                     return;
@@ -133,121 +155,128 @@ classdef Fig_V1_1_1D
         %  > 2.2.1. -------------------------------------------------------
         function [] = Plot_1_2(Xc,Xv,obj_e,x,fig,zoom)
             %  > Auxiliary variables.
-            fid   = "V1_1_1D (2)";
-            j     = x.a;
-            n     = x.b;
-            p_all = 1;
-            L1    = Fig_V1_1_1D.Set_Legend_2(p_all,0);
-            L2    = Fig_V1_1_1D.Set_Legend_2(p_all,x.a);
+            fid  = "V1_1_1D (2)";
+            j    = x.a;
+            n    = x.b;
+            plot = [1,1];
+            L1   = Fig_V1_1_1D.Set_Legend_2(plot,0);
+            L2   = Fig_V1_1_1D.Set_Legend_2(plot,x.a);
             
             %  > Select variables.
-            if ~p_all
+            if ~plot(1)
                 %  > #1 (Error distribution).
-                M1 = repelem("--o",2);
+                M1      = repelem("--o",2);
                 V1(:,1) = obj_e.p{n}.c.c_abs;
                 V1(:,2) = obj_e.p{n}.t.c_abs;
                 %  > #2 (Error norms).
-                M2 = repelem("-",2);
+                M2      = repelem("-",2);
                 V2  (1) = obj_e.p{n}.c.n_abs  (j);
                 V2  (2) = obj_e.p{n}.t.n_abs.c(j);
             else
-                %  > #1 (Error distribution).
-                M1      = ["--o",":v","-.d","--o",":v","-.d"];
-                V1(:,1) = obj_e.a{n}.c.c_abs;
-                V1(:,2) = obj_e.p{n}.c.c_abs;
-                V1(:,3) = obj_e.d{n}.c.c_abs;
-                V1(:,4) = obj_e.a{n}.t.c_abs;
-                V1(:,5) = obj_e.p{n}.t.c_abs;
-                V1(:,6) = obj_e.d{n}.t.c_abs;
-                %  > #2 (Error norms).
-                M2      = repelem("-",6);
-                V2  (1) = obj_e.a{n}.c.n_abs  (j);
-                V2  (2) = obj_e.p{n}.c.n_abs  (j);
-                V2  (3) = obj_e.d{n}.c.n_abs  (j);
-                V2  (4) = obj_e.a{n}.t.n_abs.c(j);
-                V2  (5) = obj_e.p{n}.t.n_abs.c(j);
-                V2  (6) = obj_e.d{n}.t.n_abs.c(j);
+                if ~plot(2)
+                    %  > #1 (Error distribution).
+                    M1  = ["--o",":v","-.d","--o",":v","-.d"];
+                    f1  = ["da","p","d"];
+                    f2  = ["c","t"];
+                    %  > #2 (Error norms).
+                    M2  = repelem("-",6);
+                else
+                    %  > #1 (Error distribution).
+                    M1  = ["--o","--s",":v","-.d","--o","--s",":v","-.d"];
+                    f1  = ["a","da","p","d"];
+                    f2  = ["c","t"];
+                    %  > #2 (Error norms).
+                    M2  = repelem("-",8);
+                end
+                l1 = length(f1);
+                l2 = length(f2);
+                for a = 1:l2
+                    for b = 1:l1
+                        V1(:,l1*(a-1)+b) = obj_e.(f1(b)){n}.(f2(a)).c_abs;
+                        switch a
+                            case 1
+                                V2(l1*(a-1)+b) = obj_e.(f1(b)){n}.(f2(a)).n_abs  (j);
+                            case 2
+                                V2(l1*(a-1)+b) = obj_e.(f1(b)){n}.(f2(a)).n_abs.c(j);
+                        end  
+                    end
+                end
             end
             %  > Plot variables.
-            [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xc,V1);
-            [L2,P2,Y2]  = Fig_Tools_1D.Var_3(fig,M2,L2,Xc,V2);
+            [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,Xc,V1);
+            [L2,P2,Y2] = Fig_Tools_1D.Var_3(fig,M2,L2,Xc,V2);
             
             %  > Axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,1],2);
+            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],1,Xv,[Y1;Y2],[-1,2.5],2);
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end
         %  > 2.2.2. -------------------------------------------------------
-        function [L] = Set_Legend_2(f,n)
-            switch f
+        function [L] = Set_Legend_2(plot,n)
+            switch plot(1)
                 case 0
                     %  > w/o analytic.
                     switch n
                         case 0
                             L{1} = "$|e_{c^{\left(p\right)}}|$";
                             L{2} = "$|\bar{\tau}_{c^{\left(p\right)}}|$";
-                        otherwise
+                        case 1
                             S(1) = Fig_Tools_1D.Set_str_3(n);
                             L{1} = join(["$\|e_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
                             L{2} = join(["$\|\bar{\tau}_{c^{\left(p\right)}}\|_{_{",S(1),"}}$"]);
+                        otherwise
+                            return;
                     end
                 case 1
                     %  > w/  analytic.
                     switch n
                         case 0
-                            L{1} = "$|e_{c^{\left(a\right)\phantom{-p}}}|$";
-                            L{2} = "$|e_{c^{\left(p\right)\phantom{-a}}}|$";
-                            L{3} = "$|e_{c^{\left(a-p\right)}}|$";
-                            L{4} = "$|\bar{\tau}_{c^{\left(a\right)\phantom{-p}}}|$";
-                            L{5} = "$|\bar{\tau}_{c^{\left(p\right)\phantom{-a}}}|$";
-                            L{6} = "$|\bar{\tau}_{c^{\left(a-p\right)}}|$";
+                            switch plot(2)
+                                case 0
+                                    L{1} = "$|e_{c^{\left(da\right)\phantom{-p}}}|$";
+                                    L{2} = "$|e_{c^{\left(p\right)\phantom{-da}}}|$";
+                                    L{3} = "$|e_{c^{\left(da-p\right)}}|$";
+                                    L{4} = "$|\bar{\tau}_{c^{\left(da\right)\phantom{-p}}}|$";
+                                    L{5} = "$|\bar{\tau}_{c^{\left(p\right)\phantom{-da}}}|$";
+                                    L{6} = "$|\bar{\tau}_{c^{\left(da-p\right)}}|$";
+                                case 1
+                                    L{1} = "$|e_{c^{\left(a\right)\phantom{-dp}}}|$";
+                                    L{2} = "$|e_{c^{\left(da\right)\phantom{-p}}}|$";
+                                    L{3} = "$|e_{c^{\left(p\right)\phantom{-da}}}|$";
+                                    L{4} = "$|e_{c^{\left(da-p\right)}}|$";
+                                    L{5} = "$|\bar{\tau}_{c^{\left(a\right)\phantom{-dp}}}|$";
+                                    L{6} = "$|\bar{\tau}_{c^{\left(da\right)\phantom{-p}}}|$";
+                                    L{7} = "$|\bar{\tau}_{c^{\left(p\right)\phantom{-da}}}|$";
+                                    L{8} = "$|\bar{\tau}_{c^{\left(da-p\right)}}|$";
+                                otherwise
+                                    return;
+                            end 
                         otherwise
                             S(1) = Fig_Tools_1D.Set_str_3(n);
-                            L{1} = join(["$\|e_{c^{\left(a\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
-                            L{2} = join(["$\|e_{c^{\left(p\right)\phantom{-a}}}\|_{_{",S(1),"}}$"]);
-                            L{3} = join(["$\|e_{c^{\left(a-p\right)}}\|_{_{",S(1),"}}$"]);
-                            L{4} = join(["$\|\bar{\tau}_{c^{\left(a\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
-                            L{5} = join(["$\|\bar{\tau}_{c^{\left(p\right)\phantom{-a}}}\|_{_{",S(1),"}}$"]);
-                            L{6} = join(["$\|\bar{\tau}_{c^{\left(a-p\right)}}\|_{_{",S(1),"}}$"]);
+                            switch plot(2)
+                                case 0
+                                    L{1} = join(["$\|e_{c^{\left(da\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
+                                    L{2} = join(["$\|e_{c^{\left(p\right)\phantom{-da}}}\|_{_{",S(1),"}}$"]);
+                                    L{3} = join(["$\|e_{c^{\left(da-p\right)}}\|_{_{",S(1),"}}$"]);
+                                    L{4} = join(["$\|\bar{\tau}_{c^{\left(da\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
+                                    L{5} = join(["$\|\bar{\tau}_{c^{\left(p\right)\phantom{-da}}}\|_{_{",S(1),"}}$"]);
+                                    L{6} = join(["$\|\bar{\tau}_{c^{\left(da-p\right)}}\|_{_{",S(1),"}}$"]);
+                                case 1
+                                    L{1} = join(["$\|e_{c^{\left(a\right)\phantom{-dp}}}\|_{_{",S(1),"}}$"]);
+                                    L{2} = join(["$\|e_{c^{\left(da\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
+                                    L{3} = join(["$\|e_{c^{\left(p\right)\phantom{-da}}}\|_{_{",S(1),"}}$"]);
+                                    L{4} = join(["$\|e_{c^{\left(da-p\right)}}\|_{_{",S(1),"}}$"]);
+                                    L{5} = join(["$\|\bar{\tau}_{c^{\left(a\right)\phantom{-dp}}}\|_{_{",S(1),"}}$"]);
+                                    L{6} = join(["$\|\bar{\tau}_{c^{\left(da\right)\phantom{-p}}}\|_{_{",S(1),"}}$"]);
+                                    L{7} = join(["$\|\bar{\tau}_{c^{\left(p\right)\phantom{-da}}}\|_{_{",S(1),"}}$"]);
+                                    L{8} = join(["$\|\bar{\tau}_{c^{\left(da-p\right)}}\|_{_{",S(1),"}}$"]);
+                                otherwise
+                                    return;
+                            end
                     end
                 otherwise
                     return;
             end
-        end
-        %% > 3. -----------------------------------------------------------
-        % >> 3.1. ---------------------------------------------------------
-        %  > 3.1.1. -------------------------------------------------------
-        function [] = Plot_2_X(Xv,obj,x,fig,zoom)
-            %  > Auxiliary variables.
-            fid = "V1_1_1D (3/4)";
-            j   = x.a;
-            n   = x.b;
-            
-            %  > Select variables.
-            L1      = Fig_V1_1_1D.Set_Legend_3(j);
-            M1      = ["--o","--v","-.d",":o",":v"];
-            V1(:,1) = obj.x{n}  .xf.a(:,j)-obj.x{n}  .xf.x(:,j); %  n    (a-p).
-            V1(:,2) = obj.x{n+1}.xf.a(:,j)-obj.x{n+1}.xf.x(:,j); %  n+1  (a-p).
-            V1(:,3) = V1(:,1)-V1(:,2);                           %  dn   (a-p).
-            V1(:,4) = obj.x{n+1}.xf.a(:,j)-obj.x{n}  .xf.a(:,j); % \tau_f(a).
-            V1(:,5) = obj.x{n+1}.xf.x(:,j)-obj.x{n}  .xf.x(:,j); % \tau_f(p).
-            V1      = abs(V1);
-            %  > Plot variables.
-            [L1,P1,Y1]  = Fig_Tools_1D.Var_1(fig,M1,L1,Xv,V1);
-            
-            %  > Axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,L1,P1,1,Xv,Y1,[-1,1],2);
-            %  > Export(?)/Zoom(?).
-            Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
-        end
-        %  > 3.1.2. -------------------------------------------------------
-        function [L] = Set_Legend_3(j)
-            S    = Fig_Tools_1D.Set_str_2(j);
-            L{1} = join(["$|",S,"_{f_{\left(a-m\right)}}^{\left(m\right)\phantom{-n}}|$"]);
-            L{2} = join(["$|",S,"_{f_{\left(a-m\right)}}^{\left(n\right)\phantom{-m}}|$"]);
-            L{3} = join(["$|",S,"_{f_{\left(a-m\right)}}^{\left(m-n\right)}|$"]);
-            L{4} = join(["$|\bar{\tau}_{f^{\left(a\right)}}^{",S,"}|$"]);
-            L{5} = join(["$|\bar{\tau}_{f^{\left(p\right)}}^{",S,"}|$"]);
         end
     end
 end

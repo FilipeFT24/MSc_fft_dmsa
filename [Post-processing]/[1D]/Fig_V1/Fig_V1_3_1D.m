@@ -1,7 +1,7 @@
 classdef Fig_V1_3_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [] = Plot(inp,obj,msh)
+        function [] = Plot(inp,obj,msh,plot)
             %  > Auxiliary variables.
             exp = 0;
             j   = 1;
