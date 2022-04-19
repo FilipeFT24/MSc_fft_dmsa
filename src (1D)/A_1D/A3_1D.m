@@ -6,7 +6,6 @@ classdef A3_1D
         function [fh] = Update_fh(inp)
             %  > Auxiliary variables.
             syms x;
-            m = length(inp.c);
             
             % >> Analytic function/derivatives.
             %  > Function.
@@ -16,6 +15,7 @@ classdef A3_1D
             intc   = int(func);
             %  > Function derivatives up to (+1(boundary)+2/4(next stencil)=+3/5)...
             if inp.t_terms.allow && ~inp.p_adapt.allow
+                m = length(inp.c);
                 n = inp.t_terms.n;
                 i = 1:m;
                 j = inp.p(i)+n(i);
@@ -71,8 +71,10 @@ classdef A3_1D
             Nc = msh.c.Nc;
             Xv = msh.f.Xv;
             
-            i       = 1:Nc;
-            st(i,1) = f(Xv(i+1))-f(Xv(i));
+            i             = 1:Nc;
+            st(i,1)       = f(Xv(i+1))-f(Xv(i));
+            st(isinf(st)) = 0;
+            st(isnan(st)) = 0;
         end        
     end
 end

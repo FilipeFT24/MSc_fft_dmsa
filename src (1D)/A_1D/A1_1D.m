@@ -41,9 +41,9 @@ classdef A1_1D
             %  > P-adaptation.
             %  > #1.
             inp.p_adapt.allow  = 1;                           %  > Allow p-adaptation(?).
-            inp.p_adapt.nc     = 25;                          %  > Maximum number of cycles.
+            inp.p_adapt.nc     = 75;                          %  > Maximum number of cycles.
             inp.p_adapt.ec_m   = 1.0E-10;                     %  > Minimum (global) discretization error.
-            inp.p_adapt.lambda = 0.75;                        %  > Treshold for face selection based on maximum face truncation error (%).
+            inp.p_adapt.lambda = 0.55;                        %  > Treshold for face selection based on maximum face truncation error (%).
             if ~(inp.p_adapt.lambda < 1)
                 return;
             end

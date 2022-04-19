@@ -146,6 +146,9 @@ classdef B3_1D
             %  > Auxiliary variables.
             ch   = inp.b.change(1);
             f_uc = [1,0,0];
+            if f == "a"
+                f = "da";
+            end
 
             %  > Initialize cycle count.
             i = 0;
@@ -167,8 +170,8 @@ classdef B3_1D
                 obj_x(i,:) = obj.x;
                 %   > Stop adaptation(?).
                 if ~B3_1D.Stop(inp,i,obj.e.(f){1}.c.n_abs)
-                    ic    = 1;
-                    obj.u = B3_1D.Set_u(inp,obj.e.(f){ic}.t.f_abs,obj.u);
+                    ic     = 1;
+                    obj.u  = B3_1D.Set_u(inp,obj.e.(f){ic}.t.f_abs,obj.u);
                 else
                     obj.e  = obj_e;
                     obj.m  = obj_m;
@@ -183,13 +186,13 @@ classdef B3_1D
         function [u] = Set_u(inp,v,u)
             A     = 2;
             trsh  = inp.p_adapt.lambda.*max(v(:,3));
-            fs    = find(v(:,3) > trsh);
+            fs_n  = find(v(:,3) > trsh);
             for i = 1:size(u,2)
                 for j = 1:size(u{i}.p,2)
-                    u_s{i}{j}      = fs;
-                    u  {i}.p(fs,j) = u{i}.p(fs,j)+A;
+                    u_s{i}{j}      = fs_n;
+                    u{i}.p(fs_n,j) = u{i}.p(fs_n,j)+A;
                 end
-                u{i}.s = u_s{i}; 
+                u{i}.s = u_s{i};
             end          
         end
         %  > 2.3.2. -------------------------------------------------------
