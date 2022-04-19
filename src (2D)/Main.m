@@ -10,7 +10,7 @@ run_2 = false;
 % >> ----------------------------------------------------------------------
 if run_1
     %  > Class A/B.
-    [inp,msh] = A.WrapUp_A(0.03);
+    [inp,msh] = A.WrapUp_A(0.1);
     [pde]     = B.WrapUp_B(inp,msh);
     %  > Class C/D.
     C.WrapUp_C(inp,msh,pde,'bnd',0);

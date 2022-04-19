@@ -120,23 +120,14 @@ classdef B_2_2
             end
         end
         % >> 1.3.3. -------------------------------------------------------
-        function [X] = SetUp_Solver(A,B,str)
-            if strcmpi(str,'backslash')
-                X       = A\B; % Equivalent to: V*((U'*B)./s).
-            elseif strcmpi(str,'Tikhonov')
-                lmbd    = 1E-06;
-                [U,S,V] = svd_lapack(A);
-                s       = diag(S);
-                X       = V*(s.*(U'*B)./(s.^2+lmbd));
-            else
-                return;
-            end
+        function [X] = SetUp_Solver(A,B)
+            X = A\B;
         end
         % >> 1.3.4. -------------------------------------------------------
         %  > Implicit flux reconstruction.
         function [pde] = PDE_Implicit(msh,pde,A,B)
             %  > Phi_c.
-            pde.Phi = B_2_2.SetUp_Solver(A,B,'backslash');
+            pde.Phi = B_2_2.SetUp_Solver(A,B);
             %  > Error norms.
             i       = 1:msh.c.NC;
             X(i)    = abs(pde.an.blk(i)-pde.Phi(i));

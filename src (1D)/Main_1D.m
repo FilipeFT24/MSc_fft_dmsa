@@ -7,9 +7,9 @@ Tools_1D.Set_Directories;
 run = [1,0];
 % >> ----------------------------------------------------------------------
 if run(1)
-    msh = A_1D.Set_A1(2E-2);     %  > h.
-    inp = A_1D.Set_A2([0.5,100]);    %  > c/i.
-    obj = B_1D.Run_p (inp,msh);    %  > inp/msh.
+    inp = A1_1D.Set_inp_2([0.5,75]);   %  > f: c/i.
+    msh = A2_1D.Set_msh  (1E-2);        %  > h.
+    obj = B3_1D.Run_p    (inp,msh);     %  > inp/msh.
 end
 % >> ----------------------------------------------------------------------
 if run(2)
