@@ -3,24 +3,20 @@
 ```
 └── src (1D)  
     ├── A_1D                  # >>> Call...
-    │   ├── A_1_1D            #  >> Set inputs.
-    │   ├── A_2_1D            #  >> Generate grid/stencil.
-    │   └── A_Tools_1D        #  >> Tools.
+    │   ├── A1_1D             #  >> X
+    │   ├── A2_1D             #  >> X
+    │   └── A3_1D             #  >> X
     │
-    ├── B_1D                  # >>> Problem setup/initialization.
-    │   ├── B_1_1D            #  >> Compute analytic solution/source term.
-    │   └── B_2_1D            #  >> Assemble matrices A/B and compute error distribution/norms.
+    ├── B_1D                  # >>> X
+    │   ├── B1_1D             #  >> X
+    │   ├── B2_1D             #  >> X
+    │   └── B3_1D             #  >> X
     │
-    └── C_1D                  # >>> Call 'Fig_X' functions.
-        ├── Fig_0             #  >> Fig_0.
-        ├── Fig_1             #  >> Fig_1.
-        ├── Fig_2             #  >> Fig_2.
-        ├── Fig_Tools         #  >> Fig_Tools_1D.
-        └── ...               #  >> ...    
+    └── C_1D                  # >>> X 
 ```
 #### **Main_1D (1)** - _inp_ structure.
 #### **Main_1D (1)** - _msh_ structure.
-#### **Main_1D (1)** - _pde_ structure.
+#### **Main_1D (1)** - _obj_ structure.
 ```
 pde 
 ├── fn                        # >>> Field: Analytic function (symbols/handles).
@@ -45,41 +41,7 @@ pde
 |   |   ├── c                 #   > Truncation error distribution. 
 |   |   ├── f                 #   > Truncation error distribution. 
 │   |   └── n                 #   > Truncation error norms.
-```      
-
-#### **A_2_1D (1)** - Differencing schemes.
-- **UDS** (Upwind).
-- **CDS** (Central).
-- **DDS** (Downwind).
-
-#### **A_2_1D (2)** - Number of neighbours to the left/right.
-- **#1.**
-  - **UDS** (1/0).
-  - **CDS** (1/1).
-  - **DDS** (0/1).     
-- **#2.**
-  - **UDS** (2/1).
-  - **CDS** (2/2).
-  - **DDS** (1/2).
-- **#3:**
-  - **UDS** (3/2).
-  - **CDS** (3/3).
-  - **DDS** (2/3).
-- **#4:** 
-  - (...)
-## Features/task list
-- [x] Bulk/wall clustered grids.
-- [x] Dirichlet/Neumann/Robin boundary conditions.
-- [x] Upwind/central/downwind differencing schemes up to order n.
-- [&nbsp;] Error estimators/indicators for p-refinement.
-  - [&nbsp;] **1.** X
-  - [&nbsp;] **2.** X
-  - [&nbsp;] **3.** X
-- [x] P-adaptation rules.
-  - [x] **1.** P-refinement criteria identification.
-  - [x] **2.** Irregular rule.
-  - [x] **3.** Neighbour rule.
-  - [&nbsp;] **4.** Odd-order schemes fix.
+```     
 
 # 2D Code structure
 ## Top-level directory layout
@@ -182,15 +144,26 @@ msh
 │ 
 ├── d                         # >>> Field: Domain.
 │   └── h_ref                 #  >> Hydraulic diameter. 
-│
+
+
+
+
+
+
+
+
 ├── c                         # >>> Field: Cell.
 │   ├── NC                    #  >> Number of cells.
 │   ├── xy_v                  #  >> Cell 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
 │   ├── mean                  #  >> Cell 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
-│   ├── h                     #  >> Cell 'i' hydraulic diameter.
 │   ├── vol                   #  >> Cell 'i' volume.
 │   ├── v                     #  >> Cell 'i' vertex indices. 
 │   ├── c                     #  >> Cell 'i' neighbouring cell indices. 
+│   ├── h                     #  >> Cell 'i' hydraulic diameter.
+
+
+
+
 │   └── f                     #  >> Field: Face.
 │       ├── f                 #   > Face indices of cell 'i'.
 │       ├── xy_v              #   > Face 'j' vertices of cell 'i'.  
@@ -204,6 +177,9 @@ msh
 │   ├── xy_v                  #  >> Face 'i' vertices: [Xv(:),Yv(:)] = [xy_v{i}(:,1),xy_v{i}(:,2)].
 │   ├── mean                  #  >> Face 'i' centroid: [Xv,Yv] = [mean(1,i),mean(2,i)].
 │   ├── v                     #  >> Face 'i' vertex indices.
+
+
+
 │   └── c                     #  >> Face 'i' direct neighbouring cell indices.
 │                                ├── 1. length(c{i}) = 1. Boundary face.
 │                                └── 2. length(c{i}) = 2. Bulk face.
