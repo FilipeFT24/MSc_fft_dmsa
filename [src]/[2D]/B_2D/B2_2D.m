@@ -31,20 +31,17 @@ classdef B2_2D
                     %  > Loop through cell "j"'s faces.
                     for k = 1:numel(msh.c.f.if(j,:))
                         %  > Face index (f_jk).
-                        f_jk           = msh.c.f.if(j,k);
-                        %  > Logical array w/ cell(s)/faces(s).
-                        i_jk           = s.i      {f_jk,i};
-                        l           = s.logical{f_jk,i};
+                        f_jk         = msh.c.f.if(j,k);
                         %  > Cell/face indices used to fit "f_jk".
-                        vA             = i_jk     ( l);
-                        vB             = i_jk     (~l);
+                        l            = s.logical{f_jk,i};
+                        a            = s.i      {f_jk,i}( l);
+                        b            = s.i      {f_jk,i}(~l); b = sort(b);
                         %  > Ac (cell contributions).
-                        m.Ac {i}(j,vA) = m.Ac{i}(j,vA)+msh.c.f.Sf{j}(k,:)*x.Tf_V{f_jk,i}(:,l);
+                        m.Ac{i}(j,a) = m.Ac{i}(j,a)+msh.c.f.Sf{j}(k,:)*x.Tf_V{f_jk,i}(:,l);
                         %  > Bc (cell contributions).
                         if any(~l)
-                            fi           = ismembc(f.bd.i,sort(vB));
-                            fv           = f.bd.v (fi);
-                            m.Bc{i}(j,1) = m.Bc{i}(j)-msh.c.f.Sf{j}(k,:)*x.Tf_V{f_jk,i}(:,~l)*fv;
+                            bd_v       = f.bd.v (ismembc(f.bd.i,b));
+                            m.Bc{i}(j) = m.Bc{i}(j)-msh.c.f.Sf{j}(k,:)*x.Tf_V{f_jk,i}(:,~l)*bd_v;
                         end
                     end
                 end

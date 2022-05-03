@@ -32,7 +32,24 @@ classdef B1_2D
                         %  > Add boundary faces...
                         fc = unique(reshape(msh.c.f.if(cv(bc),:),1,[]));
                         bf = fc(~msh.f.logical(fc))';
-                        
+                        %  > Check whether the selected boundary faces contain any of "fv"'s vertices.
+                        if ~isempty(bf)
+                            %  > Initialize...
+                            l = false(numel(bf),numel(fv));
+                            %  > ...for each of the vertices in "fv".
+                            for k = 1:numel(fv)
+                                l(:,k) = any(bsxfun(@eq,msh.f.iv(bf,:),fv(k)),2);
+                            end
+                            bf = bf(any(l,2));
+                            %  > Remove face that shares 1 vertex w/ face "j".
+                            if any(bf == j)
+                                fv_c          = unique (reshape([msh.v.if{fv}],1,[]))';
+                                b             = ismembc(bf,fv_c);
+                                b   (bf == j) = false;
+                                bf  (b)       = [];
+                            end
+                        end
+                       
                         %  > Compute coordinates...
                         xc = B1_2D.xt_c(msh.c.c.xy.c,cv);
                         if ~isempty(bf)

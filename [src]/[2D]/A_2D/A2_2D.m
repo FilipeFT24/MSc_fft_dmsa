@@ -22,7 +22,7 @@ classdef A2_2D
                         end
                     case "v"
                         %  > Uniform w/ triangles.
-                        struct = A2_2D.msh_v_1(h,XLim,YLim);
+                        struct = A2_2D.msh_v_1(h);
                     otherwise
                         return;
                 end
@@ -110,7 +110,7 @@ classdef A2_2D
         % >> 3.1. ---------------------------------------------------------
         %  > Example #1 (w/ squares): uniform w/ domain: (x,y)={[0,1],[0,1]}.
         function [struct] = msh_s_1(h)
-            %  > Grid limits.
+            %  > Limits.
             XLim      = [0,1];
             YLim      = [0,1];
             %  > xy_v.
@@ -137,7 +137,10 @@ classdef A2_2D
         
         %% > 4. -----------------------------------------------------------
         % >> 4.1. ---------------------------------------------------------
-        function [struct] = msh_v_1(h,XLim,YLim)
+        function [struct] = msh_v_1(h)
+            %  > Limits.
+            XLim     = [0,1];
+            YLim     = [0,1];
             %  > xy_v.
             [~,xy_v] = A2_2D.msh_grid(h,XLim,YLim);
             %  > 'struct'.

@@ -69,7 +69,7 @@ classdef A1_2D
                 c(2)            =  exp(-(1./k).^2);
                 g               =  ((exp(-(d1./(c(1).*d2)).^2)-c(2))./(1-c(2)));
                 wf              =  g./d1.^p;                       
-                inp.wf          =  matlabFunction(wf,'Vars',{d1,d2}); %  > w (weight function) handle.
+                inp.wf          =  matlabFunction(wf,'Vars',{d1,d2}); %  > wf (weight function) handle.
             end
             %  > ----------------------------------------------------------
             %  > (Volumetric) source term.
