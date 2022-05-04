@@ -378,19 +378,17 @@ classdef A2_2D
             end
             for i = 1:sz_c
                 ic_f(i,:) = find(U(i,:),sz_e,'first');
-                c         = A2_2D.i_AB(F{1}.c.v{i}(:,1:end-1),F{2}.iv(ic_f(i,:),:));
+                c         = A2_2D.i_AB(F{2}.iv(ic_f(i,:),:),F{1}.c.v{i}(:,1:end-1));
                 ic_f(i,c) = ic_f(i,:);
             end
         end
         %  > 5.2.4.1. -----------------------------------------------------
         %  > Auxiliary function (faster version of built-in function "intersect" w/ 'rows' option).
-        function [is_match] = i_AB(A,B)
-            %  > Sort/keep track of indices of A and [A;B].
-            [A,is_A] = sortrows(A);
-            [~,is_T] = sortrows([A;B]);
-            %  > Match w/ indices of B.
-            is_B     = is_T(is_T > size(A,1))-size(A,1);
-            is_match = is_A(is_B);
+        function [l] = i_AB(A,B)
+            [~,i] = sortrows(A);
+            [~,j] = sortrows(i);
+            [~,k] = sortrows(B);
+            l     = k(j);
         end
         % >> 5.3. ---------------------------------------------------------
         %  > Field: "v".

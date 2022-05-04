@@ -17,17 +17,17 @@ classdef A3_2D
             %  > func.
             v               = inp.c(1,:);
             g               = inp.c(2,:);
-            func            = (v(1).*df(1)+v(2).*df(2))-(g(1).*diff(df(1),x)+g(2).*diff(df(2),y));
+            func            = v(1).*df(1)+v(2).*df(2)+g(1).*diff(df(1),x)+g(2).*diff(df(2),y);
             fh.func.f       = func;
             fh.func.fh_f    = matlabFunction(func ,'Vars',{[x,y]});
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update field 'f.av' (cell/face values).
         function [av] = Update_av(msh,f)        
-            av.c(:,1) = f.f   (msh.c.c.xy.c);
-            av.f(:,1) = f.f   (msh.f.xy.c);
-            av.f(:,2) = f.d{1}(msh.f.xy.c);
-            av.f(:,3) = f.d{2}(msh.f.xy.c);
+            av.c   (:,1) = f.f   (msh.c.c.xy.c);
+            av.f{1}(:,1) = f.f   (msh.f.xy.c);
+            av.f{2}(:,1) = f.d{1}(msh.f.xy.c);
+            av.f{2}(:,2) = f.d{2}(msh.f.xy.c);
         end
         % >> 1.3. ---------------------------------------------------------
         %  > Update field 'f.bd' (boundary face indices/values).

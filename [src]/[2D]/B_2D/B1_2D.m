@@ -2,20 +2,22 @@ classdef B1_2D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        %  > Update stencil coordinates,etc.
+        %  > Initialize field "s" (stencil cell/face indices, coordinates, etc.).
+        function [s] = Initialize_1(nc,ns,Nf)
+            for i = 1:ns
+                s{i}.i       = cell(Nf,nc);
+                s{i}.logical = cell(Nf,nc);
+                s{i}.xt      = cell(Nf,nc);
+            end
+        end
+        % >> 1.2. ---------------------------------------------------------
+        %  > Update stencil coordinates, etc.
         function [s] = Update_1(msh,s,u)
             s        = B1_2D.Update_sc(msh,s,u);
         end
-        % >> 1.2. ---------------------------------------------------------
-        %  > Update stencil coefficients,etc.
-        function [x] = Update_2(inp,msh,f,s,u,x)
-            x        = B1_2D.Update_sx(inp,msh,f,s,u,x);
-        end
-        
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        %  > Update stencil coordinates.
-        function [s] = Update_sc(msh,s,u) 
+        % >> 1.3. ---------------------------------------------------------
+        %  > Update stencil coordinates, etc.
+        function [s] = Update_sc(msh,s,u)
             for i = 1:size(u.s,2)
                 if isempty(u.s{i})
                     continue;
@@ -49,7 +51,7 @@ classdef B1_2D
                                 bf  (b)       = [];
                             end
                         end
-                       
+                        
                         %  > Compute coordinates...
                         xc = B1_2D.xt_c(msh.c.c.xy.c,cv);
                         if ~isempty(bf)
@@ -65,7 +67,7 @@ classdef B1_2D
                             %  > logical: 1-blk.
                             logical = true(numel(cv),1);
                         end
-                        %  > Update 's' field.
+                        %  > Update field "s".
                         if ~isempty(bf)
                             s.i  {j,i} = cat(1,cv,bf);
                         else
@@ -81,10 +83,10 @@ classdef B1_2D
         %  > Compute stencil (adimensional) parameters and verify the need for stencil extension(s).
         function [f] = Extend(h,p,sc,xy)
             %  > Auxiliary variables.
-            sz_s = size(xy,2);
+            sz_s = size(xy);
             
             %  > Stencil limits/adimensional parameters(n) in the x/y-direction(s).
-            for i = 1:sz_s
+            for i = 1:sz_s(2)
                 [L(1,i),L(2,i)] = MinMaxElem(xy(:,i),'finite');
             end
             Lt = diff(L,1);
@@ -104,7 +106,51 @@ classdef B1_2D
         function [xt] = xt_f(xf,f)
             xt = xf(f,:);
         end
+        %% > 2. -----------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
+        %  > Initialize field "x" (stencil coefficients/nodal solution,etc.).
+        function [x] = Initialize_24(f,u,nc,ns,Nc,Nf)
+            for i = 1:ns
+                %  > "sx".
+                x{i}.Tf   = cell(Nf,nc);
+                x{i}.Tf_V = cell(Nf,nc);
+                x{i}.Pf   = cell(Nf,nc);
+                %  > "x".
+                x{i}.nv.a.f = zeros(Nf,1);
+                for j = u{i}.f
+                    x{i}.cf.(j) = cell(Nf,nc);
+                    x{i}.vf.(j) = cell(Nf,nc);
+                    x{i}.xf.(j) = cell(1 ,nc);
+                    for k = 1:nc
+                        switch k
+                            case 1
+                                x{i}.xf.(j){k} = zeros(Nf,1); %  > \phi_f.
+                            case 2
+                                x{i}.xf.(j){k} = zeros(Nf,2); %  > \nabla\phi_f(x,y).
+                        end
+                    end
+                    if j == "a"
+                        x{i}.nv.(j)   = f.av;
+                    else
+                        x{i}.nv.(j).c = zeros(Nc,1);
+                    end
+                end
+            end
+        end
         % >> 2.2. ---------------------------------------------------------
+        %  > 2.2.1. -------------------------------------------------------
+        %  > Update stencil coefficients, etc.
+        function [x] = Update_2(inp,msh,f,s,u,x)
+            x        = B1_2D.Update_sx(inp,msh,f,s,u,x);
+        end
+        %  > 2.2.2. -------------------------------------------------------
+        %  > Update nodal/face values, etc.
+        function [x] = Update_4(f,s,u,x)
+            x        = Tools_2.Update_xv(f,s,u,x);
+            x        = Tools_2.Update_cf(u,x);
+            x        = Tools_2.Update_xf(u,x);
+        end
+        % >> 2.3. ---------------------------------------------------------
         %  > Update stencil coefficients.
         function [x] = Update_sx(inp,msh,f,s,u,x)
             %  > Auxiliary variables.
@@ -114,20 +160,20 @@ classdef B1_2D
                 if ~isempty(u.s{i})
                     for j = u.s{i}'
                         %  > Polynomial regression coefficients/exponents.
-                        [c,e] = Tools_2.Terms(inp.p.p(i),0);
+                        [c,e]       = Tools_2.Terms(inp.p.p(i),0);
                         %  > Df.
-                        xf_c  = msh.f.xy.c(j,:);
-                        xt    = s.xt{j,i};
-                        Df    = B1_2D.Assemble_Df(c.v,e.v,xf_c,xt);
+                        xf_c        = msh.f.xy.c(j,:);
+                        xt          = s.xt{j,i};
+                        Df          = B1_2D.Assemble_Df(c.v,e.v,xf_c,xt);
                         %  > Tf.
-                        xf_v  = msh.f.xy.v{j};
-                        df    = B1_2D.Assemble_df(c.(k(i)),e.(k(i)),f.qd,xf_v);
-                        Pf    = B1_2D.Assemble_Pf(Df,inp.wf,xf_c,xt);
-                        Tf    = df*Pf;
-                        %  > Update 'x' field.
-                        x.Df  {j,i} = Df;
+                        xf_v        = msh.f.xy.v{j};
+                        df          = B1_2D.Assemble_df(c.(k(i)),e.(k(i)),f.qd,xf_v);
+                        Pf          = B1_2D.Assemble_Pf(Df,inp.wf,xf_c,xt);
+                        Tf          = df*Pf;
+                        %  > Update field x".
                         x.Tf  {j,i} = Tf;
                         x.Tf_V{j,i} = inp.c(i,:)'.*Tf;
+                        x.Pf  {j,i} = Pf;
                     end
                 end
             end

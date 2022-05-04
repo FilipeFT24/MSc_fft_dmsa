@@ -10,12 +10,6 @@ classdef Tools_1
             addpath(genpath('../[Tools]'));
         end
         % >> 1.2. ---------------------------------------------------------
-        function [] = Set_Directories_2D()
-            addpath(genpath('A_2D'));
-            addpath(genpath('B_2D'));
-            addpath(genpath('[Post-processing]'));
-            addpath(genpath('../[Tools]'));
-        end
         
         %% > 2. -----------------------------------------------------------
         % >> Sort structures.
@@ -44,7 +38,7 @@ classdef Tools_1
         %% > 3. -----------------------------------------------------------
         % >> Other functions.
         % >> 3.1. ---------------------------------------------------------
-        %  > Similar (faster) version of other built-in functions (to compute distance between 2 vertices).
+        %  > Similar (faster) version of other built-in functions (to compute distance between 2 points).
         function [D] = dist(XY)
             D = sqrt((XY(1,1)-XY(2,1)).^2+(XY(1,2)-XY(2,2)).^2);
         end

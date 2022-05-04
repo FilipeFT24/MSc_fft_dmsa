@@ -1,35 +1,7 @@
 classdef Tools_2
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        % >> Update field 'x'.
-        % >> 1.1. ---------------------------------------------------------
-        %  > Update 'x.nv.x.c' field (nodal solution).
-        function [xc] = Update_xc(At,Bt)
-            xc = At\Bt;
-        end
-        % >> 1.2. ---------------------------------------------------------
-        %  > Update 'x.vf' field (nodal values used to fit face polynomial).
-        function [x] = Update_xv(f,s,u,x)
-        end
-   
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        %  > Auxiliary functions.
-        %  > 2.1.1. -------------------------------------------------------
-        %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
-        function [L] = Set_n(E,V)
-            if nargin == 1
-                L(1,:) = Tools.mean(E);
-                L(2,:) = Tools.mean(sqrt(E.^2));
-                L(3,:) = max       (E);
-            else
-                L(1,:) = sum(E.*V)./sum(V);
-                L(2,:) = sum(sqrt((E.*V).^2))./sum(sqrt(V.^2));
-                L(3,:) = max(E);
-            end
-        end
-        %  > 2.1.2. -------------------------------------------------------
-        %  > Polynomial regression coefficients/exponents.
+        % >> Compute polynomial regression coefficients/exponents.
         function [c,e] = Terms(m,opt)
             %  > -------------|------------------------------------------------------------------------------------------------|
             %  > Term       = | 1 | x | y | x^2 | xy  | y^2 | x^3  | x^2y | xy^2 | y^3  | x^4  | x^3y  | x^2y^2 | xy^3  | y^4  | (...)
@@ -80,20 +52,20 @@ classdef Tools_2
             %  | ...       | ...
             %  > ----------------------------------------------------------
             %  > Coefficients (c).
-            c.v = ones(1,f(n+1)); %  > [x;y].
+            c.v = ones(1,f(n+1)); % > (x;y).
             for i = 0:m
                 %  > Indices.
                 j           = f(i)+1:f(i+1);
                 %  > Exponents (e).
-                e.v{1}(1,j) = i:-1:0;   %  > x.
-                e.v{1}(2,j) = 0:i;      %  > y.
+                e.v{1}(1,j) = i:-1:0;   % > x.
+                e.v{1}(2,j) = 0:i;      % > y.
             end
             %  > ----------------------------------------------------------
             %  > Diffusive term(g).
             %  > ----------------------------------------------------------
             %  > Exponents.
             %  > d(x)/dx:  > d(x)/dy:  | d(y)/dx:  | d(y)/dy:
-            %  | 0         | 0         | 0         | 0 
+            %  | 0         | 0         | 0         | 0
             %  | 0 0       | 0 0       | 0 0       | 0 0
             %  | 1 0 0     | 0 1 0     | 0 1 0     | 0 0 1
             %  | 2 1 0 0   | 0 1 2 0   | 0 2 1 0   | 0 0 1 2
@@ -107,13 +79,84 @@ classdef Tools_2
                 j = f(i)+1:f(i+1);
                 %  > Exponents(e).
                 if i == 0
-                    e.g{1}(:,j) = zeros(2,i+1);             %  > \nabla_x: [x;y].
-                    e.g{2}(:,j) = zeros(2,i+1);             %  > \nabla_y: [x;y].
+                    e.g{1}(:,j) = zeros(2,i+1);             %  > \nabla_x: (x;y).
+                    e.g{2}(:,j) = zeros(2,i+1);             %  > \nabla_y: (x;y).
                 else
-                    e.g{1}(:,j) = [[i-1:-1:0,0];[0:i-1,0]]; %  > \nabla_x: [x;y].
-                    e.g{2}(:,j) = [[0,i-1:-1:0];[0,0:i-1]]; %  > \nabla_y: [x;y].
+                    e.g{1}(:,j) = [[i-1:-1:0,0];[0:i-1,0]]; %  > \nabla_x: (x;y).
+                    e.g{2}(:,j) = [[0,i-1:-1:0];[0,0:i-1]]; %  > \nabla_y: (x;y).
                 end
             end
-        end       
+        end
+        
+        %% > 2. -----------------------------------------------------------
+        % >> Update field 'x'.
+        % >> 2.1. ---------------------------------------------------------
+        %  > Update 'x.nv.x.c' field (nodal solution).
+        function [xc] = Update_xc(At,Bt)
+            xc = At\Bt;
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > Update 'x.vf' field (nodal values used to fit face polynomial).
+        function [x] = Update_xv(f,s,u,x)
+            for i = u.f
+                for j = 1:size(u.s,2)
+                    if ~isempty(u.s{j})
+                        for k = u.s{j}'
+                            %  > Cell/face indices used to fit "k".
+                            l = s.logical{k,j};
+                            a = s.i      {k,j}( l);
+                            b = s.i      {k,j}(~l); b = sort(b);
+                            %  > Cell value(s).
+                            x.vf.(i){k,j}(l,1) = x.nv.(i).c(s.i{k,j}(l));
+                            %  > Face value(s).
+                            if any(~l)
+                                x.vf.(i){k,j}(~l,1) = f.bd.v(ismembc(f.bd.i,b));
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        % >> 2.3. ---------------------------------------------------------
+        %  > Update 'x.cf' field (fitted polynomial coefficients).
+        function [x] = Update_cf(u,x)
+            for i = u.f
+                for j = 1:size(u.s,2)
+                    if ~isempty(u.s{j})
+                        for k = u.s{j}'
+                            x.cf.(i){k,j} = x.Pf{k,j}*x.vf.(i){k,j};
+                        end
+                    end
+                end
+            end
+        end
+        % >> 2.4. ---------------------------------------------------------
+        %  > Update 'x.f' field (face values).
+        function [x] = Update_xf(u,x)
+            for i = u.f
+                for j = 1:size(u.s,2)
+                    if ~isempty(u.s{j})
+                        for k = u.s{j}'
+                            x.xf.(i){j}(k,:) = x.Tf{k,j}*x.vf.(i){k,j};
+                        end
+                    end
+                end
+            end
+        end
+        
+        %% > 3. -----------------------------------------------------------
+        %  > 3.1. ---------------------------------------------------------
+        %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
+        function [L] = Set_n(E,V)
+            if nargin == 1
+                L(1,:) = Tools.mean(E);
+                L(2,:) = Tools.mean(sqrt(E.^2));
+                L(3,:) = max       (E);
+            else
+                L(1,:) = sum(E.*V)./sum(V);
+                L(2,:) = sum(sqrt((E.*V).^2))./sum(sqrt(V.^2));
+                L(3,:) = max(E);
+            end
+        end
     end
 end

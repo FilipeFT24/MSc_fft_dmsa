@@ -20,14 +20,6 @@ classdef A1_2D
             %                        └─  c: Clustered location.
             %  > ----------------------------------------------------------
             inp.m.Uniform       =  1;                                 %  > Set uniform grid(?).
-            if ~inp.m.Uniform                                         %  > If non-uniform...
-                inp.m.is_random =  0;
-                if ~inp.m.is_random                                   %  > If not random...
-                    inp.m.A     =  [5,5];                             %  > Stretching parameter(X/Y).
-                    inp.m.c(1)  =  0.5;                               %  > Clustered location(X).
-                    inp.m.c(2)  =  0.5;                               %  > Clustered location(Y).
-                end
-            end
             inp.m.p{1}          = "s";                                %  > Cell polyhedral.
             inp.m.p{2}          =  1;                                 %  > Example# (check A2_2D.m).
             inp.m.h             =  h;                                 %  > Grid size.
