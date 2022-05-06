@@ -45,6 +45,7 @@ classdef Fig_V1_0_2D
             f    = x.a;
             j    = x.b;
             n    = x.c;
+            FA   = fig.FA;
             LW   = [fig.LW.*25,fig.LW];
             MS   = [fig.MS./2 ,fig.MS];
             
@@ -52,11 +53,13 @@ classdef Fig_V1_0_2D
             V{1} = msh.f.xy.v;
             V{2} = msh.c.c.xy.c;
             V{3} = obj.s{n}.xt{f,j};
+            V{4} = msh.c.c.xy.v(obj.s{n}.i{f,j}(obj.s{n}.logical{f,j}));
             %  > Plot variables.
             Fig_Tools_2D.Var_1(1,V{1}   ,"k"       ,"-",LW(2));
             Fig_Tools_2D.Var_2(1,V{2}   ,"k"       ,"o",MS(1));
             Fig_Tools_2D.Var_1(1,V{1}(f),fig.C(1,:),"-",LW(1));
             Fig_Tools_2D.Var_2(1,V{3}   ,fig.C(1,:),"s",MS(2));
+            Fig_Tools_2D.Var_3(1,V{4}   ,fig.C(1,:)    ,FA);
             
             %  > Axis/legend,etc.
             Fig_Tools_2D.ChangeLook (fig,[msh.f.xy.v{:}]');

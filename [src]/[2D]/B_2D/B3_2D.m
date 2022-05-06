@@ -11,6 +11,8 @@ classdef B3_2D
             Nc = msh.c.Nc;
             Nf = msh.f.Nf;
             
+            
+            
             %  >
             
             
@@ -63,7 +65,6 @@ classdef B3_2D
             if f_uc(3)
                 x        = B1_2D.Update_4   (f,s,u,x);
             end
-            f.av.c-x.nv.x.c
         end
         
         %% > 2. -----------------------------------------------------------
@@ -76,7 +77,7 @@ classdef B3_2D
                     obj = B3_2D.Initialize(inp,msh);
                     obj = B3_2D.p_standard(inp,msh,obj);
                     %  > Plot...
-                    %  Fig_V1_0_2D.Plot(1,msh,obj,"blk");
+                    Fig_V1_0_2D.Plot(1,msh,obj,"blk");
                     Fig_V1_1_2D.Plot(1,msh,obj);
                 case true
                     %  > 'p-adaptative' run.

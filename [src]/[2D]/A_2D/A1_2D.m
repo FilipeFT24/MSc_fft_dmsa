@@ -19,22 +19,13 @@ classdef A1_2D
             %                        ├─  A: Stretching parameter.
             %                        └─  c: Clustered location.
             %  > ----------------------------------------------------------
-            inp.m.Uniform       =  1;                                 %  > Set uniform grid(?).
-            inp.m.p{1}          = "s";                                %  > Cell polyhedral.
+            inp.m.p{1}          = "v";                                %  > Cell polyhedral.
             inp.m.p{2}          =  1;                                 %  > Example# (check A2_2D.m).
             inp.m.h             =  h;                                 %  > Grid size.
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up input variables #2.
-        function [inp] = Set_inp_2(v)
-            %  > ----------------------------------------------------------
-            %  > Analytic function.
-            syms x y;
-            xc                  =  v(1);
-            yc                  =  v(2);
-            i                   =  v(3);  
-            f                   =  exp(-i.*((x-xc).^2+(y-yc).^2));    %  > f.
-            inp.f               =  matlabFunction(f,'Vars',{x,y});    %  > f handle.
+        function [inp] = Set_inp_2(f_type)
             %  > ----------------------------------------------------------
             %  > Boundary treatment.
             inp.b.change(1)     =  1;                                 %  > Add n extra points for boundary face fit.
@@ -43,6 +34,8 @@ classdef A1_2D
             %  > Coefficients.
             inp.c(1,:)          =  [0,0];                             %  > Convection(X/Y).
             inp.c(2,:)          = -[1,1];                             %  > Diffusion (X/Y).
+            %  > Function. 
+            inp.f               =  Tools_1.func(inp.c,f_type);               %  > f.
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
             inp.p.p(1)          =  1;                                 %  > p(X).

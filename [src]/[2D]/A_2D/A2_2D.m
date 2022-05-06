@@ -6,30 +6,11 @@ classdef A2_2D
         function [msh] = Set_msh(h)
             %  > Auxiliary variables.
             inp = A1_2D.Set_inp_1(h);
-            u   = inp.m.Uniform;
             h   = inp.m.h;
             
-            if u
-                switch inp.m.p{1}
-                    case "s"
-                        %  > w/ squares.
-                        switch inp.m.p{2}
-                            case 1
-                                %  > Uniform w/ domain: (x,y)={[0,1],[0,1]}.
-                                struct = A2_2D.msh_s_1(h);
-                            otherwise
-                                return;
-                        end
-                    case "v"
-                        %  > Uniform w/ triangles.
-                        struct = A2_2D.msh_v_1(h);
-                    otherwise
-                        return;
-                end
-            else
-            end
             %  > ----------------------------------------------------------
             % >> struct.
+            struct              = A2_2D.Set_struct(h,inp.m.p);
             msh.struct          = struct;
             CL_c                = struct.ConnectivityList;
             %  > ----------------------------------------------------------
@@ -90,67 +71,50 @@ classdef A2_2D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [Nd,xy_v] = msh_grid(h,XLim,YLim)
-            %  > X/Y_Lim.
-            XLim    = sort(XLim);
-            YLim    = sort(YLim);
-            %  > Nd.
-            Nd  (1) = round(1./h.*(XLim(2)-XLim(1)));
-            Nd  (2) = round(1./h.*(YLim(2)-YLim(1)));
-            %  > Vd.
-            Vd  {1} = linspace(XLim(1),XLim(2),Nd(1)+1);
-            Vd  {2} = linspace(YLim(1),YLim(2),Nd(2)+1);
-            %  > X/Yd.
-            [Xd,Yd] = meshgrid(Vd{1},Vd{2});
+        function [struct] = Set_struct(h,p)
+            %  > Limits.
+            XLim     = [0,1];
+            YLim     = [0,1];
             %  > X/Yv.
-            xy_v    = cat(2,reshape(Xd,[],1),reshape(Yd,[],1));
+            [Xd,Yd] = Tools_1.msh_xy(h,p{2},XLim,YLim);
+            
+            %  > Select cell polyhedral type...
+            switch p{1}
+                case "s"
+                    %  > w/ squares.
+                    struct = A2_2D.msh_s(Xd,Yd);
+                case "v"
+                    %  > w/ triangles.
+                    struct = delaunayTriangulation(reshape(Xd,[],1),reshape(Yd,[],1));
+                otherwise
+                    return;
+            end
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > Auxiliary functions (set "struct" structure for cartesian grids).
+        %  > 2.2.1. -------------------------------------------------------
+        function [struct] = msh_s(Xd,Yd)
+            %  > Auxiliary variables.
+            NY = size(Xd,1);
+            NX = size(Yd,2);
+            
+            %  > ConnectivityList.
+            for i = 1:NX-1
+                for j = 1:NY-1
+                    struct.ConnectivityList((NY-1)*(i-1)+j,1) = NY*(i-1)+j;   % > SW.
+                    struct.ConnectivityList((NY-1)*(i-1)+j,2) = NY*(i-0)+j;   % > SE.
+                    struct.ConnectivityList((NY-1)*(i-1)+j,3) = NY*(i-0)+j+1; % > NE.
+                    struct.ConnectivityList((NY-1)*(i-1)+j,4) = NY*(i-1)+j+1; % > NW.
+                end
+            end
+            %  > Points.
+            struct.Points = cat(2,reshape(Xd,[],1),reshape(Yd,[],1));
         end
         
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
-        %  > Example #1 (w/ squares): uniform w/ domain: (x,y)={[0,1],[0,1]}.
-        function [struct] = msh_s_1(h)
-            %  > Limits.
-            XLim      = [0,1];
-            YLim      = [0,1];
-            %  > xy_v.
-            [Nd,xy_v] = A2_2D.msh_grid(h,XLim,YLim);
-            %  > 'struct'.
-            struct    = A2_2D.Set_s(Nd,xy_v);
-        end
-        % >> 3.2. ---------------------------------------------------------
-        %  > Auxiliary function (square grid 'struct').
-        function [struct] = Set_s(Nc,xy_v)
-            %  > Number of cells/vertices.
-            Nv = Nc+1;
-            NC = Nc(1).*Nc(2);
-            NV = Nv(1).*Nv(2);
-            %  > Connectivity list.
-            CList                        = reshape(1:NV,Nv(2),Nv(1));
-            struct.ConnectivityList(:,1) = reshape(CList(1:Nv(2)-1,1:Nv(1)-1),NC,1); % > SW.
-            struct.ConnectivityList(:,2) = reshape(CList(1:Nv(2)-1,2:Nv(1)  ),NC,1); % > SE.
-            struct.ConnectivityList(:,3) = reshape(CList(2:Nv(2)  ,2:Nv(1)  ),NC,1); % > NE.
-            struct.ConnectivityList(:,4) = reshape(CList(2:Nv(2)  ,1:Nv(1)-1),NC,1); % > NW.
-            %  > Points.
-            struct.Points                = xy_v;
-        end
-        
-        %% > 4. -----------------------------------------------------------
-        % >> 4.1. ---------------------------------------------------------
-        function [struct] = msh_v_1(h)
-            %  > Limits.
-            XLim     = [0,1];
-            YLim     = [0,1];
-            %  > xy_v.
-            [~,xy_v] = A2_2D.msh_grid(h,XLim,YLim);
-            %  > 'struct'.
-            struct   = delaunayTriangulation(xy_v(:,1),xy_v(:,2));
-        end
-        
-        %% > 5. -----------------------------------------------------------
-        % >> 5.1. ---------------------------------------------------------
         %  > Field: "c".
-        %  > 5.1.1. -------------------------------------------------------
+        %  > 3.1.1. -------------------------------------------------------
         %  > #1: Cell "i": face/vertex neighbours + auxiliary array "V".
         function [nb,V] = cc_nb(CL_c)
             %  > Auxiliary variables.
@@ -181,7 +145,7 @@ classdef A2_2D
                 nb.f{i,1}(:,1) = nb.v{i,1}(f_ij{i,1});
             end
         end
-        %  > 5.1.2. -------------------------------------------------------
+        %  > 3.1.2. -------------------------------------------------------
         %  > #2: Cell "i": centroid/vertex coordinates (for each cell).
         function [xy] = cc_xy(struct)
             %  > Auxiliary variables.
@@ -194,7 +158,7 @@ classdef A2_2D
                 xy.c     (i,j) = Tools_1.mean(xy.v{i,1}(:,j),1);
             end
         end
-        %  > 5.1.3. -------------------------------------------------------
+        %  > 3.1.3. -------------------------------------------------------
         %  > #3: Cell "i": volume.
         function [Volume] = c_Volume(xy_v)
             %  > Auxiliary variables.
@@ -204,7 +168,7 @@ classdef A2_2D
                 Volume(i,1) = polyarea(xy_v{i}(:,1),xy_v{i}(:,2));
             end
         end
-        %  > 5.1.4. -------------------------------------------------------
+        %  > 3.1.4. -------------------------------------------------------
         %  > #4: Cell "i": reference length.
         function [h] = c_h(xy_v,Volume)
             %  > Auxiliary variables.
@@ -226,7 +190,7 @@ classdef A2_2D
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %  > 5.1.5. -------------------------------------------------------
+        %  > 3.1.5. -------------------------------------------------------
         %  > Identify all/boundary/bulk faces (only face neighbours are evaluated).
         function [F] = cf_F1(CL_c,nb_f)
             %  > Auxiliary variables.
@@ -261,7 +225,7 @@ classdef A2_2D
             F.f.i = cat(1,F.c.i{:});
             F.f.v = cat(1,F.c.v{:});
         end
-        %  > 5.1.6. -------------------------------------------------------
+        %  > 3.1.6. -------------------------------------------------------
         %  > #2: Cell "i": centroid/vertex coordinates (for each face).
         function [xy] = cf_xy(F1,struct)
             %  > Auxiliary variables.
@@ -276,7 +240,7 @@ classdef A2_2D
                 end
             end
         end
-        %  > 5.1.7. -------------------------------------------------------
+        %  > 3.1.7. -------------------------------------------------------
         %  > #3: Cell "i": outer face normals (Sf).
         function [Sf] = cf_Sf_1(xy_m,cf_xy)
             %  > Auxiliary variables.
@@ -289,7 +253,7 @@ classdef A2_2D
                 end
             end
         end
-        %  > 5.1.7.1. -----------------------------------------------------
+        %  > 3.1.7.1. -----------------------------------------------------
         %  > Auxiliary function.
         function [Sf] = cf_Sf_2(xy_cm,xy_fm,xy_vv)
             %  > \vec{FC}.
@@ -305,9 +269,9 @@ classdef A2_2D
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % >> 5.2. ---------------------------------------------------------
+        % >> 3.2. ---------------------------------------------------------
         %  > Field: "f".
-        %  > 5.2.1. -------------------------------------------------------
+        %  > 3.2.1. -------------------------------------------------------
         %  > Auxiliary function (identify vertex indices of bulk faces).
         function [blk] = blk_f(F1)
             %  > Auxiliary variables.
@@ -326,7 +290,7 @@ classdef A2_2D
                 blk.ic(i,:) = f_blk(blk.if(i,:),n);
             end
         end
-        %  > 5.2.2. -------------------------------------------------------
+        %  > 3.2.2. -------------------------------------------------------
         %  > List faces.
         function [F2] = f_F2(F1)
             %  > Auxiliary variables.
@@ -351,7 +315,7 @@ classdef A2_2D
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %  > 5.2.3. -------------------------------------------------------
+        %  > 3.2.3. -------------------------------------------------------
         %  > #2: Face "i": centroid/vertex coordinates.
         function [xy] = f_xy(f,struct)
             %  > Auxiliary variables.
@@ -364,8 +328,8 @@ classdef A2_2D
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        %  > 5.2.4. -------------------------------------------------------
-        %  #3: Cell "i": face indices.
+        %  > 3.2.4. -------------------------------------------------------
+        %  > #3: Cell "i": face indices.
         function [ic_f] = cf_if(CL_c,F)
             %  > Auxiliary variables.
             sz_c = size (F{1}.c.i,1);
@@ -382,7 +346,7 @@ classdef A2_2D
                 ic_f(i,c) = ic_f(i,:);
             end
         end
-        %  > 5.2.4.1. -----------------------------------------------------
+        %  > 3.2.4.1. -----------------------------------------------------
         %  > Auxiliary function (faster version of built-in function "intersect" w/ 'rows' option).
         function [l] = i_AB(A,B)
             [~,i] = sortrows(A);
@@ -390,9 +354,9 @@ classdef A2_2D
             [~,k] = sortrows(B);
             l     = k(j);
         end
-        % >> 5.3. ---------------------------------------------------------
+        % >> 3.3. ---------------------------------------------------------
         %  > Field: "v".
-        %  > 5.3.1. -------------------------------------------------------
+        %  > 3.3.1. -------------------------------------------------------
         %  > #1: Vertex "i" cell indices (similar to routines in "A2_2D.nb_cc").
         function [iv_c] = v_c(CL_c,V)
             %  > Auxiliary variables.
@@ -403,7 +367,7 @@ classdef A2_2D
                 iv_c{i,1}(:,1) = find(U(i,:));
             end
         end
-        %  > 5.3.2. -------------------------------------------------------
+        %  > 3.3.2. -------------------------------------------------------
         %  > #2: Vertex "i" face indices (similar to routines in "A2_2D.nb_cc").
         function [iv_f] = v_f(F2)
             %  > Auxiliary variables.
@@ -415,10 +379,10 @@ classdef A2_2D
                 U(F2.iv(i,:),i) = true;
             end
             for i = 1:sz_v
-                iv_f{i,1}(:,1) = find(U(i,:),2);
+                iv_f{i,1}(:,1) = find(U(i,:));
             end
         end
-        %  > 5.3.3. -------------------------------------------------------
+        %  > 3.3.3. -------------------------------------------------------
         %  > #3: Identify boundary/bulk vertices.
         function [logical] = v_logical(F2)
             sz             = max   (F2.iv,[],'all');

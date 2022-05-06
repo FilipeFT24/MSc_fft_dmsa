@@ -29,6 +29,7 @@ classdef B1_2D
                         fv = msh.f.iv(j,:);
                         %  > To what cells do these vertices belong to?
                         cv = unique(cat(1,msh.v.ic{fv}));
+                        
                         %  > Are these boundary cells?
                         bc = msh.c.logical(cv);
                         %  > Add boundary faces...
@@ -36,19 +37,26 @@ classdef B1_2D
                         bf = fc(~msh.f.logical(fc))';
                         %  > Check whether the selected boundary faces contain any of "fv"'s vertices.
                         if ~isempty(bf)
-                            %  > Initialize...
+                            %  > Initialize array "l".
                             l = false(numel(bf),numel(fv));
-                            %  > ...for each of the vertices in "fv".
+                            %  > For each of the vertices in "fv"...
                             for k = 1:numel(fv)
                                 l(:,k) = any(bsxfun(@eq,msh.f.iv(bf,:),fv(k)),2);
                             end
                             bf = bf(any(l,2));
-                            %  > Remove face that shares 1 vertex w/ face "j".
+                            %  > Remove face that shares 1 vertex w/ face "j" if it belongs to the same cell.
                             if any(bf == j)
-                                fv_c          = unique (reshape([msh.v.if{fv}],1,[]))';
-                                b             = ismembc(bf,fv_c);
-                                b   (bf == j) = false;
-                                bf  (b)       = [];
+                                fv_c             = unique (cat(1,msh.v.if{fv}));
+                                b                = ismembc(bf,fv_c);
+                                b   (bf == j)    = false;
+                                %  > Check whether face "j" belongs to the same cell...
+                                c_b              = cat(1,msh.f.ic{bf});
+                                c_j              = msh.f.ic{j};
+                                b   (c_b ~= c_j) = false;
+                                %  > Remove...
+                                if nnz(b) == 1
+                                    bf(b) = [];
+                                end
                             end
                         end
                         
@@ -106,6 +114,7 @@ classdef B1_2D
         function [xt] = xt_f(xf,f)
             xt = xf(f,:);
         end
+        
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > Initialize field "x" (stencil coefficients/nodal solution,etc.).
