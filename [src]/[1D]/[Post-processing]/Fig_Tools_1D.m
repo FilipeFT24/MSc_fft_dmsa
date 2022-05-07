@@ -100,7 +100,6 @@ classdef Fig_Tools_1D
                 P1{k}             = fplot(Y1{1,i},X2,M1(1,i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
                 P2{k}             =  plot(X1,Y1{2,i},M1(2,i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
                 [YV(k,1),YV(k,2)] = MinMaxElem(Y1{2,i});
-                disp(Y1{2,i}(5));
             end
         end
         % >> 2.3. ---------------------------------------------------------

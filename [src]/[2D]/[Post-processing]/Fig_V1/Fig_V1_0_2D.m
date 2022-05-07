@@ -22,6 +22,16 @@ classdef Fig_V1_0_2D
                     Fig_V1_0_2D.Plot_1(msh,obj,x,fig,0);
                 end
             else
+                if plot(1)
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    x.a = 1;                             %  >    f .
+                    x.b = 1;                             %  > (:,j).
+                    Fig_V1_0_2D.Plot_1(msh,obj,x,fig,0);
+                    figure; set(gcf,'Units','pixels','Position',fig.Position);
+                    x.a = 2;                             %  >    f .
+                    x.b = 2;                             %  > (:,j).
+                    Fig_V1_0_2D.Plot_1(msh,obj,x,fig,0);
+                end
             end
         end
         % >> 1.2. ---------------------------------------------------------

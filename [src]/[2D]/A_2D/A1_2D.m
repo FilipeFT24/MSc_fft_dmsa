@@ -4,28 +4,14 @@ classdef A1_2D
         % >> 1.1. ---------------------------------------------------------
         %  > Set up input variables #1.
         function [inp] = Set_inp_1(h)
-            %  > ----------------------------------------------------------
-            %  > msh.
-            %    ├─ v
-            %        ├─ Example 1: Uniform.
-            %                    └─ fft_Distmesh2D (https://github.com/ionhandshaker/distmesh/blob/master/distmesh.m).
-            %        └─ Example 2: Non-uniform.
-            %                    └─ Random.
-            %    └─ s
-            %        ├─ Example 1: Uniform.
-            %        └─ Example 2: Non-uniform.
-            %                    ├─ Random.
-            %                    └─ Smooth non-uniform.
-            %                        ├─  A: Stretching parameter.
-            %                        └─  c: Clustered location.
-            %  > ----------------------------------------------------------
-            inp.m.p{1}          = "v";                                %  > Cell polyhedral.
-            inp.m.p{2}          =  1;                                 %  > Example# (check A2_2D.m).
+            inp.m.p             = "s";                                %  > Cell polyhedral (type).
             inp.m.h             =  h;                                 %  > Grid size.
+            inp.m.Lim(1,:)      =  [0,1];                             %  > Grid limits (x-direction).
+            inp.m.Lim(2,:)      =  [0,1];                             %  > Grid limits (y-direction).
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up input variables #2.
-        function [inp] = Set_inp_2(f_type)
+        function [inp] = Set_inp_2(t,v)
             %  > ----------------------------------------------------------
             %  > Boundary treatment.
             inp.b.change(1)     =  1;                                 %  > Add n extra points for boundary face fit.
@@ -34,8 +20,8 @@ classdef A1_2D
             %  > Coefficients.
             inp.c(1,:)          =  [0,0];                             %  > Convection(X/Y).
             inp.c(2,:)          = -[1,1];                             %  > Diffusion (X/Y).
-            %  > Function. 
-            inp.f               =  Tools_1.func(inp.c,f_type);               %  > f.
+            %  > Function.
+            inp.f               =  Tools_1.func(t,v);                 %  > f.
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
             inp.p.p(1)          =  1;                                 %  > p(X).
@@ -53,7 +39,7 @@ classdef A1_2D
                 c(1)            =  k.*(1+e);
                 c(2)            =  exp(-(1./k).^2);
                 g               =  ((exp(-(d1./(c(1).*d2)).^2)-c(2))./(1-c(2)));
-                wf              =  g./d1.^p;                       
+                wf              =  g./d1.^p;
                 inp.wf          =  matlabFunction(wf,'Vars',{d1,d2}); %  > wf (weight function) handle.
             end
             %  > ----------------------------------------------------------
@@ -69,12 +55,12 @@ classdef A1_2D
             if ~(inp.p_adapt.lambda < 1)
                 return;
             end
-            %  > #2. 
+            %  > #2.
             inp.p_adapt.opt(1)  =  0;                                 %  > Use higher-order solution(?).
-            inp.p_adapt.opt(2)  =  0;                                 %  > Add lower-order (predicted) cell truncation error as source term(?).   
+            inp.p_adapt.opt(2)  =  0;                                 %  > Add lower-order (predicted) cell truncation error as source term(?).
             if all(inp.p_adapt.opt)                                   %  > Only allow w/ lower-order solution...
                 return;
             end
-        end         
+        end
     end
 end

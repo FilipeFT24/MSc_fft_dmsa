@@ -38,149 +38,105 @@ classdef Tools_1
         end
         
         %% > 3. -----------------------------------------------------------
-        %  > Set V=(x,y).
+        %  > Set "struct" structure.
         % >> 3.1. ---------------------------------------------------------
-        % >> 3.1. ---------------------------------------------------------
-        function [Xd,Yd] = msh_xy(h,t,XLim,YLim)
-            %  > Limits.
-            [XM(1),XM(2)] = MinMaxElem(XLim); dX = XM(2)-XM(1); Nd(1) = round(dX./h);
-            [YM(1),YM(2)] = MinMaxElem(YLim); dY = YM(2)-YM(1); Nd(2) = round(dY./h);
+        function [struct] = Set_struct(m)
+            %  > ...for x/y-directions.
+            for i = 1:size(m.Lim,1)
+                %  > Limits.
+                [L(i,1),L(i,2)] = MinMaxElem(m.Lim(i,:)); Nv(i) = round(diff(L(i,:))./m.h)+1; Nc = Nv-1;
+                %  > X/Yv.
+                XY_v{i} = linspace(L(i,1),L(i,2),Nv(i));
+            end
+            %  > X/Yt,d.
+            [Xt,Yt] = meshgrid  (XY_v{1},XY_v{2});
+            [Xd,Yd] = Tools_1.T1(Xt,Yt);
             
-            %  > Select #example...
-            switch t
-                case 1
-                    %  > #1.
-                    [Xd,Yd] = Tools_1.E1(XM,YM,Nd);
-                case 2
-                    %  > #2.
-                    [Xd,Yd] = Tools_1.E2(XM,YM,Nd);
-                case 3
-                    %  > #3.
-                    [Xd,Yd] = Tools_1.E3(XM,YM,Nd);
-                case 4
-                    %  > #4.
-                    [Xd,Yd] = Tools_1.E4(XM,YM,Nd);
-                case 5
-                    %  > #5.
-                    [Xd,Yd] = Tools_1.E5(XM,YM,Nd);
-                case 6
-                    %  > #5.
-                    [Xd,Yd] = Tools_1.E1(XM,YM,Nd);
+            %  > Select cell polyhedral (type)...
+            switch m.p
+                case "s"
+                    % >> w/ squares.
+                    %  > Connectivity list.
+                    for i = 1:Nc(1)
+                        for j = 1:Nc(2)
+                            struct.ConnectivityList(Nc(2)*(i-1)+j,1) = Nv(2)*(i-1)+j;   % > SW.
+                            struct.ConnectivityList(Nc(2)*(i-1)+j,2) = Nv(2)*(i-0)+j;   % > SE.
+                            struct.ConnectivityList(Nc(2)*(i-1)+j,3) = Nv(2)*(i-0)+j+1; % > NE.
+                            struct.ConnectivityList(Nc(2)*(i-1)+j,4) = Nv(2)*(i-1)+j+1; % > NW.
+                        end
+                    end
+                    %  > Points.
+                    struct.Points = cat(2,reshape(Xd,[],1),reshape(Yd,[],1));
+                case "v"
+                    % >> w/ triangles.
+                    struct = delaunayTriangulation(reshape(Xd,[],1),reshape(Yd,[],1));
                 otherwise
                     return;
-            end  
+            end
         end
         %  > 3.1.1. -------------------------------------------------------
-        %  > Uniform distribution.
-        function [Xd,Yd] = E1(XM,YM,Nd)
-            %  > Vd.
-            Vd{1}   = linspace(XM(1),XM(2),Nd(1)+1);
-            Vd{2}   = linspace(YM(1),YM(2),Nd(2)+1);
+        function [Xd,Yd] = T1(Xt,Yt)
+            %  > f.
+            f {1} = @(u,v) u;
+            f {2} = @(u,v) v;
             %  > X/Yd.
-            [Xd,Yd] = meshgrid(Vd{1},Vd{2});
+            Xd    = f{1}(Xt,Yt);
+            Yd    = f{2}(Xt,Yt);
         end
         %  > 3.1.2. -------------------------------------------------------
-        %  > Transformation #1: x(u,v) = u+a*sin(2*pi*u)*sin(2*pi*v).
-        %                       y(u,v) = v+a*sin(2*pi*u)*sin(2*pi*v).
-        function [Xd,Yd] = E2(XM,YM,Nd)
-            %  > Auxiliary variables.
-            c (1)   = 2.*pi;
-            c (2)   = 0.5./c(1);
-            %  > Vd.
-            Vd{1}   = linspace(XM(1),XM(2),Nd(1)+1);
-            Vd{2}   = linspace(YM(1),YM(2),Nd(2)+1);
-            %  > X/Yt.
-            [Xt,Yt] = meshgrid(Vd{1},Vd{2});
+        function [Xd,Yd] = T2(Xt,Yt)
+            %  > f.
+            c (1) = 2.*pi;
+            c (2) = 1./(2.*c(1));
+            f {1} = @(u,v) u+c(2).*sin(c(1).*u).*sin(c(1).*v);
+            f {2} = @(u,v) v+c(2).*sin(c(1).*u).*sin(c(1).*v);
             %  > X/Yd.
-            f {1}   = @(u,v) u+c(2).*sin(c(1).*u).*sin(c(1).*v);
-            f {2}   = @(u,v) v+c(2).*sin(c(1).*u).*sin(c(1).*v);
-            Xd      = f{1}(Xt,Yt);
-            Yd      = f{2}(Xt,Yt);
+            Xd    = f{1}(Xt,Yt);
+            Yd    = f{2}(Xt,Yt);
         end
         %  > 3.1.3. -------------------------------------------------------
-        %  > Transformation #2: x(u,v) = L*(i-1)/(im-1)*[a*(im-i)/(im-1)*sin(w*H/L*(j-1)/(jm-1))+1].
-        %                       y(u,v) = H*(j-1)/(jm-1)*[a*(jm-j)/(jm-1)*sin(w*H/L*(i-1)/(im-1))+1].
-        function [Xd,Yd] = E3(XM,YM,Nd)
-            %  > Auxiliary variables.
-            L       = dX;
-            H       = dY;
-            a       = 0.1;
-            w       = 10.*pi;
-            %  > i/jm.
-            [im,jm] = meshgrid(1:Nd(1)+1,1:Nd(2)+1);
+        function [Xd,Yd] = T3(Xt,Yt)
+            %  > f.
+            c (1) = 0.75;
+            f {1} = @(u,v) u;
+            f {2} = @(u,v) v-c(1)/pi*sin(pi*v);
             %  > X/Yd.
-            f {1}   = @(i,j) L.*(i-1)./Nd(1).*(a.*(Nd(1)+1-i)./Nd(1).*sin(w.*H./L.*(j-1)./Nd(2))+1);
-            f {2}   = @(i,j) H.*(j-1)./Nd(2).*(a.*(Nd(2)+1-j)./Nd(2).*sin(w.*H./L.*(i-1)./Nd(1))+1);
-            Xd      = f{1}(im,jm);
-            Yd      = f{2}(im,jm);
+            Xd    = f{1}(Xt,Yt);
+            Yd    = f{2}(Xt,Yt);
         end
         %  > 3.1.4. -------------------------------------------------------
-        %  > Transformation #3 (from Artur's thesis).
-        function [Xd,Yd] = E4(XM,YM,Nd)
-            % > Displacement percentage (0<g<0.5).
-            g = 0.25;
-            %  > Check...
-            if g >= 0.5
-                return;
-            end
-            %  > Vd.
-            for i = 1:numel(Nd)
-                if rem(Nd(i),2)
-                    h_ref(i) = 1./(Nd(i)+2.*g);
-                else
-                    h_ref(i) = 1./Nd(i);
-                end
-                for j = 1:Nd(i)+1
-                    switch j
-                        case 1
-                            Vd{i}(j) = 0;
-                        otherwise
-                            if ~rem(j,2)
-                                Vd{i}(j) = Vd{i}(j-1)+h_ref(i).*(1+2.*g);
-                            else
-                                Vd{i}(j) = Vd{i}(j-1)+h_ref(i).*(1-2.*g);
-                            end
-                    end
-                end
-            end
-            %  > X/Yd.
-            [Xd,Yd] = meshgrid(Vd{1},Vd{2});
-        end
-        %  > 3.1.5. -------------------------------------------------------
-        %  > Transformation #1: x(u,v) = u+g/pi*sin(pi*u).
-        %                       y(u,v) = v+g/pi*sin(pi*v).
-        function [Xd,Yd] = E5(XM,YM,Nd)
+        function [Xd,Yd] = T4(Xt,Yt)
             %  > Auxiliary variables.
-            g       = 0.95;
-            %  > Vd.
-            Vd{1}   = linspace(XM(1),XM(2),Nd(1)+1);
-            Vd{2}   = linspace(YM(1),YM(2),Nd(2)+1);
-            %  > X/Yt.
-            [Xt,Yt] = meshgrid(Vd{1},Vd{2});
+            [X(1),X(2)] = MinMaxElem(Xt); L = X(2)-X(1); Nv(1) = size(Xt,2); Nc(1) = Nv(1)-1;
+            [Y(1),Y(2)] = MinMaxElem(Yt); H = Y(2)-Y(1); Nv(2) = size(Yt,1); Nc(2) = Nv(2)-1;
+            %  > f.
+            c (1)   = 0.1;
+            c (2)   = 1.0.*pi;
+            f {1}   = @(i,j) L.*(i-1)./Nc(1).*(c(1).*(Nv(1)-i)./Nc(1).*sin(c(2).*H./L.*(j-1)./Nc(2))+1);
+            f {2}   = @(i,j) H.*(j-1)./Nc(2).*(c(1).*(Nv(2)-j)./Nc(2).*sin(c(2).*H./L.*(i-1)./Nc(1))+1);
             %  > X/Yd.
-            f {1}   = @(u) u;
-            f {2}   = @(v) v-g/pi*sin(pi*v);
-            Xd      = f{1}(Xt);
-            Yd      = f{2}(Yt);
+            [it,jt] = meshgrid(1:Nv(1),1:Nv(2));
+            Xd      = f{1}(it,jt);
+            Yd      = f{2}(it,jt);
         end
-
+        
         %% > 4. -----------------------------------------------------------
         %  > Analytic functions.
         % >> 4.1. ---------------------------------------------------------
-        function [fh] = func(c,f_type)
+        function [fh] = func(t,v)
             %  > Symbolic variables.
             syms x y;
             
-            switch f_type
+            switch t
                 case 1
-                    xc = 0.5;
-                    yc = 0.5;
-                    i  = 100;
-                    f  = exp(-i.*((x-xc).^2+(y-yc).^2));
+                    xc   = v(1);
+                    yc   = v(2);
+                    i    = v(3);
+                    func = exp(-i.*((x-xc).^2+(y-yc).^2));
                 otherwise
                     return;
             end
-            fh = matlabFunction(f,'Vars',{x,y});
+            fh = matlabFunction(func,'Vars',{x,y});
         end
     end
 end
