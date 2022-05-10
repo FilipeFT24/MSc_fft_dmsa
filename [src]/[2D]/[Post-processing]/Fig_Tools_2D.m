@@ -95,11 +95,9 @@ classdef Fig_Tools_2D
             end
         end
         %  >> 2.2. --------------------------------------------------------
-        function [] = Var_2(V,C,M,MS)
+        function [P] = Var_2(V,C,M,MS)
             hold on;
-            for i = 1:size(V,1)
-                plot(V(i,1),V(i,2),M,'Color',C,'MarkerFaceColor',C,'MarkerSize',MS);
-            end
+            P = plot(V(:,1),V(:,2),M,'Color',C,'MarkerFaceColor',C,'MarkerSize',MS);
         end
         %  >> 2.3. --------------------------------------------------------
         function [] = Var_3(V1,V2,FA)

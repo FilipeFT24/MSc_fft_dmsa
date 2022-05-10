@@ -59,22 +59,32 @@ classdef Fig_V1_0_2D
             LW   = [fig.LW.*25,fig.LW];
             MS   = [fig.MS./2 ,fig.MS];
             
+            %  > Axis/legend,etc.
+            Fig_Tools_2D.ChangeLook_1(fig,msh);
+            
             %  > Select variables.
             V{1} = msh.f.xy.v;
             V{2} = msh.c.c.xy.c;
-            V{3} = obj.s{n}.xt{f,j};
-            V{4} = msh.c.c.xy.v(obj.s{n}.i{f,j}(obj.s{n}.logical{f,j}));
+            for i = 1:numel(obj.s{n}.sc{f,j})
+                V{3}{i} = msh.c.c.xy.c(obj.s{n}.sc{f,j}{i},:);
+                V{4}{i} = msh.c.c.xy.v(obj.s{n}.sc{f,j}{i});
+            end
+            for i = 1:numel(obj.s{n}.sf{f,j})
+                V{5}{i} = msh.f.xy.c  (obj.s{n}.sf{f,j}{i},:);
+            end
             %  > Plot variables.
-            Fig_Tools_2D.Var_1(1,V{1}   ,"k"       ,"-",LW(2));
-            Fig_Tools_2D.Var_2(1,V{2}   ,"k"       ,"o",MS(1));
-            Fig_Tools_2D.Var_1(1,V{1}(f),fig.C(1,:),"-",LW(1));
-            Fig_Tools_2D.Var_2(1,V{3}   ,fig.C(1,:),"s",MS(2));
-            Fig_Tools_2D.Var_3(1,V{4}   ,fig.C(1,:)    ,FA);
-            
-            %  > Axis/legend,etc.
-            Fig_Tools_2D.ChangeLook (fig,[msh.f.xy.v{:}]');
+            Fig_Tools_2D.Var_1(V{1}   ,"k"       ,"-",LW(2));
+            Fig_Tools_2D.Var_2(V{2}   ,"k"       ,"o",MS(1));
+            Fig_Tools_2D.Var_1(V{1}(f),fig.C(1,:),"-",LW(1));
+            for i = 1:numel(obj.s{n}.sc{f,j})
+                Fig_Tools_2D.Var_2(V{3}{i},fig.C(i,:),"s",MS(2));
+                Fig_Tools_2D.Var_3(V{4}{i},fig.C(i,:)    ,FA);
+            end
+            for i = 1:numel(obj.s{n}.sf{f,j})
+                Fig_Tools_2D.Var_2(V{5}{i},fig.C(i,:),"s",MS(2));
+            end
             %  > Export(?)/Zoom(?).
-            Fig_Tools_2D.Exp_Or_Zoom(fig,zoom,fid);
+            Fig_Tools_2D.Exp_Or_Zoom (fig,zoom,fid);
         end
     end
 end

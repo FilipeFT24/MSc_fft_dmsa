@@ -5,66 +5,67 @@ classdef A2_2D
         %  > Set up 'msh' structure.
         function [msh] = Set_msh(h)
             %  > Auxiliary variables.
-            inp = A1_2D.Set_inp_1(h);
+            inp_m = A1_2D.Set_inp_1(h);
             
             %  > ----------------------------------------------------------
             % >> struct.
-            struct              = Tools_1.Set_struct(inp.m);
-            msh.struct          = struct;
-            CL_c                = struct.ConnectivityList;
+            struct                  = Tools_1.Set_struct(inp_m);
+            msh.struct              = struct;
+            CL_c                    = struct.ConnectivityList;
             %  > ----------------------------------------------------------
             % >> c.
-            msh.c.Nc            = size(CL_c,1);
+            msh.c.Nc                = size(CL_c,1);
             %  > c.c.
             %  #1: Cell "i": face/vertex neighbours + auxiliary array "V".
-            [msh.c.c.nb,V]      = A2_2D.cc_nb   (CL_c);
+            [msh.c.c.nb,V]          = A2_2D.cc_nb   (CL_c);
             %  #2: Cell "i": centroid/vertex coordinates (for each cell).
-            msh.c.c.xy          = A2_2D.cc_xy   (struct);
+            msh.c.c.xy              = A2_2D.cc_xy   (struct);
             %  #3: Cell "i": volume.
-            msh.c.Volume        = A2_2D.c_Volume(msh.c.c.xy.v);
+            msh.c.Volume            = A2_2D.c_Volume(msh.c.c.xy.v);
             %  #4: Cell "i": reference length.
-            msh.c.h             = A2_2D.c_h     (msh.c.c.xy.v,msh.c.Volume);
+            msh.c.h                 = A2_2D.c_h     (msh.c.c.xy.v,msh.c.Volume);
             %  > c.f.
             %  #1: Identify all/boundary/bulk faces.
-            F{1}                = A2_2D.cf_F1   (CL_c,msh.c.c.nb.f);
+            F{1}                    = A2_2D.cf_F1   (CL_c,msh.c.c.nb.f);
             %  #2: Cell "i": centroid/vertex coordinates (for each face).
-            msh.c.f.xy          = A2_2D.cf_xy   (F{1}.c.v,struct);
-            %  #3: Cell "i": outer face normals (Sf).
-            msh.c.f.Sf          = A2_2D.cf_Sf_1 (msh.c.c.xy.c,msh.c.f.xy);
+            msh.c.f.xy              = A2_2D.cf_xy   (F{1}.c.v,struct);
+            %  #3: Cell "i": outer face normals (Nf,Sf).
+            [msh.c.f.Nf,msh.c.f.Sf] = ...
+                A2_2D.cf_NSf_1(msh.c.c.xy.c,msh.c.f.xy);
             %  > ----------------------------------------------------------
             % >> f.
             %  #1: List faces.
-            F{2}                = A2_2D.f_F2(F{1});
+            F{2}                    = A2_2D.f_F2(F{1});
             %  -1) Number of (unique) faces.
-            msh.f.Nf            = size(F{2}.ic,1);
+            msh.f.Nf                = size(F{2}.ic,1);
             %  -2) Face "i": cell indices.
-            msh.f.ic            = F{2}.ic;
+            msh.f.ic                = F{2}.ic;
             %  -3) Face "i": vertex indices.
-            msh.f.iv            = F{2}.iv;
+            msh.f.iv                = F{2}.iv;
             %  -4) Face "i": is it a boundary or bulk face ?
-            msh.f.logical       = F{2}.logical;
+            msh.f.logical           = F{2}.logical;
             %  -5) Boundary cell indices.
-            ic_b                = unique([msh.f.ic{~F{2}.logical}]');
-            msh.c.logical       = false (msh.c.Nc,1);
-            msh.c.logical(ic_b) = true;
+            ic_b                    = unique([msh.f.ic{~F{2}.logical}]');
+            msh.c.logical           = false (msh.c.Nc,1);
+            msh.c.logical(ic_b)     = true;
             %  #2: Face "i": centroid/vertex coordinates.
-            msh.f.xy            = A2_2D.f_xy (msh.f.iv,struct);
+            msh.f.xy                = A2_2D.f_xy (msh.f.iv,struct);
             %  #3: Cell "i": face indices.
-            msh.c.f.if          = A2_2D.cf_if(CL_c,F);
+            msh.c.f.if              = A2_2D.cf_if(CL_c,F);
             %  > ----------------------------------------------------------
             % >> v.
             %  #1: Vertex "i": cell indices.
-            msh.v.ic            = A2_2D.v_c      (CL_c,V);
+            msh.v.ic                = A2_2D.v_c      (CL_c,V);
             %  #2: Vertex "i": face indices.
-            msh.v.if            = A2_2D.v_f      (F{2});
+            msh.v.if                = A2_2D.v_f      (F{2});
             %  #3: Identify boundary/bulk vertices.
-            msh.v.logical       = A2_2D.v_logical(F{2});
+            msh.v.logical           = A2_2D.v_logical(F{2});
             %  > ----------------------------------------------------------
             % >> d.
             %  #1: Domain reference length.
-            msh.d.h             = Tools_1.mean(msh.c.h.h,1);
+            msh.d.h                 = Tools_1.mean(msh.c.h.h,1);
             %  > Sort fields...
-            msh                 = Tools_1.Sort_msh_2D(msh);
+            msh                     = Tools_1.Sort_msh_2D(msh);
             %  > ----------------------------------------------------------
         end
         
@@ -199,20 +200,21 @@ classdef A2_2D
         end
         %  > 2.1.7. -------------------------------------------------------
         %  > #3: Cell "i": outer face normals (Sf).
-        function [Sf] = cf_Sf_1(xy_m,cf_xy)
+        function [Nf,Sf] = cf_NSf_1(xy_m,cf_xy)
             %  > Auxiliary variables.
             sz = size(cf_xy.v);
             
             for i = 1:sz(1)
                 j = size(cf_xy.v{i});
                 for k = 1:j(1)
-                    Sf{i,1}(k,:) = A2_2D.cf_Sf_2(xy_m(i,:),cf_xy.c{i}(k,:),cf_xy.v{i}{k});
+                    [Nf{i,1}(k,:),Sf{i,1}(k,:)] = ...
+                        A2_2D.cf_NSf_2(xy_m(i,:),cf_xy.c{i}(k,:),cf_xy.v{i}{k});
                 end
             end
         end
         %  > 2.1.7.1. -----------------------------------------------------
         %  > Auxiliary function.
-        function [Sf] = cf_Sf_2(xy_cm,xy_fm,xy_vv)
+        function [Nf,Sf] = cf_NSf_2(xy_cm,xy_fm,xy_vv)
             %  > \vec{FC}.
             FC    = xy_cm-xy_fm;
             FC    = bsxfun(@rdivide,FC,sqrt(sum(FC.^2)));
@@ -222,6 +224,7 @@ classdef A2_2D
             Nf    = bsxfun(@rdivide,Sf,sqrt(sum(Sf.^2)));
             %  > Check...
             if dot(FC,Nf) > 0
+                Nf = -Nf;
                 Sf = -Sf;
             end
         end
