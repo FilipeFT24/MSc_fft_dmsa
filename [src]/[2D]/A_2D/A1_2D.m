@@ -15,7 +15,7 @@ classdef A1_2D
         function [inp] = Set_inp_2(t,v)
             %  > ----------------------------------------------------------
             %  > Analytic function/coefficients.
-            inp.c               = Tools_1.c   (2,v);                 %  > c.
+            inp.c               = Tools_1.c   (t,v);                 %  > c.
             inp.f               = Tools_1.func(t,v);                 %  > f.
             %  > ----------------------------------------------------------
             %  > Polynomial fit.

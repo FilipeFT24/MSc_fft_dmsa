@@ -36,6 +36,11 @@ classdef Fig_2_1_2D
             L1{2}      = join(["$\|\bar{\tau}_{c^{\left(p\right)}}\|_{1}$"]);
             L1{3}      = join(["$\|e_{c^{\left(a\right)}}\|_{1}$"]);
             L1{4}      = join(["$\|e_{c^{\left(p\right)}}\|_{1}$"]);
+            
+            plot(h,V{1},'-ok');
+            
+            sl = Tools_1.Slope(h,V{1})
+            
         end
     end
 end

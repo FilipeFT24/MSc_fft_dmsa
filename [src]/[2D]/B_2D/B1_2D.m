@@ -65,16 +65,16 @@ classdef B1_2D
                                     end
                                 end
                             end
-                            % >> Level N.
-                            if p > 1
-                                if ~inp.p.nb_t
-                                    %  > Face neighbours.
-                                    [sc{2},sf{2}] = B1_2D.fn(msh,sc{1},sf{1});
-                                else
-                                    %  > Vertex neighbours.
-                                    [sc{2},sf{2}] = B1_2D.vn(msh,sc{1},sf{1});
-                                end
-                            end
+%                             % >> Level N.
+%                             if p > 1
+%                                 if ~inp.p.nb_t
+%                                     %  > Face neighbours.
+%                                     [sc{2},sf{2}] = B1_2D.fn(msh,sc{1},sf{1});
+%                                 else
+%                                     %  > Vertex neighbours.
+%                                     [sc{2},sf{2}] = B1_2D.vn(msh,sc{1},sf{1});
+%                                 end
+%                             end
                             %  > ------------------------------------------
                             %  > Compute coordinates...
                             xc = B1_2D.xt_c(msh.c.c.xy.c,cat(1,sc{:}));
@@ -228,7 +228,7 @@ classdef B1_2D
                                 case 1, t = Tools_2.Terms_1(p);
                                 case 2, t = Tools_2.Terms_2(p,j);
                             end
-                            gf    = B1_2D.Gauss_f(inp.c{i,j},f.qd {i,j},xy_fv);
+                            gf    = B1_2D.Gauss_f(inp.c{i,j},f.qd{i,j},xy_fv);
                             Tf_V  = B1_2D.Assemble_Tf_V(gf,Pf,t,xy_fv);
                             %  > Update field x".
                             x.gf  {k,i}{j} = gf;

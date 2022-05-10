@@ -65,22 +65,22 @@ classdef Fig_V1_0_2D
             %  > Select variables.
             V{1} = msh.f.xy.v;
             V{2} = msh.c.c.xy.c;
-            for i = 1:numel(obj.s{n}.sc{f,j})
-                V{3}{i} = msh.c.c.xy.c(obj.s{n}.sc{f,j}{i},:);
-                V{4}{i} = msh.c.c.xy.v(obj.s{n}.sc{f,j}{i});
+            for i = 1:numel(obj.s{n}.sc{f,j}{n})
+                V{3}{i} = msh.c.c.xy.c(obj.s{n}.sc{f,j}{n}{i},:);
+                V{4}{i} = msh.c.c.xy.v(obj.s{n}.sc{f,j}{n}{i});
             end
-            for i = 1:numel(obj.s{n}.sf{f,j})
-                V{5}{i} = msh.f.xy.c  (obj.s{n}.sf{f,j}{i},:);
+            for i = 1:numel(obj.s{n}.sf{f,j}{n})
+                V{5}{i} = msh.f.xy.c  (obj.s{n}.sf{f,j}{n}{i},:);
             end
             %  > Plot variables.
             Fig_Tools_2D.Var_1(V{1}   ,"k"       ,"-",LW(2));
             Fig_Tools_2D.Var_2(V{2}   ,"k"       ,"o",MS(1));
             Fig_Tools_2D.Var_1(V{1}(f),fig.C(1,:),"-",LW(1));
-            for i = 1:numel(obj.s{n}.sc{f,j})
+            for i = 1:numel(obj.s{n}.sc{f,j}{n})
                 Fig_Tools_2D.Var_2(V{3}{i},fig.C(i,:),"s",MS(2));
                 Fig_Tools_2D.Var_3(V{4}{i},fig.C(i,:)    ,FA);
             end
-            for i = 1:numel(obj.s{n}.sf{f,j})
+            for i = 1:numel(obj.s{n}.sf{f,j}{n})
                 Fig_Tools_2D.Var_2(V{5}{i},fig.C(i,:),"s",MS(2));
             end
             %  > Export(?)/Zoom(?).

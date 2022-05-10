@@ -110,7 +110,7 @@ classdef B2_2D
             %  > \tau_f(\phi), \tau(\nabla\phi), \tau_f and \tau_c.
             ea = B2_2D.Set_1_e(msh,ea,f,x.gf,x.xf.a);
             %  > Update remaining error fields...
-            ea = B2_2D.Set_2_e(msh,ea,m,Vc);
+            ea = B2_2D.Set_2_e(msh,ea,f,x,m,Vc);
         end
         % >> 1.3. ---------------------------------------------------------
         %  > Auxiliary functions.
@@ -167,10 +167,10 @@ classdef B2_2D
         end
         %  > 1.3.3. -------------------------------------------------------
         %  > Auxiliary function #3.
-        function [e] = Set_2_e(msh,e,m,Vc)
+        function [e] = Set_2_e(msh,e,f,x,m,Vc)
             % >> Error distribution.
             %  > e_c_abs.
-            e.c.c_abs   = abs(m.At\e.t.c);
+            e.c.c_abs   = abs(f.av.c-x.nv.x.c);%abs(m.At\e.t.c);
             % >> Error norms.
             e.c.n_abs   = Tools_2.Set_n(e.c.c_abs,Vc);
             e.t.n_abs.c = Tools_2.Set_n(e.t.c_abs,Vc);

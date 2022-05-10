@@ -21,15 +21,15 @@ classdef C1_2D
         %  > 2.2.1. -------------------------------------------------------
         %  > Input variables.
         function [h] = Set_h()
-            h_lim = [1.0E-1,5.0E-2];
-            n     = 10;
+            h_lim = [1.0E-1,3.5E-2];
+            n     = 5;
             h     = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
         end
         %  > 2.2.2. -------------------------------------------------------
         function [V] = Check_Decay()
             %  > "inp".
             h   = C1_2D.Set_h;
-            inp = A1_2D.Set_inp_2(1,[0.5,0.5,100]);     %  > f_type/xc/yc/i.
+            inp = A1_2D.Set_inp_2(1,[0.5,0.5,10]);      %  > f_type/xc/yc/i.
             
             %  > Set up "P-standard" run.
             if ~inp.p_adapt.allow
