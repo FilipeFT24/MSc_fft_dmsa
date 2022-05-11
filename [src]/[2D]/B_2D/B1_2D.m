@@ -174,6 +174,7 @@ classdef B1_2D
         function [x] = Initialize_24(f,u,nc,ns,Nc,Nf)
             for i = 1:ns
                 %  > "sx".
+                x{i}.Df   = cell(Nf,nc(2));
                 x{i}.gf   = cell(Nf,nc(2));
                 x{i}.Pf   = cell(Nf,nc(2));
                 x{i}.Tf_V = cell(Nf,nc(2));
@@ -217,11 +218,11 @@ classdef B1_2D
                     for j = 1:size(u.s{i},2)
                         for k = u.s{i}{j}'
                             %  > p.
-                            p     = u.p{i}(k,j);
+                            p       = u.p{i}(k,j);
                             %  > Pf.
-                            xy_fc = msh.f.xy.c(k,:);
-                            xy_t  = s.xt      {k,i}{j};
-                            Pf    = B1_2D.Assemble_Pf(inp,p,xy_fc,xy_t);
+                            xy_fc   = msh.f.xy.c(k,:);
+                            xy_t    = s.xt      {k,i}{j};
+                            [Df,Pf] = B1_2D.Assemble_DPf(inp,p,xy_fc,xy_t);
                             %  > Tf_V.
                             xy_fv = msh.f.xy.v{k};
                             switch i
@@ -231,6 +232,7 @@ classdef B1_2D
                             gf    = B1_2D.Gauss_f(inp.c{i,j},f.qd{i,j},xy_fv);
                             Tf_V  = B1_2D.Assemble_Tf_V(gf,Pf,t,xy_fv);
                             %  > Update field x".
+                            x.Df  {k,i}{j} = Df;
                             x.gf  {k,i}{j} = gf;
                             x.Pf  {k,i}{j} = Pf;
                             x.Tf_V{k,i}{j} = Tf_V;
@@ -241,7 +243,7 @@ classdef B1_2D
         end
         %  > 2.3.1. -------------------------------------------------------
         %  > Check boundary type and assemble matrices Df and Pf.
-        function [Pf] = Assemble_Pf(inp,p,xy_fc,xy_t)
+        function [Df,Pf] = Assemble_DPf(inp,p,xy_fc,xy_t)
             % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
             d_ft = xy_t-xy_fc;
             t    = Tools_2.Terms_1(p);

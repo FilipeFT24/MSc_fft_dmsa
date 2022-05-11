@@ -9,7 +9,7 @@ classdef A3_2D
             %  > "av" (analytic values).
             f.av = A3_2D.Update_av(msh,f.fh.f);
             %  > "bd" (boundary values).
-            f.bd = A3_2D.Update_bd(msh,f.fh.f);
+            f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
             %  > "st" (source term).
             f.st = A3_2D.Update_st(msh,f.fh.func.f);
             %  > "qd" (1D quadrature).
@@ -49,9 +49,21 @@ classdef A3_2D
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Update field "f.bd" (boundary face indices/values).
-        function [bd] = Update_bd(msh,f)
+        function [bd] = Update_bd(inp,msh,f)
+            
             bd.i(:,1) = find(~msh.f.logical);
             bd.v(:,1) = f.f ( msh.f.xy.c(~msh.f.logical,:));
+            
+%             for i = 1:numel(bd.i,1)
+%                 switch x
+%                     %  > "Dirichlet".
+%                     case 1, bd.v(i,1) = f.f(msh.f.xy.c(~msh.f.logical,:));
+%                     %  > "Neumann".
+%                     case 2, bd.v(i,1) = f.f(msh.f.xy.c(~msh.f.logical,:));
+%                     %  > "Robin".
+%                     case 3, bd.v(i,1) = f.f(msh.f.xy.c(~msh.f.logical,:));
+%                 end
+%             end
         end
         % >> 1.5. ---------------------------------------------------------
         %  > Update field "f.st" ((volumetric) source term).

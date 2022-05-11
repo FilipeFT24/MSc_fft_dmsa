@@ -121,7 +121,7 @@ classdef Tools_1
                     return;
             end
         end
-        % >> 2.1. ---------------------------------------------------------
+        % >> 2.2. ---------------------------------------------------------
         function [fh] = func(t,v)
             %  > Auxiliary variables.
             xc = v(1);
@@ -150,7 +150,6 @@ classdef Tools_1
             msh.c.c.nb = orderfields(msh.c.c.nb,{'f','v'});
             msh.c.c.xy = orderfields(msh.c.c.xy,{'c','v'});
             msh.c.f    = orderfields(msh.c.f   ,{'if','Sf'});
-            %msh.c.f.xy = orderfields(msh.c.f.xy,{'c','v'});
             msh.c.h    = orderfields(msh.c.h   ,{'h','xy'});
             %  > d.
             msh.d      = orderfields(msh.d     ,{'h'});

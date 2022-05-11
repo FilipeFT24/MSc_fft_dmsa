@@ -166,7 +166,7 @@ classdef B2_2D
             end
         end
         %  > 1.3.3. -------------------------------------------------------
-        %  > Auxiliary function #3.
+        %  > Auxiliary function #4.
         function [e] = Set_2_e(msh,e,f,x,m,Vc)
             % >> Error distribution.
             %  > e_c_abs.

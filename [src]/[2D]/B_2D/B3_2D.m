@@ -63,8 +63,8 @@ classdef B3_2D
                     obj = B3_2D.Initialize(inp,msh);
                     obj = B3_2D.p_standard(inp,msh,obj);
                     %  > Plot...
-                    Fig_V1_0_2D.Plot(inp.plot(1),msh,obj,"blk");
-                    Fig_V1_1_2D.Plot(inp.plot(2),msh,obj);
+                    Fig_2D_1.Plot(inp,msh,obj);
+                    Fig_2D_2.Plot(inp,msh,obj);
                 case true
                     %  > 'p-adaptative' run.
                 otherwise

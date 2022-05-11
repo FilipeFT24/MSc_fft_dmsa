@@ -18,6 +18,12 @@ classdef A1_2D
             inp.c               = Tools_1.c   (t,v);                 %  > c.
             inp.f               = Tools_1.func(t,v);                 %  > f.
             %  > ----------------------------------------------------------
+            %  > Boundary conditions.
+            inp.bc_t(1)         = "Dirichlet";                       %  > E.
+            inp.bc_t(2)         = "Dirichlet";                       %  > E.
+            inp.bc_t(3)         = "Dirichlet";                       %  > E.
+            inp.bc_t(4)         = "Dirichlet";                       %  > E.
+            %  > ----------------------------------------------------------
             %  > Polynomial fit.
             inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
             inp.p.p(2,:)        = [1,1];                             %  > p-diffusion (X/Y).
