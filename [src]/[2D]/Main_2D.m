@@ -8,7 +8,7 @@ run = 0;
 % >> ----------------------------------------------------------------------
 if ~run
     inp = A1_2D.Set_inp_2(1,[0.5,0.5,100]); %  > f_type/xc/yc/i.
-    msh = A2_2D.Set_msh  (1.0E-1);            %  > h.
+    msh = A2_2D.Set_msh  (2.5E-2);          %  > h.
     obj = B3_2D.Run_p    (inp,msh);         %  > inp/msh.
 else
     obj = C1_2D.Run_p    (1);

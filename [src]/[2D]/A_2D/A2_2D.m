@@ -2,7 +2,7 @@ classdef A2_2D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        %  > Set up 'msh' structure.
+        %  > Set up "msh" structure.
         function [msh] = Set_msh(h)
             %  > Auxiliary variables.
             inp_m = A1_2D.Set_inp_1(h);
@@ -28,7 +28,7 @@ classdef A2_2D
             %  #1: Identify all/boundary/bulk faces.
             F{1}                = A2_2D.cf_F1   (CL_c,msh.c.c.nb.f);
             %  #2: Cell "i": outer face normals.
-            msh.c.f.Sf          = A2_2D.cf_Sf   (F{1},struct,msh.c.c.xy.c);%,msh.c.f.xy);
+            msh.c.f.Sf          = A2_2D.cf_Sf   (F{1},struct,msh.c.c.xy.c);
             %  > ----------------------------------------------------------
             % >> f.
             %  #1: List faces.
@@ -80,11 +80,11 @@ classdef A2_2D
             V   {2} = false(sz(1),sz(1));
             l       = 1:sz(1);
             
+            %  > Assemble sparse matrix...
+            a     = repelem(1:sz(1),sz(2))';
+            b     = reshape(CL_c',[],1);
+            V{1}  = sparse (a,b,true(numel(a),1));
             %  > Vertex neighbours.
-            for i = 1:sz(1)
-                V{1}(i,CL_c(i,:)) = true;
-            end
-            V{1}  = sparse(V{1});
             for i = 1:sz(1)
                 for j = 1:sz(2)
                     V{2}(i,V{1}(:,CL_c(i,j))) = true;
@@ -182,16 +182,14 @@ classdef A2_2D
             F.f.v = cat(1,F.c.v{:});
         end
         %  > 2.1.6. -------------------------------------------------------
-        %  > #3: Cell "i": outer face normals (Sf).
+        %  > #2: Cell "i": outer face normals (Sf).
         function [Sf] = cf_Sf(F1,struct,xy_cm)
-            %  > xy_v.
             for i = 1:size(F1.c.v,1)
+                %  > xy_v.
                 for k = 1:size(F1.c.v{i},1)
                     xy_v{i,1}{k,1} = struct.Points(F1.c.v{i}(k,1:end-1),:);
                 end
-            end
-            %  > Sf.
-            for i = 1:size(xy_v,1)
+                %  > Sf.
                 for j  = 1:size(xy_v{i},1)
                     %  > \vec{FC}.
                     vec_FC      = xy_cm(i,:)-Tools_1.mean(xy_v{i}{j},1);
@@ -282,17 +280,17 @@ classdef A2_2D
             end
             for i = j
                 ic_f(i,:) = k(U(i,:));
-                c         = A2_2D.i_AB(F{2}.iv(ic_f(i,:),:),F{1}.c.v{i}(:,1:end-1));
+                c         = A2_2D.AB(F{2}.iv(ic_f(i,:),:),F{1}.c.v{i}(:,1:end-1));
                 ic_f(i,c) = ic_f(i,:);
             end
         end
         %  > 2.2.4.1. -----------------------------------------------------
         %  > Auxiliary function (faster version of built-in function "intersect" w/ 'rows' option).
-        function [l] = i_AB(A,B)
+        function [l] = AB(A,B)
             [~,i] = sortrows(A);
-            [~,j] = sortrows(i);
-            [~,k] = sortrows(B);
-            l     = k(j);
+            [~,j] = sortrows(B);
+            [~,k] = sortrows(i);
+            l     = j(k);
         end
         % >> 2.3. ---------------------------------------------------------
         %  > Field: "v".

@@ -63,7 +63,7 @@ classdef A3_2D
                 for j = 1:size(msh.c.c.xy.v{i},1)-2
                     %  > Split cell polyhedral into #V-2 triangles and select vertex indices/coordinates...
                     xy_v  {i,1}{j} = msh.struct.Points(msh.struct.ConnectivityList(i,[1,j+1,j+2]),:);
-                    %  > Compute partial contributions.
+                    %  > Compute partial contributions...
                     st_aux{i,1}(j) = A3_2D.st_aux(map,xy_v{i,1}{j});
                 end
                 st(i,1) = sum(st_aux{i,1});
