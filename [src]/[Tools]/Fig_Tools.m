@@ -3,46 +3,143 @@ classdef Fig_Tools
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         function [fig] = Set_fig(exp,run,zoom)
-            fig.exp  = exp;                                    %  > Export figure(?).
-            fig.run  = run;                                    %  > Test working directory.
-            fig.zoom = zoom;                                   %  > Zoom(?).
-            fig.C    = linspecer(9,'qualitative');             %  > Colors.
+            fig.exp  = exp;                                  %  > Export figure(?).
+            fig.run  = run;                                  %  > Test working directory.
+            fig.zoom = zoom;                                 %  > Zoom(?).
+            fig.C    = linspecer(9,'qualitative');           %  > Colors.
             if ~exp
-                fig.LW       =  0.25;                          %  > Line.
-                fig.MS       =  7.50;                          %  > Marker size.
-                fig.FA       =  0.25;                          %  > FaceAlpha.
-                fig.FT_1     = 12.00;                          %  > Legend.
-                fig.FT_2     = 15.00;                          %  > x/y-axis.
-                fig.FT_3     = [25.00,25.00];                  %  > x/y-label.
-                fig.FT_4     = 12.50;                          %  > x/y-axis (zoom).
-                fig.Position = [150,100,1250,600];             %  > Position.
+                fig.LW       =  1.50;                        %  > Line.
+                fig.MS       =  5.00;                        %  > Marker size.
+                fig.FA       =  0.25;                        %  > FaceAlpha.
+                fig.FT_1     = 15.00;                        %  > Legend.
+                fig.FT_2     = 15.00;                        %  > x/y-axis.
+                fig.FT_3     = [17.50,17.50];                %  > x/y-label.
+                fig.FT_4     = 12.50;                        %  > x/y-axis (zoom).
+                fig.Position = [150,100,1250,600];           %  > Position.
             else
-                fig.LW       =  0.10;                          %  > Line.
-                fig.MS       =  7.50;                          %  > Marker.
-                fig.FA       =  0.25;                          %  > FaceAlpha.
-                fig.FT_1     = 25.00;                          %  > Legend.
-                fig.FT_2     = 30.00;                          %  > x/y-axis.
-                fig.FT_3     = [42.50,42.50];                  %  > x/y-label.
-                fig.FT_4     = 25.00;                          %  > x/y-axis (zoom).
-                fig.Position = [350,100,850,600];              %  > Position.
+                fig.LW       =  0.10;                        %  > Line.
+                fig.MS       =  7.50;                        %  > Marker.
+                fig.FA       =  0.25;                        %  > FaceAlpha.
+                fig.FT_1     = 25.00;                        %  > Legend.
+                fig.FT_2     = 30.00;                        %  > x/y-axis.
+                fig.FT_3     = [42.50,42.50];                %  > x/y-label.
+                fig.FT_4     = 25.00;                        %  > x/y-axis (zoom).
+                fig.Position = [350,100,850,600];            %  > Position.
             end
-            fig.trsh         = 1.0e-16;                        %  > Error treshold.
-            fig.NT           = [10,10];                        %  > Number of ticks (x/y-direction).
-            fig.Folder       = "../[Figures]";                 %  > Destination folder.
+            fig.nsh          = 0;                            %  > Number of elements below "trsh".
+            fig.trsh         = 1.0e-16;                      %  > Error treshold.
+            fig.NT           = [10,10];                      %  > Number of ticks (x/y-direction).
+            fig.Folder       = "../[Figures]";               %  > Destination folder.
             if ~run
-                fig.L{1}     = "$x$";                          %  > x-axis label.
-                fig.L{2}     = "$y$";                          %  > y-axis label.
+                fig.L{1}     = "$x$";                        %  > x-axis label.
+                fig.L{2}     = "$y$";                        %  > y-axis label.
             else
-                fig.L{1}     = "$\textrm{NNZ}$";               %  > x-axis label.
-                fig.L{2}     = "$\textrm{Error magnitude}$";   %  > y-axis label.
+                fig.L{1}     = "$\textrm{NNZ}$";             %  > x-axis label.
+                fig.L{2}     = "$\textrm{Error magnitude}$"; %  > y-axis label.
             end
             %  > Markers/line styles.
             %  M = ['+','o','*','x','v','d','^','s','>','<'];
             %  L = ['-','--',':','-.'];
         end
+        % >> 1.2. ---------------------------------------------------------
+        %  > 1.2.1. -------------------------------------------------------
+        function [str] = Set_str_1(i)
+            switch i
+                case 1
+                    str = "\phantom{\nabla}\phi";
+                case 2
+                    str = "\nabla\phi";
+                otherwise
+                    return;
+            end
+        end
+        %  > 1.2.2. -------------------------------------------------------
+        function [str] = Set_str_2(i)
+            switch i
+                case 1
+                    str = "\phi";
+                case 2
+                    str = "\nabla\phi";
+                otherwise
+                    return;
+            end
+        end
+        %  > 1.2.3. -------------------------------------------------------
+        function [str] = Set_str_3(i)
+            switch i
+                case 1
+                    str = "1";
+                case 2
+                    str = "2";
+                case 3
+                    str = "\infty";
+                otherwise
+                    return;
+            end
+        end
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
+        %  > 2.1.1. -------------------------------------------------------
+        function [] = Map_1D_1(fig,fx,XM,L_XY)
+            %  > Other parameters.
+            [xl(1),xl(2)] = MinMaxElem(XM);
+            box on;
+            set(gcf,'color','w');
+            set(gca,'TickLabelInterpreter','latex');
+            set(gca,'FontSize',fig.FT_2);
+            
+            %  > Axis.
+            if fx
+                i     = 1:fig.NT(1)+1;
+                xt(i) = xl(1)-(xl(1)-xl(2))./fig.NT(1).*(i-1);
+                xticks(xt);
+            end
+            xlim  ([xl(1),xl(2)]);
+            xlabel(L_XY(1),'FontSize',fig.FT_3(1),'Interpreter','latex');
+            ylabel(L_XY(2),'FontSize',fig.FT_3(2),'Interpreter','latex');
+        end
+        %  > 2.1.2. -------------------------------------------------------
+        function [] = Map_1D_2(fig,L,P,fx,XM,YM_1,YM_2,NC)
+            ax = gca;
+            legend([P{:}],[L{:}],...
+                'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
+            if fig.run
+                set(ax,'XScale','log'); ax.XAxis.Exponent = 3;
+            end
+            set(ax,'YScale','log');
+            if ~isempty(YM_1) && ~isempty(YM_2)
+                a = 10.^(ceil(log10(min(YM_1(:,1))))+YM_2(1));
+                b = 10.^(ceil(log10(max(YM_1(:,2))))+YM_2(2));
+                if a < fig.trsh
+                    a = fig.trsh;
+                end
+                ylim([a,b]);
+            end
+            Fig_Tools.Map_1D_1(fig,fx,XM,fig.L);
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > 2.2.1. -------------------------------------------------------
+        function [LY,P,YV] = Var_1D_1(fig,M,LX,X,Y)
+            %  > Auxiliary variables.
+            a = size(X,2);
+            b = size(Y,2);
+            if a < b
+                X = repelem(X,1,b);
+            end
+            
+            hold on;
+            k = 0;
+            for i = 1:b
+                j{i} = Y(:,i) > fig.trsh; Y(~j{i},i) = 0;
+                if nnz(j{i})  > fig.nsh
+                    k                 = k+1;
+                    LY{k}             = LX{i};
+                    P {k}             = plot(X(:,i),Y(:,i),M(i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
+                    [YV(k,1),YV(k,2)] = MinMaxElem(Y(j{i},i));
+                end
+            end
+        end
         
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
@@ -103,19 +200,20 @@ classdef Fig_Tools
                 movefile(    strcat(Filename,'.pdf'),Directory);
             end
         end
-        %  > 3.1.4. -------------------------------------------------------
+        % >> 3.2. ---------------------------------------------------------
+        %  > 3.2.1. -------------------------------------------------------
         function [] = Var_2D_1(V,C,M,LW)
             hold on;
             for i = 1:size(V,1)
                 plot(V{i}(:,1),V{i}(:,2),M,'Color',C,'LineWidth',LW);
             end
         end
-        %  > 3.1.5. -------------------------------------------------------
+        %  > 3.2.2. -------------------------------------------------------
         function [P] = Var_2D_2(V,C,M,MS)
             hold on;
             P = plot(V(:,1),V(:,2),M,'Color',C,'MarkerFaceColor',C,'MarkerSize',MS);
         end
-        %  > 3.1.6. -------------------------------------------------------
+        %  > 3.2.3. -------------------------------------------------------
         function [] = Var_2D_3(V1,V2,FA)
             hold on;
             [sz(1),sz(2)] = deal(size(V1,1),size(V2,1));
@@ -126,7 +224,7 @@ classdef Fig_Tools
                 patch(V1{i}(:,1),V1{i}(:,2),V2(i,:),'FaceAlpha',FA,'Linestyle','None');
             end
         end
-        %  > 3.1.7. -------------------------------------------------------
+        %  > 3.2.4. -------------------------------------------------------
         function [] = Var_2D_4(V1,V2,x,C)
             hold on;
             for i = 1:size(V1,1)

@@ -4,8 +4,9 @@ classdef Fig_2D_2
         function [] = Plot(inp,msh,obj)
             %  > Auxiliary variables.
             exp  = 0;
+            run  = 0;
             zoom = 0;
-            fig  = Fig_Tools.Set_fig(0,exp,zoom);
+            fig  = Fig_Tools.Set_fig(exp,run,zoom);
             n    = 1;
             
             if ~exp
@@ -31,6 +32,8 @@ classdef Fig_2D_2
         function [] = Plot_1(msh,v,x,fig)
             %  > Auxiliary variables.
             fig.fid         = "2D_2";
+            fig.LW          = 0.1;
+            fig.FT_1        = 12.00;
             y.str           = 'thermal';
             y.title         = Fig_2D_2.Set_Legend(x);
             [y.c(1),y.c(2)] = MinMaxElem(v);

@@ -50,20 +50,53 @@ classdef A3_2D
         % >> 1.4. ---------------------------------------------------------
         %  > Update field "f.bd" (boundary face indices/values).
         function [bd] = Update_bd(inp,msh,f)
-            
+            %  > (Boundary) face indices.
             bd.i(:,1) = find(~msh.f.logical);
-            bd.v(:,1) = f.f ( msh.f.xy.c(~msh.f.logical,:));
-            
-%             for i = 1:numel(bd.i,1)
-%                 switch x
-%                     %  > "Dirichlet".
-%                     case 1, bd.v(i,1) = f.f(msh.f.xy.c(~msh.f.logical,:));
-%                     %  > "Neumann".
-%                     case 2, bd.v(i,1) = f.f(msh.f.xy.c(~msh.f.logical,:));
-%                     %  > "Robin".
-%                     case 3, bd.v(i,1) = f.f(msh.f.xy.c(~msh.f.logical,:));
-%                 end
-%             end
+            %  > Identify...
+            for i = 1:numel(bd.i)
+                c       = msh.f.ic  {bd.i(i,1)};
+                Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
+                %  > Select...
+                if     Sf(i,1) >  0 && Sf(i,2) == 0, t(i,1) = 1; %  > East.
+                elseif Sf(i,1) == 0 && Sf(i,2) >  0, t(i,1) = 2; %  > North.
+                elseif Sf(i,1) <  0 && Sf(i,2) == 0, t(i,1) = 3; %  > West.
+                elseif Sf(i,1) == 0 && Sf(i,2) <  0, t(i,1) = 4; %  > South.
+                else
+                    return;
+                end
+            end
+            for i = 1:numel(bd.i)
+                bd_j{i} = find(t == i);
+            end
+            %  > (Boundary) face values.
+            for i = 1:numel(inp.b.t)
+                bd_fi = bd_j{i};
+                xy_fc = msh.f.xy.c(bd.i(bd_j{i}),:);
+                switch inp.b.t(i)
+                    case "Dirichlet"
+                        %  > V = \phi(f).
+                        bd.v(bd_fi,1) = f.f(xy_fc);
+                    case "Neumann"
+                        %  > V = (\nabla\phi(f)_x,\nabla\phi(f)_y)*Sf.
+                        for j  = 1:numel(bd_fi)
+                            bd.v(bd_fi(j),1) = ...
+                                [f.d{1}(xy_fc(j,:)),f.d{2}(xy_fc(j,:))]*Sf(bd_fi(j),:)';
+                        end
+                    case "Robin"
+                        %  > Evaluate convective/diffusive coefficients at face centroid...
+                        for j = 1:size(inp.c,1)
+                            for k = 1:size(inp.c,2)
+                                c_fc{j}(:,k) = inp.c{j,k}(xy_fc);
+                            end
+                        end
+                        GoV = c_fc{2}./c_fc{1};
+                        %  > V = [GoV.*(\nabla\phi(f)_x,\nabla\phi(f)_y)]*Sf-\phi(f)*Sf.
+                        for j  = 1:numel(bd_fi)
+                            bd.v(bd_fi(j),1) = ...
+                                [f.f(xy_fc(j,:)),f.f(xy_fc(j,:))]*Sf(bd_fi(j),:)'-GoV(j,:).*[f.d{1}(xy_fc(j,:)),f.d{2}(xy_fc(j,:))]*Sf(bd_fi(j),:)';
+                        end
+                end
+            end
         end
         % >> 1.5. ---------------------------------------------------------
         %  > Update field "f.st" ((volumetric) source term).

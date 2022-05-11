@@ -8,7 +8,7 @@ classdef C1_2D
             else
                 V = C1_2D.Check_Decay;
             end
-            Fig_2_1_2D.Plot(V.msh,V.obj);
+            Fig_2D_3.Plot(V.msh,V.obj);
         end
         
         %% > 2. -----------------------------------------------------------

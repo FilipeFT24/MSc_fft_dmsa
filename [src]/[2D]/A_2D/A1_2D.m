@@ -19,10 +19,14 @@ classdef A1_2D
             inp.f               = Tools_1.func(t,v);                 %  > f.
             %  > ----------------------------------------------------------
             %  > Boundary conditions.
-            inp.bc_t(1)         = "Dirichlet";                       %  > E.
-            inp.bc_t(2)         = "Dirichlet";                       %  > E.
-            inp.bc_t(3)         = "Dirichlet";                       %  > E.
-            inp.bc_t(4)         = "Dirichlet";                       %  > E.
+            %  > NOTE: Only tested for square domain (boundaries are identified by outher face normals (Sf)).
+            inp.b.t(1)          = "Neumann";                         %  > East  (E).
+            inp.b.t(2)          = "Dirichlet";                       %  > North (N).
+            inp.b.t(3)          = "Dirichlet";                       %  > West  (W).
+            inp.b.t(4)          = "Dirichlet";                       %  > South (S).
+            if ~all(ismember(inp.b.t,["Dirichlet","Neumann","Robin"]))
+                return;
+            end
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
             inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).

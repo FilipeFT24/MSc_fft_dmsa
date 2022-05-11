@@ -5,8 +5,9 @@ classdef Fig_2D_1
         function [] = Plot(inp,msh,obj)
             %  > Auxiliary variables.
             exp  = 0;
+            run  = 0;
             zoom = 0;
-            fig  = Fig_Tools.Set_fig(0,exp,zoom);
+            fig  = Fig_Tools.Set_fig(exp,run,zoom);
             x.c  = 1; %  > n.
             
             if ~exp

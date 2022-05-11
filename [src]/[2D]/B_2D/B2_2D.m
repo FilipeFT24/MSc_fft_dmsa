@@ -108,7 +108,7 @@ classdef B2_2D
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
         function [ea] = Update_ea(inp,msh,ea,f,m,s,u,x,Vc)
             %  > \tau_f(\phi), \tau(\nabla\phi), \tau_f and \tau_c.
-            ea = B2_2D.Set_1_e(msh,ea,f,x.gf,x.xf.a);
+            ea = B2_2D.Set_1_e(msh,ea,f,x);
             %  > Update remaining error fields...
             ea = B2_2D.Set_2_e(msh,ea,f,x,m,Vc);
         end
@@ -117,17 +117,16 @@ classdef B2_2D
         %  > 1.3.1. -------------------------------------------------------
         %  > Auxiliary function #1.
         %  > Compute remaining error fields (based on the convective/diffusive facial components).
-        function [e] = Set_1_e(msh,e,f,gf,x)
+        function [e] = Set_1_e(msh,e,f,x)
             %  > Auxiliary variables.
-            n    = numel(x);
-            d_tf = cell (1,n+1);
+            n    = size(x.xf.a,2);
+            d_tf = cell(1,n+1);
             
             %  > "Average face value".
-            y = B2_2D.nv_a_f_V(f,gf);
             %  > \tau_f(\phi)_(x,y) and \tau_f(\nabla\phi)_(x,y).
             for i = 1:n+1
                 if i ~= n+1
-                    d_tf{i} = y{i}-x{i};
+                    d_tf{i} = x.xf.a{i}-x.xf.x{i};
                 else
                     d_tf{i} = sum(cat(3,d_tf{1:n}),3);
                 end
@@ -170,7 +169,7 @@ classdef B2_2D
         function [e] = Set_2_e(msh,e,f,x,m,Vc)
             % >> Error distribution.
             %  > e_c_abs.
-            e.c.c_abs   = abs(f.av.c-x.nv.x.c);%abs(m.At\e.t.c);
+            e.c.c_abs   = abs(m.At\e.t.c);
             % >> Error norms.
             e.c.n_abs   = Tools_2.Set_n(e.c.c_abs,Vc);
             e.t.n_abs.c = Tools_2.Set_n(e.t.c_abs,Vc);

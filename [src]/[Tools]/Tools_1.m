@@ -105,11 +105,11 @@ classdef Tools_1
             switch t
                 case 1
                     %  > Convection(X/Y).
-                    ch{1,1} = @(x) c(1,1); % > x.
-                    ch{1,2} = @(x) c(1,2); % > y.
+                    ch{1,1} = @(x) repelem(c(1,1),size(x,1),1);       % > x.
+                    ch{1,2} = @(x) repelem(c(1,2),size(x,1),1);       % > y.
                     %  > Diffusion (X/Y).
-                    ch{2,1} = @(x) c(2,1); % > x.
-                    ch{2,2} = @(x) c(2,2); % > y.
+                    ch{2,1} = @(x) repelem(c(2,1),size(x,1),1);       % > x.
+                    ch{2,2} = @(x) repelem(c(2,2),size(x,1),1);       % > y.
                 case 2
                     %  > Convection(X/Y).
                     ch{1,1} = @(x) c(1,1).*exp(-i.*((x(:,1)-xc).^2)); % > x.
