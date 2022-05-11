@@ -40,7 +40,7 @@ classdef A1_1D
             inp.c(1)           =  1;                          %  > Convection.
             inp.c(2)           = -1;                          %  > Diffusion.
             %  > Polynomial fit.
-            inp.p              = [3,3];                       %  > Convection(1)/Diffusion(2).
+            inp.p              = [1,1];                       %  > Convection(1)/Diffusion(2).
             if any(rem(inp.p,2) == 0)                         %  > Allow only p=1,3,5,7,9,etc.
                 return;
             end

@@ -149,8 +149,8 @@ classdef Tools_1
             msh.c.c    = orderfields(msh.c.c   ,{'nb','xy'});
             msh.c.c.nb = orderfields(msh.c.c.nb,{'f','v'});
             msh.c.c.xy = orderfields(msh.c.c.xy,{'c','v'});
-            msh.c.f    = orderfields(msh.c.f   ,{'if','xy','Nf','Sf'});
-            msh.c.f.xy = orderfields(msh.c.f.xy,{'c','v'});
+            msh.c.f    = orderfields(msh.c.f   ,{'if','Sf'});
+            %msh.c.f.xy = orderfields(msh.c.f.xy,{'c','v'});
             msh.c.h    = orderfields(msh.c.h   ,{'h','xy'});
             %  > d.
             msh.d      = orderfields(msh.d     ,{'h'});

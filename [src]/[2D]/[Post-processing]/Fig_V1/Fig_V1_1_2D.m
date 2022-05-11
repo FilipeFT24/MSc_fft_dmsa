@@ -31,13 +31,14 @@ classdef Fig_V1_1_2D
             %  > Auxiliary variables.
             fid             = "V1_1_2D (1)";
             n               = x.a;
+            v               = obj.e.a{n}.t.c_abs;
             y.str           = 'thermal';
             y.title         = Fig_V1_1_2D.Set_Legend(1);
-            [y.c(1),y.c(2)] = MinMaxElem(obj.e.a{n}.t.c_abs);
+            [y.c(1),y.c(2)] = MinMaxElem(v);
             
             %  > Select variables.
             V{1} = msh.c.c.xy.v;
-            V{2} = obj.e.a{n}.t.c_abs;
+            V{2} = v;
             %  > Plot variables.
             Fig_Tools_2D.Var_3(V{1},V{2},1);
             Fig_Tools_2D.ChangeLook_2(fig,y);
@@ -52,13 +53,14 @@ classdef Fig_V1_1_2D
             %  > Auxiliary variables.
             fid             = "V1_1_2D (2)";
             n               = x.a;
+            v               = obj.e.a{n}.c.c_abs;
             y.str           = 'thermal';
             y.title         = Fig_V1_1_2D.Set_Legend(2);
-            [y.c(1),y.c(2)] = MinMaxElem(obj.e.a{n}.c.c_abs);
+            [y.c(1),y.c(2)] = MinMaxElem(v);
             
             %  > Select variables.
             V{1} = msh.c.c.xy.v;
-            V{2} = obj.e.a{n}.c.c_abs;
+            V{2} = v;
             %  > Plot variables.
             Fig_Tools_2D.Var_3(V{1},V{2},1);
             Fig_Tools_2D.ChangeLook_2(fig,y);
