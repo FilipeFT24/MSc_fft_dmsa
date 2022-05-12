@@ -57,9 +57,11 @@ classdef Fig_2D_1
             j   = x.b;
             n   = x.c;
             FA  = fig.FA;
-            LW  = [fig.LW.*15,fig.LW];
-            MS  = [fig.MS./2 ,fig.MS];
-           
+            LW  = [2.5,0.1];
+            MS  = [3.0,7.0];
+            
+            %  > Axis/legend,etc.
+            Fig_Tools.Map_2D_1(msh,fig);
             %  > Select variables.
             V{1} = msh.f.xy.v;
             V{2} = msh.c.c.xy.c;
@@ -81,8 +83,6 @@ classdef Fig_2D_1
             for i = 1:numel(obj.s{n}.sf{f,j}{n})
                 Fig_Tools.Var_2D_2(V{5}{i},fig.C(i,:),"s",MS(2));
             end
-            %  > Axis/legend,etc.
-            Fig_Tools.Map_2D_1(msh,fig);
             Fig_Tools.Map_2D_3(fig);
         end
     end

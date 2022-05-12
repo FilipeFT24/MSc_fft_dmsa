@@ -13,7 +13,7 @@ classdef Fig_Tools
                 fig.FA       =  0.25;                        %  > FaceAlpha.
                 fig.FT_1     = 15.00;                        %  > Legend.
                 fig.FT_2     = 15.00;                        %  > x/y-axis.
-                fig.FT_3     = [17.50,17.50];                %  > x/y-label.
+                fig.FT_3     = [25.00,25.00];                %  > x/y-label.
                 fig.FT_4     = 12.50;                        %  > x/y-axis (zoom).
                 fig.Position = [150,100,1250,600];           %  > Position.
             else
@@ -162,7 +162,8 @@ classdef Fig_Tools
             set(gca,'YLim',y,'YTick',yl);
             ylabel(fig.L{2},'FontSize',fig.FT_3(2),'Interpreter','latex');
             %  > Grid.
-            Fig_Tools.Var_2D_1(msh.f.xy.v,"k","-",fig.LW);
+            LW = 0.1;
+            Fig_Tools.Var_2D_1(msh.f.xy.v,"k","-",LW);
         end
         %  > 3.1.2. -------------------------------------------------------
         function [] = Map_2D_2(fig,y)

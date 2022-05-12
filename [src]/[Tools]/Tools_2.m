@@ -48,52 +48,49 @@ classdef Tools_2
         %  > --------------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > \phi_f.
+        %  > Number of coefficients: (x.^2+x)./2.
         function [t] = Terms_1(p)
-            %  > Function handle (f): number of coefficients.
-            f = @(x) (x.^2+x)./2;
-            %  > (c).
-            t.c = ones(1,f(p+1));
-            %  > (e).
-            for j = 0:p
-                %  > Indices.
-                k        = f(j)+1:f(j+1);
-                %  > (e).
-                t.e(1,k) = j:-1:0; % > x.
-                t.e(2,k) = 0:j;    % > y.
+            %  > Initialize...
+            n   = ((p+1).^2+(p+1))./2;
+            t.c = ones (1,n);
+            t.e = zeros(2,n);
+            
+            for i = 0:p
+                j        = (i.^2+i)./2+1:((i+1).^2+(i+1))./2;
+                t.e(1,j) = i:-1:0; % > x.
+                t.e(2,j) = 0:i;    % > y.
             end
         end
         % >> 1.2. ---------------------------------------------------------
         %  > \nabla\phi_f.
+        %  > Number of coefficients: (x.^2+x)./2.
         function [t] = Terms_2(p,i)
-            %  > Function handle (f): number of coefficients.
-            f = @(x) (x.^2+x)./2;
+            %  > Initialize...
+            n   = ((p+1).^2+(p+1))./2;
+            t.c = zeros(1,n);
+            t.e = zeros(2,n);
+            
             %  > Select...
             switch i
                 case 1
-                    % >> \nabla\phi_f (x).
+                    % >> \nabla\phi_f_x.
                     for j = 0:p
-                        %  > Indices.
-                        k        = f(j)+1:f(j+1);
+                        k = (j.^2+j)./2+1:((j+1).^2+(j+1))./2;
                         %  > (c).
                         t.c(1,k) = j:-1:0;
                         %  > (e).
-                        if j == 0
-                            t.e(:,k) = zeros(2,j+1);
-                        else
+                        if j ~= 0
                             t.e(:,k) = [[j-1:-1:0,0];[0:j-1,0]];
                         end
                     end
                 case 2
-                    % >> \nabla\phi_f (y).
+                    % >> \nabla\phi_f_y.
                     for j = 0:p
-                        %  > Indices.
-                        k        = f(j)+1:f(j+1);
+                        k = (j.^2+j)./2+1:((j+1).^2+(j+1))./2;
                         %  > (c).
                         t.c(1,k) = 0:j;
                         %  > (e).
-                        if j == 0
-                            t.e(:,k) = zeros(2,j+1);
-                        else
+                        if j ~= 0
                             t.e(:,k) = [[0,j-1:-1:0];[0,0:j-1]];
                         end
                     end

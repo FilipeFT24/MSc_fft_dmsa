@@ -7,7 +7,7 @@ classdef B2_2D
             for i = 1:ns
                 for j = 1:nc(2)
                     m{i}.Ac{j} = zeros(Nc);
-                    m{i}.Bc{j} = zeros(Nc,1);
+                    m{i}.Bc{j} = zeros(Nc);
                 end
                 m{i}.At = zeros(Nc);
                 m{i}.Bt = zeros(Nc,1);
@@ -23,35 +23,32 @@ classdef B2_2D
         function [m] = Update_m(inp,msh,f,m,s,u,x)
             %  > Initialize rows (r) to be updated...
             for i = 1:numel(u.s)
-                for j = 1:numel(u.s{i})
-                    cf_1{i,j} = u.s{i}{j};
-                end
+                uf{i} = [msh.f.ic{RunLength(sort(cat(1,u.s{i}{:})))}];
             end
-            cf_2      = [msh.f.ic{unique(cat(1,cf_1{:}))}]';
-            r         = unique(cf_2);
+            r = RunLength(sort(cat(2,uf{:})));
+            for i = 1:numel(u.s)
+                m.Ac{i}(r,:) = 0;
+                m.Bc{i}(r)   = 0;
+            end
             m.At(r,:) = 0;
             m.Bt(r)   = f.st(r);
-            
+
             %  > For each term (convective/diffusive)...
             for i = 1:numel(u.s)
-                for j = r'
-                    %  > Loop through cell "j"'s faces.
-                    for k = 1:numel(msh.c.f.if(j,:))
-                        %  > Cell/face indices used to fit "f_jk".
-                        fk = msh.c.f.if(j,k);
-                        l  = s.logical {fk,i};
-                        %  > For each direction...
+                for j = r
+                    for k = 1:numel(msh.c.f.if(j,:)), ff = msh.c.f.if(j,k);
+                        %  > Cell/face indices used to fit face "ff" (for each direction)...
+                        l = s.logical{ff,i};
                         for n = 1:numel(l)
                             %  > Auxiliary variables.
-                            a            = s.i{fk,i} {n}( l{n});
-                            b            = s.i{fk,i} {n}(~l{n}); b = sort(b);
+                            a            = s.i{ff,i} {n}( l{n});
+                            b            = s.i{ff,i} {n}(~l{n});
                             Sf_n         = msh.c.f.Sf{j}( k,n);
                             %  > Ac (cell contributions).
-                            m.Ac{i}(j,a) = m.Ac{i}(j,a)+Sf_n*x.Tf_V{fk,i}{n}(:,l{n});
+                            m.Ac{i}(j,a) = m.Ac{i}(j,a)+Sf_n*x.Tf_V{ff,i}{n}(:,l{n});
                             %  > Bc (cell contributions).
                             if any(~l{n})
-                                bd_v       = f.bd.v(ismembc(f.bd.i,b));
-                                m.Bc{i}(j) = m.Bc{i}(j)-Sf_n*x.Tf_V{fk,i}{n}(:,~l{n})*bd_v;
+                                m.Bc{i}(j) = m.Bc{i}(j)-Sf_n*x.Tf_V{ff,i}{n}(:,~l{n})*f.bd.v(ismembc(f.bd.i,sort(b)));
                             end
                         end
                     end

@@ -12,11 +12,10 @@ classdef A3_2D
             f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
             %  > "st" (source term).
             f.st = A3_2D.Update_st(msh,f.fh.func.f);
-            %  > "qd" (1D quadrature).
-            for i = 1:size(inp.p.p,1)
-                for j = 1:size(inp.p.p,2)
-                    f.qd{i,j} = A3_2D.Q_1D(inp.p.p(i,j));
-                end
+            %  > "qd" (1D quadrature): treat convective/diffusive terms in a unified manner...
+            j = 1;
+            for i = 1:size(inp.p.p,2)
+                f.qd{i} = A3_2D.Q_1D(inp.p.p(j,i));
             end
         end
         % >> 1.2. ---------------------------------------------------------
@@ -49,6 +48,7 @@ classdef A3_2D
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Update field "f.bd" (boundary face indices/values).
+        %  > NOTE: hard coded for square domain (boundaries are identified by outher face normals (Sf)).
         function [bd] = Update_bd(inp,msh,f)
             %  > (Boundary) face indices.
             bd.i(:,1) = find(~msh.f.logical);
@@ -158,18 +158,11 @@ classdef A3_2D
         end
         %  > 1.5.5. -------------------------------------------------------
         %  > Auxiliary function #5: 1D quadrature: x(u) = x(1)*(1-u)/2+x(2)*(1+u)/2.
-        %                                          j(u) = d(x)/d(csi).
         function [qd] = Q_1D(p)
-            %  > Symbolic variables (u,x).
-            u = sym('u');
-            x = sym('x',[1,2]);
-            
-            %  > x(u) and j(u).
-            qd.xu = @(u,x) x(1).*(1-u)./2+x(2).*(1+u)./2;
-            ju    = jacobian(qd.xu(u,x),u);
-            qd.ju = matlabFunction(ju,'Vars',{x});
             %  > Quadrature points/weights (Gauss-Legendre).
-            qd.pw = quadGaussLegendre(ceil(p./2));
+            qd    = quadGaussLegendre(ceil(p./2));
+            %  > x(u).
+            qd.xu = @(u,x) x(1,:).*(1-u)./2+x(2,:).*(1+u)./2;
         end
     end
 end

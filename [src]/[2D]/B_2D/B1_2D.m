@@ -20,88 +20,88 @@ classdef B1_2D
         % >> 1.3. ---------------------------------------------------------
         %  > Update stencil coordinates, etc.
         function [s] = Update_sc(inp,msh,s,u)
-            for i = 1:size(u.s,2)
-                if isempty(u.s{i})
-                    continue;
-                else
-                    for j = 1:size(u.s{i},2)
-                        for k = u.s{i}{j}'
-                            %  > Initialize...
-                            p  = u.p{i}(k,j);
-                            sc = [];
-                            sf = [];
-                            
-                            % >> Level 1.
+            %  > NOTE: treat convective/diffusive terms in a unified manner...
+            i = 1;
+            for j = 1:numel(u.s{i})
+                for k = u.s{i}{j}', p = u.p{i}(k,j);
+                    %  > Initialize...
+                    sc = cell(ceil(p./2));
+                    sf = cell(ceil(p./2));
+                    %  > Loop through levels...
+                    n = 1;
+                    while n <= p
+                        if n == 1
                             %  > Cells to which face "k"'s vertices belong to.
-                            fv    = msh.f.iv(k,:);
-                            sc{1} = unique(cat(1,msh.v.ic{fv}));
-                            
+                            fv    = msh.f.iv (k,:);
+                            sc{n} = RunLength(sort(cat(1,msh.v.ic{fv})));
                             %  > Are these boundary cells?
-                            bc    = msh.c.logical(sc{1});
+                            bc    = msh.c.logical(sc{n});
                             %  > Add boundary faces...
-                            fc    = unique(reshape(msh.c.f.if(sc{1}(bc),:),1,[]));
-                            sf{1} = fc(~msh.f.logical(fc))';
+                            fc    = RunLength(sort(reshape(msh.c.f.if(sc{n}(bc),:),[],1)));
+                            sf{n} = fc(~msh.f.logical(fc));
+                            
                             %  > Check whether the selected boundary faces contain any of "fv"'s vertices.
-                            if ~isempty(sf{1})
+                            if ~isempty(sf{n})
                                 %  > Initialize array "l".
-                                m = false(numel(sf{1}),numel(fv));
+                                m = false(numel(sf{n}),numel(fv));
                                 %  > For each of the vertices in "fv"...
                                 for l = 1:numel(fv)
-                                    m(:,l) = any(bsxfun(@eq,msh.f.iv(sf{1},:),fv(l)),2);
+                                    m(:,l) = any(bsxfun(@eq,msh.f.iv(sf{n},:),fv(l)),2);
                                 end
-                                sf{1} = sf{1}(any(m,2));
+                                sf{n} = sf{n}(any(m,2));
                                 %  > Remove face that shares 1 vertex w/ face "j" if it belongs to the same cell.
-                                if any(sf{1} == k)
+                                if any(sf{n} == k)
                                     fv_c             = unique (cat(1,msh.v.if{fv}));
-                                    b                = ismembc(sf{1},fv_c);
-                                    b   (sf{1} == k) = false;
+                                    b                = ismembc(sf{n},fv_c);
+                                    b   (sf{n} == k) = false;
                                     %  > Check whether face "j" belongs to the same cell...
-                                    c_b              = cat(1,msh.f.ic{sf{1}});
+                                    c_b              = cat(1,msh.f.ic{sf{n}});
                                     c_j              = msh.f.ic{k};
                                     b   (c_b ~= c_j) = false;
                                     %  > Remove...
                                     if nnz(b) == 1
-                                        sf{1}(b) = [];
+                                        sf{n}(b) = [];
                                     end
                                 end
                             end
-%                             % >> Level N.
-%                             if p > 1
-%                                 if ~inp.p.nb_t
-%                                     %  > Face neighbours.
-%                                     [sc{2},sf{2}] = B1_2D.fn(msh,sc{1},sf{1});
-%                                 else
-%                                     %  > Vertex neighbours.
-%                                     [sc{2},sf{2}] = B1_2D.vn(msh,sc{1},sf{1});
-%                                 end
-%                             end
-                            %  > ------------------------------------------
-                            %  > Compute coordinates...
-                            xc = B1_2D.xt_c(msh.c.c.xy.c,cat(1,sc{:}));
-                            if ~isempty(sf{1})
-                                %  > xt.
-                                xf      = B1_2D.xt_f(msh.f.xy.c,cat(1,sf{:}));
-                                xt      = cat(1,xc,xf);
-                                %  > logical: 0-bnd.
-                                %             1-blk.
-                                logical = cat(1,true(size(xc,1),1),false(size(xf,1),1));
+                        else
+                            if ~inp.p.nb_t
+                                %  > Face neighbours.
+                                [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sf{n-1});
                             else
-                                %  > xt.
-                                xt      = xc;
-                                %  > logical: 1-blk.
-                                logical = true(size(xc,1),1);
+                                %  > Vertex neighbours.
+                                [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sf{n-1});
                             end
-                            %  > Update field "s".
-                            if ~isempty(sf{1})
-                                s.i  {k,i}{j} = cat(1,cat(1,sc{:}),cat(1,sf{:}));
-                            else
-                                s.i  {k,i}{j} = cat(1,sc{:});
-                            end
-                            s.logical{k,i}{j} = logical;
-                            s.sc     {k,i}{j} = sc;
-                            s.sf     {k,i}{j} = sf;
-                            s.xt     {k,i}{j} = xt;
                         end
+                        n = n+1;
+                    end
+                    
+                    %  > Compute coordinates...
+                    xc = msh.c.c.xy.c(cat(1,sc{:}),:);
+                    if ~isempty(sf{1})
+                        %  > xt.
+                        xf      = msh.f.xy.c(cat(1,sf{:}),:);
+                        xt      = cat(1,xc,xf);
+                        %  > logical: 0-bnd.
+                        %             1-blk.
+                        logical = cat(1,true(size(xc,1),1),false(size(xf,1),1));
+                    else
+                        %  > xt.
+                        xt      = xc;
+                        %  > logical: 1-blk.
+                        logical = true(size(xc,1),1);
+                    end
+                    %  > Update field "s".
+                    for l = 1:numel(u.s)
+                        if ~isempty(sf{1})
+                            s.i  {k,l}{j} = cat(1,cat(1,sc{:}),cat(1,sf{:}))';
+                        else
+                            s.i  {k,l}{j} = cat(1,sc{:});
+                        end
+                        s.logical{k,l}{j} = logical;
+                        s.sc     {k,l}{j} = sc;
+                        s.sf     {k,l}{j} = sf;
+                        s.xt     {k,l}{j} = xt;
                     end
                 end
             end
@@ -119,19 +119,7 @@ classdef B1_2D
             f  = ~(n >= p);
         end
         %  > 2.1.2. -------------------------------------------------------
-        %  > Compute stencil coordinates.
         %  > 2.1.2.1. -----------------------------------------------------
-        %  > c.
-        function [xt] = xt_c(xc,c)
-            xt = xc(c,:);
-        end
-        %  > 2.1.2.2. -----------------------------------------------------
-        %  > f.
-        function [xt] = xt_f(xf,f)
-            xt = xf(f,:);
-        end
-        %  > 2.1.3. -------------------------------------------------------
-        %  > 2.1.3.1. -----------------------------------------------------
         %  > Vertex neighbours.
         function [sc,sf] = fn(msh,c,f)
             %  > Stencil cell(s).
@@ -151,7 +139,7 @@ classdef B1_2D
                 sf = vb_f(is_f);
             end
         end
-        %  > 2.1.3.2. -----------------------------------------------------
+        %  > 2.1.2.2. -----------------------------------------------------
         %  > Face neighbours.
         function [sc,sf] = vn(msh,c,f)
             %  > Stencil cell(s).
@@ -174,7 +162,6 @@ classdef B1_2D
         function [x] = Initialize_24(f,u,nc,ns,Nc,Nf)
             for i = 1:ns
                 %  > "sx".
-                x{i}.Df   = cell(Nf,nc(2));
                 x{i}.gf   = cell(Nf,nc(2));
                 x{i}.Pf   = cell(Nf,nc(2));
                 x{i}.Tf_V = cell(Nf,nc(2));
@@ -211,80 +198,77 @@ classdef B1_2D
         % >> 2.3. ---------------------------------------------------------
         %  > Update stencil coefficients.
         function [x] = Update_sx(inp,msh,f,s,u,x)
-            for i = 1:size(u.s,2)
-                if isempty(u.s{i})
-                    continue;
-                else
-                    for j = 1:size(u.s{i},2)
-                        for k = u.s{i}{j}'
-                            %  > p.
-                            p       = u.p{i}(k,j);
-                            %  > Pf.
-                            xy_fc   = msh.f.xy.c(k,:);
-                            xy_t    = s.xt      {k,i}{j};
-                            [Df,Pf] = B1_2D.Assemble_DPf(inp,p,xy_fc,xy_t);
-                            %  > Tf_V.
-                            xy_fv = msh.f.xy.v{k};
-                            switch i
-                                case 1, t = Tools_2.Terms_1(p);
-                                case 2, t = Tools_2.Terms_2(p,j);
-                            end
-                            gf    = B1_2D.Gauss_f(inp.c{i,j},f.qd{i,j},xy_fv);
-                            Tf_V  = B1_2D.Assemble_Tf_V(gf,Pf,t,xy_fv);
-                            %  > Update field x".
-                            x.Df  {k,i}{j} = Df;
-                            x.gf  {k,i}{j} = gf;
-                            x.Pf  {k,i}{j} = Pf;
-                            x.Tf_V{k,i}{j} = Tf_V;
+            % >> Pf.
+            %  > NOTE: treat convective/diffusive terms in a unified manner...
+            i = 1;
+            for j = 1:numel(u.s{i})
+                for k = u.s{i}{j}', p = u.p{i}(k,j);
+                    %  > Pf.
+                    Pf = B1_2D.Assemble_Pf(inp,p,msh.f.xy.c(k,:),s.xt{k,i}{j});
+                    %  > Update field "x.Pf".
+                    for l = 1:numel(u.s)
+                        x.Pf{k,l}{j} = Pf;
+                    end
+                end
+            end
+            % >> Tf_V.
+            for i = 1:numel(u.s)
+                for j = 1:numel(u.s{i})
+                    for k = u.s{i}{j}', p = u.p{i}(k,j);
+                        %  > gf.
+                        gf = B1_2D.Gauss_f(inp.c{i,j},f.qd{j},msh.f.xy.v{k});
+                        %  > Tf_V.
+                        switch i
+                            case 1, t = Tools_2.Terms_1(p);
+                            case 2, t = Tools_2.Terms_2(p,j);
                         end
+                        Tf = B1_2D.Assemble_Tf_V(gf,t,x.Pf{k,i}{j});
+                        %  > Update field "x".
+                        x.gf  {k,i}{j} = gf;
+                        x.Tf_V{k,i}{j} = Tf;
                     end
                 end
             end
         end
         %  > 2.3.1. -------------------------------------------------------
         %  > Check boundary type and assemble matrices Df and Pf.
-        function [Df,Pf] = Assemble_DPf(inp,p,xy_fc,xy_t)
+        function [Pf] = Assemble_Pf(inp,p,xy_fc,xy_t)
             % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
             d_ft = xy_t-xy_fc;
             t    = Tools_2.Terms_1(p);
             Df   = t.c.*d_ft(:,1).^t.e(1,:).*d_ft(:,2).^t.e(2,:);
             
-            % >> Pf = inv(Dwf_T*Df)*Dwf_T, where Dwf = W*Df.
+            % >> Pf = inv(Df'*W*Df)*Df'*W.
             if ~inp.p.wls
-                Dwf = Df;
+                DTWf = Df';
             else
                 %  > Compute distances to face centroid and check for nil d's.
                 d   = sqrt(sum((xy_t-xy_fc).^2,2));
                 d_n = d == 0;
                 if any(d_n)
-                    d (d_n) = min(d(~d_n),[],'all')./2;
+                    d (d_n) = min(d(~d_n))./2;
                 end
-                Dwf = diag(inp.p.wf(d,max(d)))*Df;
+                DTWf = Df'*diag(inp.p.wf(d,max(d)));
             end
-            Pf = inv(transpose(Dwf)*Df)*transpose(Dwf);
+            Pf = inv(DTWf*Df)*DTWf;
         end
         %  > 2.3.2. -------------------------------------------------------
         %  > 2.3.2.1. -----------------------------------------------------
-        function [g] = Gauss_f(inp_c,qd,xy_fv)
-            %  > Auxiliary variables.
-            p = qd.pw.Points;
-            w = qd.pw.Weights;
-            
+        %  > Handle (1D) face quadrature.
+        function [g] = Gauss_f(c,qd,xy_fv)
             %  > (xg,yg).
-            for i = 1:size(xy_fv,2)
-                g.xy(:,i) = qd.xu(p,xy_fv(:,i));
-            end
+            xy_g = qd.xu(qd.Points,xy_fv);
+            g.d  = Tools_1.mean(xy_fv,1)-xy_g;
             %  > V.
-            g.V = 1./2.*w.*inp_c(g.xy);
+            g.V  = qd.Weights.*c(xy_g)./2;
         end
         %  > 2.3.2.2. -----------------------------------------------------
         %  > Assemble matrix Tf_V.
-        function [Tf_V] = Assemble_Tf_V(g,Pf,t,xy_fv)
-            %  > df_V.
-            d_cg = mean(xy_fv,1)-g.xy;
-            df   = t.c.*d_cg(:,1).^t.e(1,:).*d_cg(:,2).^t.e(2,:);
+        function [Tf_V] = Assemble_Tf_V(g,t,Pf)
+            %  > d_fV.
+            df   = t.c.*g.d(:,1).^t.e(1,:).*g.d(:,2).^t.e(2,:);
             df_V = df.*g.V;
-            %  > Tf_V.
+            %  > T_fV.
             Tf_V = sum(df_V,1)*Pf;
         end
     end
