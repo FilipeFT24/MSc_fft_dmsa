@@ -29,7 +29,7 @@ classdef B1_2D
                     sf = cell(ceil(p./2));
                     %  > Loop through levels...
                     n = 1;
-                    while n <= p
+                    while n <= ceil(p./2)
                         if n == 1
                             %  > Cells to which face "k"'s vertices belong to.
                             fv    = msh.f.iv (k,:);
@@ -67,10 +67,10 @@ classdef B1_2D
                         else
                             if ~inp.p.nb_t
                                 %  > Face neighbours.
-                                [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sf{n-1});
+                                [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sf{n-1}); %  > [0].
                             else
                                 %  > Vertex neighbours.
-                                [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sf{n-1});
+                                [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sf{n-1}); %  > [1].
                             end
                         end
                         n = n+1;
@@ -120,35 +120,30 @@ classdef B1_2D
         end
         %  > 2.1.2. -------------------------------------------------------
         %  > 2.1.2.1. -----------------------------------------------------
-        %  > Vertex neighbours.
+        %  > Face neighbours [0].
         function [sc,sf] = fn(msh,c,f)
             %  > Stencil cell(s).
-            sc   = Tools_1.setdiff(unique(cat(1,msh.c.c.nb.v{c})),c);
+            sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),c);
             %  > Stencil face(s).
-            v    = unique(reshape(msh.struct.ConnectivityList(c,:),[],1));
-            vn_f = unique(cat(1,msh.v.if{v}));
-            vb_f = vn_f  (~msh.f.logical(vn_f));
-            is_f = false (numel(vb_f),1);
+            fn_f = RunLength(sort(reshape(msh.c.f.if(c,:),[],1)));
             %  > Check faces to be added...
-            for i = 1:numel(vb_f)
-                is_f(i) = nnz(ismembc(msh.f.iv(vb_f(i),:),v)) > 1;
-            end
+            vb_f = fn_f(~msh.f.logical(fn_f));
             if ~isempty(f)
-                sf = Tools_1.setdiff(vb_f(is_f),f);
+                sf = Tools_1.setdiff(vb_f,f);
             else
-                sf = vb_f(is_f);
+                sf = vb_f;
             end
         end
         %  > 2.1.2.2. -----------------------------------------------------
-        %  > Face neighbours.
+        %  > Vertex neighbours [1].
         function [sc,sf] = vn(msh,c,f)
             %  > Stencil cell(s).
-            sc   = Tools_1.setdiff(unique(cat(1,msh.c.c.nb.v{c})),c);
+            sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),c);
             %  > Stencil face(s).
-            v    = unique(reshape(msh.struct.ConnectivityList(c,:),[],1));
-            vn_f = unique(cat(1,msh.v.if{v}));
-            vb_f = vn_f  (~msh.f.logical(vn_f));
+            v    = RunLength(sort(reshape(msh.struct.ConnectivityList(c,:),[],1)));
+            vn_f = RunLength(sort(cat(1,msh.v.if{v})));
             %  > Check faces to be added...
+            vb_f = vn_f(~msh.f.logical(vn_f));
             if ~isempty(f)
                 sf = Tools_1.setdiff(vb_f,f);
             else
