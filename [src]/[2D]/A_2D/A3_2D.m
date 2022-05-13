@@ -11,7 +11,7 @@ classdef A3_2D
             %  > "bd" (boundary values).
             f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
             %  > "st" (source term).
-            %  f.st = A3_2D.Update_st(msh,f.fh.func.f);
+            f.st = A3_2D.Update_st(msh,f.fh.func.f);
             %  > "qd" (1D quadrature): treat convective/diffusive terms in a unified manner...
             j = 1;
             for i = 1:size(inp.p.p,2)
@@ -57,16 +57,16 @@ classdef A3_2D
                 c       = msh.f.ic  {bd.i(i,1)};
                 Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
                 %  > Select...
-                if     Sf(i,1) >  0 && Sf(i,2) == 0, t(i,1) = 1; %  > East.
-                elseif Sf(i,1) == 0 && Sf(i,2) >  0, t(i,1) = 2; %  > North.
-                elseif Sf(i,1) <  0 && Sf(i,2) == 0, t(i,1) = 3; %  > West.
-                elseif Sf(i,1) == 0 && Sf(i,2) <  0, t(i,1) = 4; %  > South.
+                if     Sf(i,1) >  0 && Sf(i,2) == 0, bd.t(i,1) = 1; %  > East.
+                elseif Sf(i,1) == 0 && Sf(i,2) >  0, bd.t(i,1) = 2; %  > North.
+                elseif Sf(i,1) <  0 && Sf(i,2) == 0, bd.t(i,1) = 3; %  > West.
+                elseif Sf(i,1) == 0 && Sf(i,2) <  0, bd.t(i,1) = 4; %  > South.
                 else
                     return;
                 end
             end
             for i = 1:numel(bd.i)
-                bd_j{i} = find(t == i);
+                bd_j{i} = find(bd.t == i);
             end
             %  > (Boundary) face values.
             for i = 1:numel(inp.b.t)

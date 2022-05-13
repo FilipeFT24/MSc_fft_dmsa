@@ -188,5 +188,10 @@ classdef Tools_1
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j)); 
         end
+        % >> 4.5. ---------------------------------------------------------
+        %  > Save .mat file.
+        function [] = Save_mat(Td,Wd,V)
+            save(join([Wd,'V',Td,'.mat']),'V');
+        end
     end
 end

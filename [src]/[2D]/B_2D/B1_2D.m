@@ -25,8 +25,8 @@ classdef B1_2D
             for j = 1:numel(u.s{i})
                 for k = u.s{i}{j}', p = u.p{i}(k,j);
                     %  > Initialize...
-                    sc = cell(ceil(p./2));
-                    sf = cell(ceil(p./2));
+                    sc = cell(1,ceil(p./2));
+                    sf = cell(1,ceil(p./2));
                     %  > Loop through levels...
                     n = 1;
                     while n <= ceil(p./2)
@@ -51,13 +51,13 @@ classdef B1_2D
                                 sf{n} = sf{n}(any(m,2));
                                 %  > Remove face that shares 1 vertex w/ face "j" if it belongs to the same cell.
                                 if any(sf{n} == k)
-                                    fv_c             = unique (cat(1,msh.v.if{fv}));
-                                    b                = ismembc(sf{n},fv_c);
-                                    b   (sf{n} == k) = false;
+                                    fv_c            = unique (cat(1,msh.v.if{fv}));
+                                    b               = ismembc(sf{n},fv_c);
+                                    b  (sf{n} == k) = false;
                                     %  > Check whether face "j" belongs to the same cell...
-                                    c_b              = cat(1,msh.f.ic{sf{n}});
-                                    c_j              = msh.f.ic{k};
-                                    b   (c_b ~= c_j) = false;
+                                    c_b             = cat(1,msh.f.ic{sf{n}});
+                                    c_j             = msh.f.ic{k};
+                                    b  (c_b ~= c_j) = false;
                                     %  > Remove...
                                     if nnz(b) == 1
                                         sf{n}(b) = [];
@@ -78,7 +78,7 @@ classdef B1_2D
                     
                     %  > Compute coordinates...
                     xc = msh.c.c.xy.c(cat(1,sc{:}),:);
-                    if ~isempty(sf{1})
+                    if ~isempty(cat(1,sf{:}))
                         %  > xt.
                         xf      = msh.f.xy.c(cat(1,sf{:}),:);
                         xt      = cat(1,xc,xf);
@@ -93,7 +93,7 @@ classdef B1_2D
                     end
                     %  > Update field "s".
                     for l = 1:numel(u.s)
-                        if ~isempty(sf{1})
+                        if ~isempty(cat(1,sf{:}))
                             s.i  {k,l}{j} = cat(1,cat(1,sc{:}),cat(1,sf{:}))';
                         else
                             s.i  {k,l}{j} = cat(1,sc{:});
@@ -193,13 +193,22 @@ classdef B1_2D
         % >> 2.3. ---------------------------------------------------------
         %  > Update stencil coefficients.
         function [x] = Update_sx(inp,msh,f,s,u,x)
+            % >> gf.
+            for i = 1:numel(u.s)
+                for j = 1:numel(u.s{i})
+                    for k = u.s{i}{j}', p = u.p{i}(k,j);
+                        x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},f.qd{j},msh.f.xy.v{k});
+                    end
+                end
+            end
             % >> Pf.
             %  > NOTE: treat convective/diffusive terms in a unified manner...
             i = 1;
             for j = 1:numel(u.s{i})
                 for k = u.s{i}{j}', p = u.p{i}(k,j);
                     %  > Pf.
-                    Pf = B1_2D.Assemble_Pf(inp,p,msh.f.xy.c(k,:),s.xt{k,i}{j});
+                    Pf = B1_2D.Assemble_Pf(inp,msh,p,...
+                        f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
                     %  > Update field "x.Pf".
                     for l = 1:numel(u.s)
                         x.Pf{k,l}{j} = Pf;
@@ -210,28 +219,62 @@ classdef B1_2D
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     for k = u.s{i}{j}', p = u.p{i}(k,j);
-                        %  > gf.
-                        gf = B1_2D.Gauss_f(inp.c{i,j},f.qd{j},msh.f.xy.v{k});
-                        %  > Tf_V.
                         switch i
                             case 1, t = Tools_2.Terms_1(p);
                             case 2, t = Tools_2.Terms_2(p,j);
                         end
-                        Tf = B1_2D.Assemble_Tf_V(gf,t,x.Pf{k,i}{j});
-                        %  > Update field "x".
-                        x.gf  {k,i}{j} = gf;
-                        x.Tf_V{k,i}{j} = Tf;
+                        x.Tf_V{k,i}{j} = B1_2D.Assemble_Tf_V(x.gf{k,i}{j},t,x.Pf{k,i}{j});
                     end
                 end
             end
         end
         %  > 2.3.1. -------------------------------------------------------
         %  > Check boundary type and assemble matrices Df and Pf.
-        function [Pf] = Assemble_Pf(inp,p,xy_fc,xy_t)
+        function [Pf] = Assemble_Pf(inp,msh,p,f_bd,lc,sf,xy_fc,xy_t)
             % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
-            d_ft = xy_t-xy_fc;
-            t    = Tools_2.Terms_1(p);
-            Df   = t.c.*d_ft(:,1).^t.e(1,:).*d_ft(:,2).^t.e(2,:);
+            %  > d_ft.
+            d_ft        = xy_t-xy_fc;
+            %  > Df.
+            T1          = Tools_2.Terms_1(p);
+            Df          = zeros(size(xy_t,1),size(T1.c,2));
+            Df  ( lc,:) = T1.c.*d_ft(lc,1).^T1.e(1,:).*d_ft(lc,2).^T1.e(2,:);
+            %  > Check whether the stencil contains boundary faces...
+            if ~isempty(sf)
+                %  > Identify boundary...
+                [bd_i,~] = find(bsxfun(@eq,shiftdim(sf,1),f_bd.i)); bd_loc = f_bd.t(bd_i); j = find(~lc);
+                %  > Fill remaining rows of Df...
+                for k = 1:numel(bd_i)
+                    switch inp.b.t(bd_loc(k))
+                        case "Dirichlet"
+                            %  > Df(j(k)).
+                            Df(j(k),:) = T1.c.*d_ft(j(k),1).^T1.e(1,:).*d_ft(j(k),2).^T1.e(2,:);
+                        case "Neumann"
+                            %  > Sf.
+                            c  = msh.f.ic  {sf(k)};
+                            Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == sf(k),:);
+                            %  > Df(j(k)).
+                            T2 = Tools_2.Terms_3(p);
+                            for l = 1:size(T2.c,1)
+                                df(l,:) = T2.c(l,:).*d_ft(j(k),1).^T2.e{l}(1,:).*d_ft(j(k),2).^T2.e{l}(2,:);
+                            end
+                            Df(j(k),:) = Sf*df;
+                        case "Robin"
+                            %  > Sf.
+                            c  = msh.f.ic  {sf(k)};
+                            Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == sf(k),:);
+                            %  > goV.
+                            
+                            
+                            %  > Df(j(k)).
+                            T2 = Tools_2.Terms_3(p);
+                            for l = 1:numel(Sf)
+                                df_1(l,:) = T1.c     .*d_ft(j(k),1).^T1.e   (1,:).*d_ft(j(k),2).^T1.e   (2,:);
+                                df_2(l,:) = T2.c(l,:).*d_ft(j(k),1).^T2.e{l}(1,:).*d_ft(j(k),2).^T2.e{l}(2,:);
+                            end
+                            Df(j(k),:) = Sf*(df_1+goV*df_2);
+                    end
+                end
+            end
             
             % >> Pf = inv(Df'*W*Df)*Df'*W.
             if ~inp.p.wls

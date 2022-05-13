@@ -18,7 +18,7 @@ classdef Fig_2D_1
                     x.b = 1;                             %  > (:,j).
                     Fig_2D_1.Plot_1(msh,obj,x,fig);
                     subplot(1,2,2);
-                    x.a = 2;                             %  >    f .
+                    x.a = 202;                             %  >    f .
                     x.b = 2;                             %  > (:,j).
                     Fig_2D_1.Plot_1(msh,obj,x,fig);
                 end

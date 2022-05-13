@@ -4,7 +4,7 @@ classdef C1_2D
         function [V] = Run_p(run)
             %  > Load/run...
             if ~run(1)
-                load('[.mat Files]/V1.mat');
+                load('[.mat Files]/V3.mat');
             else
                 V = C1_2D.Check_Decay;
             end
@@ -13,23 +13,12 @@ classdef C1_2D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        %  > Save .mat file.
-        function [] = Save_mat(Td,Wd,V)
-            save(join([Wd,'V',Td,'.mat']),'V');
-        end
-        % >> 2.2. ---------------------------------------------------------
-        %  > 2.2.1. -------------------------------------------------------
-        %  > Input variables.
-        function [h] = Set_h()
-            h_lim = [5.0E-2,2.5E-2];
-            n     = 5;
-            h     = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
-        end
-        %  > 2.2.2. -------------------------------------------------------
         function [V] = Check_Decay()
             %  > "inp".
-            h   = C1_2D.Set_h;
-            inp = A1_2D.Set_inp_2(1,[0.5,0.5,100]);     %  > f_type/xc/yc/i.
+            h_lim = [5.0E-2,2.5E-2];
+            n     = 3;
+            h     = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
+            inp   = A1_2D.Set_inp_2(1,[0.5,0.5,100]);   %  > f_type/xc/yc/i.
             
             %  > Set up "P-standard" run.
             if ~inp.p_adapt.allow
@@ -43,7 +32,7 @@ classdef C1_2D
             end
             V.msh = msh;
             V.obj = obj;
-            C1_2D.Save_mat('1','C_2D/[.mat Files]/',V);
+            Tools_1.Save_mat('3','C_2D/[.mat Files]/',V);
         end
     end
 end

@@ -28,10 +28,10 @@ classdef B2_2D
             r = RunLength(sort(cat(2,uf{:})));
             for i = 1:numel(u.s)
                 m.Ac{i}(r,:) = 0;
-                m.Bc{i}(r)   = 0;
+                m.Bc{i}(r,1) = 0;
             end
             m.At(r,:) = 0;
-            m.Bt(r)   = f.st(r);
+            m.Bt(r,1) = f.st(r);
 
             %  > For each term (convective/diffusive)...
             for i = 1:numel(u.s)
@@ -48,7 +48,7 @@ classdef B2_2D
                             m.Ac{i}(j,a) = m.Ac{i}(j,a)+Sf_n*x.Tf_V{ff,i}{n}(:,l{n});
                             %  > Bc (cell contributions).
                             if any(~l{n})
-                                m.Bc{i}(j) = m.Bc{i}(j)-Sf_n*x.Tf_V{ff,i}{n}(:,~l{n})*f.bd.v(ismembc(f.bd.i,sort(b)));
+                                m.Bc{i}(j,1) = m.Bc{i}(j)-Sf_n*x.Tf_V{ff,i}{n}(:,~l{n})*f.bd.v(ismembc(f.bd.i,sort(b)));
                             end
                         end
                     end

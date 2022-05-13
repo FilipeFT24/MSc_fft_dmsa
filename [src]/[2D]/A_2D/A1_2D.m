@@ -29,8 +29,8 @@ classdef A1_2D
             end
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
-            inp.p.p(1,:)        = [3,1];                             %  > p-convection(X/Y).
-            inp.p.p(2,:)        = [3,1];                             %  > p-diffusion (X/Y).
+            inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
+            inp.p.p(2,:)        = [1,1];                             %  > p-diffusion (X/Y).
             if any(any(rem(inp.p.p,2) == 0)) || ...                  %  > Allow only p=1,3,5,7,9,etc.
                     ~all(inp.p.p(1,:) == inp.p.p(2,:))               %  > Treat in a unified manner...
                 return;
@@ -66,7 +66,7 @@ classdef A1_2D
             end
             %  > ----------------------------------------------------------
             %  > Plot...
-            inp.plot            = [1,0];
+            inp.plot            = [0,1];
         end
     end
 end

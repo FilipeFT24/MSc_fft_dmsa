@@ -41,7 +41,12 @@ classdef Fig_2D_3
             M        = ["-v","-^","-d","-.o","-.s"];
             [L,P1,Y] = Fig_Tools.Var_1D_1(fig,M,L,NNZ,[V{1},V{2},V{3}]);
             %  > Axis/legend,etc.
-            Fig_Tools.Map_1D_2(fig,L,P1,0,NNZ,Y,[-0.5,0],2);
+            Fig_Tools.Map_1D_2(fig,L,P1,0,NNZ,Y,[-0.5,0],2); 
+            
+            
+            Tools_1.Slope(h,V{1})
+            Tools_1.Slope(h,V{2})
+            Tools_1.Slope(h,V{3})
         end
         % >> 2.2 -------------------------------------------------------
         function [L] = Set_Legend(j)

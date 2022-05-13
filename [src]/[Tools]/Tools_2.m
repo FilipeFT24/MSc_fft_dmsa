@@ -62,7 +62,7 @@ classdef Tools_2
             end
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > \nabla\phi_f.
+        %  > \nabla\phi_f_x OR \nabla\phi_f_y.
         %  > Number of coefficients: (x.^2+x)./2.
         function [t] = Terms_2(p,i)
             %  > Initialize...
@@ -98,7 +98,31 @@ classdef Tools_2
                     return;
             end
         end
-        
+        % >> 1.3. ---------------------------------------------------------
+        %  > \nabla\phi_f_x AND \nabla\phi_f_y.
+        %  > Number of coefficients: (x.^2+x)./2.
+        function [t] = Terms_3(p)
+            %  > Initialize...
+            n   = ((p+1).^2+(p+1))./2;
+            t.c = zeros(2,n);
+            t.e = cell (1,2);
+            for i = 1:numel(t.e)
+                t.e{i} = zeros(2,n);
+            end
+
+            for j = 0:p
+                k = (j.^2+j)./2+1:((j+1).^2+(j+1))./2;
+                %  > (c).
+                t.c(1,k) = j:-1:0;
+                t.c(2,k) = 0:j;
+                %  > (e).
+                if j ~= 0
+                    t.e{1}(:,k) = [[j-1:-1:0,0];[0:j-1,0]];
+                    t.e{2}(:,k) = [[0,j-1:-1:0];[0,0:j-1]];
+                end
+            end
+        end
+
         %% > 2. -----------------------------------------------------------
         % >> Update field 'x'.
         % >> 2.1. ---------------------------------------------------------
