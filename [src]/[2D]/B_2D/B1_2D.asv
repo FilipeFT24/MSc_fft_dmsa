@@ -203,20 +203,19 @@ classdef B1_2D
                 end
             end
             %  > goV.
-            %  > NOTE:   Treat convective/diffusive terms in a unified manner...
-            %  > Remark: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
+            %  > NOTE: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
             for i = 1:size(x.goV,1)
                 for j = 1:size(x.goV,2)
                     x.goV(i,j) = x.gf{i,2}{j}.Vc./x.gf{i,1}{j}.Vc;
                 end
             end
             % >> Pf.
-            %  > NOTE: Treat convective/diffusive terms in a unified manner...
+            %  > NOTE: treat convective/diffusive terms in a unified manner...
             i = 1;
             for j = 1:numel(u.s{i})
                 for k = u.s{i}{j}', p = u.p{i}(k,j);
                     %  > Pf.
-                    Pf = B1_2D.Assemble_Pf(inp,msh,x.goV(k,:),p,...
+                    Pf = B1_2D.Assemble_Pf(inp,msh,x.goV(k,j),p,...
                         f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
                     %  > Update field "x.Pf".
                     for l = 1:numel(u.s)
@@ -271,13 +270,16 @@ classdef B1_2D
                             %  > Sf.
                             c  = msh.f.ic  {sf(k)};
                             Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == sf(k),:);
+                            %  > goV.
+                            
+                            
                             %  > Df(j(k)).
                             T2 = Tools_2.Terms_3(p);
                             for l = 1:numel(Sf)
                                 df_1(l,:) = T1.c     .*d_ft(j(k),1).^T1.e   (1,:).*d_ft(j(k),2).^T1.e   (2,:);
                                 df_2(l,:) = T2.c(l,:).*d_ft(j(k),1).^T2.e{l}(1,:).*d_ft(j(k),2).^T2.e{l}(2,:);
                             end
-                            Df(j(k),:) = Sf*(df_1+goV'.*df_2);
+                            Df(j(k),:) = Sf*(df_1+goV*df_2);
                     end
                 end
             end
