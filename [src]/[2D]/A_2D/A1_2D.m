@@ -18,7 +18,7 @@ classdef A1_2D
             inp.f               = h.f;                               %  > f.
             %  > Boundary conditions.
             %  > NOTE: hard coded for square domain (boundaries are identified by outher face normals (Sf)).
-            inp.b.t(1)          = "Neumann";                         %  > East  (E).
+            inp.b.t(1)          = "Dirichlet";                       %  > East  (E).
             inp.b.t(2)          = "Dirichlet";                       %  > North (N).
             inp.b.t(3)          = "Dirichlet";                       %  > West  (W).
             inp.b.t(4)          = "Dirichlet";                       %  > South (S).

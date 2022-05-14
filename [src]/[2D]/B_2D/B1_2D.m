@@ -31,53 +31,18 @@ classdef B1_2D
                     n = 1;
                     while n <= ceil(p./2)
                         if n == 1
-                            %  > Cells to which face "k"'s vertices belong to.
-                            fv    = msh.f.iv (k,:);
-                            sc{n} = RunLength(sort(cat(1,msh.v.ic{fv})));
-                            %  > Are these boundary cells?
-                            bc    = msh.c.logical(sc{n});
-                            %  > Add boundary faces...
-                            fc    = RunLength(sort(reshape(msh.c.f.if(sc{n}(bc),:),[],1)));
-                            sf{n} = fc(~msh.f.logical(fc));
-                            
-                            
-                            
-                            
-                            
-                            
-                            
-                            
-                            
-                            
-                            %  > Check whether the selected boundary faces contain any of "fv"'s vertices.
-                            if ~isempty(sf{n})
-                                %  > Initialize array "l".
-                                m = false(numel(sf{n}),numel(fv));
-                                %  > For each of the vertices in "fv"...
-                                for l = 1:numel(fv)
-                                    m(:,l) = any(bsxfun(@eq,msh.f.iv(sf{n},:),fv(l)),2);
-                                end
-                                sf{n} = sf{n}(any(m,2));
-                                %  > Remove face that shares 1 vertex w/ face "j" if it belongs to the same cell.
-                                if any(sf{n} == k)
-                                    fv_c            = unique (cat(1,msh.v.if{fv}));
-                                    b               = ismembc(sf{n},fv_c);
-                                    b  (sf{n} == k) = false;
-                                    %  > Check whether face "j" belongs to the same cell...
-                                    c_b             = cat(1,msh.f.ic{sf{n}});
-                                    c_j             = msh.f.ic{k};
-                                    b  (c_b ~= c_j) = false;
-                                    %  > Remove...
-                                    if nnz(b) == 1
-                                        sf{n}(b) = [];
-                                    end
-                                end
+                            %  > Face "k"'s vertices.
+                            kv    = msh.f.iv (k,:);
+                            %  > Cells to which "kv" belong to.
+                            sc{n} = RunLength(sort(cat(1,msh.v.ic{kv})));
+                            %  > (Boundary) faces to which "kv" belong to.
+                            fv    = RunLength(sort(cat(1,msh.v.if{kv})));
+                            sf{n} = fv(~msh.f.logical(fv));
+                            %  > Remove faces that belong to the same cell (case "k" is a boundary face).
+                            if ~msh.f.logical(k)
+                                ck    = msh.f.ic{k};
+                                sf{n} = sf{n}(cat(1,msh.f.ic{sf{n}}) ~= ck | sf{n} == k);
                             end
-                            
-                            
-                            
-                            
-                            
                         else
                             if ~inp.p.nb_t
                                 %  > Face neighbours.
@@ -86,15 +51,19 @@ classdef B1_2D
                                 %  > Vertex neighbours.
                                 [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sf{n-1}); %  > [1].
                             end
+                            %  > Extend...
+                            sc_t = cat(1,sc{:});
+                            sf_t = cat(1,sf{:});
+                            f    = B1_2D.Extend(msh,p,sc_t,sf_t);
                         end
                         n = n+1;
                     end
                     
                     %  > Compute coordinates...
-                    xc = msh.c.c.xy.c(cat(1,sc{:}),:);
-                    if ~isempty(cat(1,sf{:}))
+                    xc = msh.c.c.xy.c(sc_t,:);
+                    if ~isempty(sf_t)
                         %  > xt.
-                        xf      = msh.f.xy.c(cat(1,sf{:}),:);
+                        xf      = msh.f.xy.c(sf_t,:);
                         xt      = cat(1,xc,xf);
                         %  > logical: 0-bnd.
                         %             1-blk.
@@ -108,9 +77,9 @@ classdef B1_2D
                     %  > Update field "s".
                     for l = 1:numel(u.s)
                         if ~isempty(cat(1,sf{:}))
-                            s.i  {k,l}{j} = cat(1,cat(1,sc{:}),cat(1,sf{:}))';
+                            s.i  {k,l}{j} = cat(1,sc_t,sf_t)';
                         else
-                            s.i  {k,l}{j} = cat(1,sc{:});
+                            s.i  {k,l}{j} = sc_t;
                         end
                         s.logical{k,l}{j} = logical;
                         s.sc     {k,l}{j} = sc;
@@ -122,13 +91,19 @@ classdef B1_2D
         end
         %  > 2.1.1. -------------------------------------------------------
         %  > Compute stencil (adimensional) parameters and verify the need for stencil extension(s).
-        function [f] = Extend(h,p,sc,xy)
+        function [f] = Extend(msh,p,sc,sf)
             %  > Stencil limits/adimensional parameters(n) in the x/y-direction(s).
-            for i = 1:size(xy,2)
-                [L(1,i),L(2,i)] = MinMaxElem(xy(:,i),'finite');
+            xc = msh.c.c.xy.c(sc,:);
+            if ~isempty(sf)
+                xt = cat(1,xc,msh.f.xy.c(sf,:));
+            else
+                xt = xc;
             end
-            Lt = diff(L,1);
-            n  = ceil(Lt./Tools_1.mean(h(sc,:)));
+            for i = 1:size(xt,2)
+                [L(1,i),L(2,i)] = MinMaxElem(xt(:,i),'finite');
+            end
+            Lt = L(2,:)-L(1,:);
+            n  = ceil(Lt./Tools_1.mean(msh.c.h.xy(sc,:),1));
             %  > Extend(?).
             f  = ~(n >= p);
         end
