@@ -12,7 +12,7 @@ classdef Fig_Tools
                 fig.MS       =  5.00;                        %  > Marker size.
                 fig.FA       =  0.25;                        %  > FaceAlpha.
                 fig.FT_1     = 15.00;                        %  > Legend.
-                fig.FT_2     = 15.00;                        %  > x/y-axis.
+                fig.FT_2     = 14.00;                        %  > x/y-axis.
                 fig.FT_3     = [25.00,25.00];                %  > x/y-label.
                 fig.FT_4     = 12.50;                        %  > x/y-axis (zoom).
                 fig.Position = [150,100,1250,600];           %  > Position.

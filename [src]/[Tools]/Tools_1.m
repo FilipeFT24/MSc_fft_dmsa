@@ -89,57 +89,10 @@ classdef Tools_1
             Xd      = f{1}(it,jt);
             Yd      = f{2}(it,jt);
         end
-        
+    
         %% > 2. -----------------------------------------------------------
-        %  > Analytic function.
-        % >> 2.1. ---------------------------------------------------------
-        function [ch] = c(t,v)
-            %  > Auxiliary variables.
-            xc      =  v(1);
-            yc      =  v(2);
-            i       =  v(3);
-            c (1,:) =  [0,0];
-            c (2,:) = -[1,1];
-            
-            %  > Select function(s)...
-            switch t
-                case 1
-                    %  > Convection(X/Y).
-                    ch{1,1} = @(x) repelem(c(1,1),size(x,1),1);       % > x.
-                    ch{1,2} = @(x) repelem(c(1,2),size(x,1),1);       % > y.
-                    %  > Diffusion (X/Y).
-                    ch{2,1} = @(x) repelem(c(2,1),size(x,1),1);       % > x.
-                    ch{2,2} = @(x) repelem(c(2,2),size(x,1),1);       % > y.
-                case 2
-                    %  > Convection(X/Y).
-                    ch{1,1} = @(x) c(1,1).*exp(-i.*((x(:,1)-xc).^2)); % > x.
-                    ch{1,2} = @(x) c(1,2).*exp(-i.*((x(:,2)-yc).^2)); % > y.
-                    %  > Diffusion (X/Y).
-                    ch{2,1} = @(x) c(2,1).*exp(-i.*((x(:,1)-xc).^2)); % > x.
-                    ch{2,2} = @(x) c(2,2).*exp(-i.*((x(:,2)-yc).^2)); % > y.
-                otherwise
-                    return;
-            end
-        end
-        % >> 2.2. ---------------------------------------------------------
-        function [fh] = func(t,v)
-            %  > Auxiliary variables.
-            xc = v(1);
-            yc = v(2);
-            i  = v(3);
-            
-            %  > Select function...
-            switch t
-                case 1
-                    fh = @(x) exp(-i.*((x(:,1)-xc).^2+(x(:,2)-yc).^2));
-                otherwise
-                    return;
-            end
-        end
-        
-        %% > 3. -----------------------------------------------------------
         % >> Sort structures.
-        % >> 3.1. ---------------------------------------------------------
+        % >> 2.1. ---------------------------------------------------------
         %  > Sort "msh" (2D) fields.
         function [msh] = Sort_msh_2D(msh)
             % >> msh.
@@ -160,19 +113,19 @@ classdef Tools_1
             msh.v      = orderfields(msh.v     ,{'ic','if','logical'});
         end
         
-        %% > 4. -----------------------------------------------------------
+        %% > 3. -----------------------------------------------------------
         % >> Other functions.
-        % >> 4.1. ---------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
         %  > Similar (faster) version of other built-in functions (to compute distance between 2 points).
         function [D] = dist(XY)
             D = sqrt((XY(1,1)-XY(2,1)).^2+(XY(1,2)-XY(2,2)).^2);
         end
-        % >> 4.2. ---------------------------------------------------------
+        % >> 3.2. ---------------------------------------------------------
         %  > Similar (faster) version of built-in function "mean".
         function [y] = mean(x,j)
             y = sum(x,j,'default','includenan')./size(x,j);
         end
-        % >> 4.3. ---------------------------------------------------------
+        % >> 3.3. ---------------------------------------------------------
         %  > Similar (faster) version of built-in function "setdiff" (w/o verification(s)).
         function [z] = setdiff(x,y)
             w    = zeros(1,max(max(x),max(y)));
@@ -180,7 +133,7 @@ classdef Tools_1
             w(y) = 0;
             z    = x(logical(w(x)));
         end
-        % >> 4.4. ---------------------------------------------------------
+        % >> 3.4. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             [m,n]  = size(e);
@@ -188,7 +141,7 @@ classdef Tools_1
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j)); 
         end
-        % >> 4.5. ---------------------------------------------------------
+        % >> 3.5. ---------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(Td,Wd,V)
             save(join([Wd,'V',Td,'.mat']),'V');

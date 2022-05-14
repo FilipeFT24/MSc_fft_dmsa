@@ -40,6 +40,15 @@ classdef B1_2D
                             fc    = RunLength(sort(reshape(msh.c.f.if(sc{n}(bc),:),[],1)));
                             sf{n} = fc(~msh.f.logical(fc));
                             
+                            
+                            
+                            
+                            
+                            
+                            
+                            
+                            
+                            
                             %  > Check whether the selected boundary faces contain any of "fv"'s vertices.
                             if ~isempty(sf{n})
                                 %  > Initialize array "l".
@@ -64,6 +73,11 @@ classdef B1_2D
                                     end
                                 end
                             end
+                            
+                            
+                            
+                            
+                            
                         else
                             if ~inp.p.nb_t
                                 %  > Face neighbours.
