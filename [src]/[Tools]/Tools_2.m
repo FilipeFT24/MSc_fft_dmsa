@@ -51,7 +51,7 @@ classdef Tools_2
         %  > Number of coefficients: (x.^2+x)./2.
         function [t] = Terms_1(p)
             %  > Initialize...
-            n   = ((p+1).^2+(p+1))./2;
+            n   = (p+1).*(p+2)./2;
             t.c = ones (1,n);
             t.e = zeros(2,n);
             
@@ -66,7 +66,7 @@ classdef Tools_2
         %  > Number of coefficients: (x.^2+x)./2.
         function [t] = Terms_2(p,i)
             %  > Initialize...
-            n   = ((p+1).^2+(p+1))./2;
+            n   = (p+1).*(p+2)./2;
             t.c = zeros(1,n);
             t.e = zeros(2,n);
             
@@ -103,7 +103,7 @@ classdef Tools_2
         %  > Number of coefficients: (x.^2+x)./2.
         function [t] = Terms_3(p)
             %  > Initialize...
-            n   = ((p+1).^2+(p+1))./2;
+            n   = (p+1).*(p+2)./2;
             t.c = zeros(2,n);
             t.e = cell (1,2);
             for i = 1:numel(t.e)

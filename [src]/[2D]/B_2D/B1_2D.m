@@ -55,10 +55,10 @@ classdef B1_2D
                         sc_t = cat(1,sc{:});
                         sf_t = cat(1,sf{:});
                         
-                        %  > Extend...
+                        %  > Extend (if necessary)...
                         if n ~= 1
                             if ~isempty(sf_t)
-                                e  = B1_2D.Extend_1(msh,p,sc_t,sf_t);
+                                e  = B1_2D.Extend_1(msh,2*n-1,sc_t,sf_t);
                                 nd = numel(e.f);
                                 %  > Loop through x/y-directions...
                                 for l = 1:nd
@@ -135,7 +135,7 @@ classdef B1_2D
         %  > Vertex neighbours [1].
         function [sc,sf] = vn(msh,c,ct,ft)
             %  > Stencil cell(s).
-            sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),c);
+            sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),ct);
             %  > Stencil face(s).
             v    = RunLength(sort(reshape(msh.struct.ConnectivityList(c,:),[],1)));
             vn_f = RunLength(sort(cat(1,msh.v.if{v})));
