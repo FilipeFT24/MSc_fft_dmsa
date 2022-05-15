@@ -32,7 +32,7 @@ classdef A1_2D
                     ~all(inp.p.p(1,:) == inp.p.p(2,:))               %  > Treat in a unified manner...
                 return;
             end
-            inp.p.nb_t          = 0;
+            inp.p.nb_t          = 1;
             inp.p.wls           = 1;
             if inp.p.wls
                 syms d1 d2;

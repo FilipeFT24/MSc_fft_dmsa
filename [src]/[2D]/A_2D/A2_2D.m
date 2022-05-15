@@ -28,7 +28,7 @@ classdef A2_2D
             %  #3: Cell "i": volume.
             msh.c.Volume        = A2_2D.c_Volume(msh.c.c.xy.v);
             %  #4: Cell "i": reference length.
-            msh.c.h             = A2_2D.c_h     (msh.c.c.xy.v,msh.c.Volume);
+            msh.c.h             = A2_2D.c_h     (msh.c.c.xy,msh.c.Volume);
             %  > c.f.
             %  #1: Identify all/boundary/bulk faces.
             F{1}                = A2_2D.cf_F1   (CL_c,msh.c.c.nb.f);
@@ -130,23 +130,24 @@ classdef A2_2D
         end
         %  > 2.1.4. -------------------------------------------------------
         %  > #4: Cell "i": reference length.
-        function [h] = c_h(xy_v,Volume)
+        function [h] = c_h(xy,Volume)
             %  > Auxiliary variables.
-            sz = size(Volume);
+            d (1,:) = [1,0]; %  > x.
+            d (2,:) = [0,1]; %  > y.
+            sz      = size(Volume);
             
             for i = 1:sz(1)
-                j = size(xy_v{i});
+                j = size(xy.v{i});
                 %  > h.
                 k = [1:j(1);circshift(1:j,j(1)-1)]';
                 for l = 1:j(1)
-                    Length{i,1}(l,1) = Tools_1.dist(xy_v{i}(k(l,:),:));
+                    Length{i,1}(l,1) = Tools_1.dist(xy.v{i}(k(l,:),:));
                 end
                 h.h (i,1) = 4.*Volume(i)./sum(Length{i});
                 %  > h(x,y).
                 for l = 1:j(2)
-                    [L(1,l),L(2,l)] = MinMaxElem(xy_v{i}(:,l),'finite');
+                    h.xy(i,l) = Tools_1.hd(xy.v{i},xy.c(i,:),d(l,:));
                 end
-                h.xy(i,:) = L(2,:)-L(1,:);
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -133,7 +133,39 @@ classdef Tools_1
             w(y) = 0;
             z    = x(logical(w(x)));
         end
-        % >> 3.4. ---------------------------------------------------------
+        % >> 3.4. Compute reference length (direction: d).
+        function [h] = hd(v,c,d)
+            %  > Select face indices...
+            n = size(v,1);
+            k = [1:n;circshift(1:n,n-1)]';
+            
+            %  > t.
+            m = d(2)./d(1);
+            if ~isinf(m)
+                %  > t = (b-y(1)+mx(1))/(y(2)-y(1)-m(x(2)-x(1))).
+                b = c(2)-m.*c(1);
+                for i = 1:n
+                    t(i) = (b-v(k(i,1),2)+m.*v(k(i,1),1))./(v(k(i,2),2)-v(k(i,1),2)-m.*(v(k(i,2),1)-v(k(i,1),1)));
+                end
+            else
+                %  > t = (b-x(1))/(x(2)-x(1)).
+                b = c(1);
+                for i = 1:n
+                    t(i) = (b-v(k(i,1),1))./(v(k(i,2),1)-v(k(i,1),1));
+                end
+            end
+            % > Check intersections...
+            f = 0 <= t & t <= 1 & t ~= Inf;
+            if nnz(f) ~= 2
+                return;
+            else
+                for i = 1:size(v,2)
+                    XY(:,i) = v(k(f,1),i)+t(f)'.*(v(k(f,2),i)-v(k(f,1),i));
+                end
+                h = Tools_1.dist(XY);
+            end
+        end
+        % >> 3.5. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             [m,n]  = size(e);
@@ -141,7 +173,7 @@ classdef Tools_1
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j)); 
         end
-        % >> 3.5. ---------------------------------------------------------
+        % >> 3.6. ---------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(Td,Wd,V)
             save(join([Wd,'V',Td,'.mat']),'V');
