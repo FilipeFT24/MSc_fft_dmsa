@@ -35,7 +35,7 @@ classdef B1_2D
                             kv    = msh.f.iv (k,:);
                             %  > Cells to which "kv" belong to.
                             sc{n} = RunLength(sort(cat(1,msh.v.ic{kv})));
-                            %  > (Boundary) faces to which "kv" belong to.
+                            %  > Boundary faces to which "kv" belong to.
                             fv    = RunLength(sort(cat(1,msh.v.if{kv})));
                             sf{n} = fv(~msh.f.logical(fv));
                             %  > Remove faces that belong to the same cell (case "k" is a boundary face).
@@ -46,86 +46,94 @@ classdef B1_2D
                         else
                             if ~inp.p.nb_t
                                 %  > Face neighbours.
-                                [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sf{n-1}); %  > [0].
+                                [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sc_t,sf_t); %  > [0].
                             else
                                 %  > Vertex neighbours.
-                                [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sf{n-1}); %  > [1].
+                                [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sc_t,sf_t); %  > [1].
                             end
-                            %  > Extend...
-                            sc_t = cat(1,sc{:});
-                            sf_t = cat(1,sf{:});
-                            f    = B1_2D.Extend(msh,p,sc_t,sf_t);
+                        end
+                        sc_t = cat(1,sc{:});
+                        sf_t = cat(1,sf{:});
+                        
+                        %  > Extend...
+                        if n ~= 1
+                            if ~isempty(sf_t)
+                                e  = B1_2D.Extend_1(msh,p,sc_t,sf_t);
+                                nd = numel(e.f);
+                                %  > Loop through x/y-directions...
+                                for l = 1:nd
+                                    if e.f(l)
+                                        %  > Direction.
+                                        d       = Tools_1.setdiff(1:nd,l);
+                                        %  > Update stencil elements...
+                                        sn      = B1_2D.Extend_2(inp,msh,d,e.L,sc{n},sc_t,sf_t);
+                                        sc  {n} = [sc{n};sn.c];
+                                        sc_t    = cat(1,sc{:});
+                                        if ~isempty(sn.f)
+                                            sf  {n} = [sf{n};sn.f];
+                                            sf_t    = cat(1,sf{:});
+                                        end
+                                    end
+                                end
+                            end
                         end
                         n = n+1;
                     end
                     
                     %  > Compute coordinates...
-                    xc = msh.c.c.xy.c(sc_t,:);
+                    xt = B1_2D.s_xt(msh,sc_t,sf_t);
+                    %  > Assign logical indexing: 0-bnd.
+                    %                             1-blk.
+                    nc = numel (sc_t);
+                    nf = numel (sf_t);
                     if ~isempty(sf_t)
-                        %  > xt.
-                        xf      = msh.f.xy.c(sf_t,:);
-                        xt      = cat(1,xc,xf);
-                        %  > logical: 0-bnd.
-                        %             1-blk.
-                        logical = cat(1,true(size(xc,1),1),false(size(xf,1),1));
+                        logical = [true(nc,1);false(nf,1)];
                     else
-                        %  > xt.
-                        xt      = xc;
-                        %  > logical: 1-blk.
-                        logical = true(size(xc,1),1);
+                        logical = true(nc,1);
                     end
                     %  > Update field "s".
-                    for l = 1:numel(u.s)
-                        if ~isempty(cat(1,sf{:}))
-                            s.i  {k,l}{j} = cat(1,sc_t,sf_t)';
+                    for m = 1:numel(u.s)
+                        if ~isempty(sf_t)
+                            s.i  {k,m}{j} = [sc_t;sf_t];
                         else
-                            s.i  {k,l}{j} = sc_t;
+                            s.i  {k,m}{j} = sc_t;
                         end
-                        s.logical{k,l}{j} = logical;
-                        s.sc     {k,l}{j} = sc;
-                        s.sf     {k,l}{j} = sf;
-                        s.xt     {k,l}{j} = xt;
+                        s.logical{k,m}{j} = logical;
+                        s.sc     {k,m}{j} = sc;
+                        s.sf     {k,m}{j} = sf;
+                        s.xt     {k,m}{j} = xt;
                     end
                 end
             end
         end
-        %  > 2.1.1. -------------------------------------------------------
-        %  > Compute stencil (adimensional) parameters and verify the need for stencil extension(s).
-        function [f] = Extend(msh,p,sc,sf)
-            %  > Stencil limits/adimensional parameters(n) in the x/y-direction(s).
+        %  > 1.3.1. -------------------------------------------------------
+        function [xt] = s_xt(msh,sc,sf)
             xc = msh.c.c.xy.c(sc,:);
             if ~isempty(sf)
-                xt = cat(1,xc,msh.f.xy.c(sf,:));
+                xt = [xc;msh.f.xy.c(sf,:)];
             else
                 xt = xc;
             end
-            for i = 1:size(xt,2)
-                [L(1,i),L(2,i)] = MinMaxElem(xt(:,i),'finite');
-            end
-            Lt = L(2,:)-L(1,:);
-            n  = ceil(Lt./Tools_1.mean(msh.c.h.xy(sc,:),1));
-            %  > Extend(?).
-            f  = ~(n >= p);
         end
-        %  > 2.1.2. -------------------------------------------------------
-        %  > 2.1.2.1. -----------------------------------------------------
+        %  > 1.3.2. -------------------------------------------------------
+        %  > 1.3.2.1. -----------------------------------------------------
         %  > Face neighbours [0].
-        function [sc,sf] = fn(msh,c,f)
+        function [sc,sf] = fn(msh,c,ct,ft)
             %  > Stencil cell(s).
-            sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),c);
+            sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.f{c}))),ct);
             %  > Stencil face(s).
             fn_f = RunLength(sort(reshape(msh.c.f.if(c,:),[],1)));
             %  > Check faces to be added...
             vb_f = fn_f(~msh.f.logical(fn_f));
-            if ~isempty(f)
-                sf = Tools_1.setdiff(vb_f,f);
+            if ~isempty(ft)
+                sf = Tools_1.setdiff(vb_f,ft);
             else
                 sf = vb_f;
             end
         end
-        %  > 2.1.2.2. -----------------------------------------------------
+        %  > 1.3.2.2. -----------------------------------------------------
         %  > Vertex neighbours [1].
-        function [sc,sf] = vn(msh,c,f)
+        function [sc,sf] = vn(msh,c,ct,ft)
             %  > Stencil cell(s).
             sc   = Tools_1.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),c);
             %  > Stencil face(s).
@@ -133,10 +141,50 @@ classdef B1_2D
             vn_f = RunLength(sort(cat(1,msh.v.if{v})));
             %  > Check faces to be added...
             vb_f = vn_f(~msh.f.logical(vn_f));
-            if ~isempty(f)
-                sf = Tools_1.setdiff(vb_f,f);
+            if ~isempty(ft)
+                sf = Tools_1.setdiff(vb_f,ft);
             else
                 sf = vb_f;
+            end
+        end
+        %  > 1.3.3. -------------------------------------------------------
+        %  > 1.3.3.1. -----------------------------------------------------
+        %  > Compute stencil (adimensional) parameters and verify the need for stencil extension(s).
+        function [e] = Extend_1(msh,p,sc,sf)
+            %  > Limits.
+            xt = B1_2D.s_xt(msh,sc,sf);
+            for i = 1:size(xt,2)
+                [e.L(1,i),e.L(2,i)] = MinMaxElem(xt(:,i),'finite');
+            end
+            %  > Adimensional parameters in the x/y-direction(s).
+            Lt  = e.L(2,:)-e.L(1,:);
+            n   = ceil(Lt./Tools_1.mean(msh.c.h.xy(sc,:),1));
+            %  > Extend(?).
+            e.f = ~(n >= p);
+        end
+        %  > 1.3.3.2. -----------------------------------------------------
+        %  > Perform extension in the appropriate direction.
+        function [sn] = Extend_2(inp,msh,d,L,c,ct,ft)
+            % >> Compute "new layer"...
+            if ~inp.p.nb_t
+                %  > Face neighbours.
+                [sn.c,sn.f] = B1_2D.fn(msh,c,ct,ft); %  > [0].
+            else
+                %  > Vertex neighbours.
+                [sn.c,sn.f] = B1_2D.vn(msh,c,ct,ft); %  > [1].
+            end
+            % >> Select direction...
+            %  > c.
+            sn.c      = Tools_1.setdiff(sn.c,ct);
+            xc        = msh.c.c.xy.c(sn.c,:);
+            logical_c = xc(:,d) >= L(1,d) & xc(:,d) <= L(2,d);
+            sn.c      = sn.c(logical_c);
+            %  > f.
+            if ~isempty(sn.f)
+                sn.f      = Tools_1.setdiff(sn.f,ft);
+                xf        = msh.f.xy.c(sn.f,:);
+                logical_f = xf(:,d) >= L(1,d) & xf(:,d) <= L(2,d);
+                sn.f      = sn.f(logical_f);
             end
         end
         
@@ -192,8 +240,8 @@ classdef B1_2D
                 end
             end
             %  > goV.
-            %  > NOTE:   Treat convective/diffusive terms in a unified manner...
-            %  > Remark: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
+            %  > NOTE #1: Treat convective/diffusive terms in a unified manner...
+            %  > NOTE #2: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
             for i = 1:size(x.goV,1)
                 for j = 1:size(x.goV,2)
                     x.goV(i,j) = x.gf{i,2}{j}.Vc./x.gf{i,1}{j}.Vc;
@@ -283,7 +331,7 @@ classdef B1_2D
                 end
                 DTWf = Df'*diag(inp.p.wf(d,max(d)));
             end
-            Pf = inv(DTWf*Df)*DTWf;
+            Pf = (DTWf*Df)\DTWf;
         end
         %  > 2.3.2. -------------------------------------------------------
         %  > 2.3.2.1. -----------------------------------------------------
