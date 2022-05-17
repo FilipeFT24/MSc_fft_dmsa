@@ -49,6 +49,8 @@ classdef Fig_Tools
                     str = "\phantom{\nabla}\phi";
                 case 2
                     str = "\nabla\phi";
+                case 3
+                    str = "\phantom{\nabla\phi}";
                 otherwise
                     return;
             end
@@ -83,7 +85,7 @@ classdef Fig_Tools
         %  > 2.1.1. -------------------------------------------------------
         function [] = Map_1D_1(fig,fx,XM,L_XY)
             %  > Other parameters.
-            [xl(1),xl(2)] = MinMaxElem(XM);
+            [xl(1),xl(2)] = MinMaxElem(XM(XM ~=0));
             box on;
             set(gcf,'color','w');
             set(gca,'TickLabelInterpreter','latex');

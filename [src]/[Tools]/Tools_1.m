@@ -176,7 +176,7 @@ classdef Tools_1
         % >> 3.6. ---------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(Td,Wd,V)
-            save(join([Wd,'V',Td,'.mat']),'V');
+            save(strjoin([Wd,"V",Td,".mat"],''),"V");
         end
     end
 end

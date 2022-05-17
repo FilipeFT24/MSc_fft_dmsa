@@ -39,10 +39,10 @@ classdef Fig_V1_2_1D
             j    = x.a;
             n    = x.b;
             plot = [1,0];
-            f    = ["a","da"];
+            f    = "a";%["a","da"];
             m    = length(f);
             L1   = Fig_V1_2_1D.Set_Legend_1(x.c,f(1),j);
-            L2   = Fig_V1_2_1D.Set_Legend_1(x.c,f(2),j);
+            %L2   = Fig_V1_2_1D.Set_Legend_1(x.c,f(2),j);
                         
             %  > Select variables.
             for i = 1:size(obj_m,1)
@@ -79,10 +79,10 @@ classdef Fig_V1_2_1D
             end
             %  > Plot variables.
             [L1,P1,Y1] = Fig_Tools_1D.Var_1(fig,M1,L1,nnz,V{1});
-            [L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,M2,L2,nnz,V{2});
+            %[L2,P2,Y2] = Fig_Tools_1D.Var_1(fig,M2,L2,nnz,V{2});
             
             %  > Axis/legend,etc.
-            Fig_Tools_1D.Set_Plot_2(fig,[L1,L2],[P1,P2],0,ys,[Y1;Y2],[-1,1],2);
+            Fig_Tools_1D.Set_Plot_2(fig,L1,P1,0,ys,Y1,[-1,1],2);
             %  > Export(?)/Zoom(?).
             Fig_Tools_1D.Exp_Or_Zoom(fig,zoom,fid);
         end

@@ -160,10 +160,8 @@ classdef Tools_2
             for i = u.f
                 for j = 1:numel(u.s)
                     for k = 1:numel(u.s{j})
-                        if ~isempty(u.s{j}{k})
-                            for l = u.s{j}{k}'
-                                x.cf.(i){l,j}{k} = x.Pf{l,j}{k}*x.vf.(i){l,j}{k};
-                            end
+                        for l = 1:size(x.vf.(i),1)
+                            x.cf.(i){l,j}{k} = x.Pf{l,j}{k}*x.vf.(i){l,j}{k};
                         end
                     end
                 end
@@ -175,10 +173,8 @@ classdef Tools_2
             for i = u.f
                 for j = 1:numel(u.s)
                     for k = 1:numel(u.s{j})
-                        if ~isempty(u.s{j}{k})
-                            for l = u.s{j}{k}'
-                                x.xf.(i){j}(l,k) = x.Tf_V{l,j}{k}*x.vf.(i){l,j}{k};
-                            end
+                        for l = 1:size(x.vf.(i),1)
+                            x.xf.(i){j}(l,k) = x.Tf_V{l,j}{k}*x.vf.(i){l,j}{k};
                         end
                     end
                 end

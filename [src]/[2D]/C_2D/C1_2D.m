@@ -3,36 +3,41 @@ classdef C1_2D
         %% > 1. -----------------------------------------------------------
         function [V] = Run_p(run)
             %  > Load/run...
+            T = "1";
             if ~run(1)
-                load('[.mat Files]/V3.mat');
+                load(strjoin(["[.mat Files]/V",T,".mat"],''));
             else
-                V = C1_2D.Check_Decay;
+                V = C1_2D.Check_Decay(T);
             end
             Fig_2D_3.Plot(V.msh,V.obj);
         end
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        function [V] = Check_Decay()
+        function [V] = Check_Decay(T)
             %  > "inp".
-            h_lim = [5.0E-2,2.5E-2];
-            n     = 3;
+            h_lim = [5.0E-2,1.0E-2];
+            n     = 5;
             h     = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
-            inp   = A1_2D.Set_inp_2(1,[0.5,0.5,100]);   %  > f_type/xc/yc/i.
+            inp   = A1_2D.Set_inp([1,1],[100,0.5,0.5]);     %  > c/f.
             
             %  > Set up "P-standard" run.
             if ~inp.p_adapt.allow
                 for i = 1:numel(h)
                     %  > Execute...
-                    msh(i) = A2_2D.Set_msh(h(i));       %  > h.
-                    obj(i) = B3_2D.Run_p  (inp,msh(i)); %  > inp/msh.
+                    msh  (i)   = A2_2D.Set_msh(h(i));       %  > h.
+                    obj  (i)   = B3_2D.Run_p  (inp,msh(i)); %  > inp/msh.
+                    %  > Assign...
+                    V.msh(i).d = msh(i).d;
+                    V.obj(i).e = obj(i).e;
+                    for j = 1:numel(obj(i).m)
+                        V.obj(i).m{j}.nnz = obj(i).m{j}.nnz;
+                    end
                     %  > Print to terminal...
                     fprintf("Cycle #%d\n",i);
                 end
             end
-            V.msh = msh;
-            V.obj = obj;
-            Tools_1.Save_mat('3','C_2D/[.mat Files]/',V);
+            Tools_1.Save_mat(T,"C_2D/[.mat Files]/",V);
         end
     end
 end

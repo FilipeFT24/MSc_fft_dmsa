@@ -41,8 +41,7 @@ classdef A2_1D
             Nc       = length(Xv)-1;
             msh.c.Nc = Nc;
             for i = 1:msh.c.Nc
-                msh.c.f.f {i,1} = [i,i+1];
-                msh.c.f.Nf{i,1} = [-1,1];
+                msh.c.f.if(i,:) = [i,i+1];
             end
             j             = 1:msh.c.Nc;
             msh.c.Xc(j,1) = 1./2.*(Xv(j)+Xv(j+1));
@@ -53,9 +52,9 @@ classdef A2_1D
             Nf            = Nc+1;
             msh.f.Nf      = Nf;
             for i = 1:Nf
-                msh.f.c{i,1} = [i-1,i];
+                msh.f.ic{i,1} = [i-1,i];
                 if i == 1 || i == Nf
-                    msh.f.c{i,1} = setdiff(msh.f.c{i,1},[0,Nf]);
+                    msh.f.ic{i,1} = setdiff(msh.f.ic{i,1},[0,Nf]);
                 end
             end            
             j             = 1:msh.f.Nf;

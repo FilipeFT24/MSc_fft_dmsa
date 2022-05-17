@@ -41,7 +41,10 @@ classdef B1_1D
                             else
                                 sc = 1:p+1;
                             end
-                            xt = [Xc(sc)',f.bd.x(1)];
+                            sf      = 1;
+                            si      = [sf;sc'];
+                            xt      = [f.bd.x(sf),Xc(sc)'];
+                            logical = [false;true(numel(sc),1)];
                         elseif any(ns >= Nf)
                             % >> EB.
                             %  > Add cell(s) to the left(?).
@@ -50,14 +53,23 @@ classdef B1_1D
                             else
                                 sc = Nc-p:Nc;
                             end
-                            xt = [Xc(sc)',f.bd.x(2)];
+                            sf      = Nf;
+                            si      = [sc';sf];
+                            xt      = [Xc(sc)',f.bd.x(2)];
+                            logical = [true(numel(sc),1);false];
                         else
-                            sc = ns;
-                            xt = Xc(sc)';
+                            sc      = ns;
+                            sf      = [];
+                            si      = sc';
+                            xt      = Xc(sc)';
+                            logical = true(numel(sc),1);
                         end
                         %  > Update 's' field.
-                        s.c{j,i} = sc;
-                        s.t{j,i} = sort(xt);
+                        s.c      {j,i} = sc';
+                        s.f      {j,i} = sf';
+                        s.i      {j,i} = si;
+                        s.logical{j,i} = logical;
+                        s.t      {j,i} = xt;
                     end
                 end
             end
@@ -87,7 +99,7 @@ classdef B1_1D
         function [x] = Update_sx(inp,msh,f,s,u,x)
             for i = 1:size(u.s,2)
                 if ~isempty(u.s{i})
-                    for j = u.s{i}'
+                    for j = 1:101%u.s{i}'
                         %  > Df.
                         xt        = s.t{j,i};
                         p         = 1:length(xt);
@@ -98,9 +110,11 @@ classdef B1_1D
                         df  (1,i) = 1;
                         Inv       = inv(Df);
                         Tf        = df*Inv;
+                        Tf_V      = inp.c(i).*Tf;
                         %  > Update 'x' field.
-                        x.if{j,i} = Inv;
-                        x.Tf{j,i} = Tf;
+                        x.if  {j,i} = Inv;
+                        x.Tf  {j,i} = Tf;
+                        x.Tf_V{j,i} = Tf_V;
                     end
                 end
             end

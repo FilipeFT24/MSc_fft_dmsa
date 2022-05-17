@@ -50,15 +50,16 @@ classdef B3_1D
                 %  > Field: 'm' (matrices).
                 for j = 1:nc
                     obj.m{i}.Ac{j} = zeros(Nc);
-                    obj.m{i}.Af{j} = zeros(Nf,Nc);
                     obj.m{i}.Bc{j} = zeros(Nc,1);
-                    obj.m{i}.Bf{j} = zeros(Nf,1);
                 end
                 obj.m{i}.At = zeros(Nc);
                 obj.m{i}.Bt = obj.f.st;
                 %  > Field: 's' (stencil coordinates,etc.).
-                obj.s{i}.c  = cell (Nf,nc);
-                obj.s{i}.t  = cell (Nf,nc);
+                obj.s{i}.c       = cell (Nf,nc);
+                obj.s{i}.f       = cell (Nf,nc);
+                obj.s{i}.i       = cell (Nf,nc);
+                obj.s{i}.logical = cell (Nf,nc);
+                obj.s{i}.t       = cell (Nf,nc);
                 %  > Field: 'u' (update flag).
                 obj.u{i}.f  = ["a","x"];
                 for j = 1:nc
@@ -68,6 +69,7 @@ classdef B3_1D
                 %  > Field: 'x' (nodal solution/ stencil coefficients,etc.).
                 obj.x{i}.if     = cell (Nf,nc);
                 obj.x{i}.Tf     = cell (Nf,nc);
+                obj.x{i}.Tf_V   = cell (Nf,nc);
                 obj.x{i}.nv.a.f = zeros(Nf,1);
                 for j = obj.u{i}.f
                     obj.x{i}.cf.(j) = cell (Nf,nc);
@@ -109,9 +111,14 @@ classdef B3_1D
                 case false
                     %  > 'p-standard' run.
                     obj = B3_1D.Initialize(inp,msh);
+                    
+                    %obj.u{1}.p = [1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;3,3;3,3;3,3;3,3;3,3;3,3;3,3;3,3;3,3;3,3;3,3;3,3;3,3;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1;1,1];
+                    
+                    
+                    
                     obj = B3_1D.p_standard(inp,msh,obj);                    
                     %  > Plot...
-                    Fig_V1_1_1D.Plot([1,0],inp,msh,obj);
+                    Fig_V1_1_1D.Plot([0,0],inp,msh,obj);
                 case true
                     %  > 'p-adaptative' run.
                     obj_init    = B3_1D.Initialize(inp,msh);
@@ -129,7 +136,7 @@ classdef B3_1D
         function [obj] = p_standard(inp,msh,obj)
             %  > Auxiliary variables.
             ch   = inp.b.change(1);
-            f_uc = [1,0,0];
+            f_uc = [1,1,1];
             f_xc = 1;
             
             %  > Update fields 'm', 's' and 'x'.
@@ -145,10 +152,10 @@ classdef B3_1D
         function [obj] = p_adaptative(inp,msh,obj,f)
             %  > Auxiliary variables.
             ch   = inp.b.change(1);
-            f_uc = [1,0,0];
-            if f == "a"
-                f = "da";
-            end
+            f_uc = [1,1,1];
+%             if f == "a"
+%                 f = "da";
+%             end
 
             %  > Initialize cycle count.
             i = 0;
@@ -198,11 +205,11 @@ classdef B3_1D
         %  > 2.3.2. -------------------------------------------------------
         %  > Solve AX=B(?) criterion/criteria.
         function [flag] = f_sol(i)
-            if i ~= 1
-                flag = 0;
-            else
+            %if i ~= 1
+            %    flag = 0;
+            %else
                 flag = 1;
-            end
+            %end
         end
         %  > 2.3.3. -------------------------------------------------------
         %  > Set stopping criterion/criteria.

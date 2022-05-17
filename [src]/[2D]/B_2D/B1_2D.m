@@ -240,36 +240,28 @@ classdef B1_2D
                 end
             end
             %  > goV.
-            %  > NOTE #1: Treat convective/diffusive terms in a unified manner...
-            %  > NOTE #2: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
+            %  > NOTE: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
             for i = 1:size(x.goV,1)
                 for j = 1:size(x.goV,2)
                     x.goV(i,j) = x.gf{i,2}{j}.Vc./x.gf{i,1}{j}.Vc;
                 end
             end
-            % >> Pf.
-            %  > NOTE: Treat convective/diffusive terms in a unified manner...
-            i = 1;
-            for j = 1:numel(u.s{i})
-                for k = u.s{i}{j}', p = u.p{i}(k,j);
-                    %  > Pf.
-                    Pf = B1_2D.Assemble_Pf(inp,msh,x.goV(k,:),p,...
-                        f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
-                    %  > Update field "x.Pf".
-                    for l = 1:numel(u.s)
-                        x.Pf{k,l}{j} = Pf;
-                    end
-                end
-            end
-            % >> Tf_V.
+            % >> Pf and Tf_V.
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     for k = u.s{i}{j}', p = u.p{i}(k,j);
+                        %  > Pf.
+                        Pf = B1_2D.Assemble_Pf(inp,msh,x.goV(k,:),p,...
+                            f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
+                        %  > Tf.
                         switch i
                             case 1, t = Tools_2.Terms_1(p);
                             case 2, t = Tools_2.Terms_2(p,j);
                         end
-                        x.Tf_V{k,i}{j} = B1_2D.Assemble_Tf_V(x.gf{k,i}{j},t,x.Pf{k,i}{j});
+                        Tf = B1_2D.Assemble_Tf_V(x.gf{k,i}{j},t,Pf);
+                        %  > Update field "x".
+                        x.Pf  {k,i}{j} = Pf;
+                        x.Tf_V{k,i}{j} = Tf;
                     end
                 end
             end

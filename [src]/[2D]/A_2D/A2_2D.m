@@ -3,15 +3,10 @@ classdef A2_2D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Set up "msh" structure.
-        function [msh] = Set_msh(h,s)
+        function [msh] = Set_msh(h)
             %  > Auxiliary variables.
             inp_m = A1_2D.Set_msh(h);
-            switch s
-                case 1, inp_m.Lim = [ 0.0, 1.0; 0.0, 1.0]; %  > Grid limits (x/y-directions).
-                case 2, inp_m.Lim = [-0.5, 0.5;-0.5, 0.5]; %  > Grid limits (x/y-directions).
-                otherwise
-                    return;
-            end
+
             %  > ----------------------------------------------------------
             % >> struct.
             struct              = Tools_1.Set_struct(inp_m);

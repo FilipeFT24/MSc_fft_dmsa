@@ -46,8 +46,8 @@ classdef A1_1D
             end
             %  > P-adaptation.
             %  > #1.
-            inp.p_adapt.allow  = 0;                           %  > Allow p-adaptation(?).
-            inp.p_adapt.nc     = 75;                          %  > Maximum number of cycles.
+            inp.p_adapt.allow  = 1;                           %  > Allow p-adaptation(?).
+            inp.p_adapt.nc     = 50;                          %  > Maximum number of cycles.
             inp.p_adapt.ec_m   = 1.0E-10;                     %  > Minimum (global) discretization error.
             inp.p_adapt.lambda = 0.85;                        %  > Treshold for face selection based on maximum face truncation error (%).
             if ~(inp.p_adapt.lambda < 1)
@@ -60,7 +60,7 @@ classdef A1_1D
                 return;
             end
             %  > Truncated terms.
-            inp.t_terms.allow  = 1;                           %  > Compute truncated terms' magnitude(?).
+            inp.t_terms.allow  = 0;                           %  > Compute truncated terms' magnitude(?).
             inp.t_terms.n      = [3,3];                       %  > Number of terms: Convection(1)/Diffusion(2).
         end
     end

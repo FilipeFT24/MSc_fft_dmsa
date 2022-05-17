@@ -7,11 +7,13 @@ Set_Directories_2D;
 run = 0;
 % >> ----------------------------------------------------------------------
 if ~run
-    h   = 8.0E-02;                %  > h.
-    s   = [1,1];                  %  > c/f.
-    inp = A1_2D.Set_inp(s);       %  > s.
-    msh = A2_2D.Set_msh(h,s(2));  %  > h,s(2).
-    obj = B3_2D.Run_p  (inp,msh); %  > inp/msh.
+    h   = 1.0E-01;
+    inp = A1_2D.Set_inp([1,1],[100,0.5,0.5]); %  > c/f.
+    msh = A2_2D.Set_msh(h);                   %  > h.
+    obj = B3_2D.Run_p  (inp,msh);             %  > inp/msh.
+    
+    obj.e.a{1}.c.n_abs
+    
 else
     obj = C1_2D.Run_p  (0);
 end

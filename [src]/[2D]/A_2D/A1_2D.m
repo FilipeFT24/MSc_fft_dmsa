@@ -5,15 +5,17 @@ classdef A1_2D
         %  > Set up input variables #1.
         function [inp_m] = Set_msh(h)
             inp_m.h             = h;                                 %  > Grid size.
+            inp_m.Lim(1,:)      = [0,1];                             %  > Grid limits (x-direction).
+            inp_m.Lim(2,:)      = [0,1];                             %  > Grid limits (y-direction).
             inp_m.p             = "s";                               %  > Cell polyhedral (type).
             inp_m.t             = 0;                                 %  > #Example.
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up input variables #2.
-        function [inp] = Set_inp(t)
+        function [inp] = Set_inp(t,v)
             %  > ----------------------------------------------------------
             %  > Analytic function/coefficients.
-            h                   = A1_2D.cf_h(t);
+            h                   = A1_2D.cf_h(t,v);
             inp.c               = h.c;                               %  > c.
             inp.f               = h.f;                               %  > f.
             %  > Boundary conditions.
@@ -26,8 +28,8 @@ classdef A1_2D
                 return;
             end
             %  > Polynomial fit.
-            inp.p.p(1,:)        = [5,5];                             %  > p-convection(X/Y).
-            inp.p.p(2,:)        = [5,5];                             %  > p-diffusion (X/Y).
+            inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
+            inp.p.p(2,:)        = [1,1];                             %  > p-diffusion (X/Y).
             if any(any(rem(inp.p.p,2) == 0)) || ...                  %  > Allow only p=1,3,5,7,9,etc.
                     ~all(inp.p.p(1,:) == inp.p.p(2,:))               %  > Treat in a unified manner...
                 return;
@@ -63,44 +65,40 @@ classdef A1_2D
             end
             %  > ----------------------------------------------------------
             %  > Plot...
-            inp.plot            = [1,1];
+            inp.plot            = [0,1];
             %  > ----------------------------------------------------------
         end
         % >> 1.3. ---------------------------------------------------------
-        %  > 1.3.1. -------------------------------------------------------
-        function [h] = cf_h(t)
+        function [h] = cf_h(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [0,0];
-            c(2,:) = -[1,1];
+            c (1,:) =  [0,0];
+            c (2,:) = -[1,1];
+            i       =  v(1);
+            xc      =  v(2);
+            yc      =  v(3);
             
-            %  > Select...
+            %  > ch.
             switch t(1)
                 case 1
-                    %  > ch(1,:): V.
-                    h.c{1,1} = @(x) repelem(c(1,1),size(x,1),1); % > x.
-                    h.c{1,2} = @(x) repelem(c(1,2),size(x,1),1); % > y.
-                    %  > ch(2,:): G.
-                    h.c{2,1} = @(x) repelem(c(2,1),size(x,1),1); % > x.
-                    h.c{2,2} = @(x) repelem(c(2,2),size(x,1),1); % > y.
+                    h.c{1,1} = @(x) repelem(c(1,1),size(x,1),1); %  > V(x).
+                    h.c{1,2} = @(x) repelem(c(1,2),size(x,1),1); %  > V(y).
+                    h.c{2,1} = @(x) repelem(c(2,1),size(x,1),1); %  > G(x).
+                    h.c{2,2} = @(x) repelem(c(2,2),size(x,1),1); %  > G(x).
                 otherwise
                     return;
             end
-            %  > Select...
+            %  > fh.
             switch t(2)
                 case 1
-                    %  > Auxiliary variables.
-                    xc  = 0.5;
-                    yc  = 0.5;
-                    i   = 100;
-                    %  > fh.
                     h.f = @(x) exp(-i.*((x(:,1)-xc).^2+(x(:,2)-yc).^2));
                 case 2
-                    %  > Auxiliary variables.
-                    S   = 10;
-                    A   = S./(2.*pi.*c(2,1));
-                    B   = c(1,1)./(2.*c(2,1));
-                    %  > fh.
-                    h.f = @(x) A.*bessely(0,B.*sqrt(x(:,1).^2+x(:,2).^2)).*exp(B.*x(:,1));
+                    if any(c(:,1) == 0)
+                        return;
+                    else
+                        A = i./(2.*pi.*c(2,1));
+                        B = c(1,1)./(2.*i);
+                    end
+                    h.f = @(x) A.*bessely(0,A.*sqrt((x(:,1)-xc).^2+(x(:,2)-yc).^2)).*exp(B.*x(:,1));
                 otherwise
                     return;
             end

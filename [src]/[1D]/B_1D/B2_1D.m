@@ -4,8 +4,7 @@ classdef B2_1D
         % >> 1.1. ---------------------------------------------------------
         %  > Update matrices.
         function [m] = Update_3(inp,msh,f,m,s,u,x)
-            m        = B2_1D.Update_mA(inp,msh,f,m,s,u,x);
-            m        = B2_1D.Update_mB(inp,msh,f,m,s,u,x);
+            m        = B2_1D.Update_m(inp,msh,f,m,s,u,x);
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update nodal/face values, etc.
@@ -17,107 +16,53 @@ classdef B2_1D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        %  > Update matrix A.
-        function [m] = Update_mA(inp,msh,f,m,s,u,x)
-            %  > Auxiliary variables.
-            Nc = msh.c.Nc;
+        %  > Update matrices A and B.
+        function [m] = Update_m(inp,msh,f,m,s,u,x)
+            %  > Initialize rows (r) to be updated...
+            uf        = [msh.f.ic{RunLength(sort(cat(1,u.s{:})))}]';
+            r         = 1:100;%RunLength(uf)';
+            m.At(r,:) = 0;
+            m.Bt(r)   = f.st(r);
+            for i = 1:numel(u.s)
+                m.Ac{i}(r,:) = 0;
+                m.Bc{i}(r)   = 0;
+            end
             
-            % >> Set face equation(s) and update A (cell dependent coefficient matrix).
-            for i = 1:size(u.s,2)
-                %  > Af (face contributions).
-                if ~isempty(u.s{i})
-                    for j = u.s{i}'
-                        k                   = ismembc(s.t{j,i},f.bd.x);
-                        m.Af{i}(j,:)        = zeros(1,Nc);
-                        m.Af{i}(j,s.c{j,i}) = inp.c(i).*x.Tf{j,i}(~k);
-                    end
-                    %  > Cell indices to be updated.
-                    a{i}(:,1) = unique([msh.f.c{u.s{i}}]);
-                    
-                    %  > Ac (cell contributions).
-                    if ~isempty(a{i})
-                        for j = a{i}'
-                            %  > Add west(w)/east(e) face contributions...
-                            k            = msh.c.f.f{j};
-                            m.Ac{i}(j,:) = zeros(1,Nc);
-                            for n = 1:length(k)
-                                m.Ac{i}(j,:) = m.Ac{i}(j,:)+m.Af{i}(k(n),:).*msh.c.f.Nf{j}(n);
-                            end
+            %  > For each term (convective/diffusive)...
+            for i = 1:numel(u.s)
+                for j = r
+                    for k = 1:numel(msh.c.f.if(j,:)), ff = msh.c.f.if(j,k);
+                        %  > Cell/face indices used to fit face "ff"...
+                        l = s.logical{ff,i};
+                        %  > Auxiliary variables.
+                        a = s.i{ff,i}( l);
+                        b = s.i{ff,i}(~l);
+                        switch k
+                            case 1
+                                Nf = -1;
+                            case 2
+                                Nf =  1;
+                            otherwise
+                                return;
+                        end
+                        %  > Ac (cell contributions).
+                        m.Ac{i}(j,a) = m.Ac{i}(j,a)+Nf*x.Tf_V{ff,i}(l);
+                        %  > Bc (cell contributions).
+                        if any(~l)
+                            m.Bc{i}(j,1) = m.Bc{i}(j)-Nf*x.Tf_V{ff,i}(~l)*f.bd.v(ismembc(f.bd.i,sort(b)));
                         end
                     end
                 end
-                m.nnz.Ac(i) = B2_1D.Set_nnz(m.Ac{i});
-                m.nnz.Af(i) = B2_1D.Set_nnz(m.Af{i});
+                %  > At and Bt (cumulative/total matrices).
+                m.At = m.At+m.Ac{i};
+                m.Bt = m.Bt+m.Bc{i};
             end
-            %  > Cell(s) to be updated.
-            b = unique(cat(1,a{:}));
-            
-            %  > At (cumulative/total matrix).
-            if ~isempty(b)
-                for i = b'
-                    %  > Add convective/diffusive contributions...
-                    m.At(i,:) = zeros(1,Nc);
-                    for j = 1:size(u.s,2)
-                        m.At(i,:) = m.At(i,:)+m.Ac{j}(i,:);
-                    end
-                end
+            %  > nnz.
+            for i = 1:numel(u.s)
+                m.nnz.Ac(i) = nnz(m.Ac{i});
             end
-            m.nnz.At = B2_1D.Set_nnz(m.At);
-        end
-        % >> 2.2. ---------------------------------------------------------
-        %  > Update matrix B.
-        function [m] = Update_mB(inp,msh,f,m,s,u,x)
-            %  > Auxiliary variables.
-            Nf   = msh.f.Nf;
-            k_bf = zeros(Nf,size(u.s,2));
-            
-            % >> Set face equation(s) and update B (face dependent coefficient matrix w/ source term contribution).
-            for i = 1:size(u.s,2)
-                %  > Bf (face contributions).
-                if ~isempty(u.s{i})
-                    for j = u.s{i}'
-                        k = ismembc(s.t{j,i},f.bd.x);
-                        if any(k)
-                            k_bf   (j,i) = 1;
-                            m.Bf{i}(j,1) = inp.c(i).*x.Tf{j,i}(k).*f.bd.v(f.bd.x == s.t{j,i}(k));
-                        end
-                    end
-                end
-                %  > Cell indices to be updated.
-                a{i}(:,1) = find(k_bf(:,i));
-                b{i}(:,1) = unique([msh.f.c{a{i}(:,1)}]);
-                
-                %  > Bc (cell contributions).
-                if ~isempty(b{i})
-                    for j = b{i}'
-                        %  > Add west(w)/east(e) face contributions...
-                        k            = msh.c.f.f{j};
-                        m.Bc{i}(j,1) = 0;
-                        for l = 1:length(k)
-                            m.Bc{i}(j,1) = m.Bc{i}(j,1)-m.Bf{i}(k(l),1).*msh.c.f.Nf{j}(l);
-                        end
-                    end
-                end
-            end
-            %  > Cell(s) to be updated.
-            c = unique(cat(1,b{:}));
-            
-            %  > Bt (cumulative/total matrix).
-            if ~isempty(c)
-                for i = c'
-                    %  > Add convective/diffusive contributions...
-                    m.Bt(i,1) = f.st(i);
-                    for j = 1:size(u.s,2)
-                        m.Bt(i,1) = m.Bt(i,1)+m.Bc{j}(i,1);
-                    end
-                end
-            end
-        end
-        % >> 2.3. ---------------------------------------------------------
-        %  > Update 'nnz' of each matrix.
-        function [nnz_m] = Set_nnz(m)
-            nnz_m = nnz(m);
-        end
+            m.nnz.At = nnz(m.At);
+        end       
         
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
@@ -131,7 +76,7 @@ classdef B2_1D
             for i = u.f
                 for j = 1:size(u.s,2)
                     if ~isempty(u.s{j})
-                        for k = u.s{j}'
+                        for k = 1:101%u.s{j}'
                             l = ismembc(s.t{k,j},f.bd.x);
                             %  > Boundary face contribution(s).
                             if any(l)
@@ -150,7 +95,7 @@ classdef B2_1D
             for i = u.f
                 for j = 1:size(u.s,2)
                     if ~isempty(u.s{j})
-                        for k = u.s{j}'
+                        for k = 1:101%u.s{j}'
                             x.cf.(i){k,j} = x.if{k,j}*x.vf.(i){k,j};
                         end
                     end
@@ -163,7 +108,7 @@ classdef B2_1D
             for i = u.f
                 for j = 1:size(u.s,2)
                     if ~isempty(u.s{j})
-                        for k = u.s{j}'
+                        for k = 1:101%u.s{j}'
                             x.xf.(i)(k,j) = x.Tf{k,j}*x.vf.(i){k,j};
                         end
                     end
@@ -176,7 +121,7 @@ classdef B2_1D
         %  > Update 'e.p(...)' field (predicted/estimated cell/face truncation error distribution/norms).
         function [ed,ep,x] = Update_ed_ep(inp,eda,ed,ep,f,m,s,u,x,Vc,fs)
             %  > \tau_f(\phi), \tau(\nabla\phi), \tau_f and \tau_c.
-            ep = B2_1D.Set_1_e(ep,inp.c,x{1}.xf.x,x{2}.xf.x);
+            ep = B2_1D.Set_1_e(ep,inp.c,x{1}.xf.x,x{2}.xf.x,x{2}.xf.x);
             %  > Update remaining error fields...
             if ~fs(2)
                 if ~fs(1)
@@ -191,7 +136,7 @@ classdef B2_1D
                 %  > Add as source(?).
                 j  = 1;
                 x  = B2_1D.Add_ep_tc(ep,f,m{j},s,u,x);
-                ep = B2_1D.Set_1_e  (ep,s{1}.v,x{1}.xf.x,x{2}.xf.x);
+                ep = B2_1D.Set_1_e  (ep,s{1}.v,x{1}.xf.x,x{2}.xf.x,x{2}.xf.x);
                 ep = B2_1D.Set_2_e  (ep,m{j},Vc);
             end
             ed = B2_1D.Update_ed(eda,ed,ep,Vc);
@@ -212,7 +157,20 @@ classdef B2_1D
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
         function [ea] = Update_ea(inp,msh,ea,f,m,s,u,x,Vc)
             %  > \tau_f(\phi), \tau(\nabla\phi), \tau_f and \tau_c.
-            ea = B2_1D.Set_1_e(ea,inp.c,x.xf.a,x.nv.a.f);
+            ea = B2_1D.Set_1_e(ea,m,inp.c,x.xf.a,x.xf.x); %x.nv.a.f
+%             
+%             ea.c.c    (:,1) = m.At\ea.t.c;
+            ea.c.c = x.nv.x.c-f.av.c;
+%             disp(mean(abs(ea.c.c-sa)));
+%             
+%             
+%             figure(1);
+%             hold on;
+%             plot(abs(ea.c.c),'-r');
+%             plot(abs(sa),'ob');
+%             set(gca,'YScale','log');
+%             
+            
             %  > Update remaining error fields...
             ea = B2_1D.Set_2_e(ea,m,Vc);
             %  > Update truncated terms' magnitude (w/ anlytic field).
@@ -225,7 +183,7 @@ classdef B2_1D
         %  > Update 'e.da(...)' field (analytic cell/face (difference) truncation error distribution/norms).
         function [eda] = Update_eda(inp,eda,m,x,Vc)
             %  > \tau_f(\phi), \tau(\nabla\phi), \tau_f and \tau_c.
-            eda = B2_1D.Set_1_e(eda,inp.c,x{1}.xf.a,x{2}.xf.a);
+            eda = B2_1D.Set_1_e(eda,inp.c,x{1}.xf.a,x{2}.xf.a,x{2}.xf.a);
             %  > Update remaining error fields...
             eda = B2_1D.Set_2_e(eda,m,Vc);
         end
@@ -273,14 +231,14 @@ classdef B2_1D
         %  > 4.5.2. -------------------------------------------------------
         %  > Auxiliary function #2.
         %  > Compute remaining error fields (based on the convective/diffusive facial components).
-        function [e] = Set_1_e(e,v,x,y)
+        function [e] = Set_1_e(e,m,v,x,y)
             %  > \tau_f(\phi) and \tau(\nabla\phi).
             [a,b] = size(e.t.f);
             for i = 1:b-1
-                e.t.f(:,i) = v(i).*(y(:,i)-x(:,i));
+                e.t.f(:,i) = v(i).*(x(:,i)-y(:,i));
             end
             %  > \tau_f.
-            e.t.f    (:,b) = sum(e.t.f(:,1:b-1),2);
+            e.t.f(:,b) = sum(e.t.f(:,1:b-1),2);
             %  > \tau_c.
             for i = 1:a-1
                 e.t.c(i,1) = e.t.f(i,b)-e.t.f(i+1,b);
@@ -317,14 +275,14 @@ classdef B2_1D
             
             % >> #1: Update stencil/nodal solution...
             %  > Update fields 'm', 's' and 'x'.
-            ic                  = 2;
-            [m{ic},s{ic},x{ic}] = B3_1D.Update_all(inp,msh,f,m{ic},s{ic},u{ic},x{ic},ch,[1,fs(1),fs(1)]);
+            %ic                  = 2;
+            %[m{ic},s{ic},x{ic}] = B3_1D.Update_all(inp,msh,f,m{ic},s{ic},u{ic},x{ic},ch,[1,fs(1),fs(1)]);
             %  > Update nodal solution...
             if f_xc
                 if ~fs(1)
                     ic = 1;
                     xc = B2_1D.Update_xc(m{ic}.At,m{ic}.Bt);
-                    for i = 1:size(x,2)
+                    for i = 1:1%size(x,2)
                         x{i}.nv.x.c = xc;
                     end
                 else
@@ -333,22 +291,26 @@ classdef B2_1D
                 end
             end
             %  > Update field 'x'.
-            for i = 1:size(x,2)
+            for i = 1:1%size(x,2)
                 x{i} = B2_1D.Update_4(f,s{i},u{i},x{i});
             end
             % >> #2: Update fields 'e.a' and 'e.da': if the (predicted) cell truncation error is added as a source term, no need to update matrices, since e=A(LO)\(\tau_c).
-            for i = 1:nc
+            for i = 1:1%nc
                 e.a{i} = B2_1D.Update_ea(inp,msh,e.a{i},f,m{i},s{i},u{i},x{i},Vc);
-                if i ~= 1
-                    j         = i-1:i;
-                    e.da{i-1} = B2_1D.Update_eda(inp,e.da{i-1},m{i},x(j),Vc);
-                end
+%                 if i ~= 1
+%                     j         = i-1:i;
+%                     e.da{i-1} = B2_1D.Update_eda(inp,e.da{i-1},m{i},x(j),Vc);
+%                 end
             end
-            % >> #3: Update fields 'e.d', 'e.p' and 'x'.
-            i                    = 1;
-            j                    = i:i+1;
-            [e.d{i},e.p{i},x(j)] = ...
-                B2_1D.Update_ed_ep(inp,e.da{i},e.d{i},e.p{i},f,m(j),s(j),u(j),x(j),Vc,fs);
-        end
+            e.a{1}.c.c_abs = mean(abs(f.av.c-x{1}.nv.x.c));
+            %e.a{1}.c.n_abs = B2_1D.Set_n(e.a{1}.c.c_abs,Vc);
+            
+            
+%             % >> #3: Update fields 'e.d', 'e.p' and 'x'.
+%             i                    = 1;
+%             j                    = i:i+1;
+%             [e.d{i},e.p{i},x(j)] = ...
+%                 B2_1D.Update_ed_ep(inp,e.da{i},e.d{i},e.p{i},f,m(j),s(j),u(j),x(j),Vc,fs);
+         end
     end
 end

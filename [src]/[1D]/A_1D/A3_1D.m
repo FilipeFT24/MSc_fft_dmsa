@@ -10,7 +10,7 @@ classdef A3_1D
             % >> Analytic function/derivatives.
             %  > Function.
             f_d{1} = diff(inp.f(x),x);
-            f_d{2} = diff(f_d{1});
+            f_d{2} = diff(f_d{1},x);
             func   = inp.c(1).*f_d{1}+inp.c(2).*f_d{2};
             intc   = int(func);
             %  > Function derivatives up to (+1(boundary)+2/4(next stencil)=+3/5)...
@@ -49,8 +49,10 @@ classdef A3_1D
         %  > Update field 'f.bd' (boundary face values).
         function [bd] = Update_bd(inp,msh,f)
             %  > Auxiliary variables.
+            Nf    = msh.f.Nf;
             Xv    = msh.f.Xv;
             
+            bd.i  = [1,Nf];
             bd.t  = inp.b.t;
             bd.x  = [Xv(1),Xv(end)];
             for i = 1:length(bd.t)
