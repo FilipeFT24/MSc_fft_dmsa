@@ -20,88 +20,89 @@ classdef B1_2D
         % >> 1.3. ---------------------------------------------------------
         %  > Update stencil coordinates, etc.
         function [s] = Update_sc(inp,msh,s,u)
-            %  > NOTE: treat convective/diffusive terms in a unified manner...
-            i = 1;
-            for j = 1:numel(u.s{i})
-                for k = u.s{i}{j}', p = u.p{i}(k,j);
-                    %  > Initialize...
-                    sc = cell(1,ceil(p./2));
-                    sf = cell(1,ceil(p./2));
-                    %  > Loop through levels...
-                    n = 1;
-                    while n <= ceil(p./2)
-                        if n == 1
-                            %  > Face "k"'s vertices.
-                            kv    = msh.f.iv (k,:);
-                            %  > Cells to which "kv" belong to.
-                            sc{n} = RunLength(sort(cat(1,msh.v.ic{kv})));
-                            %  > Boundary faces to which "kv" belong to.
-                            fv    = RunLength(sort(cat(1,msh.v.if{kv})));
-                            sf{n} = fv(~msh.f.logical(fv));
-                            %  > Remove faces that belong to the same cell (case "k" is a boundary face).
-                            if ~msh.f.logical(k)
-                                ck    = msh.f.ic{k};
-                                sf{n} = sf{n}(cat(1,msh.f.ic{sf{n}}) ~= ck | sf{n} == k);
-                            end
-                        else
-                            if ~inp.p.nb_t
-                                %  > Face neighbours.
-                                [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sc_t,sf_t); %  > [0].
-                            else
-                                %  > Vertex neighbours.
-                                [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sc_t,sf_t); %  > [1].
-                            end
-                        end
-                        sc_t = cat(1,sc{:});
-                        sf_t = cat(1,sf{:});
+            for i = 1:numel(u.s)
+                for j = 1:numel(u.s{i})
+                    for k = u.s{i}{j}', p = u.p{i}(k,j);
+                        %  > Initialize...
+                        sc = cell(1,ceil(p./2));
+                        sf = cell(1,ceil(p./2));
                         
-                        %  > Extend (if necessary)...
-                        if n ~= 1
-                            if ~isempty(sf_t)
-                                e  = B1_2D.Extend_1(msh,2*n-1,sc_t,sf_t);
-                                nd = numel(e.f);
-                                %  > Loop through x/y-directions...
-                                for l = 1:nd
-                                    if e.f(l)
-                                        %  > Direction.
-                                        d       = Tools_1.setdiff(1:nd,l);
-                                        %  > Update stencil elements...
-                                        sn      = B1_2D.Extend_2(inp,msh,d,e.L,sc{n},sc_t,sf_t);
-                                        sc  {n} = [sc{n};sn.c];
-                                        sc_t    = cat(1,sc{:});
-                                        if ~isempty(sn.f)
-                                            sf  {n} = [sf{n};sn.f];
-                                            sf_t    = cat(1,sf{:});
+                        %  > Loop through levels...
+                        n = 1;
+                        while n <= ceil(p./2)
+                            if n == 1
+                                %  > Face "k"'s vertices.
+                                kv    = msh.f.iv (k,:);
+                                %  > Cells to which "kv" belong to.
+                                sc{n} = RunLength(sort(cat(1,msh.v.ic{kv})));
+                                %  > Boundary faces to which "kv" belong to.
+                                fv    = RunLength(sort(cat(1,msh.v.if{kv})));
+                                sf{n} = fv(~msh.f.logical(fv));
+                                %  > Remove faces that belong to the same cell (case "k" is a boundary face).
+                                if ~msh.f.logical(k)
+                                    ck    = msh.f.ic{k};
+                                    sf{n} = sf{n}(cat(1,msh.f.ic{sf{n}}) ~= ck | sf{n} == k);
+                                end
+                            else
+                                if ~inp.p.nb_t
+                                    [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sc_t,sf_t); %  > [0]: Face   neighbours.
+                                else
+                                    [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sc_t,sf_t); %  > [1]: Vertex neighbours.
+                                end
+                            end
+                            sc_t = cat(1,sc{:});
+                            sf_t = cat(1,sf{:});
+                            %  > Extend...
+                            if n ~= 1
+                                if ~isempty(sf_t)
+                                    %  > ...until no extension is necessary.
+                                    while 1
+                                        e = B1_2D.Extend_1(msh,2*n-1,sc_t,sf_t);
+                                        if ~all(e.f)
+                                            break;
+                                        end
+                                        %  > Loop through x/y-directions...
+                                        nd = numel(e.f);
+                                        for l = 1:nd
+                                            if e.f(l)
+                                                %  > Direction.
+                                                dir     = Tools_1.setdiff(1:nd,l);
+                                                %  > Update stencil elements...
+                                                sn      = B1_2D.Extend_2(inp,msh,dir,e.L,sc{n},sc_t,sf_t);
+                                                sc  {n} = [sc{n};sn.c];
+                                                sc_t    = cat(1,sc{:});
+                                                if ~isempty(sn.f)
+                                                    sf  {n} = [sf{n};sn.f];
+                                                    sf_t    = cat(1,sf{:});
+                                                end
+                                            end
                                         end
                                     end
                                 end
                             end
+                            n = n+1;
                         end
-                        n = n+1;
-                    end
-                    
-                    %  > Compute coordinates...
-                    xt = B1_2D.s_xt(msh,sc_t,sf_t);
-                    %  > Assign logical indexing: 0-bnd.
-                    %                             1-blk.
-                    nc = numel (sc_t);
-                    nf = numel (sf_t);
-                    if ~isempty(sf_t)
-                        logical = [true(nc,1);false(nf,1)];
-                    else
-                        logical = true(nc,1);
-                    end
-                    %  > Update field "s".
-                    for m = 1:numel(u.s)
+                        %  > Compute coordinates...
+                        xt = B1_2D.s_xt(msh,sc_t,sf_t);
+                        %  > Assign logical indexing: 0-bnd.
+                        %                             1-blk.
+                        nc = numel (sc_t);
+                        nf = numel (sf_t);
                         if ~isempty(sf_t)
-                            s.i  {k,m}{j} = [sc_t;sf_t];
+                            logical = [true(nc,1);false(nf,1)];
                         else
-                            s.i  {k,m}{j} = sc_t;
+                            logical = true(nc,1);
                         end
-                        s.logical{k,m}{j} = logical;
-                        s.sc     {k,m}{j} = sc;
-                        s.sf     {k,m}{j} = sf;
-                        s.xt     {k,m}{j} = xt;
+                        %  > Update field "s".
+                        if ~isempty(sf_t)
+                            s.i  {k,i}{j} = [sc_t;sf_t];
+                        else
+                            s.i  {k,i}{j} = sc_t;
+                        end
+                        s.logical{k,i}{j} = logical;
+                        s.sc     {k,i}{j} = sc;
+                        s.sf     {k,i}{j} = sf;
+                        s.xt     {k,i}{j} = xt;
                     end
                 end
             end
@@ -164,7 +165,7 @@ classdef B1_2D
         end
         %  > 1.3.3.2. -----------------------------------------------------
         %  > Perform extension in the appropriate direction.
-        function [sn] = Extend_2(inp,msh,d,L,c,ct,ft)
+        function [sn] = Extend_2(inp,msh,dir,L,c,ct,ft)
             % >> Compute "new layer"...
             if ~inp.p.nb_t
                 %  > Face neighbours.
@@ -177,13 +178,13 @@ classdef B1_2D
             %  > c.
             sn.c      = Tools_1.setdiff(sn.c,ct);
             xc        = msh.c.c.xy.c(sn.c,:);
-            logical_c = xc(:,d) >= L(1,d) & xc(:,d) <= L(2,d);
+            logical_c = xc(:,dir) >= L(1,dir) & xc(:,dir) <= L(2,dir);
             sn.c      = sn.c(logical_c);
             %  > f.
             if ~isempty(sn.f)
                 sn.f      = Tools_1.setdiff(sn.f,ft);
                 xf        = msh.f.xy.c(sn.f,:);
-                logical_f = xf(:,d) >= L(1,d) & xf(:,d) <= L(2,d);
+                logical_f = xf(:,dir) >= L(1,dir) & xf(:,dir) <= L(2,dir);
                 sn.f      = sn.f(logical_f);
             end
         end
@@ -194,13 +195,14 @@ classdef B1_2D
         function [x] = Initialize_24(f,u,nc,ns,Nc,Nf)
             for i = 1:ns
                 %  > "sx".
+                x{i}.Df   = cell (Nf,nc(2));
                 x{i}.gf   = cell (Nf,nc(2));
                 x{i}.goV  = zeros(Nf,nc(2));
                 x{i}.Pf   = cell (Nf,nc(2));
                 x{i}.Tf_V = cell (Nf,nc(2));
                 %  > "x".
                 x{i}.nv.a.f = zeros(Nf,1);
-                for j = u{i}.f
+                for j = ["a","x"]
                     x{i}.cf.(j) = cell(Nf,nc(2));
                     x{i}.vf.(j) = cell(Nf,nc(2));
                     x{i}.xf.(j) = cell(1 ,nc(2));
@@ -216,17 +218,9 @@ classdef B1_2D
             end
         end
         % >> 2.2. ---------------------------------------------------------
-        %  > 2.2.1. -------------------------------------------------------
         %  > Update stencil coefficients, etc.
         function [x] = Update_2(inp,msh,f,s,u,x)
             x        = B1_2D.Update_sx(inp,msh,f,s,u,x);
-        end
-        %  > 2.2.2. -------------------------------------------------------
-        %  > Update nodal/face values, etc.
-        function [x] = Update_4(f,s,u,x)
-            x        = Tools_2.Update_xv(f,s,u,x);
-            x        = Tools_2.Update_cf(u,x);
-            x        = Tools_2.Update_xf(u,x);
         end
         % >> 2.3. ---------------------------------------------------------
         %  > Update stencil coefficients.
@@ -250,9 +244,11 @@ classdef B1_2D
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     for k = u.s{i}{j}', p = u.p{i}(k,j);
-                        %  > Pf.
-                        Pf = B1_2D.Assemble_Pf(inp,msh,x.goV(k,:),p,...
+                        %  > Df and DWf'.
+                        [Df,DTWf] = B1_2D.Assemble_Df(inp,msh,x.goV(k,:),p,...
                             f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
+                        %  > Pf.
+                        Pf = (DTWf*Df)\DTWf;
                         %  > Tf.
                         switch i
                             case 1, t = Tools_2.Terms_1(p);
@@ -260,6 +256,7 @@ classdef B1_2D
                         end
                         Tf = B1_2D.Assemble_Tf_V(x.gf{k,i}{j},t,Pf);
                         %  > Update field "x".
+                        x.Df  {k,i}{j} = Df;
                         x.Pf  {k,i}{j} = Pf;
                         x.Tf_V{k,i}{j} = Tf;
                     end
@@ -268,7 +265,7 @@ classdef B1_2D
         end
         %  > 2.3.1. -------------------------------------------------------
         %  > Check boundary type and assemble matrices Df and Pf.
-        function [Pf] = Assemble_Pf(inp,msh,goV,p,f_bd,lc,sf,xy_fc,xy_t)
+        function [Df,DTWf] = Assemble_Df(inp,msh,goV,p,f_bd,lc,sf,xy_fc,xy_t)
             % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
             %  > d_ft.
             d_ft       = xy_t-xy_fc;
@@ -276,6 +273,7 @@ classdef B1_2D
             T1         = Tools_2.Terms_1(p);
             Df         = zeros(size(xy_t,1),size(T1.c,2));
             Df  (lc,:) = T1.c.*d_ft(lc,1).^T1.e(1,:).*d_ft(lc,2).^T1.e(2,:);
+            
             %  > Check whether the stencil contains boundary faces...
             if ~isempty(sf)
                 %  > Identify boundary...
@@ -316,14 +314,12 @@ classdef B1_2D
                 DTWf = Df';
             else
                 %  > Compute distances to face centroid and check for nil d's.
-                d   = sqrt(sum((xy_t-xy_fc).^2,2));
-                d_n = d == 0;
+                d(1,:) = sqrt(sum((xy_t-xy_fc).^2,2)); d_n = d == 0;
                 if any(d_n)
                     d (d_n) = min(d(~d_n))./2;
                 end
-                DTWf = Df'*diag(inp.p.wf(d,max(d)));
+                DTWf = bsxfun(@times,Df',inp.p.wf(d));
             end
-            Pf = (DTWf*Df)\DTWf;
         end
         %  > 2.3.2. -------------------------------------------------------
         %  > 2.3.2.1. -----------------------------------------------------

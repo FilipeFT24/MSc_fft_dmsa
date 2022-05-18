@@ -128,18 +128,19 @@ classdef Tools_1
         % >> 3.3. ---------------------------------------------------------
         %  > Similar (faster) version of built-in function "setdiff" (w/o verification(s)).
         function [z] = setdiff(x,y)
-            w    = zeros(1,max(max(x),max(y)));
-            w(x) = 1;
-            w(y) = 0;
-            z    = x(logical(w(x)));
+            w    = false(1,max(max(x),max(y)));
+            w(x) = true;
+            w(y) = false;
+            z    = x(w(x));
         end
-        % >> 3.4. Compute reference length (direction: d).
+        % >> 3.4. ---------------------------------------------------------
+        %  > Compute reference length (direction: d).
         function [h] = hd(v,c,d)
             %  > Select face indices...
-            n = size(v,1);
-            k = [1:n;circshift(1:n,n-1)]';
-            
+            [n,o] = size(v);
+
             %  > t.
+            k = [1:n;circshift(1:n,n-1)]';
             m = d(2)./d(1);
             if ~isinf(m)
                 %  > t = (b-y(1)+mx(1))/(y(2)-y(1)-m(x(2)-x(1))).
@@ -159,10 +160,8 @@ classdef Tools_1
             if nnz(f) ~= 2
                 return;
             else
-                for i = 1:size(v,2)
-                    XY(:,i) = v(k(f,1),i)+t(f)'.*(v(k(f,2),i)-v(k(f,1),i));
-                end
-                h = Tools_1.dist(XY);
+                XY = v(k(f,1),:)+t(f)'.*(v(k(f,2),:)-v(k(f,1),:));
+                h  = Tools_1.dist(XY);
             end
         end
         % >> 3.5. ---------------------------------------------------------

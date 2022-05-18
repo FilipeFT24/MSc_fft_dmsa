@@ -6,7 +6,7 @@ classdef A2_2D
         function [msh] = Set_msh(h)
             %  > Auxiliary variables.
             inp_m = A1_2D.Set_msh(h);
-
+            
             %  > ----------------------------------------------------------
             % >> struct.
             struct              = Tools_1.Set_struct(inp_m);
@@ -77,13 +77,13 @@ classdef A2_2D
             sz  (3) = max  (CL_c,[],'all');
             V   {1} = false(sz(1),sz(3));
             V   {2} = false(sz(1),sz(1));
-            l       = 1:sz(1);
             
             %  > Assemble sparse matrix...
             a     = repelem(1:sz(1),sz(2))';
             b     = reshape(CL_c',[],1);
             V{1}  = sparse (a,b,true(numel(a),1));
             %  > Vertex neighbours.
+            l     = 1:sz(1);
             for i = 1:sz(1)
                 for j = 1:sz(2)
                     V{2}(i,V{1}(:,CL_c(i,j))) = true;

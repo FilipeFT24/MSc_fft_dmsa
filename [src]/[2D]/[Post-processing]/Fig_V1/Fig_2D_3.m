@@ -42,7 +42,7 @@ classdef Fig_2D_3
                     end
                 end
                 for k = ["x","y"]
-                    V{1}.(k)(i,:) = obj(i).e.a{n}.t.n_abs.f.(k)(j,:);
+                    V{1}.(k)(i,:) = obj(i).e.a{n}.n_abs.t.f.(k)(j,:);
                 end
             end
             %  > Plot variables.
@@ -54,6 +54,12 @@ classdef Fig_2D_3
             [L2,P2,Y2] = Fig_Tools.Var_1D_1(fig,M2,L2,NNZ,V{1}.y);
             %  > Axis/legend,etc.
             Fig_Tools.Map_1D_2(fig,[L1,L2],[P1,P2],0,NNZ,[Y1;Y2],[-1,0],2);
+            
+            
+            Tools_1.Slope(h,V{1}.x)
+            Tools_1.Slope(h,V{1}.y)
+            
+            
         end
         %  > 2.1.2. -------------------------------------------------------
         function [L] = Set_Legend_1(j,n)
@@ -63,7 +69,7 @@ classdef Fig_2D_3
             S(4) = Fig_Tools.Set_str_3(j);
             switch n
                 case 1, d = "x";
-                case 2, d = "x";
+                case 2, d = "y";
                 otherwise
                     return;
             end
@@ -82,8 +88,8 @@ classdef Fig_2D_3
             for i = 1:size(obj,2)
                 h     (i,1) = msh(i).d.h;
                 NNZ   (i,1) = obj(i).m{n}.nnz.At;
-                V  {1}(i,1) = obj(i).e.a{n}.c.n_abs  (j);
-                V  {2}(i,1) = obj(i).e.a{n}.t.n_abs.c(j);
+                V  {1}(i,1) = obj(i).e.a{n}.n_abs.c  (j);
+                V  {2}(i,1) = obj(i).e.a{n}.n_abs.t.c(j);
             end
             %  > Plot variables.
             L1         = Fig_2D_3.Set_Legend_2(j);
@@ -91,6 +97,11 @@ classdef Fig_2D_3
             [L1,P1,Y1] = Fig_Tools.Var_1D_1(fig,M1,L1,NNZ,[V{1},V{2}]);
             %  > Axis/legend,etc.
             Fig_Tools.Map_1D_2(fig,L1,P1,0,NNZ,Y1,[-1,0],2);
+            
+            
+            Tools_1.Slope(h,V{1})
+            Tools_1.Slope(h,V{2})
+            
         end
         % >> 2.3 ----------------------------------------------------------
         function [L] = Set_Legend_2(j)

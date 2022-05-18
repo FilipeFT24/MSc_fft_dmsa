@@ -28,24 +28,17 @@ classdef A1_2D
                 return;
             end
             %  > Polynomial fit.
-            inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
-            inp.p.p(2,:)        = [1,1];                             %  > p-diffusion (X/Y).
-            if any(any(rem(inp.p.p,2) == 0)) || ...                  %  > Allow only p=1,3,5,7,9,etc.
-                    ~all(inp.p.p(1,:) == inp.p.p(2,:))               %  > Treat in a unified manner...
-                return;
-            end
+            inp.p.p(1,:)        = [5,5];                             %  > p-convection(X/Y).
+            inp.p.p(2,:)        = [5,5];                             %  > p-diffusion (X/Y).
             inp.p.nb_t          = 0;
             inp.p.wls           = 1;
             if inp.p.wls
-                syms d1 d2;
                 p               = 2;                                 %  > p.
                 e               = 1;                                 %  > \epsilon.
                 k               = 1./2;                              %  > k.
                 c(1)            = k.*(1+e);
                 c(2)            = exp(-(1./k).^2);
-                g               = ((exp(-(d1./(c(1).*d2)).^2)-c(2))./(1-c(2)));
-                wf              = g./d1.^p;
-                inp.p.wf        = matlabFunction(wf,'Vars',{d1,d2}); %  > wf (weight function) handle.
+                inp.p.wf        = @(d) ((exp(-(d(1,:)./(c(1).*max(d))).^2)-c(2))./(1-c(2)))./d(1,:).^p;
             end
             %  > ----------------------------------------------------------
             %  > P-adaptation.

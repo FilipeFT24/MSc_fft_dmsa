@@ -11,7 +11,7 @@ classdef A3_2D
             %  > "bd" (boundary values).
             f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
             %  > "st" (source term).
-            f.st = A3_2D.Update_st(msh,f.fh.func.f);
+            %  f.st = A3_2D.Update_st(msh,f.fh.func.f);
             %  > "qd" (1D quadrature): treat convective/diffusive terms in a unified manner...
             j = 1;
             for i = 1:size(inp.p.p,2)

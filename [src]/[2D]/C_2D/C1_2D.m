@@ -1,9 +1,7 @@
 classdef C1_2D
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [V] = Run_p(run)
-            %  > Load/run...
-            T = "1";
+        function [V] = Run_p(run,T)
             if ~run(1)
                 load(strjoin(["[.mat Files]/V",T,".mat"],''));
             else
@@ -16,10 +14,11 @@ classdef C1_2D
         % >> 2.1. ---------------------------------------------------------
         function [V] = Check_Decay(T)
             %  > "inp".
-            h_lim = [5.0E-2,1.0E-2];
-            n     = 5;
-            h     = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
-            inp   = A1_2D.Set_inp([1,1],[100,0.5,0.5]);     %  > c/f.
+            h_lim    = [5.0E-2,1.0E-2];
+            n        = 5;
+            h        = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
+            inp      = A1_2D.Set_inp([1,1],[100,0.5,0.5]);     %  > c/f.
+            inp.plot = [0,0];
             
             %  > Set up "P-standard" run.
             if ~inp.p_adapt.allow

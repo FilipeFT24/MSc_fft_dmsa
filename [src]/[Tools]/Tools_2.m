@@ -109,7 +109,7 @@ classdef Tools_2
             for i = 1:numel(t.e)
                 t.e{i} = zeros(2,n);
             end
-
+            
             for j = 0:p
                 k = (j.^2+j)./2+1:((j+1).^2+(j+1))./2;
                 %  > (c).
@@ -124,65 +124,7 @@ classdef Tools_2
         end
 
         %% > 2. -----------------------------------------------------------
-        % >> Update field 'x'.
-        % >> 2.1. ---------------------------------------------------------
-        %  > Update 'x.nv.x.c' field (nodal solution).
-        function [xc] = Update_xc(At,Bt)
-            xc = At\Bt;
-        end
-        % >> 2.2. ---------------------------------------------------------
-        %  > Update 'x.vf' field (nodal values used to fit face polynomial).
-        function [x] = Update_xv(f,s,u,x)
-            for i = u.f
-                for j = 1:numel(u.s)
-                    for k = 1:numel(u.s{j})
-                        if ~isempty(u.s{j}{k})
-                            for l = u.s{j}{k}'
-                                %  > Cell/face indices used to fit "l".
-                                m = s.logical{l,j}{k};
-                                a = s.i      {l,j}{k}( m);
-                                b = s.i      {l,j}{k}(~m); b = sort(b);
-                                %  > Cell value(s).
-                                x.vf.(i){l,j}{k}(m,1) = x.nv.(i).c(s.i{l,j}{k}(m));
-                                %  > Face value(s).
-                                if any(~m)
-                                    x.vf.(i){l,j}{k}(~m,1) = f.bd.v(ismembc(f.bd.i,b));
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        % >> 2.3. ---------------------------------------------------------
-        %  > Update 'x.cf' field (fitted polynomial coefficients).
-        function [x] = Update_cf(u,x)
-            for i = u.f
-                for j = 1:numel(u.s)
-                    for k = 1:numel(u.s{j})
-                        for l = 1:size(x.vf.(i),1)
-                            x.cf.(i){l,j}{k} = x.Pf{l,j}{k}*x.vf.(i){l,j}{k};
-                        end
-                    end
-                end
-            end
-        end
-        % >> 2.4. ---------------------------------------------------------
-        %  > Update 'x.f' field (face values (multiplied by V)).
-        function [x] = Update_xf(u,x)
-            for i = u.f
-                for j = 1:numel(u.s)
-                    for k = 1:numel(u.s{j})
-                        for l = 1:size(x.vf.(i),1)
-                            x.xf.(i){j}(l,k) = x.Tf_V{l,j}{k}*x.vf.(i){l,j}{k};
-                        end
-                    end
-                end
-            end
-        end
-        
-        %% > 3. -----------------------------------------------------------
-        %  > 3.1. ---------------------------------------------------------
+        %  > 2.1. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = Set_n(E,V)
             if nargin == 1

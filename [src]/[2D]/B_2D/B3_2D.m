@@ -2,8 +2,8 @@ classdef B3_2D
     methods(Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        %  > Initialize 'obj' structure: {1} - present.        ('.s','.m','.x').
-        %                                {2} - error estimator ('.s','.m','.x').
+        %  > Initialize "obj" structure: {1} - present.        (".s",".m",".x").
+        %                                {2} - error estimator (".s",".m",".x").
         function [obj] = Initialize(inp,msh)
             %  > Auxiliary variables.
             A  = [0,2];
@@ -22,7 +22,6 @@ classdef B3_2D
             obj.m = B2_2D.Initialize_3 (nc,ns,Nc);
             %  > Field: "u" (update flag).
             for i = 1:ns
-                obj.u{i}.f = ["a","x"];
                 for j = 1:nc(1)
                     for k = 1:nc(2)
                         obj.u{i}.p{j}   (:,k) = repelem(inp.p.p(j,k)+A(i),Nf); %  > (x,y).
@@ -34,23 +33,12 @@ classdef B3_2D
             obj.x = B1_2D.Initialize_24(obj.f,obj.u,nc,ns,Nc,Nf);
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > Update all fields ('obj').
-        function [m,s,x] = Update_all(inp,msh,f,m,s,u,x,f_uc)
-            %  > Update stencil.
-            s            = B1_2D.Update_1   (inp,msh,s,u);
-            x            = B1_2D.Update_2   (inp,msh,f,s,u,x);
-            %  > Update matrices(?).
-            if f_uc(1)
-                m        = B2_2D.Update_3   (inp,msh,f,m,s,u,x);
-            end
-            %  > Update nodal solution(?).
-            if f_uc(2)
-                x.nv.x.c = Tools_2.Update_xc(m.At,m.Bt);
-            end
-            %  > Update face values(?).
-            if f_uc(3)
-                x        = B1_2D.Update_4   (f,s,u,x);
-            end
+        %  > Update all fields ("obj").
+        function [m,s,x] = Update_all(inp,msh,f,m,s,u,x,f_xc)
+            s            = B1_2D.Update_1(inp,msh,s,u);
+            x            = B1_2D.Update_2(inp,msh,f,s,u,x);
+            m            = B2_2D.Update_3(msh,f,m,s,u,x);
+            x            = B2_2D.Update_4(f,m,s,u,x,f_xc);
         end
         
         %% > 2. -----------------------------------------------------------
@@ -75,16 +63,18 @@ classdef B3_2D
         % >> 'p-standard' run.
         function [obj] = p_standard(inp,msh,obj)
             %  > Auxiliary variables.
-            f_uc = [1,1,1];
             f_xc = 1;
             
             %  > Update fields 'm', 's' and 'x'.
             ic                              = 1;
             [obj.m{ic},obj.s{ic},obj.x{ic}] = ...
-                B3_2D.Update_all(inp,msh,obj.f,obj.m{ic},obj.s{ic},obj.u{ic},obj.x{ic},f_uc);
+                B3_2D.Update_all(inp,msh,obj.f,obj.m{ic},obj.s{ic},obj.u{ic},obj.x{ic},f_xc);
             %  > Update fields 'e', 'm' and 'x'.
             [obj.e] = ...
-                B2_2D.Update_e  (inp,msh,obj.e,obj.f,obj.m,obj.s,obj.u,obj.x);
+                B2_2D.Update_e  (inp,msh,obj.e,obj.m,obj.x);
         end
+        
+        
+        
     end
 end
