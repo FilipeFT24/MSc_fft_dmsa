@@ -7,7 +7,7 @@ classdef A1_2D
             inp_m.h             = h;                                 %  > Grid size.
             inp_m.Lim(1,:)      = [0,1];                             %  > Grid limits (x-direction).
             inp_m.Lim(2,:)      = [0,1];                             %  > Grid limits (y-direction).
-            inp_m.p             = "s";                               %  > Cell polyhedral (type).
+            inp_m.p             = "s";                               %  > Cell polyhedral type.
             inp_m.t             = 0;                                 %  > #Example.
         end
         % >> 1.2. ---------------------------------------------------------
@@ -28,9 +28,9 @@ classdef A1_2D
                 return;
             end
             %  > Polynomial fit.
-            inp.p.p(1,:)        = [5,5];                             %  > p-convection(X/Y).
-            inp.p.p(2,:)        = [5,5];                             %  > p-diffusion (X/Y).
-            inp.p.nb_t          = 0;
+            inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
+            inp.p.p(2,:)        = [7,7];                             %  > p-diffusion (X/Y).
+            inp.p.nb_t          = 1;
             inp.p.wls           = 1;
             if inp.p.wls
                 p               = 2;                                 %  > p.

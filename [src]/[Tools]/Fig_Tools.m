@@ -85,7 +85,7 @@ classdef Fig_Tools
         %  > 2.1.1. -------------------------------------------------------
         function [] = Map_1D_1(fig,fx,XM,L_XY)
             %  > Other parameters.
-            [xl(1),xl(2)] = MinMaxElem(XM(XM ~=0));
+            [xl(1),xl(2)] = MinMaxElem(XM);
             box on;
             set(gcf,'color','w');
             set(gca,'TickLabelInterpreter','latex');

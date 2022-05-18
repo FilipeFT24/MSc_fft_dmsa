@@ -58,7 +58,7 @@ classdef B1_2D
                                     %  > ...until no extension is necessary.
                                     while 1
                                         e = B1_2D.Extend_1(msh,2*n-1,sc_t,sf_t);
-                                        if ~all(e.f)
+                                        if all(~e.f)
                                             break;
                                         end
                                         %  > Loop through x/y-directions...
