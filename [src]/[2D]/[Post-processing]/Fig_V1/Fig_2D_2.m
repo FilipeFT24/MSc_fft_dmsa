@@ -16,9 +16,9 @@ classdef Fig_2D_2
                     %  > Colormap.
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     subplot(1,2,1);
-                    Fig_2D_2.Plot_1(msh,1,obj.e.a{n}.t.c_abs,fig);
+                    Fig_2D_2.Plot_1(msh,1,obj.e.a.t.c_abs,fig);
                     subplot(1,2,2);
-                    Fig_2D_2.Plot_1(msh,2,obj.e.a{n}.c.c_abs,fig);
+                    Fig_2D_2.Plot_1(msh,2,obj.e.a.c.c_abs,fig);
                     %  > 1D.
                     if flag
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

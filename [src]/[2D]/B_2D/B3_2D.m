@@ -13,7 +13,7 @@ classdef B3_2D
             Nf = msh.f.Nf;
             
             %  > Field: "e" (error).
-            obj.e = B2_2D.Initialize_e (nc,ns,Nc,Nf);
+            obj.e = B2_2D.Initialize_e (nc,Nc,Nf);
             %  > Field: "f" (analytic function, 1D/2D quadrature, etc.).
             obj.f = A3_2D.Initialize_f (inp,msh);
             %  > Field: "s" (stencil cell/face indices, coordinates, etc.).
@@ -43,38 +43,46 @@ classdef B3_2D
         
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
-        %  > Set up 'p-standard' and 'p-adaptative' runs.
+        %  > Set up 'P-standard' and 'P-adaptative' runs.
         function [obj] = Run_p(inp,msh)
             switch inp.p_adapt.allow
                 case false
-                    %  > 'p-standard' run.
+                    %  > 'P-standard' run.
                     obj = B3_2D.Initialize(inp,msh);
-                    obj = B3_2D.p_standard(inp,msh,obj);
+                    obj = B3_2D.P_standard(inp,msh,obj);
                     %  > Plot...
                     Fig_2D_1.Plot(inp,msh,obj);
                     Fig_2D_2.Plot(inp,msh,obj);
                 case true
-                    %  > 'p-adaptative' run.
+                    %  > 'P-adaptative' run.
+                    obj = B3_2D.Initialize(inp,msh);
+                    obj = B3_2D.P_adaptative(inp,msh,obj);
                 otherwise
                     return;
             end
         end
         % >> 2.2. ---------------------------------------------------------
         % >> 'p-standard' run.
-        function [obj] = p_standard(inp,msh,obj)
-            %  > Auxiliary variables.
-            f_xc = 1;
-            
+        function [obj] = P_standard(inp,msh,obj)
             %  > Update fields 'm', 's' and 'x'.
             ic                              = 1;
             [obj.m{ic},obj.s{ic},obj.x{ic}] = ...
-                B3_2D.Update_all(inp,msh,obj.f,obj.m{ic},obj.s{ic},obj.u{ic},obj.x{ic},f_xc);
+                B3_2D.Update_all(inp,msh,obj.f,obj.m{ic},obj.s{ic},obj.u{ic},obj.x{ic},1);
             %  > Update fields 'e', 'm' and 'x'.
             [obj.e] = ...
-                B2_2D.Update_e  (inp,msh,obj.e,obj.m,obj.x);
+                B2_2D.Update_e  (inp,msh,obj.e,obj.f,obj.m,obj.x);
         end
-        
-        
-        
+        % >> 2.3. ---------------------------------------------------------
+        % >> 'P-adaptative' run.
+        function [obj] = P_adaptative(inp,msh,obj)
+            %  > Initialize cycle count.
+            i = 0;
+            while 1
+                %  > Update cycle count...
+                i = i+1;
+                
+                
+            end
+        end
     end
 end

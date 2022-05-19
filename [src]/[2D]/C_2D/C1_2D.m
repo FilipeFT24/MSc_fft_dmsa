@@ -14,7 +14,7 @@ classdef C1_2D
         % >> 2.1. ---------------------------------------------------------
         function [V] = Check_Decay(T)
             %  > "inp".
-            h_lim    = [5.0E-2,1.0E-2];
+            h_lim    = [5.0E-2,2.0E-2];
             n        = 5;
             h        = exp(1).^(linspace(log(h_lim(1)),log(h_lim(2)),n));
             inp      = A1_2D.Set_inp([1,1],[100,0.5,0.5]);     %  > c/f.

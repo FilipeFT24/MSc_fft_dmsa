@@ -54,12 +54,6 @@ classdef Fig_2D_3
             [L2,P2,Y2] = Fig_Tools.Var_1D_1(fig,M2,L2,NNZ,V{1}.y);
             %  > Axis/legend,etc.
             Fig_Tools.Map_1D_2(fig,[L1,L2],[P1,P2],0,NNZ,[Y1;Y2],[-1,0],2);
-            
-            
-            Tools_1.Slope(h,V{1}.x)
-            Tools_1.Slope(h,V{1}.y)
-            
-            
         end
         %  > 2.1.2. -------------------------------------------------------
         function [L] = Set_Legend_1(j,n)
@@ -97,11 +91,6 @@ classdef Fig_2D_3
             [L1,P1,Y1] = Fig_Tools.Var_1D_1(fig,M1,L1,NNZ,[V{1},V{2}]);
             %  > Axis/legend,etc.
             Fig_Tools.Map_1D_2(fig,L1,P1,0,NNZ,Y1,[-1,0],2);
-            
-            
-            Tools_1.Slope(h,V{1})
-            Tools_1.Slope(h,V{2})
-            
         end
         % >> 2.3 ----------------------------------------------------------
         function [L] = Set_Legend_2(j)

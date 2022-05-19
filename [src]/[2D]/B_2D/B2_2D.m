@@ -30,7 +30,6 @@ classdef B2_2D
             r         = RunLength(sort(cat(2,uf{:})));
             m.At(r,:) = 0;
             m.Bt(r,1) = f.st(r);
-           
             
             %  > For each term (convective/diffusive)...
             for i = 1:numel(u.s)
@@ -104,7 +103,7 @@ classdef B2_2D
                             x.vf.(fn(k)){l,i}{j}(m,1) = x.nv.(fn(k)).c(s.i{l,i}{j}(m));
                             %  > Face value(s).
                             if any(~m)
-                                x.vf.(fn(k)){l,i}{j}(~m,1) = f.bd.v(ismembc(f.bd.i,sort(b)));
+                                x.vf.(fn(k)){l,i}{j}(~m,1) = f.bd.v(arrayfun(@(x) find(f.bd.i == x),b));
                             end
                             %  > "x.cf"
                             x.cf.(fn(k)){l,i}{j}   = x.Pf  {l,i}{j}*x.vf.(fn(k)){l,i}{j};
@@ -119,98 +118,148 @@ classdef B2_2D
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > Initialize field "e" (error): fields "e.a", "e.f" and "e.p".
-        function [e] = Initialize_e(nc,ns,Nc,Nf)
+        function [e] = Initialize_e(nc,Nc,Nf)
+            %  > Error distribution.
             for i = ["a","f","p"]
-                for j = 1:ns-1
-                    %  > Error distribution.
-                    if i ~= "f"
-                        e.(i){j}.c.c_abs = zeros(Nc,1);
-                        e.(i){j}.t.c     = zeros(Nc,1);
-                        e.(i){j}.t.c_abs = zeros(Nc,1);
-                        for k = ["x","y"]
-                            e.(i){j}.t.f_abs.(k) = zeros(Nf,nc(1)+1);
-                        end
-                    else
-                        e.(i){j}.c_abs = zeros(Nc,1);
-                        for k = ["x","y"]
-                            e.(i){j}.f_abs.(k) = zeros(Nf,nc(1)+1);
+                if i ~= "f"
+                    e.(i).c.c_abs    = zeros(Nc,1);
+                    e.(i).t.c        = zeros(Nc,1);
+                    e.(i).t.c_abs    = zeros(Nc,1);
+                    for j = 1:numel(nc)+1
+                        if j ~= numel(nc)+1
+                            e.(i).t.f_abs{j} = zeros(Nf,nc(j)+1);   %  > v,g,(t) and x,y,(t).
+                        else
+                            e.(i).t.f_abs{j} = zeros(Nf,sum(nc)+1); %  > vx,vy,gx,gy,(t).
                         end
                     end
-                    %  > Error norms.
-                    e.(i){j}.n_abs.c = zeros(3,1);
-                    if i ~= "f"
-                        e.(i){j}.n_abs.t.c = zeros(3,1);
-                        for k = ["x","y"]
-                            e.(i){j}.n_abs.t.f.(k) = zeros(3,nc(1)+1);
+                else
+                    e.(i).c_abs = zeros(Nc,1);
+                    for j = 1:nc(1)
+                        e.(i).f_abs{j} = zeros(Nf,nc(2));   %  > v(x,y),g(x,y).
+                    end
+                end
+            end
+            %  > Error norms.
+            for i = ["a","f","p"]
+                e.(i).n_abs.c = zeros(3,1);
+                if i ~= "f"
+                    e.(i).n_abs.t.c    = zeros(3,1);
+                    for j = 1:numel(nc)+1
+                        if j ~= numel(nc)+1
+                            e.(i).n_abs.t.f{j} = zeros(3,nc(j)+1);   %  > v,g,(t) and x,y,(t).
+                        else
+                            e.(i).n_abs.t.f{j} = zeros(3,sum(nc)+1); %  > vx,vy,gx,gy,(t).
                         end
-                    else
-                        for k = ["x","y"]
-                            e.(i){j}.n_abs.f.(k) = zeros(3,nc(1)+1);
-                        end
+                    end
+                else
+                    for j = 1:nc(1)
+                        e.(i).n_abs.f{j} = zeros(3,nc(2)); %  > v(x,y),g(x,y).
                     end
                 end
             end
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update 'e.(...)' field (error).
-        function [e] = Update_e(inp,msh,e,m,x)
-            %  > Auxiliary variables.
-            i      = 1;
-            
+        function [e] = Update_e(inp,msh,e,f,m,x)
             %  > #1: Update field 'e.a'.
-            e.a{i} = B2_2D.Update_ea(msh,e.a{i},m{i},x{i});
+            i   = 1;
+            e.a = B2_2D.Update_ea(msh,e.a,f,m{i},x{i});
         end
         %  > 1.2.1. -------------------------------------------------------
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
-        function [e] = Update_ea(msh,e,m,x)
-            %  > Auxiliary variables.
-            n      = numel(m.Ac)+1;
-            e_t_fx = cell (1,n);
-            
+        function [e] = Update_ea(msh,e,f,m,x)
             % >> f.
             %  > \tau_f: {1}-\tau_f(\phi).
             %            {2}-\tau_f(\nabla\phi).
             %            {3}-\tau_f.
-            for i = 1:n
-                if i ~= n
-                    e_t_fx{i} = x.xf.a{i}-x.xf.x{i};
+            n     = numel(x.xf.a);
+            e_t_f = cell (1,n);
+            for i = 1:n+1
+                if i ~= n+1
+                    e_t_f{i} = x.xf.a{i}-x.xf.x{i};
                 else
-                    e_t_fx{i} = sum(cat(3,e_t_fx{1:n-1}),3);
+                    e_t_f{i} = sum(cat(3,e_t_f{1:n}),3);
                 end
             end
-            %  > \tau_f_abs: x(v,g).
-            %                y(v,g).
-            fn = fieldnames(e.t.f_abs);
-            l  = 1;
+            e_t_f_3 = cat(2,e_t_f{1:n});
+            %  > \tau_f_abs.
+            l = 1;
             for i = 1:msh.f.Nf
+                %  > Sf.
                 c       = msh.f.ic  {i}(l);
                 Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == i,:);
-                for j = 1:n-1
-                    for k = 1:n
-                        e.t.f_abs.(fn{j})(i,k) = abs(e_t_fx{k}(i,j).*Sf(i,j));
+                %  > #1: v,g,(t).
+                %  > [\tau_f\phi(x,y),\tau_f\nabla\phi(x,y),\tau_f(x,y)]*Sf(x,y).
+                for j = 1:size(e_t_f,2)
+                    e.t.f_abs{1}(i,j) = abs(e_t_f{j}(i,:)*Sf(i,:)');
+                end
+                %  > #2: x,y,(t).
+                %  > [\tau_f*Sf(x),\tau_f*Sf(y),\tau_f*Sf(x,y)].
+                for j = 1:size(e_t_f{end},2)+1
+                    if j ~= size(e_t_f{end},2)+1
+                        e.t.f_abs{2}(i,j) = abs(e_t_f{end}(i,j)*Sf(i,j));
+                    else
+                        e.t.f_abs{2}(i,j) = abs(e_t_f{end}(i,:)*Sf(i,:)');
                     end
                 end
+                %  > #3: vx,vy,gx,gy,(t).
+                %  > [\tau_f\phi(x)*Sf(x),\tau_f\phi(y)*Sf(y),\tau_f\nabla\phi(x)*Sf(x),\tau_f\nabla\phi(y)*Sf(y),\tau_f(x,y)*Sf(x,y)].
+                %  > Multiply by Sf(x)...
+                e.t.f_abs{3}(i,[1,3]) = e_t_f_3(i,[1,3]).*Sf(i,1);
+                %  > Multiply by Sf(y)...
+                e.t.f_abs{3}(i,[2,4]) = e_t_f_3(i,[2,4]).*Sf(i,2);
             end
+            %  > Sum contributions (3)...
+            e.t.f_abs{3}(:,end) = sum(e.t.f_abs{3}(:,1:end-1),2);
+            e.t.f_abs{3}        = abs(e.t.f_abs{3});
             %  > Error norms.
-            for j = 1:n-1
-                e.n_abs.t.f.(fn{j}) = Tools_2.Set_n(e.t.f_abs.(fn{j}));
+            for i = 1:numel(e.n_abs.t.f)
+                e.n_abs.t.f{i} = Tools_2.Set_n(e.t.f_abs{i});
             end
             
             % >> c.
             %  > \tau_c.
             for i = 1:msh.c.Nc
                 for j = 1:numel(msh.c.f.if(i,:))
-                    e.t.c(i) = e.t.c(i)+msh.c.f.Sf{i}(j,:)*e_t_fx{n}(msh.c.f.if(i,j),:)';
+                    e.t.c(i) = e.t.c(i)+msh.c.f.Sf{i}(j,:)*e_t_f{n}(msh.c.f.if(i,j),:)';
                 end
             end
             %  > \tau_c_abs.
             e.t.c_abs   = abs(e.t.c);
             %  > e_c_abs.
-            %  > Equivalent to: ea.c.c_abs = f.av.c-x.nv.x.c.
+            %  > Equivalent to: ea.c.c_abs = abs(f.av.c-x.nv.x.c).
             e.c.c_abs   = abs(m.At\e.t.c);
             %  > Error norms.
             e.n_abs.c   = Tools_2.Set_n(e.c.c_abs,msh.c.Volume);
             e.n_abs.t.c = Tools_2.Set_n(e.t.c_abs,msh.c.Volume);
+        end
+        % >> 1.3. ---------------------------------------------------------
+        %  > 1.3.1. -------------------------------------------------------
+        %  > Select faces for coarsening/refinement.
+        function [u] = Set_u(inp,v,u)
+            A     = 2;
+            trsh  = inp.p_adapt.lambda.*max(v(:,3));
+            fs_n  = find(v(:,3) > trsh);
+            for i = 1:size(u,2)
+                for j = 1:size(u{i}.p,2)
+                    u_s{i}{j}      = fs_n;
+                    u{i}.p(fs_n,j) = u{i}.p(fs_n,j)+A;
+                end
+                u{i}.s = u_s{i};
+            end
+        end
+        %  > 1.3.2. -------------------------------------------------------
+        %  > Set stopping criterion/criteria.
+        function [flag] = Stop(inp,c,e)
+            flag = 0;
+            if c >  inp.p_adapt.nc
+                flag = 1;
+                fprintf("Stopping criterion: max. number of cycles.\n");
+            end
+            if e <= inp.p_adapt.em(1)
+                flag = 1;
+                fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
+            end
         end
     end
 end

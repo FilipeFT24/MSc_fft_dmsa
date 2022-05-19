@@ -44,7 +44,7 @@ classdef B1_2D
                                     sf{n} = sf{n}(cat(1,msh.f.ic{sf{n}}) ~= ck | sf{n} == k);
                                 end
                             else
-                                if ~inp.p.nb_t
+                                if ~inp.wls.nb
                                     [sc{n},sf{n}] = B1_2D.fn(msh,sc{n-1},sc_t,sf_t); %  > [0]: Face   neighbours.
                                 else
                                     [sc{n},sf{n}] = B1_2D.vn(msh,sc{n-1},sc_t,sf_t); %  > [1]: Vertex neighbours.
@@ -166,8 +166,13 @@ classdef B1_2D
         %  > 1.3.3.2. -----------------------------------------------------
         %  > Perform extension in the appropriate direction.
         function [sn] = Extend_2(inp,msh,dir,L,c,ct,ft)
+            %  > Auxiliary variables (avoid round-off errors when evaluating expressions ">=" or "<=").
+            %  > Use first "n" digits.
+            n = 10;
+            L = round(L,n);
+            
             % >> Compute "new layer"...
-            if ~inp.p.nb_t
+            if ~inp.wls.nb
                 %  > Face neighbours.
                 [sn.c,sn.f] = B1_2D.fn(msh,c,ct,ft); %  > [0].
             else
@@ -175,15 +180,16 @@ classdef B1_2D
                 [sn.c,sn.f] = B1_2D.vn(msh,c,ct,ft); %  > [1].
             end
             % >> Select direction...
+            
             %  > c.
             sn.c      = Tools_1.setdiff(sn.c,ct);
-            xc        = msh.c.c.xy.c(sn.c,:);
+            xc        = round(msh.c.c.xy.c(sn.c,:),n);
             logical_c = xc(:,dir) >= L(1,dir) & xc(:,dir) <= L(2,dir);
             sn.c      = sn.c(logical_c);
             %  > f.
             if ~isempty(sn.f)
                 sn.f      = Tools_1.setdiff(sn.f,ft);
-                xf        = msh.f.xy.c(sn.f,:);
+                xf        = round(msh.f.xy.c(sn.f,:),n);
                 logical_f = xf(:,dir) >= L(1,dir) & xf(:,dir) <= L(2,dir);
                 sn.f      = sn.f(logical_f);
             end
@@ -195,7 +201,6 @@ classdef B1_2D
         function [x] = Initialize_24(f,u,nc,ns,Nc,Nf)
             for i = 1:ns
                 %  > "sx".
-                x{i}.Df   = cell (Nf,nc(2));
                 x{i}.gf   = cell (Nf,nc(2));
                 x{i}.goV  = zeros(Nf,nc(2));
                 x{i}.Pf   = cell (Nf,nc(2));
@@ -229,7 +234,7 @@ classdef B1_2D
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     for k = u.s{i}{j}', p = u.p{i}(k,j);
-                        x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},f.qd{j},msh.f.xy.v{k});
+                        x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},f.qd{i}{j},msh.f.xy.v{k});
                     end
                 end
             end
@@ -244,11 +249,9 @@ classdef B1_2D
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     for k = u.s{i}{j}', p = u.p{i}(k,j);
-                        %  > Df and DWf'.
-                        [Df,DTWf] = B1_2D.Assemble_Df(inp,msh,x.goV(k,:),p,...
-                            f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
                         %  > Pf.
-                        Pf = (DTWf*Df)\DTWf;
+                        Pf = B1_2D.Assemble_Pf(inp,msh,x.goV(k,:),p,...
+                            f.bd,s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j});
                         %  > Tf.
                         switch i
                             case 1, t = Tools_2.Terms_1(p);
@@ -256,7 +259,6 @@ classdef B1_2D
                         end
                         Tf = B1_2D.Assemble_Tf_V(x.gf{k,i}{j},t,Pf);
                         %  > Update field "x".
-                        x.Df  {k,i}{j} = Df;
                         x.Pf  {k,i}{j} = Pf;
                         x.Tf_V{k,i}{j} = Tf;
                     end
@@ -265,7 +267,7 @@ classdef B1_2D
         end
         %  > 2.3.1. -------------------------------------------------------
         %  > Check boundary type and assemble matrices Df and Pf.
-        function [Df,DTWf] = Assemble_Df(inp,msh,goV,p,f_bd,lc,sf,xy_fc,xy_t)
+        function [Pf] = Assemble_Pf(inp,msh,goV,p,f_bd,lc,sf,xy_fc,xy_t)
             % >> Df = [1*{(x-xf)^0}*{(y-yf)^0},1*{(x-xf)^1}*{(y-yf)^0},1*{(x-xf)^0}*{(y-yf)^1},...] = [1,(x-xf),(y-yf),...].
             %  > d_ft.
             d_ft       = xy_t-xy_fc;
@@ -310,7 +312,7 @@ classdef B1_2D
             end
             
             % >> Pf = inv(Df'*W*Df)*Df'*W.
-            if ~inp.p.wls
+            if ~inp.wls.allow
                 DTWf = Df';
             else
                 %  > Compute distances to face centroid and check for nil d's.
@@ -318,8 +320,9 @@ classdef B1_2D
                 if any(d_n)
                     d (d_n) = min(d(~d_n))./2;
                 end
-                DTWf = bsxfun(@times,Df',inp.p.wf(d));
+                DTWf = bsxfun(@times,Df',inp.wls.wf(d));
             end
+            Pf = (DTWf*Df)\DTWf;
         end
         %  > 2.3.2. -------------------------------------------------------
         %  > 2.3.2.1. -----------------------------------------------------

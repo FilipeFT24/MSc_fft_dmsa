@@ -13,9 +13,10 @@ classdef A3_2D
             %  > "st" (source term).
             f.st = A3_2D.Update_st(msh,f.fh.func.f);
             %  > "qd" (1D quadrature): treat convective/diffusive terms in a unified manner...
-            j = 1;
-            for i = 1:size(inp.p.p,2)
-                f.qd{i} = A3_2D.Q_1D(inp.p.p(j,i));
+            for i = 1:size(inp.p.p,1)
+                for j = 1:size(inp.p.p,2)
+                    f.qd{i}{j} = A3_2D.Q_1D(inp.p.p(i,j));
+                end
             end
         end
         % >> 1.2. ---------------------------------------------------------

@@ -29,25 +29,26 @@ classdef A1_2D
             end
             %  > Polynomial fit.
             inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
-            inp.p.p(2,:)        = [7,7];                             %  > p-diffusion (X/Y).
-            inp.p.nb_t          = 1;
-            inp.p.wls           = 1;
-            if inp.p.wls
-                p               = 2;                                 %  > p.
+            inp.p.p(2,:)        = [3,3];                             %  > p-diffusion (X/Y).    
+            %  > WLS.
+            inp.wls.allow       = 1;                                 %  > Allow WLS(?).
+            if inp.wls.allow
+                p               = 1;                                 %  > p.
                 e               = 1;                                 %  > \epsilon.
                 k               = 1./2;                              %  > k.
                 c(1)            = k.*(1+e);
                 c(2)            = exp(-(1./k).^2);
-                inp.p.wf        = @(d) ((exp(-(d(1,:)./(c(1).*max(d))).^2)-c(2))./(1-c(2)))./d(1,:).^p;
+                inp.wls.wf      = @(d) ((exp(-(d(1,:)./(c(1).*max(d))).^2)-c(2))./(1-c(2)))./d(1,:).^p;
             end
+            inp.wls.nb          = 0;
             %  > ----------------------------------------------------------
             %  > P-adaptation.
             %  > #1.
             inp.p_adapt.allow   = 0;                                 %  > Allow p-adaptation(?).
             inp.p_adapt.nc      = 50;                                %  > Maximum number of cycles.
-            inp.p_adapt.ec_m    = 1.0E-10;                           %  > Minimum (global) discretization error.
-            inp.p_adapt.lambda  = 0.75;                              %  > Treshold for face selection based on maximum face truncation error (%).
-            if ~(inp.p_adapt.lambda < 1)
+            inp.p_adapt.em      = 1.0E-10;                           %  > Minimum global discretization/truncation error.
+            inp.p_adapt.trsh    = 0.75;                              %  > Treshold for face selection based on maximum face truncation error (%).
+            if ~(inp.p_adapt.trsh <= 1)
                 return;
             end
             %  > #2.
@@ -58,7 +59,7 @@ classdef A1_2D
             end
             %  > ----------------------------------------------------------
             %  > Plot...
-            inp.plot            = [0,1];
+            inp.plot            = [1,1];
             %  > ----------------------------------------------------------
         end
         % >> 1.3. ---------------------------------------------------------
@@ -66,24 +67,25 @@ classdef A1_2D
             %  > Auxiliary variables.
             c (1,:) =  [0,0];
             c (2,:) = -[1,1];
-            i       =  v(1);
+            ic      =  v(1);
             xc      =  v(2);
             yc      =  v(3);
             
             %  > ch.
             switch t(1)
                 case 1
-                    h.c{1,1} = @(x) repelem(c(1,1),size(x,1),1); %  > V(x).
-                    h.c{1,2} = @(x) repelem(c(1,2),size(x,1),1); %  > V(y).
-                    h.c{2,1} = @(x) repelem(c(2,1),size(x,1),1); %  > G(x).
-                    h.c{2,2} = @(x) repelem(c(2,2),size(x,1),1); %  > G(x).
+                    for i = 1:size(c,1)
+                        for j = 1:size(c,2)
+                            h.c{i,j} = @(x) repelem(c(i,j),size(x,1),1);
+                        end
+                    end
                 otherwise
                     return;
             end
             %  > fh.
             switch t(2)
                 case 1
-                    h.f = @(x) exp(-i.*((x(:,1)-xc).^2+(x(:,2)-yc).^2));
+                    h.f = @(x) exp(-ic.*((x(:,1)-xc).^2+(x(:,2)-yc).^2));
                 case 2
                     if any(c(:,1) == 0)
                         return;
