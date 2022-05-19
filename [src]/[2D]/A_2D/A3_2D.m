@@ -12,12 +12,8 @@ classdef A3_2D
             f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
             %  > "st" (source term).
             f.st = A3_2D.Update_st(msh,f.fh.func.f);
-            %  > "qd" (1D quadrature): treat convective/diffusive terms in a unified manner...
-            for i = 1:size(inp.p.p,1)
-                for j = 1:size(inp.p.p,2)
-                    f.qd{i}{j} = A3_2D.Q_1D(inp.p.p(i,j));
-                end
-            end
+            %  > "qd" (1D quadrature).
+            f.qd = A3_2D.Q_1D_1;
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update field "f.fh" (function handles).
@@ -158,12 +154,21 @@ classdef A3_2D
             st = map.d(xy_cv).*integral2(map.i(xy_cv),0,1,0,@(u) 1-u);
         end
         %  > 1.5.5. -------------------------------------------------------
-        %  > Auxiliary function #5: 1D quadrature: x(u) = x(1)*(1-u)/2+x(2)*(1+u)/2.
-        function [qd] = Q_1D(p)
-            %  > Quadrature points/weights (Gauss-Legendre).
-            qd    = quadGaussLegendre(ceil(p./2));
-            %  > x(u).
+        %  > 1.5.5.1. -----------------------------------------------------
+        %  > Auxiliary function #5.1.
+        function [qd] = Q_1D_1()
             qd.xu = @(u,x) x(1,:).*(1-u)./2+x(2,:).*(1+u)./2;
+        end
+        %  > 1.5.5.2. -----------------------------------------------------
+        %  > Auxiliary function #5.2.
+        function [Q] = Q_1D_2(n)
+            %  > From "quadGaussLegendre(n,varargin)"...
+            A            = zeros(1,n); 
+            B            = sqrt (((1:n-1)./(2:n))./((2*(0:n-2)+1)./((0:n-2)+1).*(2*(1:n-1)+1)./((1:n-1)+1)));
+            J            = diag(B,1)+diag(A)+diag(B,-1);
+            %  > Weights/points.
+            [V,D]        = eig(J,'vector');
+            [Q.Points,I] = sort(D); Q.Weights = (2*V(1,I).^2)';
         end
     end
 end

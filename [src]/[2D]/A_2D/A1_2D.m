@@ -28,7 +28,7 @@ classdef A1_2D
                 return;
             end
             %  > Polynomial fit.
-            inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
+            inp.p.p(1,:)        = [3,5];                             %  > p-convection(X/Y).
             inp.p.p(2,:)        = [3,3];                             %  > p-diffusion (X/Y).    
             %  > WLS.
             inp.wls.allow       = 1;                                 %  > Allow WLS(?).

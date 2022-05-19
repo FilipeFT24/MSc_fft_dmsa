@@ -234,12 +234,12 @@ classdef B1_2D
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     for k = u.s{i}{j}', p = u.p{i}(k,j);
-                        x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},f.qd{i}{j},msh.f.xy.v{k});
+                        x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},p,f.qd.xu,msh.f.xy.v{k});
                     end
                 end
             end
             %  > goV.
-            %  > NOTE: If V=0, goV=Inf (do not try to use a Robin BC if no convection exists!)
+            %  > NOTE: If V=0, goV=Inf (do not try to use a mixed/robin BC if no convection exists!)
             for i = 1:size(x.goV,1)
                 for j = 1:size(x.goV,2)
                     x.goV(i,j) = x.gf{i,2}{j}.Vc./x.gf{i,1}{j}.Vc;
@@ -327,14 +327,16 @@ classdef B1_2D
         %  > 2.3.2. -------------------------------------------------------
         %  > 2.3.2.1. -----------------------------------------------------
         %  > Handle (1D) face quadrature.
-        function [g] = Gauss_f(c,qd,xy_fv)
+        function [g] = Gauss_f(c,p,xu,xy_fv)
+            %  > "Q" structure.
+            Q    = A3_2D.Q_1D_2(ceil(p./2));
             %  > (xg,yg).
             xy_c = Tools_1.mean(xy_fv,1);
-            xy_g = qd.xu(qd.Points,xy_fv);
+            xy_g = xu(Q.Points,xy_fv);
             g.d  = xy_c-xy_g;
             %  > V.
             g.Vc = c(xy_c);
-            g.Vg = qd.Weights.*c(xy_g)./2;
+            g.Vg = Q.Weights.*c(xy_g)./2;
         end
         %  > 2.3.2.2. -----------------------------------------------------
         %  > Assemble matrix Tf_V.
