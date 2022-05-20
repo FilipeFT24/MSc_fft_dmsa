@@ -1,7 +1,7 @@
 classdef Fig_2D_2
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [] = Plot(inp,msh,obj)
+        function [] = Plot(inp,msh,obj_e)
             %  > Auxiliary variables.
             exp   = 0;
             run   = 0;
@@ -16,9 +16,9 @@ classdef Fig_2D_2
                     %  > Colormap.
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     subplot(1,2,1);
-                    Fig_2D_2.Plot_1(msh,1,obj.e.a.t.c_abs,fig);
+                    Fig_2D_2.Plot_1(msh,1,obj_e.a.t.c_abs,fig);
                     subplot(1,2,2);
-                    Fig_2D_2.Plot_1(msh,2,obj.e.a.c.c_abs,fig);
+                    Fig_2D_2.Plot_1(msh,2,obj_e.a.c.c_abs,fig);
                     %  > 1D.
                     if flag
                         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

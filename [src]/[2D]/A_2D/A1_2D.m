@@ -28,26 +28,26 @@ classdef A1_2D
                 return;
             end
             %  > Polynomial fit.
-            inp.p.p(1,:)        = [3,5];                             %  > p-convection(X/Y).
-            inp.p.p(2,:)        = [3,3];                             %  > p-diffusion (X/Y).    
+            inp.p.p(1,:)        = [1,1];                             %  > p-convection(X/Y).
+            inp.p.p(2,:)        = [1,1];                             %  > p-diffusion (X/Y).    
             %  > WLS.
             inp.wls.allow       = 1;                                 %  > Allow WLS(?).
             if inp.wls.allow
-                p               = 1;                                 %  > p.
+                p               = 4;                                 %  > p.
                 e               = 1;                                 %  > \epsilon.
                 k               = 1./2;                              %  > k.
                 c(1)            = k.*(1+e);
                 c(2)            = exp(-(1./k).^2);
                 inp.wls.wf      = @(d) ((exp(-(d(1,:)./(c(1).*max(d))).^2)-c(2))./(1-c(2)))./d(1,:).^p;
             end
-            inp.wls.nb          = 0;
+            inp.wls.nb          = 1;
             %  > ----------------------------------------------------------
             %  > P-adaptation.
             %  > #1.
-            inp.p_adapt.allow   = 0;                                 %  > Allow p-adaptation(?).
-            inp.p_adapt.nc      = 50;                                %  > Maximum number of cycles.
+            inp.p_adapt.allow   = 1;                                 %  > Allow p-adaptation(?).
+            inp.p_adapt.nc      = 5;                                 %  > Maximum number of cycles.
             inp.p_adapt.em      = 1.0E-10;                           %  > Minimum global discretization/truncation error.
-            inp.p_adapt.trsh    = 0.75;                              %  > Treshold for face selection based on maximum face truncation error (%).
+            inp.p_adapt.trsh    = 0.50;                              %  > Treshold for face selection based on maximum face truncation error (%).
             if ~(inp.p_adapt.trsh <= 1)
                 return;
             end
@@ -59,7 +59,7 @@ classdef A1_2D
             end
             %  > ----------------------------------------------------------
             %  > Plot...
-            inp.plot            = [1,1];
+            inp.plot            = [0,1];
             %  > ----------------------------------------------------------
         end
         % >> 1.3. ---------------------------------------------------------

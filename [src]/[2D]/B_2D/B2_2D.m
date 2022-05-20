@@ -57,8 +57,8 @@ classdef B2_2D
                     end
                 end
                 %  > At and Bt (cumulative/total matrices).
-                m.At = m.At+m.Ac{i};
-                m.Bt = m.Bt+m.Bc{i};
+                m.At(r,:) = m.At(r,:)+m.Ac{i}(r,:);
+                m.Bt(r,1) = m.Bt(r,1)+m.Bc{i}(r,1);
             end
             %  > nnz.
             for i = 1:numel(u.s)
@@ -77,6 +77,7 @@ classdef B2_2D
             %  > Check if empty...
             fn   = convertCharsToStrings(fieldnames(x.vf));
             fn_n = numel(fn);
+            flag = false;
             if all(cellfun(@isempty,x.vf.a),'all')
                 flag = true;
             end
@@ -160,14 +161,17 @@ classdef B2_2D
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update 'e.(...)' field (error).
-        function [e] = Update_e(inp,msh,e,f,m,x)
+        function [e] = Update_e(inp,msh,e,m,x)
             %  > #1: Update field 'e.a'.
             i   = 1;
-            e.a = B2_2D.Update_ea(msh,e.a,f,m{i},x{i});
+            e.a = B2_2D.Update_ea(msh,e.a,m{i},x{i});
         end
         %  > 1.2.1. -------------------------------------------------------
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
-        function [e] = Update_ea(msh,e,f,m,x)
+        function [e] = Update_ea(msh,e,m,x)
+            %  > Initialize...
+            e.t.c = zeros(msh.c.Nc,1);
+            
             % >> f.
             %  > \tau_f: {1}-\tau_f(\phi).
             %            {2}-\tau_f(\nabla\phi).
@@ -219,7 +223,7 @@ classdef B2_2D
             
             % >> c.
             %  > \tau_c.
-            for i = 1:msh.c.Nc
+            for i = 1:numel(e.t.c)
                 for j = 1:numel(msh.c.f.if(i,:))
                     e.t.c(i) = e.t.c(i)+msh.c.f.Sf{i}(j,:)*e_t_f{n}(msh.c.f.if(i,j),:)';
                 end
@@ -236,28 +240,35 @@ classdef B2_2D
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
         %  > Select faces for coarsening/refinement.
-        function [u] = Set_u(inp,v,u)
-            A     = 2;
-            trsh  = inp.p_adapt.lambda.*max(v(:,3));
-            fs_n  = find(v(:,3) > trsh);
+        function [u] = Update_u(inp,e,u)
+            A = 2; %  > Method's order.
+            k = 2; %  > Choice: #1: v,g,(t).
+                   %            #2: x,y,(t).
+                   %            #3: vx,vy,gx,gy,(t).
+            
+            %  > Error treshold.
+            trsh = inp.p_adapt.trsh.*max(e.t.f_abs{k}(:,end));
+            %  > Faces selected for refinement.
+            fr_i = e.t.f_abs{k}(:,1:end-1) > trsh;
+            
             for i = 1:size(u,2)
-                for j = 1:size(u{i}.p,2)
-                    u_s{i}{j}      = fs_n;
-                    u{i}.p(fs_n,j) = u{i}.p(fs_n,j)+A;
-                end
-                u{i}.s = u_s{i};
+                u{i}.p{2}(fr_i) = u{i}.p{2}(fr_i)+A;
+                u{i}.p;
+                
+                u{i}.s{1}{1} = [];
+                u{i}.s{1}{2} = [];
+                u{i}.s{2}{1} = find(fr_i(:,1));
+                u{i}.s{2}{2} = find(fr_i(:,2));
             end
         end
         %  > 1.3.2. -------------------------------------------------------
         %  > Set stopping criterion/criteria.
-        function [flag] = Stop(inp,c,e)
-            flag = 0;
-            if c >  inp.p_adapt.nc
-                flag = 1;
+        function [f] = Stop(inp,count,e)
+            f = false;
+            if count >= inp.p_adapt.nc, f = true;
                 fprintf("Stopping criterion: max. number of cycles.\n");
             end
-            if e <= inp.p_adapt.em(1)
-                flag = 1;
+            if e(1)  <= inp.p_adapt.em, f = true;
                 fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
             end
         end
