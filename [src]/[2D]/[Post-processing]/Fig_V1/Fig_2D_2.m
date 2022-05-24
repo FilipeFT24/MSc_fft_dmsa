@@ -36,7 +36,6 @@ classdef Fig_2D_2
 %                         Fig_2D_2.Plot_3(inp_m,msh,j,obj.e.a{n}.t.f_abs.y,fig);
                     end
                 end
-            else
             end
         end
         

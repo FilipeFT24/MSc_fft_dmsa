@@ -1,78 +1,52 @@
 classdef Fig_2D_1
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        % >> 1.1. ---------------------------------------------------------
         function [] = Plot(inp,msh,obj)
             %  > Auxiliary variables.
             exp  = 0;
             run  = 0;
             zoom = 0;
             fig  = Fig_Tools.Set_fig(exp,run,zoom);
-            x.c  = [1,1]; %  > m/n.
-            
+
             if ~exp
                 if inp.plot(1)
                     figure; set(gcf,'Units','pixels','Position',fig.Position);
                     subplot(1,2,1);
-                    x.a = 1;                             %  >    f .
-                    x.b = 2;                             %  > (:,j).
-                    Fig_2D_1.Plot_1(msh,obj,x,fig);
+                    %  > Diffusive term (x) - face "f".
+                    f = 1;  %  >    f .
+                    j = 2;  %  > (:,j).
+                    k = 1;  %      {k}.
+                    l = 1;  %      {l}.
+                    Fig_2D_1.Plot_1(msh,f,obj.s{l}.sc{f,j}{k},obj.s{l}.sf{f,j}{k},fig);
                     subplot(1,2,2);
-                    x.a = 2;                             %  >    f .
-                    x.b = 2;                             %  > (:,j).
-                    Fig_2D_1.Plot_1(msh,obj,x,fig);
+                    %  > Diffusive term (y) - face "f".
+                    f = 2;  %  >    f .
+                    j = 2;  %  > (:,j).
+                    k = 2;  %      {k}.
+                    l = 1;  %      {l}.
+                    Fig_2D_1.Plot_1(msh,f,obj.s{l}.sc{f,j}{k},obj.s{l}.sf{f,j}{k},fig);
                 end
-            else
             end
         end
-        % >> 1.2. ---------------------------------------------------------
-        function [f] = Set_f(msh,ft)
-            switch ft
-                case "bnd"
-                    v = find(~msh.f.logical);
-                case "blk"
-                    v = find( msh.f.logical);
-                otherwise
-                    return;
-            end
-            f = v(randperm(numel(v),1));
-        end
-        
+
         %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        function [] = Plot_1(msh,obj,x,fig)
+        function [] = Plot_1(msh,f,sc,sf,fig)
             %  > Auxiliary variables.
-            fid   = "2D_1";
-            f     = x.a;
-            j     = x.b;
-            m     = x.c(1);
-            n     = x.c(2);
-            FA    = fig.FA;
-            LW    = [2.5,0.1];
-            MS    = [3.0,7.0];
+            fig.fid = "2D_1";
+            LW      = 2.5;
+            MS      = [3.5,7.0];
             
             %  > Axis/legend,etc.
             Fig_Tools.Map_2D_1(msh,fig);
-            %  > Select variables.
-            V{1} = msh.f.xy.v;
-            V{2} = msh.c.c.xy.c;
-            for i = 1:numel(obj.s{m}.sc{f,j}{n})
-                V{3}{i} = msh.c.c.xy.c(obj.s{m}.sc{f,j}{n}{i},:);
-                V{4}{i} = msh.c.c.xy.v(obj.s{m}.sc{f,j}{n}{i});
-            end
-            for i = 1:numel(obj.s{m}.sf{f,j}{n})
-                V{5}{i} = msh.f.xy.c  (obj.s{m}.sf{f,j}{n}{i},:);
-            end
             %  > Plot variables.
-            Fig_Tools.Var_2D_1(V{1}   ,"k"       ,"-",LW(2));
-            Fig_Tools.Var_2D_2(V{2}   ,"k"       ,"o",MS(1));
-            Fig_Tools.Var_2D_1(V{1}(f),fig.C(1,:),"-",LW(1));
-            for i = 1:numel(obj.s{m}.sc{f,j}{n})
-                Fig_Tools.Var_2D_2(V{3}{i},fig.C(i,:),"s",MS(2));
-                Fig_Tools.Var_2D_3(V{4}{i},fig.C(i,:)    ,FA);
+            Fig_Tools.Var_2D_1(msh.f.xy.v  (f),fig.C(1,:),"-",LW);
+            Fig_Tools.Var_2D_2(msh.c.c.xy.c   ,"k"       ,"o",MS(1));
+            for i = 1:numel(sc)
+                Fig_Tools.Var_2D_2(msh.c.c.xy.c(sc{i},:),fig.C(i,:),"s",MS(2));
+                Fig_Tools.Var_2D_3(msh.c.c.xy.v(sc{i})  ,fig.C(i,:)    ,fig.FA);
             end
-            for i = 1:numel(obj.s{m}.sf{f,j}{n})
-                Fig_Tools.Var_2D_2(V{5}{i},fig.C(i,:),"s",MS(2));
+            for i = 1:numel(sf)
+                Fig_Tools.Var_2D_2(msh.f.xy.c  (sf{i},:),fig.C(i,:),"s",MS(2));
             end
             Fig_Tools.Map_2D_3(fig);
         end

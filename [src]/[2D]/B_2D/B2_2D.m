@@ -5,13 +5,15 @@ classdef B2_2D
         %  > Initialize field "m" (matrices).
         function [m] = Initialize_3(nc,ns,Nc)
             for i = 1:ns
-                for j = 1:nc(2)
-                    m{i}.Ac{j} = zeros(Nc);
-                    m{i}.Bc{j} = zeros(Nc,1);
+                for j = 1:nc(1)
+                    for k = 1:nc(2)
+                        m{i}.Ac{j}{k} = zeros(Nc);   %  > Ac{v}(x,y),Ac{g}(x,y).
+                        m{i}.Bc{j}{k} = zeros(Nc,1); %  > Bc{v}(x,y),Bc{g}(x,y).
+                    end
                 end
                 m{i}.At     = zeros(Nc);
                 m{i}.Bt     = zeros(Nc,1);
-                m{i}.nnz.Ac = zeros(1,nc(2));
+                m{i}.nnz.Ac = zeros(1,nc(2));        %  > nnz(Ac(x),Ac(y)).
                 m{i}.nnz.At = 0;
             end
         end
@@ -23,46 +25,51 @@ classdef B2_2D
         % >> 1.3. ---------------------------------------------------------
         %  > Update matrices A and B.
         function [m] = Update_m(msh,f,m,s,u,x)
-            %  > Initialize rows (r) to be updated...
+            %  > Rows (r) to be updated.
             for i = 1:numel(u.s)
-                uf{i} = [msh.f.ic{RunLength(sort(cat(1,u.s{i}{:})))}];
+                for j = 1:numel(u.s{i})
+                    uc{i,j} = RunLength(sort([msh.f.ic{u.s{i}{j}}]));
+                end
             end
-            r         = RunLength(sort(cat(2,uf{:})));
+            r         = RunLength(sort(cat(2,uc{:})));
             m.At(r,:) = 0;
             m.Bt(r,1) = f.st(r);
             
-            %  > For each term (convective/diffusive)...
+            %  > For each term (matrix)...
             for i = 1:numel(u.s)
-                %  > Initialize...
-                m.Ac{i}(r,:) = 0;
-                m.Bc{i}(r,1) = 0;
-                %  > Loop through rows...
-                for j = r
-                    for k = 1:numel(msh.c.f.if(j,:)), ff = msh.c.f.if(j,k);
-                        %  > Cell/face indices used to fit face "ff" (for each direction)...
-                        l = s.logical{ff,i};
-                        for n = 1:numel(l)
-                            %  > Auxiliary variables.
-                            a    = s.i{ff,i} {n}( l{n});
-                            b    = s.i{ff,i} {n}(~l{n});
-                            Sf_n = msh.c.f.Sf{j}( k,n);
-                            %  > Ac (cell contributions).
-                            m.Ac{i}(j,a) = m.Ac{i}(j,a)+Sf_n*x.Tf_V{ff,i}{n}(:,l{n});
-                            %  > Bc (cell contributions).
-                            if any(~l{n})
-                                i_bd         = arrayfun(@(x) find(f.bd.i == x),b);
-                                m.Bc{i}(j,1) = m.Bc{i}(j,1)-Sf_n*x.Tf_V{ff,i}{n}(:,~l{n})*f.bd.v(i_bd);
+                for j = 1:numel(u.s{i})
+                    if ~isempty(u.s{i}{j})
+                        %  > Reset...
+                        m.Ac{i}{j}(uc{i,j},:) = 0;
+                        m.Bc{i}{j}(uc{i,j},1) = 0;
+                        %  > For each cell...
+                        for k = uc{i,j}
+                            %  > For each face...
+                            for l = 1:numel(msh.c.f.if(k,:)), n = msh.c.f.if(k,l);
+                                %  > Auxiliary variables.
+                                o  = s.logical {n,i}{j};
+                                a  = s.i       {n,i}{j}( o);
+                                b  = s.i       {n,i}{j}(~o);
+                                Sf = msh.c.f.Sf{k}     ( l,:);
+                                %  > Ac (cell contributions).
+                                m.Ac{i}{j}(k,a) = m.Ac{i}{j}(k,a)+Sf(j).*x.Tf_V{n,i}{j}(o);
+                                %  > Bc (cell contributions).
+                                if any(~o)
+                                    i_bd            = arrayfun(@(x) find(f.bd.i == x),b);
+                                    m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j)*x.Tf_V{n,i}{j}(~o)*f.bd.v(i_bd);
+                                end
                             end
                         end
                     end
+                    %  > Cumulative matrices.
+                    m.At(r,:) = m.At(r,:)+m.Ac{i}{j}(r,:);
+                    m.Bt(r,1) = m.Bt(r,1)+m.Bc{i}{j}(r,1);
                 end
-                %  > At and Bt (cumulative/total matrices).
-                m.At(r,:) = m.At(r,:)+m.Ac{i}(r,:);
-                m.Bt(r,1) = m.Bt(r,1)+m.Bc{i}(r,1);
             end
-            %  > nnz.
-            for i = 1:numel(u.s)
-                m.nnz.Ac(i) = nnz(m.Ac{i});
+            %  > nnz (x/y-contribution(s): v(x/y)+g(x/y)).
+            for i = 1:numel(m.nnz.Ac)
+                A       {i} = cellfun(@(x) x{:,i},m.Ac,'un',0);
+                m.nnz.Ac(i) = nnz(sum(cat(3,A{i}{:}),3));
             end
             m.nnz.At = nnz(m.At);
         end
@@ -123,54 +130,34 @@ classdef B2_2D
             %  > Error distribution.
             for i = ["a","f","p"]
                 if i ~= "f"
-                    e.(i).c.c_abs    = zeros(Nc,1);
-                    e.(i).t.c        = zeros(Nc,1);
-                    e.(i).t.c_abs    = zeros(Nc,1);
-                    for j = 1:numel(nc)+1
-                        if j ~= numel(nc)+1
-                            e.(i).t.f_abs{j} = zeros(Nf,nc(j)+1);   %  > v,g,(t) and x,y,(t).
-                        else
-                            e.(i).t.f_abs{j} = zeros(Nf,sum(nc)+1); %  > vx,vy,gx,gy,(t).
-                        end
-                    end
+                    e.(i).c.c_abs = zeros(Nc,1);
+                    e.(i).t.c     = zeros(Nc,1);
+                    e.(i).t.c_abs = zeros(Nc,1);
+                    e.(i).t.f_abs = zeros(Nf,nc(2)+1);
                 else
-                    e.(i).c_abs = zeros(Nc,1);
-                    for j = 1:nc(1)
-                        e.(i).f_abs{j} = zeros(Nf,nc(2));   %  > v(x,y),g(x,y).
-                    end
+                    e.(i) = cell(Nf,nc(2));
                 end
             end
             %  > Error norms.
-            for i = ["a","f","p"]
-                e.(i).n_abs.c = zeros(3,1);
-                if i ~= "f"
-                    e.(i).n_abs.t.c    = zeros(3,1);
-                    for j = 1:numel(nc)+1
-                        if j ~= numel(nc)+1
-                            e.(i).n_abs.t.f{j} = zeros(3,nc(j)+1);   %  > v,g,(t) and x,y,(t).
-                        else
-                            e.(i).n_abs.t.f{j} = zeros(3,sum(nc)+1); %  > vx,vy,gx,gy,(t).
-                        end
-                    end
-                else
-                    for j = 1:nc(1)
-                        e.(i).n_abs.f{j} = zeros(3,nc(2)); %  > v(x,y),g(x,y).
-                    end
-                end
+            for i = ["a","p"]
+                e.(i).n_abs.c   = zeros(3,1);
+                e.(i).n_abs.t.c = zeros(3,1);
+                e.(i).n_abs.t.f = zeros(3,nc(2)+1);
             end
         end
-        % >> 1.2. ---------------------------------------------------------
-        %  > Update 'e.(...)' field (error).
-        function [e] = Update_e(inp,msh,e,m,x)
-            %  > #1: Update field 'e.a'.
-            i   = 1;
-            e.a = B2_2D.Update_ea(msh,e.a,m{i},x{i});
+        % >> 2.2. ---------------------------------------------------------
+        %  > Update "e.(...)" field (error).
+        function [e] = Update_e(inp,msh,e,m,s,x)
+            %  > #1: Update field "e.a".
+            e.a = B2_2D.Update_ea(msh,e.a,m,x);
         end
-        %  > 1.2.1. -------------------------------------------------------
+        %  > 2.2.1. -------------------------------------------------------
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
         function [e] = Update_ea(msh,e,m,x)
-            %  > Initialize...
-            e.t.c = zeros(msh.c.Nc,1);
+            %  > Reset...
+            if any(e.t.c)
+                e.t.c = zeros(msh.c.Nc,1);
+            end
             
             % >> f.
             %  > \tau_f: {1}-\tau_f(\phi).
@@ -185,41 +172,23 @@ classdef B2_2D
                     e_t_f{i} = sum(cat(3,e_t_f{1:n}),3);
                 end
             end
-            e_t_f_3 = cat(2,e_t_f{1:n});
             %  > \tau_f_abs.
-            l = 1;
+            k = 1;
             for i = 1:msh.f.Nf
                 %  > Sf.
-                c       = msh.f.ic  {i}(l);
+                c       = msh.f.ic  {i}(k);
                 Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == i,:);
-                %  > #1: v,g,(t).
-                %  > [\tau_f\phi(x,y),\tau_f\nabla\phi(x,y),\tau_f(x,y)]*Sf(x,y).
-                for j = 1:size(e_t_f,2)
-                    e.t.f_abs{1}(i,j) = abs(e_t_f{j}(i,:)*Sf(i,:)');
-                end
-                %  > #2: x,y,(t).
-                %  > [\tau_f*Sf(x),\tau_f*Sf(y),\tau_f*Sf(x,y)].
-                for j = 1:size(e_t_f{end},2)+1
-                    if j ~= size(e_t_f{end},2)+1
-                        e.t.f_abs{2}(i,j) = abs(e_t_f{end}(i,j)*Sf(i,j));
+                %  > \tau_f{x,y,(t)} = [\tau_f*Sf(x),\tau_f*Sf(y),\tau_f*Sf(x,y)].
+                for j = 1:n+1
+                    if j ~= n+1
+                        e.t.f_abs(i,j) = abs(e_t_f{n+1}(i,j)*Sf(i,j));
                     else
-                        e.t.f_abs{2}(i,j) = abs(e_t_f{end}(i,:)*Sf(i,:)');
+                        e.t.f_abs(i,j) = abs(e_t_f{n+1}(i,:)*Sf(i,:)');
                     end
                 end
-                %  > #3: vx,vy,gx,gy,(t).
-                %  > [\tau_f\phi(x)*Sf(x),\tau_f\phi(y)*Sf(y),\tau_f\nabla\phi(x)*Sf(x),\tau_f\nabla\phi(y)*Sf(y),\tau_f(x,y)*Sf(x,y)].
-                %  > Multiply by Sf(x)...
-                e.t.f_abs{3}(i,[1,3]) = e_t_f_3(i,[1,3]).*Sf(i,1);
-                %  > Multiply by Sf(y)...
-                e.t.f_abs{3}(i,[2,4]) = e_t_f_3(i,[2,4]).*Sf(i,2);
             end
-            %  > Sum contributions (3)...
-            e.t.f_abs{3}(:,end) = sum(e.t.f_abs{3}(:,1:end-1),2);
-            e.t.f_abs{3}        = abs(e.t.f_abs{3});
             %  > Error norms.
-            for i = 1:numel(e.n_abs.t.f)
-                e.n_abs.t.f{i} = Tools_2.Set_n(e.t.f_abs{i});
-            end
+            e.n_abs.t.f = src_Tools.Set_n(e.t.f_abs);
             
             % >> c.
             %  > \tau_c.
@@ -234,34 +203,31 @@ classdef B2_2D
             %  > Equivalent to: ea.c.c_abs = abs(f.av.c-x.nv.x.c).
             e.c.c_abs   = abs(m.At\e.t.c);
             %  > Error norms.
-            e.n_abs.c   = Tools_2.Set_n(e.c.c_abs,msh.c.Volume);
-            e.n_abs.t.c = Tools_2.Set_n(e.t.c_abs,msh.c.Volume);
+            e.n_abs.c   = src_Tools.Set_n(e.c.c_abs,msh.c.Volume);
+            e.n_abs.t.c = src_Tools.Set_n(e.t.c_abs,msh.c.Volume);
         end
-        % >> 1.3. ---------------------------------------------------------
-        %  > 1.3.1. -------------------------------------------------------
+        
+        %% > 3. -----------------------------------------------------------
+        % >> 3.1. ---------------------------------------------------------
+        %  > 3.1.1. -------------------------------------------------------
         %  > Select faces for coarsening/refinement.
         function [u] = Update_u(inp,e,u)
-            A = 2; %  > Method's order.
-            k = 2; %  > Choice: #1: v,g,(t).
-                   %            #2: x,y,(t).
-                   %            #3: vx,vy,gx,gy,(t).
-            
             %  > Error treshold.
-            trsh = inp.p_adapt.trsh.*max(e.t.f_abs{k}(:,end));
+            trsh = inp.p_adapt.trsh.*max(e.t.f_abs(:,end));
             %  > Faces selected for refinement.
-            fr_i = e.t.f_abs{k}(:,1:end-1) > trsh;
+            fr_i = e.t.f_abs(:,1:end-1) > trsh;
             
+            A = 2;
             for i = 1:size(u,2)
                 u{i}.p{2}(fr_i) = u{i}.p{2}(fr_i)+A;
                 u{i}.p;
-                
                 u{i}.s{1}{1} = [];
                 u{i}.s{1}{2} = [];
                 u{i}.s{2}{1} = find(fr_i(:,1));
                 u{i}.s{2}{2} = find(fr_i(:,2));
             end
         end
-        %  > 1.3.2. -------------------------------------------------------
+        %  > 3.1.2. -------------------------------------------------------
         %  > Set stopping criterion/criteria.
         function [f] = Stop(inp,count,e)
             f = false;

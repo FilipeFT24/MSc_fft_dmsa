@@ -9,7 +9,7 @@ classdef A2_2D
             
             %  > ----------------------------------------------------------
             % >> struct.
-            struct              = Tools_1.Set_struct(inp_m);
+            struct              = src_Tools.Set_struct(inp_m);
             msh.struct          = struct;
             CL_c                = struct.ConnectivityList;
             %  > ----------------------------------------------------------
@@ -60,9 +60,17 @@ classdef A2_2D
             %  > ----------------------------------------------------------
             % >> d.
             %  #1: Domain reference length.
-            msh.d.h             = Tools_1.mean(msh.c.h.h,1);
+            msh.d.h             = src_Tools.mean(msh.c.h.h,1);
+            %  > ----------------------------------------------------------
+            % >> Uniform cartesian grid flag ("round" msh.c.h.h to 10 digits).
+            if size(CL_c,2) == 4 && range(round(msh.c.h.h,10)) == 0
+                msh.flag        = true;
+            else
+                msh.flag        = false;
+            end
+            %  > ----------------------------------------------------------
             %  > Sort fields...
-            msh                 = Tools_1.Sort_msh_2D(msh);
+            msh                 = src_Tools.Sort_msh_2D(msh);
         end
         
         %% > 2. -----------------------------------------------------------
@@ -110,7 +118,7 @@ classdef A2_2D
             for i = 1:sz_CL(1)
                 j              = 1:sz_Pt(2);
                 xy.v{i,1}(:,j) = struct.Points(struct.ConnectivityList(i,:),j);
-                xy.c     (i,j) = Tools_1.mean (xy.v{i,1}(:,j),1);
+                xy.c     (i,j) = src_Tools.mean (xy.v{i,1}(:,j),1);
             end
         end
         %  > 2.1.3. -------------------------------------------------------
@@ -125,6 +133,7 @@ classdef A2_2D
         end
         %  > 2.1.4. -------------------------------------------------------
         %  > #4: Cell "i": reference length.
+        %  > 2.1.4.1. -----------------------------------------------------
         function [h] = c_h(xy,Volume)
             %  > Auxiliary variables.
             d (1,:) = [1,0]; %  > x.
@@ -136,13 +145,44 @@ classdef A2_2D
                 %  > h.
                 k = [1:j(1);circshift(1:j,j(1)-1)]';
                 for l = 1:j(1)
-                    Length{i,1}(l,1) = Tools_1.dist(xy.v{i}(k(l,:),:));
+                    Length{i,1}(l,1) = src_Tools.dist(xy.v{i}(k(l,:),:));
                 end
                 h.h (i,1) = 4.*Volume(i)./sum(Length{i});
                 %  > h(x,y).
                 for l = 1:j(2)
-                    h.xy(i,l) = Tools_1.hd(xy.v{i},xy.c(i,:),d(l,:));
+                    h.xy(i,l) = A2_2D.hd(xy.v{i},xy.c(i,:),d(l,:));
                 end
+            end
+        end
+        %  > 2.1.4.2. -----------------------------------------------------
+        %  > Auxiliary function: compute reference length (direction: d).
+        function [h] = hd(v,c,d)
+            %  > Select face indices...
+            [n,o] = size(v);
+            
+            %  > t.
+            k = [1:n;circshift(1:n,n-1)]';
+            m = d(2)./d(1);
+            if ~isinf(m)
+                %  > t = (b-y(1)+mx(1))/(y(2)-y(1)-m(x(2)-x(1))).
+                b = c(2)-m.*c(1);
+                for i = 1:n
+                    t(i) = (b-v(k(i,1),2)+m.*v(k(i,1),1))./(v(k(i,2),2)-v(k(i,1),2)-m.*(v(k(i,2),1)-v(k(i,1),1)));
+                end
+            else
+                %  > t = (b-x(1))/(x(2)-x(1)).
+                b = c(1);
+                for i = 1:n
+                    t(i) = (b-v(k(i,1),1))./(v(k(i,2),1)-v(k(i,1),1));
+                end
+            end
+            % > Check intersections...
+            f = 0 <= t & t <= 1 & t ~= Inf;
+            if nnz(f) ~= 2
+                return;
+            else
+                XY = v(k(f,1),:)+t(f)'.*(v(k(f,2),:)-v(k(f,1),:));
+                h  = src_Tools.dist(XY);
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -192,7 +232,7 @@ classdef A2_2D
                 %  > Sf.
                 for j  = 1:size(xy_v{i},1)
                     %  > \vec{FC}.
-                    vec_FC      = xy_cm(i,:)-Tools_1.mean(xy_v{i}{j},1);
+                    vec_FC      = xy_cm(i,:)-src_Tools.mean(xy_v{i}{j},1);
                     %  > \vec{Sf}.
                     vec_Sf(j,2) = xy_v{i}{j}(1,1)-xy_v{i}{j}(2,1);
                     vec_Sf(j,1) = xy_v{i}{j}(2,2)-xy_v{i}{j}(1,2);
@@ -260,7 +300,7 @@ classdef A2_2D
             for i = 1:sz(1)
                 j              = 1:sz(2);
                 xy.v{i,1}(j,:) = struct.Points(f(i,j),:);        %  > Vertex #j(x,y).
-                xy.c     (i,j) = Tools_1.mean(xy.v{i,1}(:,j),1); %  > Face   #j(x,y).
+                xy.c     (i,j) = src_Tools.mean(xy.v{i,1}(:,j),1); %  > Face   #j(x,y).
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -1,4 +1,4 @@
-classdef Tools_1
+classdef src_Tools
     methods (Static)
         %% > 1. -----------------------------------------------------------
         %  > Set "struct" structure (msh).
@@ -14,14 +14,14 @@ classdef Tools_1
             %  > X/Yt,d.
             [Xt,Yt] = meshgrid(XY_v{1},XY_v{2});
             switch inp.t
-                case 0, [Xd,Yd] = Tools_1.demo_0(Xt,Yt);
-                case 1, [Xd,Yd] = Tools_1.demo_1(Xt,Yt);
-                case 2, [Xd,Yd] = Tools_1.demo_2(Xt,Yt);
-                case 3, [Xd,Yd] = Tools_1.demo_3(Xt,Yt);
+                case 0, [Xd,Yd] = src_Tools.demo_0(Xt,Yt);
+                case 1, [Xd,Yd] = src_Tools.demo_1(Xt,Yt);
+                case 2, [Xd,Yd] = src_Tools.demo_2(Xt,Yt);
+                case 3, [Xd,Yd] = src_Tools.demo_3(Xt,Yt);
                 otherwise
                     return;
             end
-
+            
             %  > Select cell polyhedral (type)...
             switch inp.p
                 case "s"
@@ -89,14 +89,14 @@ classdef Tools_1
             Xd      = f{1}(it,jt);
             Yd      = f{2}(it,jt);
         end
-    
+        
         %% > 2. -----------------------------------------------------------
         % >> Sort structures.
         % >> 2.1. ---------------------------------------------------------
         %  > Sort "msh" (2D) fields.
         function [msh] = Sort_msh_2D(msh)
             % >> msh.
-            msh        = orderfields(msh       ,{'c','d','f','v','struct'});
+            msh        = orderfields(msh       ,{'c','d','f','flag','v','struct'});
             %  > c.
             msh.c      = orderfields(msh.c     ,{'c','f','h','logical','Nc','Volume'});
             msh.c.c    = orderfields(msh.c.c   ,{'nb','xy'});
@@ -134,34 +134,16 @@ classdef Tools_1
             z    = x(w(x));
         end
         % >> 3.4. ---------------------------------------------------------
-        %  > Compute reference length (direction: d).
-        function [h] = hd(v,c,d)
-            %  > Select face indices...
-            [n,o] = size(v);
-
-            %  > t.
-            k = [1:n;circshift(1:n,n-1)]';
-            m = d(2)./d(1);
-            if ~isinf(m)
-                %  > t = (b-y(1)+mx(1))/(y(2)-y(1)-m(x(2)-x(1))).
-                b = c(2)-m.*c(1);
-                for i = 1:n
-                    t(i) = (b-v(k(i,1),2)+m.*v(k(i,1),1))./(v(k(i,2),2)-v(k(i,1),2)-m.*(v(k(i,2),1)-v(k(i,1),1)));
-                end
+        %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
+        function [L] = Set_n(E,V)
+            if nargin == 1
+                L(1,:) = src_Tools.mean(E,1);
+                L(2,:) = src_Tools.mean(sqrt(E.^2),1);
+                L(3,:) = max         (E);
             else
-                %  > t = (b-x(1))/(x(2)-x(1)).
-                b = c(1);
-                for i = 1:n
-                    t(i) = (b-v(k(i,1),1))./(v(k(i,2),1)-v(k(i,1),1));
-                end
-            end
-            % > Check intersections...
-            f = 0 <= t & t <= 1 & t ~= Inf;
-            if nnz(f) ~= 2
-                return;
-            else
-                XY = v(k(f,1),:)+t(f)'.*(v(k(f,2),:)-v(k(f,1),:));
-                h  = Tools_1.dist(XY);
+                L(1,:) = sum(E.*V)./sum(V);
+                L(2,:) = sum(sqrt((E.*V).^2))./sum(sqrt(V.^2));
+                L(3,:) = max(E);
             end
         end
         % >> 3.5. ---------------------------------------------------------
@@ -170,7 +152,7 @@ classdef Tools_1
             [m,n]  = size(e);
             i      = 1:n;
             j      = 1:m-1;
-            s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j)); 
+            s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j));
         end
         % >> 3.6. ---------------------------------------------------------
         %  > Save .mat file.

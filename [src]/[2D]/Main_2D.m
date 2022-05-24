@@ -9,8 +9,11 @@ run = 0;
 if ~run
     h   = 5.0E-02;
     inp = A1_2D.Set_inp([1,1],[50,0.5,0.5]); %  > c/f.
-    msh = A2_2D.Set_msh(h);                   %  > h.
-    obj = B3_2D.Run_p  (inp,msh);             %  > inp/msh.
+    msh = A2_2D.Set_msh(h);                  %  > h.
+    obj = B3_2D.Run_p  (inp,msh);            %  > inp/msh.
+    
+    obj.e.a.n_abs.t.f
+    
 else
     obj = C1_2D.Run_p  (1,"2");
 end

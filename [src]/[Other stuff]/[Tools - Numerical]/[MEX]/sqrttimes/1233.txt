@@ -1,0 +1,12 @@
+        %  > 2.2.2. -------------------------------------------------------
+        %  > Update 'e.f(...)' field (fitting error).
+        function [e] = Update_ef(msh,e,s,x)
+%             for i = 1:size(x.vf.x,1)
+%                 for j = 1:size(x.vf.x,2)
+%                     for k = 1:numel(x.vf.x{i,j})
+%                         X         = x.Df{i,j}{k}*x.Pf{i,j}{k};
+%                         e{i,j}{k} = abs(sqrt(x.Wf{i,j}{k})*((eye(size(X))-X)*x.vf.x{i,j}{k}));
+%                     end
+%                 end
+%             end
+        end

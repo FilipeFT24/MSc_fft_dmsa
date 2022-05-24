@@ -29,7 +29,7 @@ classdef Fig_Tools
             fig.nsh          = 0;                            %  > Number of elements below "trsh".
             fig.trsh         = 1.0e-16;                      %  > Error treshold.
             fig.NT           = [10,10];                      %  > Number of ticks (x/y-direction).
-            fig.Folder       = "../[Figures]";               %  > Destination folder.
+            fig.Folder       = "../[.pdf Files]";            %  > Destination folder.
             if ~run
                 fig.L{1}     = "$x$";                        %  > x-axis label.
                 fig.L{2}     = "$y$";                        %  > y-axis label.
@@ -164,8 +164,7 @@ classdef Fig_Tools
             set(gca,'YLim',y,'YTick',yl);
             ylabel(fig.L{2},'FontSize',fig.FT_3(2),'Interpreter','latex');
             %  > Grid.
-            LW = 0.1;
-            Fig_Tools.Var_2D_1(msh.f.xy.v,"k","-",LW);
+            Fig_Tools.Var_2D_1(msh.f.xy.v,"k","-",0.25);
         end
         %  > 3.1.2. -------------------------------------------------------
         function [] = Map_2D_2(fig,y)
@@ -199,8 +198,8 @@ classdef Fig_Tools
             end
             if fig.exp
                 set     (gcf,'PaperSize',[29.7,21.5],'PaperPosition',[0,0,29.7,21.5]);
-                print   (gcf,strcat(Filename,'.pdf'),'-dpdf','-r500');
-                movefile(    strcat(Filename,'.pdf'),Directory);
+                print   (gcf,strcat(fig.fid,'.pdf'),'-dpdf','-r500');
+                movefile(    strcat(fig.fid,'.pdf'),Directory);
             end
         end
         % >> 3.2. ---------------------------------------------------------
@@ -235,6 +234,19 @@ classdef Fig_Tools
                     quiver(V1{i}(j,1),V1{i}(j,2),V2{i}(j,1)./x,V2{i}(j,2)./x,'AutoScale','off','Color',C);
                 end
             end
+        end
+        % >> 3.3. ---------------------------------------------------------
+        %  > 3.3.1. -------------------------------------------------------
+        function [f] = Set_f(msh,ft)
+            switch ft
+                case "bnd"
+                    v = find(~msh.f.logical);
+                case "blk"
+                    v = find( msh.f.logical);
+                otherwise
+                    return;
+            end
+            f = v(randperm(numel(v),1));
         end
     end
 end
