@@ -56,6 +56,11 @@ classdef B1_2D
                                     end
                                 end
                                 %  > If anisotropic, exclude cell(s)/face(s) (if necessary)...
+                                
+                                
+                                
+                                
+                                
                                 sc_t = cat(1,sc{:});
                                 sf_t = cat(1,sf{:});
                                 
@@ -260,12 +265,10 @@ classdef B1_2D
                 %  > "sx".
                 x{i}.gf   = cell (Nf,nc(2));
                 x{i}.goV  = zeros(Nf,nc(2));
-                x{i}.Pf   = cell (Nf,nc(2));
                 x{i}.Tf_V = cell (Nf,nc(2));
                 %  > "x".
                 x{i}.nv.a.f = zeros(Nf,1);
                 for j = ["a","x"]
-                    x{i}.cf.(j) = cell(Nf,nc(2));
                     x{i}.vf.(j) = cell(Nf,nc(2));
                     x{i}.xf.(j) = cell(1 ,nc(2));
                     for k = 1:nc(2)
@@ -291,40 +294,50 @@ classdef B1_2D
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     if ~isempty(u.s{i}{j})
-                        for k = u.s{i}{j}', p = max(u.p{i}{j}(k,:));
+                        for k = u.s{i}{j}', p = max(u.p{i}{j}(k,:)); p = 7;
                             x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},p,f.qd.xu,msh.f.xy.v{k});
                         end
                     end
                 end
             end
-            %  > goV.
-            for i = 1:size(x.goV,1)
-                for j = 1:size(x.goV,2)
-                    x.goV(i,j) = x.gf{i,2}{j}.Vc./x.gf{i,1}{j}.Vc;
-                end
-            end
-            %  > NOTE: If V=0, goV=Inf (do not try to use a mixed/robin BC if no convection exists!)
-            if any(inp.b.t == "Robin") && any(isinf(x.goV),'all')
-                return;
-            end
-            
-            % >> Pf and Tf_V.
+            % >> Tf_V.
             for i = 1:numel(u.s)
                 for j = 1:numel(u.s{i})
                     if ~isempty(u.s{i}{j})
                         for k = u.s{i}{j}', p = u.p{i}{j}(k,:);
-                            %  > Pf.
-                            C1 = B1_2D.pr_1       (inp,p);
-                            Pf = B1_2D.Assemble_Pf(inp,msh,C1,f,p,...
-                                s.logical{k,i}{j},cat(1,s.sf{k,i}{j}{:}),msh.f.xy.c(k,:),s.xt{k,i}{j},x.goV(k,:));
+                            %  >> d_cf.
+                            xc = msh.f.xy.c(k,:);
+                            xf = s.xt      {k,i}{j};
+                            %  > Remove (boundary) face "k" from "xt".
+%                             if ~msh.f.logical(k)
+%                                 l       = find(~s.logical{k,i}{j});
+%                                 m       = l(cat(1,s.sf{k,i}{j}{:}) == k);
+%                                 xf(m,:) = [];
+%                             end
+                            d_fc = xf-xc;
+                            % >> Df.
+                            C1       = B1_2D.pr_1       (inp,p);
+                            [Df,Dwf] = B1_2D.Assemble_Df(inp,C1,d_fc);
+                            %  > Add gauss points' constraints...
+                            if ~msh.f.logical(k)
+                                d_gc    = x.gf{k,i}{j}.xy-xc;
+                                b       = x.gf{k,i}{j}.v;
+                                [Cf,~]  = B1_2D.Assemble_Df(inp,C1,d_gc);
+                                %Df      = cat(1,Cf,Df);
+                                %Dwf     = cat(1,Cf,Dwf);
+                                [Gf,Hf] = B1_2D.Assemble_Pf(b,Cf,Df,Dwf);
+                            else
+                                Pf     = (Dwf'*Df)\Dwf';
+                            end
+                            
+                            Pf     = (Dwf'*Df)\Dwf';%-Gf;
                             %  > Tf_V.
                             switch i
                                 case 1, C2 = C1;
                                 case 2, C2 = B1_2D.pr_2(inp,p,j);
                             end
-                            Tf_V = B1_2D.Assemble_Tf_V(x.gf{k,i}{j},C2,Pf);
+                            Tf_V = B1_2D.Assemble_Tf_V(d_gc,x.gf{k,i}{j}.v,C2,Pf);
                             %  > Update field "x".
-                            x.Pf  {k,i}{j} = Pf;
                             x.Tf_V{k,i}{j} = Tf_V;
                         end
                     end
@@ -332,72 +345,32 @@ classdef B1_2D
             end
         end
         %  > 2.3.1. -------------------------------------------------------
-        %  > Check boundary type and assemble matrices Df and Pf.
-        function [Pf] = Assemble_Pf(inp,msh,C1,f,p,log_c,sf,xy_fc,xy_t,goV)
-            % >> Df.
-            %  > d_ft.
-            d_ft          = xy_t-xy_fc;
-            %  > Initialize and assemble Df (partially)...
-            Df            = zeros(size(xy_t,1),size(C1.c,2));
-            Df  (log_c,:) = C1.c.*d_ft(log_c,1).^C1.e(1,:).*d_ft(log_c,2).^C1.e(2,:);
-            
-            %  > Check whether the stencil contains boundary faces and assemble Df (fully)...
-            if ~isempty(sf)
-                %  > Identify boundary...
-                [bd_i,~] = find(bsxfun(@eq,shiftdim(sf,1),f.bd.i)); bd_loc = f.bd.t(bd_i); j = find(~log_c);
-                for k = 1:numel(bd_i)
-                    switch inp.b.t(bd_loc(k))
-                        case "Dirichlet"
-                            %  > Df.
-                            Df(j(k),:) = B1_2D.Dirichlet_bc(d_ft(j(k),:),C1);
-                        case {"Neumann","Robin"}
-                            %  > Sf.
-                            c  = msh.f.ic  {sf(k)};
-                            Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == sf(k),:);
-                            %  > C2.
-                            C2 = B1_2D.pr_3(inp,p);
-                            %  > Df.
-                            if     inp.b.t(bd_loc(k)) == "Neumann", Df(j(k),:) = B1_2D.Neumann_bc(d_ft(j(k),:),Sf,C2);
-                            elseif inp.b.t(bd_loc(k)) == "Robin"  , Df(j(k),:) = B1_2D.Robin_bc  (d_ft(j(k),:),Sf,C1,C2,goV);
-                            end
-                    end
-                end
-            end
-            
-            % >> Pf = inv(Df'*W*Df)*Df'*W.
-            if ~inp.m.WLS.t
-                DTWf = Df';
-            else
-                %  > Compute distances to face centroid and check for nil d's.
-                d(1,:) = sqrt(sum((xy_t-xy_fc).^2,2)); d_n = d == 0;
-                if any(d_n)
-                    d (d_n) = min(d(~d_n))./2;
-                end
-                DTWf = bsxfun(@times,Df',inp.m.WLS.Wf(d));
-            end
-            Pf = (DTWf*Df)\DTWf;
-        end
         %  > 2.3.1.1. -----------------------------------------------------
-        %  > Dirichlet boundary condition.
-        function [Df] = Dirichlet_bc(d_ft,C1)
-            Df = C1.c.*d_ft(1).^C1.e(1,:).*d_ft(2).^C1.e(2,:);
+        %  > Assemble Df (cell dependent matrix).
+        function [Df,Dwf] = Assemble_Df(inp,C1,d_cf)
+            %  > Df.
+            Df = C1.c.*d_cf(:,1).^C1.e(1,:).*d_cf(:,2).^C1.e(2,:);
+            %  > Df*W.
+            if ~inp.m.WLS.t
+                Dwf = Df;
+            else
+                w   = inp.m.WLS.Wf(sqrt(sum(d_cf.^2,2)));
+                Dwf = bsxfun(@times,Df,w);
+            end
+            Dwf = Df;
         end
         %  > 2.3.1.2. -----------------------------------------------------
-        %  > Dirichlet boundary condition.
-        function [Df] = Neumann_bc(d_ft,Sf,C2)
-            for l = 1:numel(C2)
-                df(l,:) = C2{l}.c.*d_ft(1).^C2{l}.e(1,:).*d_ft(2).^C2{l}.e(2,:);
-            end
-            Df = Sf*df;
-        end
-        %  > 2.3.1.3. -----------------------------------------------------
-        %  > Dirichlet boundary condition.
-        function [Df] = Robin_bc(d_ft,Sf,C1,C2,goV)
-            for l = 1:numel(C2)
-                df{1}(l,:) = C1   .c.*d_ft(1).^C1   .e(1,:).*d_ft(2).^C1   .e(2,:);
-                df{2}(l,:) = C2{l}.c.*d_ft(1).^C2{l}.e(1,:).*d_ft(2).^C2{l}.e(2,:);
-            end
-            Df = Sf*(df{1}+goV'.*df{2});
+        %  > Assemble Gf and Hf.
+        function [Gf,Hf] = Assemble_Pf(b,Cf,Df,Dwf)
+            %  > Ef and Ff.
+            A1 = Dwf'*Df;
+            Ef = A1\Cf';
+            Ff = A1\Dwf';
+            %  > Gf and Hf.
+            A2 = Cf*Ef;
+            A3 = Cf'/A2;
+            Gf = A1\(Dwf'-A3*(Cf*Ff));
+            Hf = A1\(A3*b);
         end
         %  > 2.3.2. -------------------------------------------------------
         %  > 2.3.2.1. -----------------------------------------------------
@@ -406,21 +379,20 @@ classdef B1_2D
             %  > "Q" structure.
             Q    = A3_2D.Q_1D_2(ceil(p./2));
             %  > (xg,yg).
-            xy_c = src_Tools.mean(xy_fv,1);
             xy_g = xu(Q.Points,xy_fv);
-            g.d  = xy_c-xy_g;
-            %  > V.
-            g.Vc = c(xy_c);
-            g.Vg = Q.Weights.*c(xy_g)./2;
+            %  > "g" structure.
+            g.xy = xy_g;
+            g.v  = c(xy_g);
+            g.w  = Q.Weights./2;
         end
         %  > 2.3.2.2. -----------------------------------------------------
         %  > Assemble matrix Tf_V.
-        function [Tf_V] = Assemble_Tf_V(g,t,Pf)
-            %  > d_fV.
-            df   = t.c.*g.d(:,1).^t.e(1,:).*g.d(:,2).^t.e(2,:);
-            df_V = df.*g.Vg;
-            %  > T_fV.
-            Tf_V = sum(df_V,1)*Pf;
+        function [Tf_V] = Assemble_Tf_V(dg,vg,t,Pf)
+            %  > df_V.
+            df   = t.c.*dg(:,1).^t.e(1,:).*dg(:,2).^t.e(2,:);
+            df_V = df.*vg;
+            %  > Tf_V.
+            Tf_V = sum(df_V*Pf,1);
         end
         %  > 2.3.3. -------------------------------------------------------
         %  > Compute polynomial regression coefficients/exponents.

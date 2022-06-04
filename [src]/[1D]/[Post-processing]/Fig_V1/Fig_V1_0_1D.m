@@ -3,7 +3,7 @@ classdef Fig_V1_0_1D
         %% > 1. -----------------------------------------------------------
         function [] = Plot(msh)
             %  > Auxiliary variables.
-            exp   = 0;
+            exp   = 1;
             fig   = Fig_Tools_1D.Set_fig(0,exp);
             fig.C = linspecer(9,'qualitative');
             if ~exp

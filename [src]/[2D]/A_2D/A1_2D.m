@@ -16,7 +16,7 @@ classdef A1_2D
             %  > ----------------------------------------------------------
             %  > Boundary conditions.
             %  > NOTE: hard coded for square domain (boundaries are identified by outher face normals (Sf)).
-            inp.b.t(1)          = "Dirichlet";      %  > East  (E).
+            inp.b.t(1)          = "Neumann";      %  > East  (E).
             inp.b.t(2)          = "Dirichlet";      %  > North (N).
             inp.b.t(3)          = "Dirichlet";      %  > West  (W).
             inp.b.t(4)          = "Dirichlet";      %  > South (S).
@@ -37,17 +37,17 @@ classdef A1_2D
             %             └─ use WLS method w/ weigh function = "inp.m.Wf".
             inp.m.WLS.t         = 1;
             if inp.m.WLS.t
-                inp.m.WLS.Wf    = A1_2D.fh_Wf(1);   %  > Weight function.
+                inp.m.WLS.Wf    = A1_2D.fh_Wf(2);   %  > Weight function.
             end
             %  > NOTE: if 0: Neighbour type: vertex.
             %          if 1: Neighbour type: face.
             inp.m.nb            = 0;
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
-            inp.p.p{1}(1,:)     = [1,1];            %  > Convection(x): [x,y].
-            inp.p.p{1}(2,:)     = [1,1];            %  > Convection(y): [x,y].
-            inp.p.p{2}(1,:)     = [1,3];            %  > Diffusion (x): [x,y].
-            inp.p.p{2}(2,:)     = [1,3];            %  > Diffusion (y): [x,y].
+            inp.p.p{1}(1,:)     = [3,3];            %  > Convection(x): [x,y].
+            inp.p.p{1}(2,:)     = [3,3];            %  > Convection(y): [x,y].
+            inp.p.p{2}(1,:)     = [3,3];            %  > Diffusion (x): [x,y].
+            inp.p.p{2}(2,:)     = [3,3];            %  > Diffusion (y): [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
             inp.p.t       = 0;
@@ -59,13 +59,13 @@ classdef A1_2D
             end
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot      = [0,1];
+            inp.plot      = [1,1];
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c (1,:) =  [0,0];
+            c (1,:) =  [1,1];
             c (2,:) = -[1,1];
             ic      =  v(1);
             xc      =  v(2);
@@ -106,7 +106,7 @@ classdef A1_2D
             c  = exp(-(1./k).^2);
             
             %  > Wf.
-            a  = @(d) exp(-(d(1,:)./(k.*(1+e).*max(d(1,:)))).^2)-c;
+            a  = @(d) exp(-(d(:,1)./(k.*(1+e).*max(d(:,1)))).^2)-c;
             b  = 1-c;
             g  = @(d) a(d)./b;
             Wf = @(d) g(d)./d(1,:).^p;

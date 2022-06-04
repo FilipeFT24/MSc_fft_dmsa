@@ -2,12 +2,7 @@ classdef Tools_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [] = Set_Directories()
-            addpath(genpath('A_1D'));
-            addpath(genpath('B_1D'));
-            addpath(genpath('[Post-processing]'));
-            addpath(genpath('../[Tools]')); 
-        end
+        
         % >> 1.2. ---------------------------------------------------------
         %  > 1.2.1. -------------------------------------------------------
         function [msh] = Sort_msh(msh)

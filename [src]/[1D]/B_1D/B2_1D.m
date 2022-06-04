@@ -20,7 +20,7 @@ classdef B2_1D
         function [m] = Update_m(inp,msh,f,m,s,u,x)
             %  > Initialize rows (r) to be updated...
             uf        = [msh.f.ic{RunLength(sort(cat(1,u.s{:})))}]';
-            r         = 1:100;%RunLength(uf)';
+            r         = RunLength(uf)';
             m.At(r,:) = 0;
             m.Bt(r)   = f.st(r);
             for i = 1:numel(u.s)
@@ -76,7 +76,7 @@ classdef B2_1D
             for i = u.f
                 for j = 1:size(u.s,2)
                     if ~isempty(u.s{j})
-                        for k = 1:101%u.s{j}'
+                        for k = u.s{j}'
                             l = ismembc(s.t{k,j},f.bd.x);
                             %  > Boundary face contribution(s).
                             if any(l)
@@ -95,7 +95,7 @@ classdef B2_1D
             for i = u.f
                 for j = 1:size(u.s,2)
                     if ~isempty(u.s{j})
-                        for k = 1:101%u.s{j}'
+                        for k = u.s{j}'
                             x.cf.(i){k,j} = x.if{k,j}*x.vf.(i){k,j};
                         end
                     end
@@ -108,7 +108,7 @@ classdef B2_1D
             for i = u.f
                 for j = 1:size(u.s,2)
                     if ~isempty(u.s{j})
-                        for k = 1:101%u.s{j}'
+                        for k = u.s{j}'
                             x.xf.(i)(k,j) = x.Tf{k,j}*x.vf.(i){k,j};
                         end
                     end

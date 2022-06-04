@@ -113,8 +113,6 @@ classdef B2_2D
                             if any(~m)
                                 x.vf.(fn(k)){l,i}{j}(~m,1) = f.bd.v(arrayfun(@(x) find(f.bd.i == x),b));
                             end
-                            %  > "x.cf"
-                            x.cf.(fn(k)){l,i}{j}   = x.Pf  {l,i}{j}*x.vf.(fn(k)){l,i}{j};
                             %  > "x.xf".
                             x.xf.(fn(k))  {i}(l,j) = x.Tf_V{l,i}{j}*x.vf.(fn(k)){l,i}{j};
                         end

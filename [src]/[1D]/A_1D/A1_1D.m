@@ -12,9 +12,9 @@ classdef A1_1D
             %                    └─ Smooth non-uniform.
             %                        ├─  A: Stretching parameter.
             %                        └─  c: Clustered location.
-            inp.m.Uniform      = 1;                          %  > Set uniform grid(?).
+            inp.m.Uniform      = 0;                          %  > Set uniform grid(?).
             if ~inp.m.Uniform
-                inp.m.A        = 10.0;                        %  > Stretching parameter.
+                inp.m.A        = 5.0;                        %  > Stretching parameter.
                 inp.m.c        = 0.5;                         %  > Clustered location.
             end
             inp.m.XLim         = [0,1];                       %  > Grid limits(X).
@@ -46,7 +46,7 @@ classdef A1_1D
             end
             %  > P-adaptation.
             %  > #1.
-            inp.p_adapt.allow  = 1;                           %  > Allow p-adaptation(?).
+            inp.p_adapt.allow  = 0;                           %  > Allow p-adaptation(?).
             inp.p_adapt.nc     = 50;                          %  > Maximum number of cycles.
             inp.p_adapt.ec_m   = 1.0E-10;                     %  > Minimum (global) discretization error.
             inp.p_adapt.lambda = 0.85;                        %  > Treshold for face selection based on maximum face truncation error (%).

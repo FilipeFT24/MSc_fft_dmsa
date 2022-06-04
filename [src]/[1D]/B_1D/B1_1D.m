@@ -99,7 +99,7 @@ classdef B1_1D
         function [x] = Update_sx(inp,msh,f,s,u,x)
             for i = 1:size(u.s,2)
                 if ~isempty(u.s{i})
-                    for j = 1:101%u.s{i}'
+                    for j = u.s{i}'
                         %  > Df.
                         xt        = s.t{j,i};
                         p         = 1:length(xt);

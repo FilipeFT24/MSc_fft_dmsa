@@ -14,7 +14,7 @@ classdef A2_1D
             if u
                 Xv  = A2_1D.msh_1(XLim,Nc);
             else
-                Xv  = A2_1D.msh_2(XLim,Nc,inp.A,inp.c);
+                Xv  = A2_1D.msh_2(XLim,Nc,inp.m.A,inp.m.c);
             end
             msh     = A2_1D.Set_Grid(XLim,Xv);
             msh.d.h = h;
@@ -35,6 +35,15 @@ classdef A2_1D
             Xv = XLim(1)+diff(XLim).*Xv;
         end
         % >> 2.3. ---------------------------------------------------------
+        %  > Highly distorted grid (transformation taken from reference).
+        function [Xv] = msh_3(XLim,Nc)
+            q     = 1.1;
+            Xv    = (0:Nc)./Nc;
+            i     = setdiff(1:Nc,[1,Nc+1]);
+            Xv(i) = Xv(i)+(rand(1,numel(i))-0.5).*Nc.^(-q);
+        end
+        
+        % >> 2.4. ---------------------------------------------------------
         %  > Set remaining grid properties.
         function [msh] = Set_Grid(XLim,Xv)
             %  > Field: 'c'.

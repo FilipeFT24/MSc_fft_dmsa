@@ -120,7 +120,7 @@ classdef Fig_Tools_1D
         %  > 2.3.1. -------------------------------------------------------
         %  > msh.
         function [] = Set_Plot_1(fig,y,XM)
-            Fig_Tools_1D.ChangeLook_1D(fig,XM,fig.L);
+            Fig_Tools_1D.ChangeLook_1D(fig,0,XM,fig.L);
             ax = gca; box off;
             dX = [XM(1),XM(end)];
             dY = [-y,y];
