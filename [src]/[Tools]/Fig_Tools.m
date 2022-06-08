@@ -8,7 +8,7 @@ classdef Fig_Tools
             fig.zoom = zoom;                                 %  > Zoom(?).
             fig.C    = linspecer(9,'qualitative');           %  > Colors.
             if ~exp
-                fig.LW       =  1.50;                        %  > Line.
+                fig.LW       =  1.75;                        %  > Line.
                 fig.MS       =  5.00;                        %  > Marker size.
                 fig.FA       =  0.25;                        %  > FaceAlpha.
                 fig.FT_1     = 15.00;                        %  > Legend.
@@ -17,12 +17,12 @@ classdef Fig_Tools
                 fig.FT_4     = 12.50;                        %  > x/y-axis (zoom).
                 fig.Position = [150,100,1250,600];           %  > Position.
             else
-                fig.LW       =  0.10;                        %  > Line.
-                fig.MS       =  7.50;                        %  > Marker.
+                fig.LW       =  5.00;                        %  > Line.
+                fig.MS       = 10.00;                        %  > Marker.
                 fig.FA       =  0.25;                        %  > FaceAlpha.
-                fig.FT_1     = 25.00;                        %  > Legend.
+                fig.FT_1     = 35.00;                        %  > Legend.
                 fig.FT_2     = 30.00;                        %  > x/y-axis.
-                fig.FT_3     = [42.50,42.50];                %  > x/y-label.
+                fig.FT_3     = [32.50,37.50];                %  > x/y-label.
                 fig.FT_4     = 25.00;                        %  > x/y-axis (zoom).
                 fig.Position = [350,100,850,600];            %  > Position.
             end
@@ -32,7 +32,7 @@ classdef Fig_Tools
             fig.Folder       = "../[.pdf Files]";            %  > Destination folder.
             if ~run
                 fig.L{1}     = "$x$";                        %  > x-axis label.
-                fig.L{2}     = "$y$";                        %  > y-axis label.
+                fig.L{2}     = "$\textrm{Error magnitude}$"; %  > y-axis label.
             else
                 fig.L{1}     = "$\textrm{NNZ}$";             %  > x-axis label.
                 fig.L{2}     = "$\textrm{Error magnitude}$"; %  > y-axis label.
@@ -46,28 +46,17 @@ classdef Fig_Tools
         function [str] = Set_str_1(i)
             switch i
                 case 1
-                    str = "\phantom{\nabla}\phi";
+                    str = "\phi\scriptscriptstyle{,C}";
                 case 2
-                    str = "\nabla\phi";
+                    str = "\phi\scriptscriptstyle{,D}";
                 case 3
-                    str = "\phantom{\nabla\phi}";
+                    str = "\phi";
                 otherwise
                     return;
             end
         end
         %  > 1.2.2. -------------------------------------------------------
         function [str] = Set_str_2(i)
-            switch i
-                case 1
-                    str = "\phi";
-                case 2
-                    str = "\nabla\phi";
-                otherwise
-                    return;
-            end
-        end
-        %  > 1.2.3. -------------------------------------------------------
-        function [str] = Set_str_3(i)
             switch i
                 case 1
                     str = "1";
@@ -102,7 +91,7 @@ classdef Fig_Tools
             ylabel(L_XY(2),'FontSize',fig.FT_3(2),'Interpreter','latex');
         end
         %  > 2.1.2. -------------------------------------------------------
-        function [] = Map_1D_2(fig,L,P,fx,XM,YM_1,YM_2,NC)
+        function [] = Map_1D_2(fig,L,P,fx,XM,YM,DY,NC)
             ax = gca;
             legend([P{:}],[L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',fig.FT_1,'NumColumns',NC);
@@ -110,9 +99,9 @@ classdef Fig_Tools
                 set(ax,'XScale','log'); ax.XAxis.Exponent = 3;
             end
             set(ax,'YScale','log');
-            if ~isempty(YM_1) && ~isempty(YM_2)
-                a = 10.^(ceil(log10(min(YM_1(:,1))))+YM_2(1));
-                b = 10.^(ceil(log10(max(YM_1(:,2))))+YM_2(2));
+            if ~isempty(YM) && ~isempty(DY)
+                a = 10.^(ceil(log10(min(YM,[],'all')))+DY(1));
+                b = 10.^(ceil(log10(max(YM,[],'all')))+DY(2));
                 if a < fig.trsh
                     a = fig.trsh;
                 end
@@ -139,6 +128,33 @@ classdef Fig_Tools
                     LY{k}             = LX{i};
                     P {k}             = plot(X(:,i),Y(:,i),M(i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
                     [YV(k,1),YV(k,2)] = MinMaxElem(Y(j{i},i));
+                end
+            end
+        end
+        %  > 2.2.2. -------------------------------------------------------
+        function [LY,P1,YV] = Var_1D_2(fig,M1,LX,X1,Y1)           
+            [X2(1),X2(2)] = MinMaxElem(X1);
+            hold on;
+            k = 0;
+            for i = 1:size(Y1,2)
+                k                 = k+1;
+                LY{k}             = LX{i};
+                P1{k}             = fplot(Y1{1,i},X2,M1(1,i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
+                P2{k}             =  plot(X1,Y1{2,i},M1(2,i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
+                [YV(k,1),YV(k,2)] = MinMaxElem(Y1{2,i});
+            end
+        end
+        %  > 2.2.3. -------------------------------------------------------
+        function [LY,P,YV] = Var_1D_3(fig,M,LX,X,Y)
+            hold on;
+            k = 0;
+            for i = 1:size(Y,2)
+                j = Y(i) > fig.trsh; Y(~j) = 0;
+                if j
+                    k                 = k+1;
+                    P {k}             = line([X(1),X(end)],[Y(i),Y(i)],'Color',fig.C(i,:),'Linewidth',fig.LW,'Linestyle',M(i));
+                    LY{k}             = LX{i};
+                    [YV(k,1),YV(k,2)] = MinMaxElem(Y(i));
                 end
             end
         end
@@ -190,18 +206,7 @@ classdef Fig_Tools
             %  > Title.
             title(y.title,'interpreter','latex');
         end
-        %  > 3.1.3. -------------------------------------------------------
-        function [] = Map_2D_3(fig)
-            if fig.zoom
-                zp = BaseZoom;
-                zp.plot(fig);
-            end
-            if fig.exp
-                set     (gcf,'PaperSize',[29.7,21.5],'PaperPosition',[0,0,29.7,21.5]);
-                print   (gcf,strcat(fig.fid,'.pdf'),'-dpdf','-r500');
-                movefile(    strcat(fig.fid,'.pdf'),Directory);
-            end
-        end
+        
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
         function [] = Var_2D_1(V,C,M,LW)
@@ -247,6 +252,18 @@ classdef Fig_Tools
                     return;
             end
             f = v(randperm(numel(v),1));
+        end
+        %  > 3.3.2. -------------------------------------------------------
+        function [] = Export(fig)
+            if fig.zoom
+                zp = BaseZoom;
+                zp.plot(fig);
+            end
+            if fig.exp
+                set     (gcf,'PaperSize',[29.7,21.5],'PaperPosition',[0,0,29.7,21.5]);
+                print   (gcf,strcat(fig.fid,'.pdf'),'-dpdf','-r500');
+                movefile(    strcat(fig.fid,'.pdf'),fig.dir);
+            end
         end
     end
 end

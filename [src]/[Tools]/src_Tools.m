@@ -93,7 +93,20 @@ classdef src_Tools
         %% > 2. -----------------------------------------------------------
         % >> Sort structures.
         % >> 2.1. ---------------------------------------------------------
-        %  > Sort "msh" (2D) fields.
+        %  > Sort "msh" (1D).
+        function [msh] = Sort_1D_msh(msh)
+            % >> msh.
+            msh     = orderfields(msh    ,{'c','d','f'});
+            %  > c.
+            msh.c   = orderfields(msh.c  ,{'f','Nc','Volume','Xc'});
+            msh.c.f = orderfields(msh.c.f,{'if','Sf'});
+            %  > d.
+            msh.d   = orderfields(msh.d  ,{'h'});
+            %  > f.
+            msh.f   = orderfields(msh.f  ,{'ic','Nf','Xv'});
+        end
+        % >> 2.2. ---------------------------------------------------------
+        %  > Sort "msh" (2D).
         function [msh] = Sort_msh_2D(msh)
             % >> msh.
             msh        = orderfields(msh       ,{'c','d','f','flag','v','struct'});

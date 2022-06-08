@@ -3,65 +3,75 @@ classdef A1_1D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Set up input variables #1.
-        function [inp] = Set_inp_1(h)
-            %  > msh.
-            %    ├─ Examples:
-            %        ├─ Example 1: Uniform.
-            %        └─ Example 2: Non-uniform.
-            %                    ├─ Random.
-            %                    └─ Smooth non-uniform.
-            %                        ├─  A: Stretching parameter.
-            %                        └─  c: Clustered location.
-            inp.m.Uniform      = 0;                          %  > Set uniform grid(?).
-            if ~inp.m.Uniform
-                inp.m.A        = 5.0;                        %  > Stretching parameter.
-                inp.m.c        = 0.5;                         %  > Clustered location.
+        function [inp] = Set_msh(h,t)
+            inp.h   = h;                            %  > Grid size.
+            inp.Lim = [0,1];                        %  > Grid limits(x).
+            inp.t   = t;                            %  > #Example.
+            if inp.t ~= 1
+                switch inp.t
+                    case 2, inp.x(1) = 5.00;        %  > Stretching (α).
+                            inp.x(2) = 0.50;        %  > Clustered location (x0).
+                    case 3, inp.x(1) = 1.25;        %  > Distortion (q).
+                    otherwise
+                        return;
+                end
             end
-            inp.m.XLim         = [0,1];                       %  > Grid limits(X).
-            inp.m.h            = h;                           %  > Grid size.
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up input variables #2.
-        function [inp] = Set_inp_2(v)
-            %  > Analytic function.
-            syms x;
-            c                  = v(1);
-            i                  = v(2);
-            f                  = exp(-i.*((x-c).^2));         %  > f.
-            inp.f              = matlabFunction(f);           %  > f handle.
-            %  > Boundary treatment.
-            inp.b.t            = ["Dirichlet","Dirichlet"];   %  > West(1)/East(2).
-            if any(inp.b.t ~= "Dirichlet") && any(inp.b.t ~= "Neumann") && any(inp.b.t ~= "Robin")
+        function [inp] = Set_inp(t,v)
+            %  > ----------------------------------------------------------
+            %  > Boundary conditions.
+            inp.b.t(1)         = "Dirichlet";       %  > West(W).
+            inp.b.t(2)         = "Dirichlet";       %  > East(E).
+            inp.b.extension(1) = 1;                 %  > Extension layer for boundary face fit.
+            inp.b.extension(2) = 0;                 %  > Extension layer for boundary face fit(error estimator).
+            if ~all(ismember(inp.b.t,["Dirichlet","Neumann","Robin"]))
                 return;
             end
-            inp.b.change(1)    = 1;                           %  > Add n extra points for boundary face fit.
-            inp.b.change(2)    = 0;                           %  > Add n extra points for boundary face fit (error estimator).
-            %  > Coefficients.
-            inp.c(1)           =  1;                          %  > Convection.
-            inp.c(2)           = -1;                          %  > Diffusion.
+            %  > ----------------------------------------------------------
+            %  > Coefficients/analytic function handle(s).
+            fh                 = A1_1D.fh_cf(t,v);
+            inp.c              = fh.c;              %  > c.
+            inp.f              = fh.f;              %  > f.
+            %  > ----------------------------------------------------------
             %  > Polynomial fit.
-            inp.p              = [1,1];                       %  > Convection(1)/Diffusion(2).
-            if any(rem(inp.p,2) == 0)                         %  > Allow only p=1,3,5,7,9,etc.
+            inp.p.p(1)         = 1;                 %  > Convection(x).
+            inp.p.p(2)         = 1;                 %  > Diffusion (x).
+            %  > ----------------------------------------------------------
+            %  > P-Adaptation.
+            inp.p.t            = 0;
+            inp.p.n            = 2;                 %  > Maximum number of cycles.
+            inp.p.e            = 1.0E-10;           %  > Minimum global discretization/truncation error.
+            inp.p.trsh         = 0.95;              %  > Treshold for face selection based on maximum face truncation error (%).
+            if ~(inp.p.trsh <= 1)
                 return;
             end
-            %  > P-adaptation.
-            %  > #1.
-            inp.p_adapt.allow  = 0;                           %  > Allow p-adaptation(?).
-            inp.p_adapt.nc     = 50;                          %  > Maximum number of cycles.
-            inp.p_adapt.ec_m   = 1.0E-10;                     %  > Minimum (global) discretization error.
-            inp.p_adapt.lambda = 0.85;                        %  > Treshold for face selection based on maximum face truncation error (%).
-            if ~(inp.p_adapt.lambda < 1)
-                return;
+            %  > ----------------------------------------------------------
+            %  > Plot.
+            inp.plot           = [0,1,0];
+        end
+        % >> 1.3. ---------------------------------------------------------
+        %  > 1.3.1. -------------------------------------------------------
+        function [fh] = fh_cf(t,v)
+            %  > Auxiliary variables.
+            c = [1,-1];
+            
+            %  > ch.
+            for i = 1:numel(c)
+                switch t(1)
+                    case 1, fh.c{i} = @(x) repmat(c(i),size(x));
+                    otherwise
+                        return;
+                end
             end
-            %  > #2.
-            inp.p_adapt.opt(1) = 0;                           %  > Use higher-order solution(?).
-            inp.p_adapt.opt(2) = 0;                           %  > Add lower-order (predicted) cell truncation error as source term(?).
-            if all(inp.p_adapt.opt)                           %  > Only allow w/ lower-order solution.
-                return;
+            %  > fh.
+            switch t(2)
+                case 1, fh.f = @(x) sin(pi.*(v(1).*x+v(2)));
+                case 2, fh.f = @(x) exp(-v(1).*(x-v(2)).^2);
+                otherwise
+                    return;
             end
-            %  > Truncated terms.
-            inp.t_terms.allow  = 0;                           %  > Compute truncated terms' magnitude(?).
-            inp.t_terms.n      = [3,3];                       %  > Number of terms: Convection(1)/Diffusion(2).
         end
     end
 end

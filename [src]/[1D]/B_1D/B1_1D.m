@@ -2,176 +2,125 @@ classdef B1_1D
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        %  > Update stencil coordinates,etc.
-        function [s] = Update_1(msh,f,s,u,ch)
-            s        = B1_1D.Update_sc(msh,f,s,u,ch);
+        %  > Initialize field "s" (stencil cell/face indices, coordinates, coefficents, etc.).
+        function [s] = Initialize_s(inp,f,nc,ns,Nc,Nf,Xc,Xv)
+            A = [0,2];
+            for i = 1:ns
+                %  > Fiels: "i", "logical" and "xt".
+                s{i}.i       = cell(Nf,nc);
+                s{i}.logical = cell(Nf,nc);
+                s{i}.xt      = cell(Nf,nc);
+                %  > Field: "u".
+                for j = 1:numel(inp.p.p)
+                    s{i}.u.p   (:,j) = repelem(inp.p.p(j)+A(i),Nf,1);
+                    s{i}.u.s{j}(:,1) = 1:Nf;
+                end
+                %  > Field: "x".
+                for j = ["a","x"]
+                    s{i}.x.vf. (j) = cell (Nf,nc);
+                    s{i}.x.xfV.(j) = zeros(Nf,nc); %  > \phi_f*V and \nabla\phi_f*V.
+                    if j == "a"
+                        s{i}.x.nv.(j) = f.fh.f.f(Xc);
+                        for k = 1:nc
+                            s{i}.x.xfV.(j)(:,k) = f.fh.f.f(Xv).*inp.c{k}(Xv);
+                        end
+                    else
+                        s{i}.x.nv.(j) = zeros(Nc,1);
+                    end
+                end
+            end
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > Update stencil coefficients,etc.
-        function [x] = Update_2(inp,msh,f,s,u,x)
-            x        = B1_1D.Update_sx(inp,msh,f,s,u,x);
-        end
-        
-        %% > 2. -----------------------------------------------------------
-        % >> 2.1. ---------------------------------------------------------
-        %  > Update stencil coordinates.
-        function [s] = Update_sc(msh,f,s,u,ch)
+        %  > Update stencil cell/face indices, coordinates, etc.
+        function [s] = Update_ss(inp,msh,f,s,ext)
             %  > Auxiliary variables.
             Nc = msh.c.Nc;
             Nf = msh.f.Nf;
             Xc = msh.c.Xc;
             Xv = msh.f.Xv;
             
-            for i = 1:size(u.s,2)
-                if isempty(u.s{i})
+            for i = 1:numel(s.u.s)
+                if isempty(s.u.s{i})
                     continue;
                 else
-                    for j  = u.s{i}'
-                        p  = u.p(j,i);
-                        
+                    for j  = s.u.s{i}', p = s.u.p(j,i);
                         %  > Stencil cell/face indices.
                         nb = ceil(p./2);
                         ns = j-nb:j+nb-1;
-                        %  > Check whether stencil reaches any of the boundaries and shift it accordingly.
+                        %  > Check whether the stencil reaches any of the boundaries...
                         if any(ns <= 0)
                             % >> WB.
                             %  > Add cell(s) to the right(?).
-                            if ~ch || ~ B1_1D.Change_bd(i,j,f.bd.t(1),Nf)
+                            if ~ext || ~ B1_1D.Change_bd(i,j,f.bd.t(1),Nf)
                                 sc = 1:p;
                             else
                                 sc = 1:p+1;
                             end
-                            sf      = 1;
-                            si      = [sf;sc'];
-                            xt      = [f.bd.x(sf),Xc(sc)'];
+                            si      = [1;sc'];
                             logical = [false;true(numel(sc),1)];
+                            xt      = [Xv(1),Xc(sc)'];
                         elseif any(ns >= Nf)
                             % >> EB.
                             %  > Add cell(s) to the left(?).
-                            if ~ch || ~ B1_1D.Change_bd(i,j,f.bd.t(2),Nf)
+                            if ~ext || ~ B1_1D.Change_bd(i,j,f.bd.t(2),Nf)
                                 sc = Nc-(p-1):Nc;
                             else
                                 sc = Nc-p:Nc;
                             end
-                            sf      = Nf;
-                            si      = [sc';sf];
-                            xt      = [Xc(sc)',f.bd.x(2)];
+                            si      = [sc';Nf];
                             logical = [true(numel(sc),1);false];
+                            xt      = [Xc(sc)',Xv(Nf)];
                         else
-                            sc      = ns;
-                            sf      = [];
-                            si      = sc';
-                            xt      = Xc(sc)';
-                            logical = true(numel(sc),1);
+                            si      = ns';
+                            logical = true(numel(ns),1);
+                            xt      = Xc(ns)';
                         end
-                        %  > Update 's' field.
-                        s.c      {j,i} = sc';
-                        s.f      {j,i} = sf';
+                        %  > "tfV".
+                        xf       = msh.f.Xv(j);
+                        Df       = B1_1D.Assemble_Df(inp,f.bd,xf,xt);
+                        df       = zeros(1,numel(xt));
+                        df (1,i) = 1;
+                        tfV      = inp.c{i}(xf).*df*inv(Df);
+                        %  > Update field "s".
                         s.i      {j,i} = si;
                         s.logical{j,i} = logical;
-                        s.t      {j,i} = xt;
+                        s.xt     {j,i} = xt;
+                        s.tfV    {j,i} = tfV;
                     end
                 end
             end
         end
-        %  > 2.1.1. -------------------------------------------------------
-        %  > Auxiliary function: change boundary formulation (flag).
+        %  > 1.2.1. -------------------------------------------------------
+        %  > Auxiliary function #1: change boundary formulation.
         function [flag] = Change_bd(i,j,bd_t,Nf)
-            switch i
-                case 1
-                    if (j == 1 || j == Nf) && bd_t == "Dirichlet"
-                        flag = 0;
-                    else
-                        flag = 1;
-                    end
-                case 2
-                    if (j == 1 || j == Nf) && bd_t == "Neumann"
-                        flag = 0;
-                    else
-                        flag = 1;
-                    end
-                otherwise
-                    return;
-            end
-        end       
-        % >> 2.2. ---------------------------------------------------------
-        %  > Update stencil coefficients.
-        function [x] = Update_sx(inp,msh,f,s,u,x)
-            for i = 1:size(u.s,2)
-                if ~isempty(u.s{i})
-                    for j = u.s{i}'
-                        %  > Df.
-                        xt        = s.t{j,i};
-                        p         = 1:length(xt);
-                        gv        = inp.c(2)./inp.c(1);
-                        Df        = B1_1D.Assemble_Df(f.bd,p,xt,msh.f.Xv(j),gv);
-                        %  > Tf.
-                        df        = zeros(1,length(xt));
-                        df  (1,i) = 1;
-                        Inv       = inv(Df);
-                        Tf        = df*Inv;
-                        Tf_V      = inp.c(i).*Tf;
-                        %  > Update 'x' field.
-                        x.if  {j,i} = Inv;
-                        x.Tf  {j,i} = Tf;
-                        x.Tf_V{j,i} = Tf_V;
-                    end
-                end
+            if ((i == 1 && bd_t == "Dirichlet") || (i == 2 && bd_t == "Neumann")) && (j == 1 || j == Nf)
+                flag = false;
+            else
+                flag = true;
             end
         end
-        %  > 2.2.1. -------------------------------------------------------
-        %  > Check boundary type and assemble matrix Df accordingly.
-        function [Df] = Assemble_Df(f_bd,p,xt,x,gv)
+        %  > 1.2.2. -------------------------------------------------------
+        %  > Auxiliary function #2: check boundary type and assemble matrix Df accordingly.
+        function [Df] = Assemble_Df(inp,f_bd,xf,xt)
             %  > Auxiliary variables.
-            a  = length(p);
-            b  = length(xt);
-            Df = zeros (b,a);
-            
-            %  > Assemble Df...
             bd = ismembc(xt,f_bd.x);
-            if any(bd) && f_bd.t(f_bd.x == xt(bd)) ~= "Dirichlet"
+            p  = numel  (xt);
+            Df = zeros  (p);
+            
+            if any(bd) && f_bd.t(arrayfun(@(x) find(f_bd.x == x),xt(bd))) ~= "Dirichlet"
                 switch f_bd.t(f_bd.x == xt(bd))
                     case "Neumann"
-                        i          = p;
-                        j          = p(1:end-1);
-                        k          = xt == f_bd.x(f_bd.x == xt(bd));
-                        Df(~k,1:a) = (xt(~k)-x)'.^(i-1);
-                        Df( k,1:a) = [0,j.*(xt(k)-x)'.^(j-1)];
+                        Df(~bd,:) = (xt(~bd)-xf)'.^((1:p)-1);
+                        Df( bd,:) = (xt( bd)-xf)'.^((1:p)-2).*[0:p-1]; Df(isinf(Df) | isnan(Df)) = 0;
                     case "Robin"
-                        i          = p;
-                        j          = p(1:end-1);
-                        k          = xt == f_bd.x(f_bd.x == xt(bd));
-                        Df( i,1:a) = (xt(i)-x)'.^(i-1);
-                        Df( k,1:a) = Df( k,i)-[0,j.*(xt(k)-x)'.^(j-1)].*gv;
+                        Df        = (xt     -xf)'.^((1:p)-1);
+                        DG        = (xt( bd)-xf)'.^((1:p)-2).*[0:p-1]; DG(isinf(DG) | isnan(DG)) = 0;
+                        Df( bd,:) = Df(bd,:)+inp.c{2}(xf)./inp.c{1}(xf).*DG;
                     otherwise
                         return;
                 end
             else
-                i         = p;
-                j         = 1:b;
-                Df(j,1:a) = (xt(j)-x)'.^(i-1);
-            end
-        end
-        %  > 2.2.2. -------------------------------------------------------
-        %  > Update truncated terms' magnitude (w/ analytic field).
-        function [em] = Update_t_terms(inp,msh,em,f,n,s,u,x)
-            for i = 1:size(u.s,2)
-                if ~isempty(u.s{i})
-                    for j  = u.s{i}'
-                        %  > Df(extended).
-                        xt = s.t{j,i};
-                        p  = length(xt)+1:length(xt)+n(i);
-                        gv = inp.c(2)./inp.c(1);
-                        Df = B1_1D.Assemble_Df(f.bd,p,xt,msh.f.Xv(j),gv);
-                        %  > Derivatives up to...
-                        for k = 1:length(p)
-                            Df(:,k) = Df(:,k).*f.fh.f.d2{p(k)-1}(msh.f.Xv(j));
-                        end
-                        %  > Truncated terms' magnitude (approximated/finite truncation error).
-                        em.f    {i}(j,p) = x.Tf{j,i}*Df;
-                        em.f_abs{i}      = abs(em.f{i});
-                    end
-                end
+                Df = (xt-xf)'.^((1:p)-1);
             end
         end
     end
