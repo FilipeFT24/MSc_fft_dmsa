@@ -7,7 +7,7 @@ classdef A3_2D
             %  > "fh" (function handles).
             f.fh = A3_2D.Update_fh(inp);
             %  > "bd" (boundary values).
-            f.bd = A3_2D.Update_bd(inp,msh);
+            f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
             %  > "st" (source term).
             f.st = A3_2D.Update_st(msh,f.fh.func.f);
             %  > "qd" (1D quadrature).
@@ -38,20 +38,33 @@ classdef A3_2D
         % >> 1.3. ---------------------------------------------------------
         %  > Update field "bd" (boundary face indices/type).
         %  > NOTE: hard coded for square domain.
-        function [bd] = Update_bd(inp,msh)
+        function [bd] = Update_bd(inp,msh,fh)
             %  > "i".
             bd.i(:,1) = find(~msh.f.logical);
-            %  > "t".
-            for i = 1:numel(bd.i)
-                c       = msh.f.ic  {bd.i(i,1)};
-                Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
-                %  > Select (based on Sf)...
-                if     Sf(i,1) >  0 && Sf(i,2) == 0, bd.t(i,1) = 1; %  > East (E).
-                elseif Sf(i,1) == 0 && Sf(i,2) >  0, bd.t(i,1) = 2; %  > North(N).
-                elseif Sf(i,1) <  0 && Sf(i,2) == 0, bd.t(i,1) = 3; %  > West (W).
-                elseif Sf(i,1) == 0 && Sf(i,2) <  0, bd.t(i,1) = 4; %  > South(S).
+            %  > "v".
+            for i  = 1:numel(bd.i)
+                c  = msh.f.ic  {bd.i(i,1)};
+                Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
+                %  > Identify boundary type...
+                if     Sf(1) >  0 && Sf(2) == 0, bd_t = 1; %  > East (E).
+                elseif Sf(1) == 0 && Sf(2) >  0, bd_t = 2; %  > North(N).
+                elseif Sf(1) <  0 && Sf(2) == 0, bd_t = 3; %  > West (W).
+                elseif Sf(1) == 0 && Sf(2) <  0, bd_t = 4; %  > South(S).
                 else
                     return;
+                end
+                %  > Compute boundary value.
+                xf_c = msh.f.xy.c(bd.i(i),:);
+                switch inp.b.t(bd_t)
+                    case "Dirichlet"
+                        bd.v(i,1) = fh.f(xf_c);
+                    case "Neumann"
+                        bd.v(i,1) = Sf*[fh.d{1}(xf_c);fh.d{2}(xf_c)];
+                    case "Robin"
+                        for j = 1:size(inp.c,2)
+                            GoV(j,1) = inp.c{2,j}(xf_c)./inp.c{1,j}(xf_c);
+                        end
+                        bd.v(i,1) = Sf*[fh.f(xf_c);fh.f(xf_c)]+Sf*[GoV(1).*fh.d{1}(xf_c);GoV(2).*fh.d{2}(xf_c)];
                 end
             end
         end
