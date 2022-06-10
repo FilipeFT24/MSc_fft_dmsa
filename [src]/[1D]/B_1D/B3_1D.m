@@ -18,7 +18,7 @@ classdef B3_1D
             %  > Field: "m" (matrices).
             obj.m = B2_1D.Initialize_m(nc,ns,Nc);
             %  > Field: "s" (stencil cell/face indices, coordinates, coefficents, etc.).
-            obj.s = B1_1D.Initialize_s(inp,obj.f,nc,ns,Nc,Nf,msh.c.Xc,msh.f.Xv);
+            obj.s = B1_1D.Initialize_s(inp,obj.f,nc,ns,Nc,Nf,msh.c.Xc);
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update all fields from structure "obj".

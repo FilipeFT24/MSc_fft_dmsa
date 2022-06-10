@@ -149,23 +149,29 @@ classdef B1_2D
                                 bd_t  = inp.b.t(f.bd.t(f.bd.i == k));
                                 ic    = msh.f.ic  {k};
                                 Sf    = msh.c.f.Sf{ic}(msh.c.f.if == k,:);
-                                %  > Assemble matrices D and Dw.
+                                %  > Assemble matrices...
                                 c     = B1_2D.C1_1(p);
-                                D     = B1_2D.Assemble_D(inp,msh,c,sc_t,src_Tools.setdiff(sf_t,k),xf);
-                                %  > Apply constraints...
+                                D     = Assemble_D();
                                 cls_m = B1_2D.Assemble_cls_m(inp,msh,bd_t,f,p,Sf,msh.f.xy.c(k,:),x_ip);
-                                cls_t = src_Tools.cls_t(cls_m.b,cls_m.C,D.D,D.D'*D.Dw);
+                                cls_t = src_Tools.CLS_m(cls_m.b,cls_m.C,Df,Df'*Dwf);
+                                
+                                
+                                
+                                
+                                cls_t = B1_2D.Assemble_cls_t(inp,msh,c,cls_m,sc_t,src_Tools.setdiff(sf_t,k),xf);
                                 %  > tfV.
                                 for i_tfV = 1:numel(cls_t)
                                     tfV{i_tfV} = sum(w_ip./2.*dfV*cls_t{i_tfV},1);
                                 end
                             else
                                 % >> ULS.
-                                %  > Assemble matrices D and Dw.
-                                c     = B1_2D.C1_1(p);
-                                D     = B1_2D.Assemble_D(inp,msh,c,sc_t,sf_t,xf);
-                                %  > tfV.
-                                tfV   = sum(w_ip./2.*dfV*((D.Dw'*D.D)\D.Dw'),1);
+                                tfV = B1_2D.Assemble_uls_t();
+                                
+                                
+                                
+                                
+                                
+                                
                             end
                             %  > Update field "s".
                             if ~isempty(sf_t)
@@ -302,6 +308,8 @@ classdef B1_2D
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
+        %  > CLS.
+        %  > 1.3.1.1. -----------------------------------------------------
         %  > Check boundary condition and assemble matrices b and C accordingly.
         function [cls_m] = Assemble_cls_m(inp,msh,bd_t,f,p,Sf,xf_c,x_ip)
             switch bd_t
@@ -330,14 +338,14 @@ classdef B1_2D
                     %  > C.    
             end
         end
-        %  > 1.3.2. -------------------------------------------------------
+        %  > 1.3.1.2 ------------------------------------------------------
         function [D] = Assemble_D(inp,msh,c,sc_t,sf_t,xf)
             %  > dd.
             xt   = cat(1,msh.c.c.xy.c(sc_t,:),msh.f.xy.c(sf_t,:));
             dd   = xt-xf;
             %  > Assemble matrices...
             D.D  = c.c.*dd(:,1).^c.e(1,:).*dd(:,2).^c.e(2,:);
-            D.Dw = D.D.*inp.m.wf(sqrt(sum(dd.^2,2)));
+            D.Dw = Df.*inp.m.wf(sqrt(sum(dd.^2,2)));
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Compute polynomial regression coefficients/exponents.
@@ -395,5 +403,159 @@ classdef B1_2D
         end
         %  > 1.4.2. -------------------------------------------------------
         %  > Direct.
+        %  > 1.4.2.1. -----------------------------------------------------
+        %  > \phi_f.
+        function [t] = C1_2(p)
+        end
+        %  > 1.4.2.2. -----------------------------------------------------
+        %  > \nabla\phi_f(x or y).
+        function [t] = C2_2(p,k)
+        end
+        %  > 1.4.2.3. -----------------------------------------------------
+        %  > \nabla\phi_f(x and y).
+        function [t] = C3_2(p)
+            t{1} = B1_2D.C2_2(p,1); %  > x.
+            t{2} = B1_2D.C2_2(p,2); %  > y.
+        end
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+%         %  > Update stencil coefficients.
+%         function [x] = Update_sx(inp,msh,f,s,u,x)
+%             % >> gf.
+%             for i = 1:numel(u.s)
+%                 for j = 1:numel(u.s{i})
+%                     if ~isempty(u.s{i}{j})
+%                         for k = u.s{i}{j}', p = max(u.p{i}{j}(k,:)); p = 7;
+%                             x.gf{k,i}{j} = B1_2D.Gauss_f(inp.c{i,j},p,f.qd.xu,msh.f.xy.v{k});
+%                         end
+%                     end
+%                 end
+%             end
+%             % >> Tf_V.
+%             for i = 1:numel(u.s)
+%                 for j = 1:numel(u.s{i})
+%                     if ~isempty(u.s{i}{j})
+%                         for k = u.s{i}{j}', p = u.p{i}{j}(k,:);
+%                             %  >> d_cf.
+%                             xc = msh.f.xy.c(k,:);
+%                             xf = s.xt      {k,i}{j};
+%                             %  > Remove (boundary) face "k" from "xt".
+% %                             if ~msh.f.logical(k)
+% %                                 l       = find(~s.logical{k,i}{j});
+% %                                 m       = l(cat(1,s.sf{k,i}{j}{:}) == k);
+% %                                 xf(m,:) = [];
+% %                             end
+%                             d_fc = xf-xc;
+%                             % >> Df.
+%                             C1       = B1_2D.pr_1       (inp,p);
+%                             [Df,Dwf] = B1_2D.Assemble_Df(inp,C1,d_fc);
+%                             %  > Add gauss points' constraints...
+%                             if ~msh.f.logical(k)
+%                                 d_gc    = x.gf{k,i}{j}.xy-xc;
+%                                 b       = x.gf{k,i}{j}.v;
+%                                 [Cf,~]  = B1_2D.Assemble_Df(inp,C1,d_gc);
+%                                 %Df      = cat(1,Cf,Df);
+%                                 %Dwf     = cat(1,Cf,Dwf);
+%                                 [Gf,Hf] = B1_2D.Assemble_Pf(b,Cf,Df,Dwf);
+%                             else
+%                                 Pf     = (Dwf'*Df)\Dwf';
+%                             end
+%                             
+%                             Pf     = (Dwf'*Df)\Dwf';%-Gf;
+%                             %  > Tf_V.
+%                             switch i
+%                                 case 1, C2 = C1;
+%                                 case 2, C2 = B1_2D.pr_2(inp,p,j);
+%                             end
+%                             Tf_V = B1_2D.Assemble_Tf_V(d_gc,x.gf{k,i}{j}.v,C2,Pf);
+%                             %  > Update field "x".
+%                             x.Tf_V{k,i}{j} = Tf_V;
+%                         end
+%                     end
+%                 end
+%             end
+%         end
+%         %  > 2.3.1. -------------------------------------------------------
+%         %  > 2.3.1.1. -----------------------------------------------------
+%         %  > Assemble Df (cell dependent matrix).
+%         function [Df,Dwf] = Assemble_Df(inp,C1,d_cf)
+%             %  > Df.
+%             Df = C1.c.*d_cf(:,1).^C1.e(1,:).*d_cf(:,2).^C1.e(2,:);
+%             %  > Df*W.
+%             if ~inp.m.WLS.t
+%                 Dwf = Df;
+%             else
+%                 w   = inp.m.WLS.Wf(sqrt(sum(d_cf.^2,2)));
+%                 Dwf = bsxfun(@times,Df,w);
+%             end
+%             Dwf = Df;
+%         end
+%         %  > 2.3.1.2. -----------------------------------------------------
+%         %  > Assemble Gf and Hf.
+%         function [Gf,Hf] = Assemble_xx(b,Cf,Df,Dwf)
+%             %  > Ef and Ff.
+%             A1 = Dwf'*Df;
+%             Ef = A1\Cf';
+%             Ff = A1\Dwf';
+%             %  > Gf and Hf.
+%             A2 = Cf*Ef;
+%             A3 = Cf'/A2;
+%             Gf = A1\(Dwf'-A3*(Cf*Ff));
+%             Hf = A1\(A3*b);
+%         end
+%         %  > 2.3.2. -------------------------------------------------------
+%         %  > 2.3.2.1. -----------------------------------------------------
+%         %  > Handle (1D) face quadrature.
+%         function [g] = Gauss_f(c,p,xu,xy_fv)
+%             %  > "Q" structure.
+%             Q    = A3_2D.Q_1D_2(ceil(p./2));
+%             %  > (xg,yg).
+%             xy_g = xu(Q.Points,xy_fv);
+%             %  > "g" structure.
+%             g.xy = xy_g;
+%             g.v  = c(xy_g);
+%             g.w  = Q.Weights./2;
+%         end
+%         %  > 2.3.2.2. -----------------------------------------------------
+%         %  > Assemble matrix Tf_V.
+%         function [Tf_V] = Assemble_Tf_V(dg,vg,t,Pf) 
+%             %  > df_V.
+%             df   = t.c.*dg(:,1).^t.e(1,:).*dg(:,2).^t.e(2,:);
+%             df_V = df.*vg;
+%             %  > Tf_V.
+%             Tf_V = sum(df_V*Pf,1);
+%         end
     end
 end

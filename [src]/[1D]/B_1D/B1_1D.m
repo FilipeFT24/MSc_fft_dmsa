@@ -3,12 +3,13 @@ classdef B1_1D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Initialize field "s" (stencil cell/face indices, coordinates, coefficents, etc.).
-        function [s] = Initialize_s(inp,f,nc,ns,Nc,Nf,Xc,Xv)
+        function [s] = Initialize_s(inp,f,nc,ns,Nc,Nf,Xc)
             A = [0,2];
             for i = 1:ns
-                %  > Fiels: "i", "logical" and "xt".
+                %  > Fiels: "i", "logical", "tfV" and "xt".
                 s{i}.i       = cell(Nf,nc);
                 s{i}.logical = cell(Nf,nc);
+                s{i}.tfV     = cell(Nf,nc);
                 s{i}.xt      = cell(Nf,nc);
                 %  > Field: "u".
                 for j = 1:numel(inp.p.p)
@@ -18,16 +19,10 @@ classdef B1_1D
                 %  > Field: "x".
                 for j = ["a","x"]
                     s{i}.x.vf. (j) = cell (Nf,nc);
-                    s{i}.x.xfV.(j) = zeros(Nf,nc); %  > \phi_f*V and \nabla\phi_f*V.
-                    if j == "a"
-                        s{i}.x.nv.(j) = f.fh.f.f(Xc);
-                        for k = 1:nc
-                            s{i}.x.xfV.(j)(:,k) = f.fh.f.f(Xv).*inp.c{k}(Xv);
-                        end
-                    else
-                        s{i}.x.nv.(j) = zeros(Nc,1);
-                    end
+                    s{i}.x.xfV.(j) = zeros(Nf,nc);
                 end
+                s{i}.x.nv.a = f.fh.f.f(Xc);
+                s{i}.x.nv.x = zeros(Nc,1); 
             end
         end
         % >> 1.2. ---------------------------------------------------------
@@ -84,8 +79,8 @@ classdef B1_1D
                         %  > Update field "s".
                         s.i      {j,i} = si;
                         s.logical{j,i} = logical;
-                        s.xt     {j,i} = xt;
                         s.tfV    {j,i} = tfV;
+                        s.xt     {j,i} = xt;
                     end
                 end
             end

@@ -6,17 +6,15 @@ classdef A3_2D
         function [f] = Initialize_f(inp,msh)
             %  > "fh" (function handles).
             f.fh = A3_2D.Update_fh(inp);
-            %  > "av" (analytic values).
-            f.av = A3_2D.Update_av(msh,f.fh.f);
             %  > "bd" (boundary values).
-            f.bd = A3_2D.Update_bd(inp,msh,f.fh.f);
+            f.bd = A3_2D.Update_bd(inp,msh);
             %  > "st" (source term).
             f.st = A3_2D.Update_st(msh,f.fh.func.f);
             %  > "qd" (1D quadrature).
             f.qd = A3_2D.Q_1D_1;
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > Update field "f.fh" (function handles).
+        %  > Update field "fh" (function handles).
         function [fh] = Update_fh(inp)
             %  > Symbolic variables.
             x = sym  ('x');
@@ -24,79 +22,41 @@ classdef A3_2D
             v = inp.c(1,:);
             g = inp.c(2,:);
             
-            %  > f.
-            f            = inp.f([x,y]);
-            df       (1) = diff (f,x);
-            fh.f.d   {1} = matlabFunction(df(1),'Vars',{[x,y]});
-            df       (2) = diff (f,y);
-            fh.f.d   {2} = matlabFunction(df(2),'Vars',{[x,y]});
-            fh.f.f       = matlabFunction(f    ,'Vars',{[x,y]});
-            %  > func.
-            func         = v{1}([x,y]).*df(1)+v{2}([x,y]).*df(2)+g{1}([x,y]).*diff(df(1),x)+g{2}([x,y]).*diff(df(2),y);
-            fh.func.f    = func;
+            %  > "f".
+            f              = inp.f([x,y]);
+            df       {1,1} = diff (f,x);
+            df       {1,2} = diff (f,y);
+            df       {2,1} = diff (df{1,1},x);
+            df       {2,2} = diff (df{1,2},y);
+            fh.f.d     {1} = matlabFunction(df{1,1},'Vars',{[x,y]});
+            fh.f.d     {2} = matlabFunction(df{1,2},'Vars',{[x,y]});
+            fh.f.f         = matlabFunction(f      ,'Vars',{[x,y]});
+            %  > "func".
+            fh.func.f      = v{1}([x,y]).*df{1,1}+v{2}([x,y]).*df{1,2}+...
+                g{1}([x,y]).*df{2,1}+g{2}([x,y]).*df{2,2};
         end
         % >> 1.3. ---------------------------------------------------------
-        %  > Update field "f.av" (analytic cell/face values).
-        function [av] = Update_av(msh,f)
-            av.c   (:,1) = f.f   (msh.c.c.xy.c);
-            av.f{1}(:,1) = f.f   (msh.f.xy.c);
-            av.f{2}(:,1) = f.d{1}(msh.f.xy.c);
-            av.f{2}(:,2) = f.d{2}(msh.f.xy.c);
-        end
-        % >> 1.4. ---------------------------------------------------------
-        %  > Update field "f.bd" (boundary face indices/values).
-        %  > NOTE: hard coded for square domain (boundaries are identified by outher face normals (Sf)).
-        function [bd] = Update_bd(inp,msh,f)
-            %  > (Boundary) face indices.
+        %  > Update field "bd" (boundary face indices/type).
+        %  > NOTE: hard coded for square domain.
+        function [bd] = Update_bd(inp,msh)
+            %  > "i".
             bd.i(:,1) = find(~msh.f.logical);
-            %  > Identify...
+            %  > "t".
             for i = 1:numel(bd.i)
                 c       = msh.f.ic  {bd.i(i,1)};
                 Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
-                %  > Select...
-                if     Sf(i,1) >  0 && Sf(i,2) == 0, bd.t(i,1) = 1; %  > East.
-                elseif Sf(i,1) == 0 && Sf(i,2) >  0, bd.t(i,1) = 2; %  > North.
-                elseif Sf(i,1) <  0 && Sf(i,2) == 0, bd.t(i,1) = 3; %  > West.
-                elseif Sf(i,1) == 0 && Sf(i,2) <  0, bd.t(i,1) = 4; %  > South.
+                %  > Select (based on Sf)...
+                if     Sf(i,1) >  0 && Sf(i,2) == 0, bd.t(i,1) = 1; %  > East (E).
+                elseif Sf(i,1) == 0 && Sf(i,2) >  0, bd.t(i,1) = 2; %  > North(N).
+                elseif Sf(i,1) <  0 && Sf(i,2) == 0, bd.t(i,1) = 3; %  > West (W).
+                elseif Sf(i,1) == 0 && Sf(i,2) <  0, bd.t(i,1) = 4; %  > South(S).
                 else
                     return;
                 end
             end
-            for i = 1:numel(bd.i)
-                bd_j{i} = find(bd.t == i);
-            end
-            %  > (Boundary) face values.
-            for i = 1:numel(inp.b.t)
-                bd_fi = bd_j{i};
-                xy_fc = msh.f.xy.c(bd.i(bd_j{i}),:);
-                switch inp.b.t(i)
-                    case "Dirichlet"
-                        %  > V = \phi(f).
-                        bd.v(bd_fi,1) = f.f(xy_fc);
-                    case "Neumann"
-                        %  > V = (\nabla\phi(f)_x,\nabla\phi(f)_y)*Sf.
-                        for j  = 1:numel(bd_fi)
-                            bd.v(bd_fi(j),1) = ...
-                                [f.d{1}(xy_fc(j,:)),f.d{2}(xy_fc(j,:))]*Sf(bd_fi(j),:)';
-                        end
-                    case "Robin"
-                        %  > Evaluate convective/diffusive coefficients at face centroid...
-                        for j = 1:size(inp.c,1)
-                            for k = 1:size(inp.c,2)
-                                c_fc{j}(:,k) = inp.c{j,k}(xy_fc);
-                            end
-                        end
-                        GoV = c_fc{2}./c_fc{1};
-                        %  > V = [GoV.*(\nabla\phi(f)_x,\nabla\phi(f)_y)]*Sf-\phi(f)*Sf.
-                        for j  = 1:numel(bd_fi)
-                            bd.v(bd_fi(j),1) = ...
-                                [f.f(xy_fc(j,:)),f.f(xy_fc(j,:))]*Sf(bd_fi(j),:)'-GoV(j,:).*[f.d{1}(xy_fc(j,:)),f.d{2}(xy_fc(j,:))]*Sf(bd_fi(j),:)';
-                        end
-                end
-            end
         end
-        % >> 1.5. ---------------------------------------------------------
-        %  > Update field "f.st" ((volumetric) source term).
+        % >> 1.4. ---------------------------------------------------------
+        %  > Update field "st" ((volumetric) source term).
         function [st] = Update_st(msh,func)
             %  > Map...
             map = A3_2D.Map(func);
@@ -110,10 +70,9 @@ classdef A3_2D
                 end
                 st(i,1) = sum(st_aux{i,1});
             end
-            st(isinf(st)) = 0;
-            st(isnan(st)) = 0;
+            st(isinf(st) | isnan(st)) = 0;
         end
-        %  > 1.5.1. -------------------------------------------------------
+        %  > 1.4.1. -------------------------------------------------------
         %  > Auxiliary function #1: (x,y)->(u,v): 1. x(u,v) = a[1](1-u-v)+b[1](u)+c[1](v), where xv([1],[2],[3]) = (a[1],b[1],c[1]).
         %                                         2. y(u,v) = a[2](1-u-v)+b[2](u)+c[2](v), where yv([1],[2],[3]) = (a[2],b[2],c[2]).
         function [map] = Map(f)
@@ -130,7 +89,7 @@ classdef A3_2D
             map.i = A3_2D.int(c,z,f);
             map.d = A3_2D.jac(c,z);
         end
-        %  > 1.5.2. -------------------------------------------------------
+        %  > 1.4.2. -------------------------------------------------------
         %  > Auxiliary function #2: set up integrand function (int_c).
         function [int_c] = int(c,z,f)
             %  > Substitute...
@@ -139,7 +98,7 @@ classdef A3_2D
             int_c = matlabFunction(sub_c,'Vars',{c,sym('u'),sym('v')});
             int_c = @(c)(@(u,v) int_c(c,u,v));
         end
-        %  > 1.5.3. -------------------------------------------------------
+        %  > 1.4.3. -------------------------------------------------------
         %  > Auxiliary function #3: compute (cell) jacobian (jac_c) and its absolute determinat (d_abs).
         function [d_abs] = jac(c,z)
             %  > Jacobian.
@@ -148,27 +107,27 @@ classdef A3_2D
             d_abs = abs(det(jac_c));
             d_abs = matlabFunction(d_abs,'Vars',{c});
         end
-        %  > 1.5.4. -------------------------------------------------------
+        %  > 1.4.4. -------------------------------------------------------
         %  > Auxiliary function #4: compute (cell) double integral ("v").
         function [st] = st_aux(map,xy_cv)
             st = map.d(xy_cv).*integral2(map.i(xy_cv),0,1,0,@(u) 1-u);
         end
-        %  > 1.5.5. -------------------------------------------------------
-        %  > 1.5.5.1. -----------------------------------------------------
+        %  > 1.4.5. -------------------------------------------------------
+        %  > 1.4.5.1. -----------------------------------------------------
         %  > Auxiliary function #5.1.
         function [qd] = Q_1D_1()
             qd.xu = @(u,x) x(1,:).*(1-u)./2+x(2,:).*(1+u)./2;
         end
-        %  > 1.5.5.2. -----------------------------------------------------
+        %  > 1.4.5.2. -----------------------------------------------------
         %  > Auxiliary function #5.2.
         function [Q] = Q_1D_2(n)
             %  > From "quadGaussLegendre(n,varargin)"...
-            A            = zeros(1,n); 
-            B            = sqrt (((1:n-1)./(2:n))./((2*(0:n-2)+1)./((0:n-2)+1).*(2*(1:n-1)+1)./((1:n-1)+1)));
-            J            = diag(B,1)+diag(A)+diag(B,-1);
+            A       = zeros(1,n);
+            B       = sqrt (((1:n-1)./(2:n))./((2*(0:n-2)+1)./((0:n-2)+1).*(2*(1:n-1)+1)./((1:n-1)+1)));
+            J       = diag(B,1)+diag(A)+diag(B,-1);
             %  > Weights/points.
-            [V,D]        = eig(J,'vector');
-            [Q.Points,I] = sort(D); Q.Weights = (2*V(1,I).^2)';
+            [V,D]   = eig(J,'vector');
+            [Q.x,I] = sort(D); Q.w = (2*V(1,I).^2)';
         end
     end
 end

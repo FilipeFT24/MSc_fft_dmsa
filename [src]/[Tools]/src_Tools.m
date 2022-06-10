@@ -91,9 +91,8 @@ classdef src_Tools
         end
         
         %% > 2. -----------------------------------------------------------
-        % >> Sort structures.
+        % >> Sort structures "msh" (1D/2D).
         % >> 2.1. ---------------------------------------------------------
-        %  > Sort "msh" (1D).
         function [msh] = Sort_1D_msh(msh)
             % >> msh.
             msh     = orderfields(msh    ,{'c','d','f'});
@@ -106,10 +105,9 @@ classdef src_Tools
             msh.f   = orderfields(msh.f  ,{'ic','Nf','Xv'});
         end
         % >> 2.2. ---------------------------------------------------------
-        %  > Sort "msh" (2D).
-        function [msh] = Sort_msh_2D(msh)
+        function [msh] = Sort_2D_msh(msh)
             % >> msh.
-            msh        = orderfields(msh       ,{'c','d','f','flag','v','struct'});
+            msh        = orderfields(msh       ,{'c','d','f','v','struct'});
             %  > c.
             msh.c      = orderfields(msh.c     ,{'c','f','h','logical','Nc','Volume'});
             msh.c.c    = orderfields(msh.c.c   ,{'nb','xy'});
@@ -147,19 +145,29 @@ classdef src_Tools
             z    = x(w(x));
         end
         % >> 3.4. ---------------------------------------------------------
+        %  > Compute CLS matrices.
+        function [t] = cls_t(b,C,D,DTD)
+            %  > Auxiliary variables.
+            C_DTD_CT    = C*(DTD\C');
+            C_DTD_DT    = C*(DTD\D');
+            %  > CLS terms (cell-dependent matrix/bd_v-dependent vector).
+            t       {1} = DTD\(D'-C'*(C_DTD_CT\C_DTD_DT));
+            t       {2} = DTD\(C'*(C_DTD_CT\b));
+        end
+        % >> 3.5. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = Set_n(E,V)
             if nargin == 1
                 L(1,:) = src_Tools.mean(E,1);
                 L(2,:) = src_Tools.mean(sqrt(E.^2),1);
-                L(3,:) = max         (E);
+                L(3,:) = max(E);
             else
                 L(1,:) = sum(E.*V)./sum(V);
                 L(2,:) = sum(sqrt((E.*V).^2))./sum(sqrt(V.^2));
                 L(3,:) = max(E);
             end
         end
-        % >> 3.5. ---------------------------------------------------------
+        % >> 3.6. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             [m,n]  = size(e);
@@ -167,7 +175,7 @@ classdef src_Tools
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j));
         end
-        % >> 3.6. ---------------------------------------------------------
+        % >> 3.7. ---------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(Td,Wd,V)
             save(strjoin([Wd,"V",Td,".mat"],''),"V");

@@ -3,7 +3,7 @@ classdef B2_2D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Initialize field "m" (matrices).
-        function [m] = Initialize_3(nc,ns,Nc)
+        function [m] = Initialize_m(nc,ns,Nc)
             for i = 1:ns
                 for j = 1:nc(1)
                     for k = 1:nc(2)

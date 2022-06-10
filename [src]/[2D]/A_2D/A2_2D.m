@@ -62,15 +62,8 @@ classdef A2_2D
             %  #1: Domain reference length.
             msh.d.h             = src_Tools.mean(msh.c.h.h,1);
             %  > ----------------------------------------------------------
-            % >> Uniform cartesian grid flag ("round" msh.c.h.h to 10 digits).
-            if size(CL_c,2) == 4 && range(round(msh.c.h.h,10)) == 0
-                msh.flag        = true;
-            else
-                msh.flag        = false;
-            end
-            %  > ----------------------------------------------------------
             %  > Sort fields...
-            msh                 = src_Tools.Sort_msh_2D(msh);
+            msh                 = src_Tools.Sort_2D_msh(msh);
         end
         
         %% > 2. -----------------------------------------------------------
