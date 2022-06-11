@@ -25,7 +25,7 @@ classdef B3_2D
         function [m,s] = Update_all(inp,msh,f,m,s)
             s          = B1_2D.Update_ss(inp,msh,f,s);
             m          = B2_2D.Update_m (msh,f,m,s);
-            s          = B2_2D.Update_sx(f,m,s,u,x);
+            s          = B2_2D.Update_sx(f,m,s);
         end
         
         %% > 2. -----------------------------------------------------------

@@ -159,15 +159,15 @@ classdef func
         %  > 3.4.2. -------------------------------------------------------
         %  > Compute CLS matrices.
         %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
-        function [t] = cls_t(b,C,D,DTD)
+        function [t] = cls_t(b,C,D,DwTD)
             %  > Auxiliary variables.
-            C_DTD_CT    = C *func.backlash(DTD,C');
-            C_DTD_DT    = C *func.backlash(DTD,D');
-            X           = C'*func.backlash(C_DTD_CT,C_DTD_DT);
-            Y           = C'*func.backlash(C_DTD_CT,b);
+            C_DwTD_CT   = C *func.backlash(DwTD,C');
+            C_DwTD_DT   = C *func.backlash(DwTD,D');
+            X           = C'*func.backlash(C_DwTD_CT,C_DwTD_DT);
+            Y           = C'*func.backlash(C_DwTD_CT,b);
             %  > CLS terms (cell-dependent matrix/bd_v-dependent vector).
-            t       {1} =    func.backlash(DTD,D'-X);
-            t       {2} =    func.backlash(DTD,Y);
+            t       {1} =    func.backlash(DwTD,D'-X);
+            t       {2} =    func.backlash(DwTD,Y);
         end
         % >> 3.5. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).

@@ -55,7 +55,7 @@ classdef B2_2D
                                 end
                                 %  > Add kf to the RHS (if CLS)...
                                 if ~isempty(s.tfV{n,i}{j}{2})
-                                    m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j)*s.tfV{n,i}{j}{2};
+                                    m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j).*s.tfV{n,i}{j}{2};
                                 end
                             end
                         end
@@ -74,30 +74,30 @@ classdef B2_2D
         end
         % >> 1.3. ---------------------------------------------------------
         %  > Update nodal solution/face values (multiplied by V).
-        function [x] = Update_4(f,m,s,u,x)
+        function [s] = Update_sx(f,m,s)
             %  > Update nodal solution.
-            x.nv.x.c = func.backlash(m.At,m.Bt);
+            s.x.nv.x = func.backlash(m.At,m.Bt);
 
             %  > Check if empty...
-            fn   = convertCharsToStrings(fieldnames(x.vf));
+            fn   = convertCharsToStrings(fieldnames(s.x.vf));
             fn_n = numel(fn);
             flag = false;
-            if all(cellfun(@isempty,x.vf.a),'all')
+            if all(cellfun(@isempty,s.x.vf.a),'all')
                 flag = true;
             end
             %  > Update only necessary/all entries for field "a"/"x".
-            for i = 1:numel(u.s)
-                for j = 1:numel(u.s{i})
+            for i = 1:numel(s.u.s)
+                for j = 1:numel(s.u.s{i})
                     for k = 1:fn_n
                         switch fn(k)
                             case "a"
                                 if ~flag
-                                    r = u.s{i}{j}';
+                                    r = s.u.s{i}{j}';
                                 else
-                                    r = 1:size(x.xf.a{i},1);
+                                    r = 1:size(s.x.xf.a{i},1);
                                 end
                             case "x"
-                                r = 1:size(x.xf.a{i},1);
+                                r = 1:size(s.x.xf.a{i},1);
                         end
                         for l = r
                             %  > Cell/face indices used to fit "k".
@@ -105,13 +105,13 @@ classdef B2_2D
                             a = s.i      {l,i}{j}( m);
                             b = s.i      {l,i}{j}(~m);
                             %  > Cell value(s).
-                            x.vf.(fn(k)){l,i}{j}(m,1) = x.nv.(fn(k)).c(s.i{l,i}{j}(m));
+                            s.x.vf.(fn(k)){l,i}{j}(m,1) = s.x.nv.(fn(k)).c(s.i{l,i}{j}(m));
                             %  > Face value(s).
                             if any(~m)
-                                x.vf.(fn(k)){l,i}{j}(~m,1) = f.bd.v(arrayfun(@(x) find(f.bd.i == x),b));
+                                s.x.vf.(fn(k)){l,i}{j}(~m,1) = f.bd.v(arrayfun(@(x) find(f.bd.i == x),b));
                             end
                             %  > "x.xf".
-                            x.xf.(fn(k))  {i}(l,j) = x.Tf_V{l,i}{j}*x.vf.(fn(k)){l,i}{j};
+                            s.x.xf.(fn(k))  {i}(l,j) = s.x.tfV{l,i}{j}*s.x.vf.(fn(k)){l,i}{j};
                         end
                     end
                 end

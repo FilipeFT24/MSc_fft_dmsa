@@ -34,7 +34,7 @@ classdef B1_2D
         % >> 1.2. ---------------------------------------------------------
         %  > Update stencil coordinates, etc.
         function [s] = Update_ss(inp,msh,f,s)
-            for i = 1:numel(s.u.s)
+            for i = 2:numel(s.u.s)
                 for j = 1:numel(s.u.s{i})
                     if ~isempty(s.u.s{i}{j})
                         for k   = s.u.s{i}{j}', p = s.u.p{i}{j}(k,:);
@@ -147,6 +147,7 @@ classdef B1_2D
                             dfV  = V.*df;
                             
                             % >> tfV.
+                            n_tfV = 2;
                             if ~msh.f.logical(k) && inp.m.cls
                                 % >> CLS.
                                 %  > Check boundary type...
@@ -162,10 +163,9 @@ classdef B1_2D
                                 end
                                 %  > Assemble matrices D and Dw.
                                 D     = B1_2D.Assemble_D(inp,msh,c_Df,sc_t,sf_t,xf);
-                                DwTD  = D.Dw'*D.D;
                                 %  > Apply constraints...
                                 cls_m = B1_2D.Assemble_cls_m(inp,msh,bd_t,f.fh.f,p,Sf,msh.f.xy.c(k,:),x_ip);
-                                cls_t = func.cls_t(cls_m.b,cls_m.C,D.Dw,DwTD);
+                                cls_t = func.cls_t(cls_m.b,cls_m.C,D.D,D.D'*D.Dw);
                                 %  > tfV.
                                 for i_tfV = 1:numel(cls_t)
                                     tfV{i_tfV} = w_ip'./2*dfV*cls_t{i_tfV};
@@ -175,9 +175,8 @@ classdef B1_2D
                                 %  > Assemble matrices D and Dw.
                                 c      = B1_2D.C1_1(p);
                                 D      = B1_2D.Assemble_D(inp,msh,c,sc_t,sf_t,xf);
-                                DwTD   = D.Dw'*D.D;
                                 %  > tfV.
-                                tfV{1} = w_ip'./2*dfV*func.backlash(DwTD,D.Dw'); %  > ...from Cf.
+                                tfV{1} = w_ip'./2*dfV*func.backlash(D.Dw'*D.D,D.Dw'); %  > ...from Cf.
                                 tfV{2} = [];                                          %  > ...from kf.
                             end
                             %  > Update field "s".
