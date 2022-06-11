@@ -6,7 +6,7 @@ classdef B1_2D
         function [s] = Initialize_s(inp,f,nc,ns,Nc,Nf,XYc)
             A = [0,2];
             for i = 1:ns
-                %  > Fiels: "i", "logical", "sc", "sf", "tfV" and "xt".
+                %  > Fiels: "i", "logical", "sc", "sf" and "tfV".
                 s{i}.i       = cell(Nf,nc(2));
                 s{i}.logical = cell(Nf,nc(2));
                 s{i}.sc      = cell(Nf,nc(2));
@@ -86,7 +86,7 @@ classdef B1_2D
                                             for l = 1:nd
                                                 if e.f(l)
                                                     %  > Direction.
-                                                    d  = src_Tools.setdiff(1:nd,l);
+                                                    d  = func.setdiff(1:nd,l);
                                                     %  > Update stencil elements...
                                                     sn = B1_2D.Extend_2(inp,msh,d,e.L,sc{n},sc_t,sf_t);
                                                     if ~isempty(sn.c)
@@ -115,6 +115,9 @@ classdef B1_2D
                             end
                             %  > Assign logical indexing: 0-bnd.
                             %                             1-blk.
+                            if ~msh.f.logical(k) && inp.m.cls
+                                sf_t = sf_t(sf_t ~= k);
+                            end
                             nc = numel (sc_t);
                             nf = numel (sf_t);
                             if ~isempty(sf_t)
@@ -143,29 +146,43 @@ classdef B1_2D
                             dfV  = V.*df;
                             
                             % >> tfV.
+                            n_tfV = 2;
                             if ~msh.f.logical(k) && inp.m.cls
                                 % >> CLS.
                                 %  > Check boundary type...
                                 bd_t  = inp.b.t(f.bd.t(f.bd.i == k));
                                 ic    = msh.f.ic  {k};
-                                Sf    = msh.c.f.Sf{ic}(msh.c.f.if == k,:);
+                                Sf    = msh.c.f.Sf{ic}(msh.c.f.if(ic,:) == k,:);
+                                %  > Avoid re-computing coefficients...
+                                switch i
+                                    case 1, c_Df = c_df;
+                                    case 2, c_Df = B1_2D.C1_1(p);
+                                    otherwise
+                                        return;
+                                end
                                 %  > Assemble matrices D and Dw.
-                                c     = B1_2D.C1_1(p);
-                                D     = B1_2D.Assemble_D(inp,msh,c,sc_t,src_Tools.setdiff(sf_t,k),xf);
+                                D     = B1_2D.Assemble_D(inp,msh,c_Df,sc_t,sf_t,xf);
                                 %  > Apply constraints...
                                 cls_m = B1_2D.Assemble_cls_m(inp,msh,bd_t,f,p,Sf,msh.f.xy.c(k,:),x_ip);
-                                cls_t = src_Tools.cls_t(cls_m.b,cls_m.C,D.D,D.D'*D.Dw);
+                                cls_t = func.cls_t(cls_m.b,cls_m.C,D.D,D.D'*D.Dw);
                                 %  > tfV.
-                                for i_tfV = 1:numel(cls_t)
-                                    tfV{i_tfV} = sum(w_ip./2.*dfV*cls_t{i_tfV},1);
-                                end
+                                for i_tfV = 1:n_tfV
+                                    tfV{i_tfV} = w_ip'./2*dfV*cls_t{i_tfV};
+                                end       
                             else
                                 % >> ULS.
                                 %  > Assemble matrices D and Dw.
                                 c     = B1_2D.C1_1(p);
                                 D     = B1_2D.Assemble_D(inp,msh,c,sc_t,sf_t,xf);
                                 %  > tfV.
-                                tfV   = sum(w_ip./2.*dfV*((D.Dw'*D.D)\D.Dw'),1);
+                                for i_tfV = 1:n_tfV
+                                    switch i_tfV
+                                        case 1, tfV{1} = w_ip'./2*dfV*func.backlash(D.Dw'*D.D,D.Dw'); %  > ...from Cf.
+                                        case 2, tfV{2} = [];                                          %  > ...from kf.
+                                        otherwise
+                                            return;
+                                    end
+                                end
                             end
                             %  > Update field "s".
                             if ~isempty(sf_t)
@@ -187,13 +204,13 @@ classdef B1_2D
         %  > Face neighbours.
         function [sc,sf] = fn(msh,c,ct,ft)
             %  > Stencil cell(s).
-            sc   = src_Tools.setdiff(RunLength(sort(cat(1,msh.c.c.nb.f{c}))),ct);
+            sc   = func.setdiff(RunLength(sort(cat(1,msh.c.c.nb.f{c}))),ct);
             %  > Stencil face(s).
             fn_f = RunLength(sort(reshape(msh.c.f.if(c,:),[],1)));
             %  > Check faces to be added...
             vb_f = fn_f(~msh.f.logical(fn_f));
             if ~isempty(ft)
-                sf = src_Tools.setdiff(vb_f,ft);
+                sf = func.setdiff(vb_f,ft);
             else
                 sf = vb_f;
             end
@@ -202,14 +219,14 @@ classdef B1_2D
         %  > Vertex neighbours.
         function [sc,sf] = vn(msh,c,ct,ft)
             %  > Stencil cell(s).
-            sc   = src_Tools.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),ct);
+            sc   = func.setdiff(RunLength(sort(cat(1,msh.c.c.nb.v{c}))),ct);
             %  > Stencil face(s).
             v    = RunLength(sort(reshape(msh.struct.ConnectivityList(c,:),[],1)));
             vn_f = RunLength(sort(cat(1,msh.v.if{v})));
             %  > Check faces to be added...
             vb_f = vn_f(~msh.f.logical(vn_f));
             if ~isempty(ft)
-                sf = src_Tools.setdiff(vb_f,ft);
+                sf = func.setdiff(vb_f,ft);
             else
                 sf = vb_f;
             end
@@ -242,13 +259,13 @@ classdef B1_2D
 %             L         = round(B1_2D.Compute_L(msh,ct,ft),n);
 %             %  > Select direction...
 %             %  > c.
-%             sc        = src_Tools.setdiff(c,ct);
+%             sc        = func.setdiff(c,ct);
 %             xc        = round(msh.c.c.xy.c(sc,:),n);
 %             logical_c = xc(:,d) >= L(1,d) & xc(:,d) <= L(2,d);
 %             sc        = sc(logical_c);
 %             %  > f.
 %             if ~isempty(f)
-%                 sf        = src_Tools.setdiff(f,ft);
+%                 sf        = func.setdiff(f,ft);
 %                 xf        = round(msh.f.xy.c(sf,:),n);
 %                 logical_f = xf(:,d) >= L(1,d) & xf(:,d) <= L(2,d);
 %                 sf        = sf(logical_f);
@@ -261,7 +278,7 @@ classdef B1_2D
         %  > Compute stencil length/aimensional parameters in the x/y-direction(s).
         function [s] = Compute_adp(msh,sc,sf)
             s.L = B1_2D.Compute_L(msh,sc,sf);
-            s.n = ceil((s.L(2,:)-s.L(1,:))./src_Tools.mean(msh.c.h.xy(sc,:),1));
+            s.n = ceil((s.L(2,:)-s.L(1,:))./func.mean(msh.c.h.xy(sc,:),1));
         end
         %  > 1.2.3.2. -----------------------------------------------------
         %  > Return extension flag.
@@ -288,13 +305,13 @@ classdef B1_2D
             L = round(L,n);
             %  > Select direction...
             %  > c.
-            sn.c      = src_Tools.setdiff(sn.c,ct);
+            sn.c      = func.setdiff(sn.c,ct);
             xc        = round(msh.c.c.xy.c(sn.c,:),n);
             logical_c = xc(:,d) >= L(1,d) & xc(:,d) <= L(2,d);
             sn.c      = sn.c(logical_c);
             %  > f.
             if ~isempty(sn.f)
-                sn.f      = src_Tools.setdiff(sn.f,ft);
+                sn.f      = func.setdiff(sn.f,ft);
                 xf        = round(msh.f.xy.c(sn.f,:),n);
                 logical_f = xf(:,d) >= L(1,d) & xf(:,d) <= L(2,d);
                 sn.f      = sn.f(logical_f);
@@ -326,18 +343,25 @@ classdef B1_2D
                 case "Robin"
                     %  > For each integration point...
                     c = B1_2D.C3_1(p);
-                    %  > b.
-                    %  > C.    
+                    for i = 1:size(x_ip,1)
+                        %  > b.
+                        
+                        %  > C.
+                        for j = 1:size(x_ip,2)
+                        end
+                    end
             end
         end
         %  > 1.3.2. -------------------------------------------------------
         function [D] = Assemble_D(inp,msh,c,sc_t,sf_t,xf)
             %  > dd.
-            xt   = cat(1,msh.c.c.xy.c(sc_t,:),msh.f.xy.c(sf_t,:));
-            dd   = xt-xf;
+            xt        = cat(1,msh.c.c.xy.c(sc_t,:),msh.f.xy.c(sf_t,:));
+            dx        = xt-xf;
             %  > Assemble matrices...
-            D.D  = c.c.*dd(:,1).^c.e(1,:).*dd(:,2).^c.e(2,:);
-            D.Dw = D.D.*inp.m.wf(sqrt(sum(dd.^2,2)));
+            D.D       = c.c.*dx(:,1).^c.e(1,:).*dx(:,2).^c.e(2,:);
+            d         = sqrt(sum(dx.^2,2));
+            d(d == 0) = min(d(d ~= 0));
+            D.Dw      = D.D.*inp.m.wf(d);
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Compute polynomial regression coefficients/exponents.

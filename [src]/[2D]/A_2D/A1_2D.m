@@ -16,7 +16,7 @@ classdef A1_2D
             %  > ----------------------------------------------------------
             %  > Boundary conditions.
             %  > NOTE: hard coded for square domain (boundaries are identified by outher face normals (Sf)).
-            inp.b.t(1)      = "Robin";      %  > East (E).
+            inp.b.t(1)      = "Dirichlet";      %  > East (E).
             inp.b.t(2)      = "Dirichlet";      %  > North(N).
             inp.b.t(3)      = "Dirichlet";      %  > West (W).
             inp.b.t(4)      = "Dirichlet";      %  > South(S).
@@ -37,7 +37,7 @@ classdef A1_2D
             inp.m.nb        = 1;                %  > Neighbouring type.
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
-            inp.p.p{1}(1,:) = [3,3];            %  > Convection(x): [x,y].
+            inp.p.p{1}(1,:) = [1,1];            %  > Convection(x): [x,y].
             inp.p.p{1}(2,:) = [1,1];            %  > Convection(y): [x,y].
             inp.p.p{2}(1,:) = [1,1];            %  > Diffusion (x): [x,y].
             inp.p.p{2}(2,:) = [1,1];            %  > Diffusion (y): [x,y].

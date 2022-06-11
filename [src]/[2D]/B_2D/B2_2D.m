@@ -18,27 +18,22 @@ classdef B2_2D
             end
         end
         % >> 1.2. ---------------------------------------------------------
-        %  > Update matrices.
-        function [m] = Update_3(msh,f,m,s,u,x)
-            m        = B2_2D.Update_m(msh,f,m,s,u,x);
-        end
-        % >> 1.3. ---------------------------------------------------------
-        %  > Update matrices A and B.
-        function [m] = Update_m(msh,f,m,s,u,x)
+        %  > Update matrix A and vector b.
+        function [m] = Update_m(msh,f,m,s)
             %  > Rows (r) to be updated.
-            for i = 1:numel(u.s)
-                for j = 1:numel(u.s{i})
-                    uc{i,j} = RunLength(sort([msh.f.ic{u.s{i}{j}}]));
+            for i = 1:numel(s.u.s)
+                for j = 1:numel(s.u.s{i})
+                    uc{i,j} = RunLength(sort([msh.f.ic{s.u.s{i}{j}}]));
                 end
             end
             r         = RunLength(sort(cat(2,uc{:})));
             m.At(r,:) = 0;
             m.Bt(r,1) = f.st(r);
             
-            %  > For each term (matrix)...
-            for i = 1:numel(u.s)
-                for j = 1:numel(u.s{i})
-                    if ~isempty(u.s{i}{j})
+            %  > For each term...
+            for i = 1:numel(s.u.s)
+                for j = 1:numel(s.u.s{i})
+                    if ~isempty(s.u.s{i}{j})
                         %  > Reset...
                         m.Ac{i}{j}(uc{i,j},:) = 0;
                         m.Bc{i}{j}(uc{i,j},1) = 0;
@@ -52,16 +47,20 @@ classdef B2_2D
                                 b  = s.i       {n,i}{j}(~o);
                                 Sf = msh.c.f.Sf{k}     ( l,:);
                                 %  > Ac (cell contributions).
-                                m.Ac{i}{j}(k,a) = m.Ac{i}{j}(k,a)+Sf(j).*x.Tf_V{n,i}{j}(o);
-                                %  > Bc (cell contributions).
-                                if any(~o)
+                                m.Ac{i}{j}(k,a) = m.Ac{i}{j}(k,a)+Sf(j).*s.tfV{n,i}{j}{1}(o);
+                                %  > bc (face contributions).
+                                if any(~o) 
                                     i_bd            = arrayfun(@(x) find(f.bd.i == x),b);
-                                    m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j)*x.Tf_V{n,i}{j}(~o)*f.bd.v(i_bd);
+                                    m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j)*s.tfV{n,i}{j}{1}(~o)*f.bd.v(i_bd);
+                                end
+                                %  > Add kf to the RHS (if CLS)...
+                                if ~isempty(s.tfV{n,i}{j}{2})
+                                    m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j)*s.tfV{n,i}{j}{2};
                                 end
                             end
                         end
                     end
-                    %  > Cumulative matrices.
+                    %  > At and bt(cumulative/total matrix/vector).
                     m.At(r,:) = m.At(r,:)+m.Ac{i}{j}(r,:);
                     m.Bt(r,1) = m.Bt(r,1)+m.Bc{i}{j}(r,1);
                 end
@@ -73,14 +72,12 @@ classdef B2_2D
             end
             m.nnz.At = nnz(m.At);
         end
-        % >> 1.4. ---------------------------------------------------------
+        % >> 1.3. ---------------------------------------------------------
         %  > Update nodal solution/face values (multiplied by V).
-        function [x] = Update_4(f,m,s,u,x,f_xc)
-            %  > Update nodal solution(?).
-            if f_xc
-                x.nv.x.c = m.At\m.Bt;
-            end
-            
+        function [x] = Update_4(f,m,s,u,x)
+            %  > Update nodal solution.
+            x.nv.x.c = func.backlash(m.At,m.Bt);
+
             %  > Check if empty...
             fn   = convertCharsToStrings(fieldnames(x.vf));
             fn_n = numel(fn);

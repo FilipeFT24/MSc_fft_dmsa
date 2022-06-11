@@ -1,4 +1,4 @@
-classdef src_Tools
+classdef func
     methods (Static)
         %% > 1. -----------------------------------------------------------
         %  > Set "struct" structure (msh).
@@ -14,10 +14,10 @@ classdef src_Tools
             %  > X/Yt,d.
             [Xt,Yt] = meshgrid(XY_v{1},XY_v{2});
             switch inp.t
-                case 0, [Xd,Yd] = src_Tools.demo_0(Xt,Yt);
-                case 1, [Xd,Yd] = src_Tools.demo_1(Xt,Yt);
-                case 2, [Xd,Yd] = src_Tools.demo_2(Xt,Yt);
-                case 3, [Xd,Yd] = src_Tools.demo_3(Xt,Yt);
+                case 0, [Xd,Yd] = func.demo_0(Xt,Yt);
+                case 1, [Xd,Yd] = func.demo_1(Xt,Yt);
+                case 2, [Xd,Yd] = func.demo_2(Xt,Yt);
+                case 3, [Xd,Yd] = func.demo_3(Xt,Yt);
                 otherwise
                     return;
             end
@@ -145,21 +145,36 @@ classdef src_Tools
             z    = x(w(x));
         end
         % >> 3.4. ---------------------------------------------------------
+        %  > 3.4.1. -------------------------------------------------------
+        %  > Rescaling to Solve a Linear System (Ax=b).
+        %  > Reference: https://www.mathworks.com/help/matlab/ref/equilibrate.html#mw_beaf3b94-7114-4652-b483-a36c2acf7b94
+        function [x] = backlash(A,b)
+            %  > Use built-in function "equilibrate".
+            [P,R,C] = equilibrate(A);
+            %  > Solve linear system...
+            B = R*P*A*C;
+            d = R*P*b;
+            x = C*(B\d);
+        end
+        %  > 3.4.2. -------------------------------------------------------
         %  > Compute CLS matrices.
+        %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
         function [t] = cls_t(b,C,D,DTD)
             %  > Auxiliary variables.
-            C_DTD_CT    = C*(DTD\C');
-            C_DTD_DT    = C*(DTD\D');
+            C_DTD_CT    = C *func.backlash(DTD,C');
+            C_DTD_DT    = C *func.backlash(DTD,D');
+            X           = C'*func.backlash(C_DTD_CT,C_DTD_DT);
+            Y           = C'*func.backlash(C_DTD_CT,b);
             %  > CLS terms (cell-dependent matrix/bd_v-dependent vector).
-            t       {1} = DTD\(D'-C'*(C_DTD_CT\C_DTD_DT));
-            t       {2} = DTD\(C'*(C_DTD_CT\b));
+            t       {1} =    func.backlash(DTD,D'-X);
+            t       {2} =    func.backlash(DTD,Y);
         end
         % >> 3.5. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = Set_n(E,V)
             if nargin == 1
-                L(1,:) = src_Tools.mean(E,1);
-                L(2,:) = src_Tools.mean(sqrt(E.^2),1);
+                L(1,:) = func.mean(E,1);
+                L(2,:) = func.mean(sqrt(E.^2),1);
                 L(3,:) = max(E);
             else
                 L(1,:) = sum(E.*V)./sum(V);

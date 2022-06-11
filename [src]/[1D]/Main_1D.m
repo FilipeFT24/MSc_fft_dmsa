@@ -4,7 +4,7 @@ clear, clc, close all; warning off; beep off;
 % >> ----------------------------------------------------------------------
 %  > Working directories.
 Set_Directories_1D;
-run = [1,0];
+run = [0,1];
 % >> ----------------------------------------------------------------------
 %  > Standard tests.
 if run(1)

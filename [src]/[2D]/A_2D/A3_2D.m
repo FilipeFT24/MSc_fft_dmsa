@@ -41,21 +41,21 @@ classdef A3_2D
         function [bd] = Update_bd(inp,msh,fh)
             %  > "i".
             bd.i(:,1) = find(~msh.f.logical);
-            %  > "v".
+            %  > "t" and "v".
             for i  = 1:numel(bd.i)
                 c  = msh.f.ic  {bd.i(i,1)};
                 Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
                 %  > Identify boundary type...
-                if     Sf(1) >  0 && Sf(2) == 0, bd_t = 1; %  > East (E).
-                elseif Sf(1) == 0 && Sf(2) >  0, bd_t = 2; %  > North(N).
-                elseif Sf(1) <  0 && Sf(2) == 0, bd_t = 3; %  > West (W).
-                elseif Sf(1) == 0 && Sf(2) <  0, bd_t = 4; %  > South(S).
+                if     Sf(1) >  0 && Sf(2) == 0, bd.t(i,1) = 1; %  > East (E).
+                elseif Sf(1) == 0 && Sf(2) >  0, bd.t(i,1) = 2; %  > North(N).
+                elseif Sf(1) <  0 && Sf(2) == 0, bd.t(i,1) = 3; %  > West (W).
+                elseif Sf(1) == 0 && Sf(2) <  0, bd.t(i,1) = 4; %  > South(S).
                 else
                     return;
                 end
                 %  > Compute boundary value.
                 xf_c = msh.f.xy.c(bd.i(i),:);
-                switch inp.b.t(bd_t)
+                switch inp.b.t(bd.t(i))
                     case "Dirichlet"
                         bd.v(i,1) = fh.f(xf_c);
                     case "Neumann"

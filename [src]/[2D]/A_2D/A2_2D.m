@@ -9,7 +9,7 @@ classdef A2_2D
             
             %  > ----------------------------------------------------------
             % >> struct.
-            struct              = src_Tools.Set_struct(inp_m);
+            struct              = func.Set_struct(inp_m);
             msh.struct          = struct;
             CL_c                = struct.ConnectivityList;
             %  > ----------------------------------------------------------
@@ -60,10 +60,10 @@ classdef A2_2D
             %  > ----------------------------------------------------------
             % >> d.
             %  #1: Domain reference length.
-            msh.d.h             = src_Tools.mean(msh.c.h.h,1);
+            msh.d.h             = func.mean(msh.c.h.h,1);
             %  > ----------------------------------------------------------
             %  > Sort fields...
-            msh                 = src_Tools.Sort_2D_msh(msh);
+            msh                 = func.Sort_2D_msh(msh);
         end
         
         %% > 2. -----------------------------------------------------------
@@ -111,7 +111,7 @@ classdef A2_2D
             for i = 1:sz_CL(1)
                 j              = 1:sz_Pt(2);
                 xy.v{i,1}(:,j) = struct.Points(struct.ConnectivityList(i,:),j);
-                xy.c     (i,j) = src_Tools.mean (xy.v{i,1}(:,j),1);
+                xy.c     (i,j) = func.mean (xy.v{i,1}(:,j),1);
             end
         end
         %  > 2.1.3. -------------------------------------------------------
@@ -138,7 +138,7 @@ classdef A2_2D
                 %  > h.
                 k = [1:j(1);circshift(1:j,j(1)-1)]';
                 for l = 1:j(1)
-                    Length{i,1}(l,1) = src_Tools.dist(xy.v{i}(k(l,:),:));
+                    Length{i,1}(l,1) = func.dist(xy.v{i}(k(l,:),:));
                 end
                 h.h (i,1) = 4.*Volume(i)./sum(Length{i});
                 %  > h(x,y).
@@ -175,7 +175,7 @@ classdef A2_2D
                 return;
             else
                 XY = v(k(f,1),:)+t(f)'.*(v(k(f,2),:)-v(k(f,1),:));
-                h  = src_Tools.dist(XY);
+                h  = func.dist(XY);
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -225,7 +225,7 @@ classdef A2_2D
                 %  > Sf.
                 for j  = 1:size(xy_v{i},1)
                     %  > \vec{FC}.
-                    vec_FC      = xy_cm(i,:)-src_Tools.mean(xy_v{i}{j},1);
+                    vec_FC      = xy_cm(i,:)-func.mean(xy_v{i}{j},1);
                     %  > \vec{Sf}.
                     vec_Sf(j,2) = xy_v{i}{j}(1,1)-xy_v{i}{j}(2,1);
                     vec_Sf(j,1) = xy_v{i}{j}(2,2)-xy_v{i}{j}(1,2);
@@ -293,7 +293,7 @@ classdef A2_2D
             for i = 1:sz(1)
                 j              = 1:sz(2);
                 xy.v{i,1}(j,:) = struct.Points(f(i,j),:);        %  > Vertex #j(x,y).
-                xy.c     (i,j) = src_Tools.mean(xy.v{i,1}(:,j),1); %  > Face   #j(x,y).
+                xy.c     (i,j) = func.mean(xy.v{i,1}(:,j),1); %  > Face   #j(x,y).
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

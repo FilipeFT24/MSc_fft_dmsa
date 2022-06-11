@@ -66,6 +66,9 @@ function [xf,yf] = Fit_1D(xd,ys,z,cls)
             df = [1,0,0,0];
             C1 = df*mf{1};
             C2 = df*mf{2};
+            
+            ll=1;
+            
         otherwise
             return;
     end
@@ -130,7 +133,7 @@ function [yf] = Fit_2D(Xd,ys,z,cls)
             mf = cls_c(Df'*Df,Cf,Df,b');
             cf = mf{1}*ys+mf{2};
             %  > #2.
-            df = Df_2D(Xc,z,2);
+            df = Df_2D(Xc,z,1);
             C1 = sum(df*mf{1},1)./2;
             C2 = sum(df*mf{2},1)./2;
             
