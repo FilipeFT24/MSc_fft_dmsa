@@ -62,9 +62,9 @@ classdef A3_2D
                         bd.v(i,1) = Sf*[fh.d{1}(xf_c);fh.d{2}(xf_c)];
                     case "Robin"
                         for j = 1:size(inp.c,2)
-                            GoV(j,1) = inp.c{2,j}(xf_c)./inp.c{1,j}(xf_c);
+                            gov(j) = inp.c{2,j}(xf_c)./inp.c{1,j}(xf_c);
                         end
-                        bd.v(i,1) = Sf*[fh.f(xf_c);fh.f(xf_c)]+Sf*[GoV(1).*fh.d{1}(xf_c);GoV(2).*fh.d{2}(xf_c)];
+                        bd.v(i,1) = Sf*[fh.f(xf_c)+gov(1).*fh.d{1}(xf_c);fh.f(xf_c)+gov(2).*fh.d{2}(xf_c)];
                 end
             end
         end

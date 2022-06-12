@@ -19,7 +19,7 @@ classdef A1_2D
             inp.b.t(1)      = "Dirichlet";      %  > East (E).
             inp.b.t(2)      = "Dirichlet";      %  > North(N).
             inp.b.t(3)      = "Dirichlet";      %  > West (W).
-            inp.b.t(4)      = "Dirichlet";      %  > South(S).
+            inp.b.t(4)      = "Robin";          %  > South(S).
             if ~all(ismember(inp.b.t,["Dirichlet","Neumann","Robin"]))
                 return;
             end
@@ -30,11 +30,11 @@ classdef A1_2D
             inp.f           = fh.f;             %  > f.
             %  > ----------------------------------------------------------
             %  > Method(s).
-            inp.m.cls       = 1;
+            inp.m.cls       = 0;
             inp.m.wf        = A1_2D.fh_wf(2);   %  > Weight function.
             %  > NOTE: if 0: Neighbour type: vertex.
             %          if 1: Neighbour type: face.
-            inp.m.nb        = 1;                %  > Neighbouring type.
+            inp.m.nb        = 0;                %  > Neighbouring type.
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
             inp.p.p{1}(1,:) = [1,1];            %  > Convection(x): [x,y].
@@ -58,7 +58,7 @@ classdef A1_2D
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [0,0];
+            c(1,:) =  [1,1];
             c(2,:) = -[1,1];
             
             %  > ch.
