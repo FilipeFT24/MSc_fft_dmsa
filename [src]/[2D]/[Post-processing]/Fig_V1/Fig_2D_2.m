@@ -55,7 +55,7 @@ classdef Fig_2D_2
             %  > Axis/legend,etc.
             Fig_Tools.Map_2D_1(msh,fig);
             Fig_Tools.Map_2D_2(fig,y);
-            Fig_Tools.Map_2D_3(fig);
+            Fig_Tools.Export  (fig);
         end
         % >> 2.2. ---------------------------------------------------------
         function [] = Plot_2(inp_m,msh,j,V1,V2,fig)

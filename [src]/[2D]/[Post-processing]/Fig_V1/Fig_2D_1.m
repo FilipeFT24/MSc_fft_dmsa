@@ -48,7 +48,7 @@ classdef Fig_2D_1
             for i = 1:numel(sf)
                 Fig_Tools.Var_2D_2(msh.f.xy.c  (sf{i},:),fig.C(i,:),"s",MS(2));
             end
-            Fig_Tools.Map_2D_3(fig);
+            Fig_Tools.Export(fig);
         end
     end
 end

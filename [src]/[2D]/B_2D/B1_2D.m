@@ -44,7 +44,7 @@ classdef B1_2D
                             sc  = cell(1,q);
                             sf  = cell(1,q);
                             tfV = cell(1,2); %  > {1}-Cf.
-                                             %  > {2}-kf.
+                            %  > {2}-kf.
                             
                             %  > Loop through levels...
                             while n <= ceil(q)
@@ -115,65 +115,60 @@ classdef B1_2D
                                 end
                                 n = n+1;
                             end
-                            %  > Exclude face "k" from "sf_t"...
+                            %  > Logical indexing: 0-bnd.
+                            %                      1-blk.
                             if ~msh.f.logical(k) && inp.m.cls
                                 sf_t = sf_t(sf_t ~= k);
                             end
-                            %  > Assign logical indexing: 0-bnd.
-                            %                             1-blk.
-                            nc = numel (sc_t);
-                            nf = numel (sf_t);
-                            if ~isempty(sf_t)
+                            nc = numel(sc_t);
+                            nf = numel(sf_t);
+                            if nf ~= 0
                                 logical = [true(nc,1);false(nf,1)];
                             else
                                 logical = true(nc,1);
                             end
-                            %  > xf.
+                            %  > Compute coordinates.
                             xf = msh.f.xy.c(k,:);
-                            %  > xt.
                             xt = B1_2D.s_xt(msh,sc_t,sf_t);
                             
                             % >> Vdf.
-                            %  > Integration point(s)' location/weight(s).
-                            Q_ip  = A3_2D.Q_1D_2(q);
-                            x_ip  = f.qd.xu(Q_ip.x,msh.f.xy.v{k});
-                            w_ip  = Q_ip.w;
-                            %  > Polynomial regression coefficients.
+                            %  > Polynomial regression coefficients/exponents.
+                            c_Df  = B1_2D.C1_1(p);
                             switch i
-                                case 1, c_df = B1_2D.C1_1(p);   %  > \phi.
-                                        c_Df = c_df;
+                                case 1, c_df = c_Df;            %  > \phi.
                                 case 2, c_df = B1_2D.C2_1(p,j); %  > \nabla\phi(x or y).
-                                        c_Df = B1_2D.C1_1(p);
                                 otherwise
                                     return;
                             end
+                            %  > Integration point(s)' location.
+                            Q_ip  = A3_2D.Q_1D_2(q);
+                            x_ip  = f.qd.xu(Q_ip.x,msh.f.xy.v{k});
+                            %  > Vdf.
                             dx_ip = x_ip-xf;
                             Vdf   = inp.c{i,j}(x_ip).*c_df.c.*dx_ip(:,1).^c_df.e(1,:).*dx_ip(:,2).^c_df.e(2,:);
-
+                            
                             % >> tfV.
                             if ~msh.f.logical(k) && inp.m.cls
                                 %  > Compute structure "D".
                                 D     = B1_2D.Assemble_cls_D(inp,c_Df,xf,xt);
-                                %  > Check boundary type...
-                                bd_c  = B1_2D.Check_bd_t(inp,msh,f.bd,k);
-                                %  > Apply constraints.
+                                %  > Check boundary type of face "k".
+                                bd_c  = B1_2D.Check_bd_t(inp,msh,f,k);
+                                %  > Apply constraints...
                                 cls_m = B1_2D.Assemble_cls_m(inp,msh,bd_c,f.fh.f,p,msh.f.xy.c(k,:),x_ip);
                                 cls_t = func.cls_t(cls_m.b,cls_m.C,D.Dw,D.DwTD);
                                 %  > tfV.
                                 for i_tfV = 1:numel(cls_t)
-                                    tfV{i_tfV} = w_ip'./2*Vdf*cls_t{i_tfV};
+                                    tfV{i_tfV} = Q_ip.w'./2*Vdf*cls_t{i_tfV};
                                 end
                             else
-                                %  > Check boundary type...
-                                bd_u   = B1_2D.Check_bd_t(inp,msh,f.bd,sf_t);
                                 %  > Compute structure "D".
-                                D      = B1_2D.Assemble_uls_D(inp,msh,bd_u,c_Df,logical,p,xf,xt);
+                                D      = B1_2D.Assemble_uls_D(inp,msh,c_Df,f,logical,p,sf_t,xf,xt);
                                 %  > tfV.
-                                tfV{1} = w_ip'./2*Vdf*func.backlash(D.DwTD,D.Dw'); %  > ...from Cf.
-                                tfV{2} = [];                                       %  > ...from kf.
+                                tfV{1} = Q_ip.w'./2*Vdf*func.backlash(D.DwTD,D.Dw'); %  > ...from Cf.
+                                tfV{2} = [];                                         %  > ...from kf.
                             end
                             %  > Update field "s".
-                            if ~isempty(sf_t)
+                            if nf ~= 0
                                 s.i  {k,i}{j} = [sc_t;sf_t];
                             else
                                 s.i  {k,i}{j} = sc_t;
@@ -283,11 +278,9 @@ classdef B1_2D
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
         %  > Check boundary type.
-        function [bd] = Check_bd_t(inp,msh,f_bd,k)
+        function [bd] = Check_bd_t(inp,msh,f,k)
             for i = 1:numel(k)
-                %  > Boundary type.
-                bd_k(i,1) = inp.b.t(f_bd.t(f_bd.i == k(i)));
-                %  > Sf.
+                bd_k(i,1) = inp.b.t(f.bd.t(f.bd.i == k(i)));
                 c   (i)   = msh.f.ic  {k(i)};
                 Sf_k(i,:) = msh.c.f.Sf{c(i)}(msh.c.f.if(c(i),:) == k(i),:);
             end
@@ -319,17 +312,16 @@ classdef B1_2D
                                 C_Sf {j} = bd.Sf(j).*c{j}.c.*dx(:,1).^c{j}.e(1,:).*dx(:,2).^c{j}.e(2,:);
                             end
                         case "Robin"
-                            cv = B1_2D.C1_1(p);
-                            cg = B1_2D.C3_1(p);
+                            c = B1_2D.C1_1(p);
+                            d = B1_2D.C3_1(p);
                             for j = 1:size(x_ip,2)
-                                %  > gov.
-                                gov (:,j) = inp.c{2,j}(x_ip)./inp.c{1,j}(x_ip);
                                 %  > v.
+                                gov (:,j) = inp.c{2,j}(x_ip)./inp.c{1,j}(x_ip);
                                 v   (:,j) = fh.f(x_ip)+gov(j).*fh.d{j}(x_ip);
                                 %  > Sf*C(\phi).
-                                C_Sfv {j} = bd.Sf(j).*cv.c.*dx(:,1).^cv.e(1,:).*dx(:,2).^cv.e(2,:);
+                                C_Sfv {j} = bd.Sf(j).*c.c.*dx(:,1).^c.e(1,:).*dx(:,2).^c.e(2,:);
                                 %  > Sf*C(\nabla\phi).
-                                C_Sfg {j} = bd.Sf(j).*cg{j}.c.*dx(:,1).^cg{j}.e(1,:).*dx(:,2).^cg{j}.e(2,:);
+                                C_Sfg {j} = bd.Sf(j).*d{j}.c.*dx(:,1).^d{j}.e(1,:).*dx(:,2).^d{j}.e(2,:);
                                 %  > Sf*C.
                                 C_Sf  {j} = C_Sfv{j}+gov(j)*C_Sfg{j};
                             end
@@ -356,10 +348,13 @@ classdef B1_2D
             M.DwTD = Dw'*D;
         end
         %  > 1.3.3.2. -----------------------------------------------------
-        function [M] = Assemble_uls_D(inp,msh,bd,c,logical,p,xf,xt)
-            %  > Polynomial regression coefficients.
-            if any(bd.t == ["Neumann","Robin"], 'all')
-                d = B1_2D.C3_1(p);
+        function [M] = Assemble_uls_D(inp,msh,c,f,logical,p,sf_t,xf,xt)
+            %  > Check boundary type of face(s) "sf_t".
+            if ~isempty(sf_t)
+                bd = B1_2D.Check_bd_t(inp,msh,f,sf_t);
+                if any(bd.t == ["Neumann","Robin"], 'all')
+                    d = B1_2D.C3_1(p);
+                end
             end
             %  > dx.
             dx = xt-xf;
@@ -367,27 +362,25 @@ classdef B1_2D
             dd = sqrt(sum(dx.^2,2)); dd(dd == 0) = min(dd(dd ~= 0));
             %  > n.
             n  = find(~logical);
+            
             %  > Assemble matrices D and Dw.
             for i = 1:size(xt,1)
-                if logical(i)
+                if logical(i) || (~logical(i) && bd.t(n == i) == "Dirichlet")
                     D(i,:) = c.c.*dx(i,1).^c.e(1,:).*dx(i,2).^c.e(2,:);
                 else
                     switch bd.t(n == i)
-                        case "Dirichlet"
-                            D(i,:) = c.c.*dx(i,1).^c.e(1,:).*dx(i,2).^c.e(2,:);
                         case "Neumann"
                             for j = 1:numel(d)
                                 Dd (j,:) = d{j}.c.*dx(i,1).^d{j}.e(1,:).*dx(i,2).^d{j}.e(2,:);
                             end
-                            D(i,:) = bd.Sf(n == i,:)*Dd;
                         case "Robin"
                             for j = 1:numel(d)
                                 gov(j)   = inp.c{2,j}(xt(i,:))./inp.c{1,j}(xt(i,:));
                                 Dd (j,:) = c.c.*dx(i,1).^c.e(1,:).*dx(i,2).^c.e(2,:)+...
                                     gov(j).*d{j}.c.*dx(i,1).^d{j}.e(1,:).*dx(i,2).^d{j}.e(2,:);
                             end
-                            D(i,:) = bd.Sf(n == i,:)*Dd;
                     end
+                    D(i,:) = bd.Sf(n == i,:)*Dd;
                 end
                 Dw(i,:) = D(i,:).*inp.m.wf(dd(i));
             end

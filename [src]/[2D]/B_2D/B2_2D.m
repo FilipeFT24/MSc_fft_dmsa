@@ -53,7 +53,7 @@ classdef B2_2D
                                     i_bd            = arrayfun(@(x) find(f.bd.i == x),b);
                                     m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j)*s.tfV{n,i}{j}{1}(~o)*f.bd.v(i_bd);
                                 end
-                                %  > Add kf to the RHS (if CLS)...
+                                %  > Add kf (scalar) to the RHS...
                                 if ~isempty(s.tfV{n,i}{j}{2})
                                     m.Bc{i}{j}(k,1) = m.Bc{i}{j}(k,1)-Sf(j).*s.tfV{n,i}{j}{2};
                                 end
@@ -94,24 +94,28 @@ classdef B2_2D
                                 if ~flag
                                     r = s.u.s{i}{j}';
                                 else
-                                    r = 1:size(s.x.xf.a{i},1);
+                                    r = 1:size(s.x.xfV.a{i},1);
                                 end
                             case "x"
-                                r = 1:size(s.x.xf.a{i},1);
+                                r = 1:size(s.x.xfV.a{i},1);
                         end
                         for l = r
-                            %  > Cell/face indices used to fit "k".
-                            m = s.logical{l,i}{j};
-                            a = s.i      {l,i}{j}( m);
-                            b = s.i      {l,i}{j}(~m);
+                            %  > Auxiliary variables.
+                            n = s.logical{l,i}{j};
+                            a = s.i      {l,i}{j}( n);
+                            b = s.i      {l,i}{j}(~n);
                             %  > Cell value(s).
-                            s.x.vf.(fn(k)){l,i}{j}(m,1) = s.x.nv.(fn(k)).c(s.i{l,i}{j}(m));
+                            s.x.vf.(fn(k)){l,i}{j}(n,1) = s.x.nv.(fn(k))(s.i{l,i}{j}(n));
                             %  > Face value(s).
-                            if any(~m)
-                                s.x.vf.(fn(k)){l,i}{j}(~m,1) = f.bd.v(arrayfun(@(x) find(f.bd.i == x),b));
+                            if any(~n)
+                                s.x.vf.(fn(k)){l,i}{j}(~n,1) = f.bd.v(arrayfun(@(x) find(f.bd.i == x),b));
                             end
-                            %  > "x.xf".
-                            s.x.xf.(fn(k))  {i}(l,j) = s.x.tfV{l,i}{j}*s.x.vf.(fn(k)){l,i}{j};
+                            %  > "xfV".
+                            if ~isempty(s.tfV{l,i}{j}{2})
+                                s.x.xfV.(fn(k)){i}(l,j) = s.tfV{l,i}{j}{1}*s.x.vf.(fn(k)){l,i}{j}+s.tfV{l,i}{j}{2}; %  > w/  constraint(s).
+                            else
+                                s.x.xfV.(fn(k)){i}(l,j) = s.tfV{l,i}{j}{1}*s.x.vf.(fn(k)){l,i}{j};                  %  > w/o constraint(s).
+                            end
                         end
                     end
                 end
@@ -141,14 +145,14 @@ classdef B2_2D
             end
         end
         % >> 2.2. ---------------------------------------------------------
-        %  > Update "e.(...)" field (error).
-        function [e] = Update_e(inp,msh,e,m,s,x)
+        %  > Update field "e.(...)" (error).
+        function [e] = Update_e(inp,msh,e,m,s)
             %  > #1: Update field "e.a".
-            e.a = B2_2D.Update_ea(msh,e.a,m,x);
+            e.a = B2_2D.Update_ea(msh,e.a,m,s);
         end
         %  > 2.2.1. -------------------------------------------------------
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
-        function [e] = Update_ea(msh,e,m,x)
+        function [e] = Update_ea(msh,e,m,s)
             %  > Reset...
             if any(e.t.c)
                 e.t.c = zeros(msh.c.Nc,1);
@@ -158,11 +162,11 @@ classdef B2_2D
             %  > \tau_f: {1}-\tau_f(\phi).
             %            {2}-\tau_f(\nabla\phi).
             %            {3}-\tau_f.
-            n     = numel(x.xf.a);
+            n     = numel(s.x.xfV.a);
             e_t_f = cell (1,n);
             for i = 1:n+1
                 if i ~= n+1
-                    e_t_f{i} = x.xf.a{i}-x.xf.x{i};
+                    e_t_f{i} = s.x.xfV.a{i}-s.x.xfV.x{i};
                 else
                     e_t_f{i} = sum(cat(3,e_t_f{1:n}),3);
                 end
@@ -183,7 +187,7 @@ classdef B2_2D
                 end
             end
             %  > Error norms.
-            e.n_abs.t.f = src_Tools.Set_n(e.t.f_abs);
+            e.n_abs.t.f = func.Set_n(e.t.f_abs);
             
             % >> c.
             %  > \tau_c.
@@ -198,8 +202,8 @@ classdef B2_2D
             %  > Equivalent to: ea.c.c_abs = abs(f.av.c-x.nv.x.c).
             e.c.c_abs   = abs(m.At\e.t.c);
             %  > Error norms.
-            e.n_abs.c   = src_Tools.Set_n(e.c.c_abs,msh.c.Volume);
-            e.n_abs.t.c = src_Tools.Set_n(e.t.c_abs,msh.c.Volume);
+            e.n_abs.c   = func.Set_n(e.c.c_abs,msh.c.Volume);
+            e.n_abs.t.c = func.Set_n(e.t.c_abs,msh.c.Volume);
         end
         
         %% > 3. -----------------------------------------------------------

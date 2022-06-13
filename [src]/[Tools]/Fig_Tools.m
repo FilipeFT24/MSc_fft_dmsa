@@ -32,7 +32,7 @@ classdef Fig_Tools
             fig.Folder       = "../[.pdf Files]";            %  > Destination folder.
             if ~run
                 fig.L{1}     = "$x$";                        %  > x-axis label.
-                fig.L{2}     = "$\textrm{Error magnitude}$"; %  > y-axis label.
+                fig.L{2}     = "$y$";%"$\textrm{Error magnitude}$"; %  > y-axis label.
             else
                 fig.L{1}     = "$\textrm{NNZ}$";             %  > x-axis label.
                 fig.L{2}     = "$\textrm{Error magnitude}$"; %  > y-axis label.
