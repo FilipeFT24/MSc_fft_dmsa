@@ -192,8 +192,8 @@ classdef func
         end
         % >> 3.7. ---------------------------------------------------------
         %  > Save .mat file.
-        function [] = Save_mat(Td,Wd,V)
-            save(strjoin([Wd,"V",Td,".mat"],''),"V");
+        function [] = Save_mat(wd,V)
+            save(strjoin([wd,".mat"],''),"V");
         end
     end
 end

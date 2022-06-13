@@ -4,11 +4,11 @@ classdef A1_2D
         % >> 1.1. ---------------------------------------------------------
         %  > Set up input variables #1.
         function [inp] = Set_msh(h)
-            inp.h               = h;            %  > Grid size.
-            inp.Lim(1,:)        = [0,1];        %  > Grid limits (x-direction).
-            inp.Lim(2,:)        = [0,1];        %  > Grid limits (y-direction).
-            inp.p               = "s";          %  > Cell polyhedral type.
-            inp.t               = 0;            %  > #Example.
+            inp.h           = h;                %  > Grid size.
+            inp.Lim(1,:)    = [0,1];            %  > Grid limits (x-direction).
+            inp.Lim(2,:)    = [0,1];            %  > Grid limits (y-direction).
+            inp.p           = "s";              %  > Cell polyhedral type.
+            inp.t           = 0;                %  > #Example.
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up input variables #2.
@@ -30,7 +30,7 @@ classdef A1_2D
             inp.f           = fh.f;             %  > f.
             %  > ----------------------------------------------------------
             %  > Method(s).
-            inp.m.cls       = 0;                %  > 0-ULS: unconstrained least squares.
+            inp.m.cls       = 1;                %  > 0-ULS: unconstrained least squares.
                                                 %    1-CLS:   constrained least squares.
             inp.m.nb        = 0;                %  > 0-Face   neighbours.
                                                 %    1-Vertex neighbours.                                   
@@ -43,7 +43,6 @@ classdef A1_2D
             inp.p.p{2}(2,:) = [1,1];            %  > Diffusion (y): [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
-            inp.p.t         = 0;
             inp.p.n         = 2;                %  > Maximum number of cycles.
             inp.p.e         = 1.0E-10;          %  > Minimum global discretization/truncation error.
             inp.p.trsh      = 0.95;             %  > Treshold for face selection based on maximum face truncation error (%).
@@ -51,8 +50,12 @@ classdef A1_2D
                 return;
             end
             %  > ----------------------------------------------------------
+            %  > Test #.
+            inp.p.t         = 1;
+            %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot      = [1,1];
+            inp.plot{1}     = [0,1];
+            inp.plot{2}     = 1;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------

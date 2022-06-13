@@ -9,9 +9,12 @@ classdef B1_2D
                 %  > Fiels: "i", "logical", "sc", "sf" and "tfV".
                 s{i}.i       = cell(Nf,nc(2));
                 s{i}.logical = cell(Nf,nc(2));
-                s{i}.sc      = cell(Nf,nc(2));
-                s{i}.sf      = cell(Nf,nc(2));
                 s{i}.tfV     = cell(Nf,nc(2));
+                %  > For plotting...
+                if inp.plot{1}(1)
+                    s{i}.sc  = cell(Nf,nc(2));
+                    s{i}.sf  = cell(Nf,nc(2));
+                end
                 %  > Field: "u".
                 for j = 1:numel(inp.p.p)
                     for k = 1:size(inp.p.p{j},1)
@@ -44,7 +47,7 @@ classdef B1_2D
                             sc  = cell(1,q);
                             sf  = cell(1,q);
                             tfV = cell(1,2); %  > {1}-Cf.
-                            %  > {2}-kf.
+                                             %  > {2}-kf.
                             
                             %  > Loop through levels...
                             while n <= ceil(q)
@@ -174,9 +177,15 @@ classdef B1_2D
                                 s.i  {k,i}{j} = sc_t;
                             end
                             s.logical{k,i}{j} = logical;
-                            s.sc     {k,i}{j} = sc;
-                            s.sf     {k,i}{j} = sf;
                             s.tfV    {k,i}{j} = tfV;
+                            %  > For plotting...
+                            if inp.plot{1}(1)
+                                if ~msh.f.logical(k) && inp.m.cls
+                                    sf{1} = sf{1}(sf{1} ~= k);
+                                end
+                                s.sf {k,i}{j} = sf;
+                                s.sc {k,i}{j} = sc;
+                            end
                         end
                     end
                 end
@@ -261,7 +270,8 @@ classdef B1_2D
                 [sn.c,sn.f] = B1_2D.vn(msh,c,ct,ft); %  > [1]: Vertex neighbours.
             end
             %  > Select direction...
-            L = round(L,10);
+            n = 10;
+            L = round(L,n);
             %  > c.
             sn.c      = func.setdiff(sn.c,ct);
             xc        = round(msh.c.c.xy.c(sn.c,:),n);
@@ -326,7 +336,7 @@ classdef B1_2D
                                 C_Sf  {j} = C_Sfv{j}+gov(j)*C_Sfg{j};
                             end
                     end
-                    cls_b = v.*bd.Sf;
+                    cls_b = v*bd.Sf';
                     cls_C = sum(cat(3,C_Sf{:}),3);
             end
             %  > Assign to structure "cls_m".
@@ -349,25 +359,24 @@ classdef B1_2D
         end
         %  > 1.3.3.2. -----------------------------------------------------
         function [M] = Assemble_uls_D(inp,msh,c,f,logical,p,sf_t,xf,xt)
-            %  > Check boundary type of face(s) "sf_t".
-            if ~isempty(sf_t)
-                bd = B1_2D.Check_bd_t(inp,msh,f,sf_t);
-                if any(bd.t == ["Neumann","Robin"], 'all')
-                    d = B1_2D.C3_1(p);
-                end
-            end
             %  > dx.
             dx = xt-xf;
             %  > dd.
             dd = sqrt(sum(dx.^2,2)); dd(dd == 0) = min(dd(dd ~= 0));
-            %  > n.
-            n  = find(~logical);
-            
             %  > Assemble matrices D and Dw.
-            for i = 1:size(xt,1)
-                if logical(i) || (~logical(i) && bd.t(n == i) == "Dirichlet")
-                    D(i,:) = c.c.*dx(i,1).^c.e(1,:).*dx(i,2).^c.e(2,:);
-                else
+            n  = find(~logical);
+            if ~isempty(sf_t)
+                %  > Check boundary type of face(s) "sf_t".
+                bd = B1_2D.Check_bd_t(inp,msh,f,sf_t);
+                if any(bd.t == ["Neumann","Robin"], 'all')
+                    d  = B1_2D.C3_1(p);
+                end
+                %  > #1.
+                a      = [find(logical);n(bd.t == "Dirichlet")];
+                b      = func.setdiff(1:numel(logical),a);
+                D(a,:) = c.c.*dx(a,1).^c.e(1,:).*dx(a,2).^c.e(2,:);
+                %  > #2.
+                for i  = b
                     switch bd.t(n == i)
                         case "Neumann"
                             for j = 1:numel(d)
@@ -382,8 +391,10 @@ classdef B1_2D
                     end
                     D(i,:) = bd.Sf(n == i,:)*Dd;
                 end
-                Dw(i,:) = D(i,:).*inp.m.wf(dd(i));
+            else
+                D = c.c.*dx(:,1).^c.e(1,:).*dx(:,2).^c.e(2,:);
             end
+            Dw     = D.*inp.m.wf(dd);
             %  > Assign to structure "M".
             M.Dw   = Dw;
             M.DwTD = Dw'*D;
