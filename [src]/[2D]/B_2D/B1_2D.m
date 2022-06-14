@@ -144,7 +144,8 @@ classdef B1_2D
                                     return;
                             end
                             %  > Integration point(s)' location.
-                            Q_ip  = A3_2D.Q_1D_2(q);
+                            n_ip  = q;
+                            Q_ip  = A3_2D.Q_1D_2(n_ip);
                             x_ip  = f.qd.xu(Q_ip.x,msh.f.xy.v{k});
                             %  > Vdf.
                             dx_ip = x_ip-xf;

@@ -199,8 +199,7 @@ classdef B2_2D
             %  > \tau_c_abs.
             e.t.c_abs   = abs(e.t.c);
             %  > e_c_abs.
-            %  > Equivalent to: ea.c.c_abs = abs(f.av.c-x.nv.x.c).
-            e.c.c_abs   = abs(m.At\e.t.c);
+            e.c.c_abs   = abs(func.backlash(m.At,e.t.c));
             %  > Error norms.
             e.n_abs.c   = func.Set_n(e.c.c_abs,msh.c.Volume);
             e.n_abs.t.c = func.Set_n(e.t.c_abs,msh.c.Volume);
@@ -209,32 +208,35 @@ classdef B2_2D
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
         %  > 3.1.1. -------------------------------------------------------
-        %  > Select faces for coarsening/refinement.
-        function [u] = Update_u(inp,e,u)
-            %  > Error treshold.
-            trsh = inp.p_adapt.trsh.*max(e.t.f_abs(:,end));
-            %  > Faces selected for refinement.
-            fr_i = e.t.f_abs(:,1:end-1) > trsh;
-            
-            A = 2;
-            for i = 1:size(u,2)
-                u{i}.p{2}(fr_i) = u{i}.p{2}(fr_i)+A;
-                u{i}.p;
-                u{i}.s{1}{1} = [];
-                u{i}.s{1}{2} = [];
-                u{i}.s{2}{1} = find(fr_i(:,1));
-                u{i}.s{2}{2} = find(fr_i(:,2));
+        %  > Check stopping criterion/criteria and continue/stop...
+        function [f] = Stop(inp,cnt,e)
+            f = false;
+            if cnt  >= inp.p.n, f = true;
+                fprintf("Stopping criterion: max. number of cycles.\n");
+            end
+            if e(1) <= inp.p.e, f = true;
+                fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
             end
         end
         %  > 3.1.2. -------------------------------------------------------
-        %  > Set stopping criterion/criteria.
-        function [f] = Stop(inp,count,e)
-            f = false;
-            if count >= inp.p_adapt.nc, f = true;
-                fprintf("Stopping criterion: max. number of cycles.\n");
-            end
-            if e(1)  <= inp.p_adapt.em, f = true;
-                fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
+        %  > Select faces for coarsening/refinement.
+        function [u] = Update_u(inp,e,u)
+            %  > Error treshold.
+            trsh(1) = inp.p.trsh(1).*min(e(:,end));
+            trsh(2) = inp.p.trsh(2).*max(e(:,end));
+            %  > Select...
+            A       = 2;
+            k       = 1:size(e,1);
+            fr      = any(e(:,1:end-1) > trsh(2),2);
+            
+            % >> Isotropic refinement.
+            %  > For each term... (v=g). NOTE: Do not change (even for anisotropic coarsening/refinement).
+            for i = 1:numel(u.p)
+                %  > For each direction... (x=y).
+                for j = 1:numel(u.p{i})
+                    u.p{i}{j}(fr,:) = u.p{i}{j}(fr,:)+A;
+                    u.s{i}{j}       = k(fr)';
+                end
             end
         end
     end

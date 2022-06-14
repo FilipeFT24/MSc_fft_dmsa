@@ -67,7 +67,7 @@ classdef B3_2D
             Plot_2D_1.Plot(inp,msh,obj);
         end
         % >> 2.3. ---------------------------------------------------------
-        function [obj_i] = P_Adaptative(inp,msh,obj)
+        function [obj_p] = P_Adaptative(inp,msh,obj)
             %  > Initialize cycle count.
             i = 0;
             while 1
@@ -82,18 +82,21 @@ classdef B3_2D
                 %  > Update field  "e".
                 [obj.e] = ...
                     B2_2D.Update_e  (inp,msh,obj.e,obj.m{j},obj.s{j});
-                %  > Assign structures (auxiliary variables).
-                obj_i.e    (i,:) = obj.e;
-                obj_i.m.nnz(i,:) = obj.m{j}.nnz;
-                obj_i.u    (i,:) = obj.u{j};
+                %  > Assign fields to structure "obj_p".
+                obj_p(i).e        = obj.e;
+                obj_p(i).m{j}.nnz = obj.m{j}.nnz;
+                obj_p(i).p        = obj.s{j}.u.p;
                 
                 %   > Stop adaptation(?).
-                if ~B2_2D.Stop(inp,i,obj.e.a.n_abs.c)
-                    obj.u = B2_2D.Update_u(inp,obj.e.a,obj.u);
+                if ~B2_2D.Stop(inp,i,obj.e.a.n_abs.t.f(:,end))
+                    obj.s{j}.u = B2_2D.Update_u(inp,obj.e.a.t.f_abs,obj.s{j}.u);
                 else
                     break;
                 end
             end
+            %  > Plot...
+            Plot_2D_1.Plot(inp,msh,obj);
+            Plot_2D_2.Plot(inp,msh,obj_p);
         end
         % >> 2.4. ---------------------------------------------------------
         %  > Set up other tests.

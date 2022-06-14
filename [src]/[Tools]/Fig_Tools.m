@@ -2,34 +2,28 @@ classdef Fig_Tools
     methods (Static)
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
-        function [fig] = Set_fig(x)
-            fig.x = x;
-            fig.C = linspecer(9,'qualitative');                  %  > Colors.
-            if ~x.e
-                fig.lw       =  1.75;                            %  > Line width.
-                fig.ms       =  5.00;                            %  > Marker size.
-                fig.fa       =  0.25;                            %  > FaceAlpha.
-                fig.fs{1}    = [20.00,22.50];                    %  > x/y-label.
-                fig.fs{2}    = 13.50;                            %  > x/y-axis.
-                fig.fs{3}    = 15.00;                            %  > Legend.
-                fig.fs{4}    = 11.50;                            %  > Colormap label.
-                fig.fs{5}    = 20.00;                            %  > Colormap title.
-                fig.position = [150,100,1250,600];               %  > Position.
+        function [fig] = Set_fig(opt,x)
+            fig.x            = x;
+            fig.C            = linspecer(9,'qualitative');       %  > Colors.
+            fig.lw           =  1.75;                            %  > Line width.
+            fig.ms           =  5.00;                            %  > Marker size.
+            fig.fa           =  0.25;                            %  > FaceAlpha.
+            if ~opt
+                fig.fs{1}(1) = 30.00;                            %  > x-label.
+                fig.fs{1}(2) = 30.00;                            %  > y-label.
             else
-                fig.lw       =  3.50;                            %  > Line width.
-                fig.ms       = 10.00;                            %  > Marker size.
-                fig.fa       =  0.25;                            %  > FaceAlpha.
-                fig.fs{1}    = [40.00,40.00];                    %  > x/y-label.
-                fig.fs{2}    = 20.00;                            %  > x/y-axis.
-                fig.fs{3}    = 30.00;                            %  > Legend.
-                fig.fs{4}    = 25.00;                            %  > Colormap label.
-                fig.fs{5}    = 40.00;                            %  > Colormap title.
-                fig.position = [350,100,850,600];                %  > Position.
+                fig.fs{1}(1) = 22.50;                            %  > x-label.
+                fig.fs{1}(2) = 22.50;                            %  > y-label.
             end
-            fig.directory = '[Post-processing]/[.pdf files]';    %  > Destination folder.
-            fig.fn        = 'Times New Roman';                   %  > Font name.
-            fig.trsh.n    = 0;                                   %  > Error treshold: number of elements.
-            fig.trsh.v    = 1.0e-16;                             %  > Error treshold: value.
+            fig.fs    {2}    = 15.00;                            %  > Axis.
+            fig.fs    {3}    = 15.00;                            %  > Legend.
+            fig.fs    {4}    = 11.50;                            %  > Colormap label.
+            fig.fs    {5}    = 20.00;                            %  > Colormap title.
+            fig.pos          = [150,100,1250,600];               %  > Position.
+            fig.dir          = '[Post-processing]/[.pdf Files]'; %  > Destination folder.
+            fig.fn           = 'Times New Roman';                %  > Font name.
+            fig.trsh.n       = 0;                                %  > Error treshold: number of elements.
+            fig.trsh.v       = 1.0e-16;                          %  > Error treshold: value.
             switch x.l
                 case 1, fig.L{1} = "$x$";                        %  > x-axis label.
                         fig.L{2} = "$\textrm{Error magnitude}$"; %  > y-axis label.
@@ -79,7 +73,7 @@ classdef Fig_Tools
             %  > Other parameters.
             a = gca;
             f = gcf;
-            box on;
+            box on; grid on;
             set(f,'Color','w');
             set(a,'Fontname',fig.fn)
             set(a,'Fontsize',fig.fs{2});
@@ -102,8 +96,6 @@ classdef Fig_Tools
             %  > Legend.
             legend([y.P{:}],[y.L{:}],...
                 'Interpreter','latex','Location','Northeast','FontSize',fig.fs{3},'NumColumns',y.nc);
-            %  > Export/zoom.
-            Fig_Tools.fig_x(fig);
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
@@ -208,8 +200,6 @@ classdef Fig_Tools
             end
             %  > Grid.
             Fig_Tools.Var_2D_1(msh.f.xy.v,"k","-",0.01);
-            %  > Export/zoom.
-            Fig_Tools.fig_x(fig);
         end
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
@@ -263,16 +253,9 @@ classdef Fig_Tools
             f = v(randperm(numel(v),1));
         end
         %  > 3.3.2. -------------------------------------------------------
-        function [] = fig_x(fig)
-            if fig.x.z
-                zp = BaseZoom;
-                zp.plot(fig);
-            end
-            if fig.x.e
-                set     (gcf,'PaperSize',[29.7,21.5],'PaperPosition',[29.7,21.5]);
-                print   (gcf,strcat(fig.fid,'.pdf'),'-dpdf','-r500');
-                movefile(    strcat(fig.fid,'.pdf'),fig.dir);
-            end
+        function [] = SubPlot_pdf(dir,fid)
+            exportgraphics(gcf,fid,'ContentType','vector');
+            movefile(fid,dir);
         end
     end
 end

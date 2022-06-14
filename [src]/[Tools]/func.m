@@ -16,8 +16,7 @@ classdef func
             switch inp.t
                 case 0, [Xd,Yd] = func.demo_0(Xt,Yt);
                 case 1, [Xd,Yd] = func.demo_1(Xt,Yt);
-                case 2, [Xd,Yd] = func.demo_2(Xt,Yt);
-                case 3, [Xd,Yd] = func.demo_3(Xt,Yt);
+                case 2, [Xd,Yd] = func.demo_2(Xt,Yt,inp.h);
                 otherwise
                     return;
             end
@@ -55,33 +54,12 @@ classdef func
         end
         %  > 1.1.2. -------------------------------------------------------
         function [Xd,Yd] = demo_1(Xt,Yt)
-            %  > f.
-            c (1) = 2.*pi;
-            c (2) = 1./(2.*c(1));
-            f {1} = @(u,v) u+c(2).*sin(c(1).*u).*sin(c(1).*v);
-            f {2} = @(u,v) v+c(2).*sin(c(1).*u).*sin(c(1).*v);
-            %  > X/Yd.
-            Xd    = f{1}(Xt,Yt);
-            Yd    = f{2}(Xt,Yt);
-        end
-        %  > 1.1.3. -------------------------------------------------------
-        function [Xd,Yd] = demo_2(Xt,Yt)
-            %  > f.
-            c (1) = 0.75;
-            f {1} = @(u,v) u;
-            f {2} = @(u,v) v-c(1)/pi*sin(pi*v);
-            %  > X/Yd.
-            Xd    = f{1}(Xt,Yt);
-            Yd    = f{2}(Xt,Yt);
-        end
-        %  > 1.1.4. -------------------------------------------------------
-        function [Xd,Yd] = demo_3(Xt,Yt)
             %  > Auxiliary variables.
             [X(1),X(2)] = MinMaxElem(Xt); L = X(2)-X(1); Nv(1) = size(Xt,2); Nc(1) = Nv(1)-1;
             [Y(1),Y(2)] = MinMaxElem(Yt); H = Y(2)-Y(1); Nv(2) = size(Yt,1); Nc(2) = Nv(2)-1;
             %  > f.
             c (1)   = 0.1;
-            c (2)   = 1.0.*pi;
+            c (2)   = 10.*pi;
             f {1}   = @(i,j) L.*(i-1)./Nc(1).*(c(1).*(Nv(1)-i)./Nc(1).*sin(c(2).*H./L.*(j-1)./Nc(2))+1);
             f {2}   = @(i,j) H.*(j-1)./Nc(2).*(c(1).*(Nv(2)-j)./Nc(2).*sin(c(2).*H./L.*(i-1)./Nc(1))+1);
             %  > X/Yd.
@@ -89,7 +67,16 @@ classdef func
             Xd      = f{1}(it,jt);
             Yd      = f{2}(it,jt);
         end
-        
+        function [Xd,Yd] = demo_2(Xt,Yt,h)
+            %  > Auxiliary variables.
+            k       = 0.1;
+            m       = size(Xt,1)-2; i = 2:m+1;
+            n       = size(Xt,2)-2; j = 2:n+1;
+            %  > X/Yd.
+            Xt(i,j) = Xt(i,j)+randn(m,n).*k.*h; Xd = Xt;
+            Yt(i,j) = Yt(i,j)+randn(m,n).*k.*h; Yd = Yt;
+        end
+               
         %% > 2. -----------------------------------------------------------
         % >> Sort structures "msh" (1D/2D).
         % >> 2.1. ---------------------------------------------------------
