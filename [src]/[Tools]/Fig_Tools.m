@@ -73,12 +73,13 @@ classdef Fig_Tools
             %  > Other parameters.
             a = gca;
             f = gcf;
-            box on; grid on;
-            set(f,'Color','w');
+            box on;
             set(a,'Fontname',fig.fn)
             set(a,'Fontsize',fig.fs{2});
             set(a,'TickLabelInterpreter','Latex');
             set(a,'YScale','log');
+            set(f,'Color','w');
+            set(f,'Windowstate','maximized');
             %  > Axis.
             [X_lim(1),X_lim(2)] = MinMaxElem(x);
             if ~y.plot
@@ -86,8 +87,11 @@ classdef Fig_Tools
                 dX = diff(X_lim)./n; X_label = X_lim(1)-dX:dX:X_lim(2)+dX;
                 set(a,'XLim',X_lim,'XTick',X_label);
             else
+                grid on; 
+                grid minor;
                 set(a,'XLim',X_lim);
                 set(a,'XScale','log'); a.XAxis.Exponent = 3;
+                set(a,'GridLineStyle','-','minorgridlinestyle',':');
             end
             Y_lim (1) = 10.^(ceil(log10(y.lim(1)))-y.dY(1));
             Y_lim (2) = 10.^(ceil(log10(y.lim(2)))+y.dY(2)); ylim(Y_lim);
@@ -157,11 +161,12 @@ classdef Fig_Tools
             a = gca;
             f = gcf;
             axis equal;
-            set(f,'Color','w');
             set(a,'Fontname',fig.fn)
             set(a,'Fontsize',fig.fs{2});
             set(a,'Layer','Top')
             set(a,'TickLabelinterpreter','Latex');
+            set(f,'Color','w');
+            set(f,'Windowstate','maximized');
             pbaspect([1,1,1]);
             %  > Axis.
             n = [10,10];
@@ -220,7 +225,17 @@ classdef Fig_Tools
             end
         end
         %  > 3.2.3. -------------------------------------------------------
-        function [] = Var_2D_3(V1,V2,fa)
+        function [] = Var_2D_3(V,c,m,ms)
+            hold on;
+            if numel(ms) ~= size(V,1)
+                ms = ones(size(V,1),1).*ms;
+            end
+            for i = 1:size(V,1)
+                plot(V(:,1),V(:,2),m,'Color',c,'MarkerFaceColor','w','MarkerSize',ms(i));
+            end
+        end
+        %  > 3.2.4. -------------------------------------------------------
+        function [] = Var_2D_4(V1,V2,fa)
             hold on;
             [sz(1),sz(2)] = deal(size(V1,1),size(V2,1));
             if sz(1) > sz(2)
@@ -230,8 +245,8 @@ classdef Fig_Tools
                 patch(V1{i}(:,1),V1{i}(:,2),V2(i,:),'FaceAlpha',fa,'Linestyle','None');
             end
         end
-        %  > 3.2.4. -------------------------------------------------------
-        function [] = Var_2D_4(V1,V2,length,c)
+        %  > 3.2.5. -------------------------------------------------------
+        function [] = Var_2D_5(V1,V2,length,c)
             hold on;
             for i = 1:size(V1,1)
                 for j = 1:size(V1{i},1)

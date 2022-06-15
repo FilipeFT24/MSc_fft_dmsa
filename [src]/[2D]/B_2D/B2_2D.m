@@ -220,22 +220,87 @@ classdef B2_2D
         end
         %  > 3.1.2. -------------------------------------------------------
         %  > Select faces for coarsening/refinement.
-        function [u] = Update_u(inp,e,u)
-            %  > Error treshold.
-            trsh(1) = inp.p.trsh(1).*min(e(:,end));
-            trsh(2) = inp.p.trsh(2).*max(e(:,end));
-            %  > Select...
-            A       = 2;
-            k       = 1:size(e,1);
-            fr      = any(e(:,1:end-1) > trsh(2),2);
+        function [u] = Update_u(msh,inp,e,u)
+            %  > Auxiliary variables.
+            A    = 2;
+            k(1) = 1; %  > Convection/diffusion term.
+            k(2) = 1; %  > x/y term.
+            R    = 1;
             
-            % >> Isotropic refinement.
-            %  > For each term... (v=g). NOTE: Do not change (even for anisotropic coarsening/refinement).
+            %  > Sort...
+            [e_trsh(1),e_trsh(2)] = MinMaxElem(e(:,end));
+            for i = 1:numel(e_trsh)
+                fs.trsh(i) = inp.p.trsh(i).*e_trsh(i);
+            end
+            [fs.r.v,fs.r.i] = sort(e(:,end),'descend');
+            %  > Apply rules(?).
+            if any(R)
+                if R(1)
+                    fr = B2_2D.R1(inp,msh,e(:,end),fs,k,u);
+                end
+            else
+                lr = fs.r.v > fs.trsh(2); %  > Logical indexing (refinement).
+                fr = fs.r.i(lr);          %  > Face indices     (refinement).
+            end
+            %  > Set structure "u".
+            %  > For each term... 
+            %    NOTE: Do not change (convection and diffusion treated in a unified manner).
             for i = 1:numel(u.p)
                 %  > For each direction... (x=y).
-                for j = 1:numel(u.p{i})
-                    u.p{i}{j}(fr,:) = u.p{i}{j}(fr,:)+A;
-                    u.s{i}{j}       = k(fr)';
+                if inp.p.iso
+                    for j = 1:numel(u.p{i})
+                        u.p{i}{j}(fr,:) = u.p{i}{j}(fr,:)+A;
+                        u.s{i}{j}       = sort(fr);
+                    end
+                end
+            end
+            disp(fr);
+        end
+        %  > 3.1.2.1. -----------------------------------------------------
+        function [lev] = lev_i(inp_p_iso,msh_c_f_if,up_k)
+            %  > Isotropic.
+            if inp_p_iso
+                k(3) = 1;
+                for j = 1:numel(msh_c_f_if)
+                    lev(j) = ceil(up_k(msh_c_f_if(j),k(3))./2);
+                end
+            end
+        end
+        %  > 3.1.2.2. -----------------------------------------------------
+        %  > Rule #1.
+        function [ir] = R1(inp,msh,e,fs,k,u)
+            %  > Cell order level (before coarsening/refinement).
+            for i = 1:msh.c.Nc
+                lev(i,:) = B2_2D.lev_i(inp.p.iso,msh.c.f.if(i,:),u.p{k(1)}{k(2)});
+            end
+            %  > Check refinement...
+            k = 1;
+            for i = fs.r.i'
+                c = [msh.f.ic{i}]; n = numel(c);
+                f = zeros(1,n);
+                for j = 1:n, c_j = c(j);
+                    %  > Auxiliary variables.
+                    l       = msh.c.f.if(c_j,:) == i;
+                    lev_j.p = lev(c_j,:)+double(l);
+                    lev_j.v = e(msh.c.f.if(c_j,:));
+                    m       = min(lev_j.p); m_j = lev_j.p == m;
+                    M       = max(lev_j.p); M_j = lev_j.p == M;
+                    %  > Check...
+                    if M <= 5%|| (M-m > 1 && all(lev_j.v(m_j) <= inp.p.e_reject))
+                        f(j) = 1;
+                    else
+                        f(j) = 0;
+                        break;
+                    end
+                end
+                %  > Add face...
+                if all(f)
+                    ir(k,1) = i;
+                    k       = k+1;
+                end
+                %  > Stop(?)
+                if k > 100
+                    break;
                 end
             end
         end

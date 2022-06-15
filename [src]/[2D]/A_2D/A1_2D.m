@@ -43,21 +43,23 @@ classdef A1_2D
             inp.p.p{2}(2,:) = [1,1];               %  > Diffusion (y): [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
-            inp.p.n         = 15;                  %  > Maximum number of cycles.
-            inp.p.e         = 1.0E-10;             %  > Minimum global discretization/truncation error.
+            inp.p.n         = 10;                   %  > Maximum number of cycles.
+            inp.p.e         = 1E-10;               %  > Minimum global discretization/truncation error.
+            inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
+            inp.p.e_reject  = 1e-10;               %  > For face's error level (ignore)...
             inp.p.trsh(1)   = 0.25;                %  > Treshold for face selection based on maximum face truncation error (%): coarsening.
-            inp.p.trsh(2)   = 0.85;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
+            inp.p.trsh(2)   = 0.75;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
             if ~(inp.p.trsh <= 1)
                 return;
             end
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot{1}     = [0,0];
-            inp.plot{2}     = 1;
-            inp.plot{3}     = 0;
+            inp.plot{1}     = [0,1];
+            inp.plot{2}     = [1,1];
+            inp.plot{3}     = 2;
             %  > ----------------------------------------------------------
             %  > Test#.
-            inp.p.t         = 2;
+            inp.p.t         = 1;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
@@ -100,7 +102,7 @@ classdef A1_2D
                     e  = 1;
                     k  = 1./2;
                     c  = exp(-(1./k).^2);
-                    p  = 2;
+                    p  = 4;
                     %  > wf.
                     a  = @(d) exp(-(d./(k.*(1+e).*max(d))).^2)-c;
                     b  = 1-c;

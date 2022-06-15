@@ -89,7 +89,7 @@ classdef B3_2D
                 
                 %   > Stop adaptation(?).
                 if ~B2_2D.Stop(inp,i,obj.e.a.n_abs.t.f(:,end))
-                    obj.s{j}.u = B2_2D.Update_u(inp,obj.e.a.t.f_abs,obj.s{j}.u);
+                    obj.s{j}.u = B2_2D.Update_u(msh,inp,obj.e.a.t.f_abs,obj.s{j}.u);
                 else
                     break;
                 end

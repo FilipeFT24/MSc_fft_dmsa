@@ -70,7 +70,7 @@ classdef Plot_2D_1
             Fig_Tools.Var_2D_2(msh.c.c.xy.c   ,"k","o",ms(1));
             for i = 1:numel(sc)
                 Fig_Tools.Var_2D_2(msh.c.c.xy.c(sc{i},:),fig.C(i,:),"s",ms(3));
-                Fig_Tools.Var_2D_3(msh.c.c.xy.v(sc{i})  ,fig.C(i,:)    ,fig.fa);
+                Fig_Tools.Var_2D_4(msh.c.c.xy.v(sc{i})  ,fig.C(i,:)    ,fig.fa);
             end
             for i = 1:numel(sf)
                 Fig_Tools.Var_2D_2(msh.f.xy.c  (sf{i},:),fig.C(i,:),"s",ms(3));
@@ -83,7 +83,7 @@ classdef Plot_2D_1
             fa = 1;
             
             %  > Plot variables.
-            Fig_Tools.Var_2D_3(msh.c.c.xy.v,V,fa);
+            Fig_Tools.Var_2D_4(msh.c.c.xy.v,V,fa);
             Fig_Tools.Map_2D  (fig,msh,y);
         end
         %  > 2.2.2. -------------------------------------------------------
