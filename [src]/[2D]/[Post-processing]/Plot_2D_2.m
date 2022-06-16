@@ -106,8 +106,18 @@ classdef Plot_2D_2
                 for k = j
                     if e(i) >= inp.p.e_reject
                         Fig_Tools.Var_2D_2(xy_p{i}(k,:),fig.C(ceil(p(i,k)./2),:),mf(k),ms);
+                    
+                        b = num2str(e(i)); c = cellstr(b);
+                        
+                        text(xy_p{i}(k,1)-0.025,xy_p{i}(k,2)+0.025,c,'Fontsize',5);
+                        
+                        lll = 1;
+                    
                     else
                         Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k','o',ms);
+                        
+                        
+                        
                     end
                 end
             end
@@ -123,10 +133,6 @@ classdef Plot_2D_2
                     P{l} = plot(NaN,NaN,mf(j),'Color',fig.C(k(l),:),'MarkerFaceColor',fig.C(k(l),:),'MarkerSize',ms);
                     L{l} = num2str(k(l));
                 end
-%                 if any(e < inp.p.e_reject)
-%                     P{numel(k)+1} = plot(NaN,NaN,mf(j),'Color','k','MarkerFaceColor','k','MarkerSize',ms);
-%                     L{numel(k)+1} = '$\textrm{x}$';
-%                 end
             end
             legend([P{:}],[L],...
                 'Interpreter','latex','Location','NortheastOutside','FontSize',fig.fs{3},'NumColumns',1);

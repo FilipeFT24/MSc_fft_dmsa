@@ -73,7 +73,7 @@ classdef B3_2D
             while 1
                 %  > Update cycle count...
                 i = i+1;
-                fprintf("Loop: #%3d\n",i);
+                fprintf("Loop #%3d\n",i);
                 
                 %  > Update fields "m" and "s".
                 j                   = 1;
@@ -88,8 +88,8 @@ classdef B3_2D
                 obj_p(i).p        = obj.s{j}.u.p;
                 
                 %   > Stop adaptation(?).
-                if ~B2_2D.Stop(inp,i,obj.e.a.n_abs.t.f(:,end))
-                    obj.s{j}.u = B2_2D.Update_u(msh,inp,obj.e.a.t.f_abs,obj.s{j}.u);
+                if ~B2_2D.Stop(inp,i,obj.e.a.n_abs.c)
+                    obj.s{j}.u = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.i,obj.s{j}.logical,obj.s{j}.u);
                 else
                     break;
                 end

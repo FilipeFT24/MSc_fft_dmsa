@@ -220,41 +220,28 @@ classdef B2_2D
         end
         %  > 3.1.2. -------------------------------------------------------
         %  > Select faces for coarsening/refinement.
-        function [u] = Update_u(msh,inp,e,u)
+        function [s_u] = Update_u(inp,msh,e,s_i,s_logical,s_u)
             %  > Auxiliary variables.
+            %    NOTE: All terms are discretized in the same manner.
             A    = 2;
             k(1) = 1; %  > Convection/diffusion term.
             k(2) = 1; %  > x/y term.
             R    = 1;
             
-            %  > Sort...
-            [e_trsh(1),e_trsh(2)] = MinMaxElem(e(:,end));
-            for i = 1:numel(e_trsh)
-                fs.trsh(i) = inp.p.trsh(i).*e_trsh(i);
-            end
-            [fs.r.v,fs.r.i] = sort(e(:,end),'descend');
-            %  > Apply rules(?).
-            if any(R)
-                if R(1)
-                    fr = B2_2D.R1(inp,msh,e(:,end),fs,k,u);
-                end
-            else
-                lr = fs.r.v > fs.trsh(2); %  > Logical indexing (refinement).
-                fr = fs.r.i(lr);          %  > Face indices     (refinement).
-            end
+            %  > Set structure "fr" (refinement).
+            fr = B2_2D.Set_fr(inp,msh,e.t.f_abs(:,end),k,s_i,s_logical,s_u.p);
             %  > Set structure "u".
             %  > For each term... 
             %    NOTE: Do not change (convection and diffusion treated in a unified manner).
-            for i = 1:numel(u.p)
+            for i = 1:numel(s_u.p)
                 %  > For each direction... (x=y).
                 if inp.p.iso
-                    for j = 1:numel(u.p{i})
-                        u.p{i}{j}(fr,:) = u.p{i}{j}(fr,:)+A;
-                        u.s{i}{j}       = sort(fr);
+                    for j = 1:numel(s_u.p{i})
+                        s_u.p{i}{j}(fr,:) = s_u.p{i}{j}(fr,:)+A;
+                        s_u.s{i}{j}       = sort(fr);
                     end
                 end
             end
-            disp(fr);
         end
         %  > 3.1.2.1. -----------------------------------------------------
         function [lev] = lev_i(inp_p_iso,msh_c_f_if,up_k)
@@ -267,40 +254,44 @@ classdef B2_2D
             end
         end
         %  > 3.1.2.2. -----------------------------------------------------
-        %  > Rule #1.
-        function [ir] = R1(inp,msh,e,fs,k,u)
-            %  > Cell order level (before coarsening/refinement).
-            for i = 1:msh.c.Nc
-                lev(i,:) = B2_2D.lev_i(inp.p.iso,msh.c.f.if(i,:),u.p{k(1)}{k(2)});
+        %  > ...for refinement.
+        function [fr] = Set_fr(inp,msh,e,k,s_i,s_logical,s_up)
+            %  > Set structure "sc".
+            for i = 1:size(s_i,1)
+                sc{i,1} = s_i{i,k(1)}{k(2)}(s_logical{i,k(1)}{k(2)});
             end
-            %  > Check refinement...
-            k = 1;
-            for i = fs.r.i'
-                c = [msh.f.ic{i}]; n = numel(c);
-                f = zeros(1,n);
+
+            %  > Set "lev" (cell order level).
+            for i = 1:msh.c.Nc
+                lev(i,:) = B2_2D.lev_i(inp.p.iso,msh.c.f.if(i,:),s_up{k(1)}{k(2)});
+            end
+            %  > Select faces based on error treshold.
+            f      = 1:msh.f.Nf;
+            trsh.v = inp.p.trsh(2).*max(e);
+            trsh.i = f(e > trsh.v);
+            %  > Check if the selected faces are eligible for refinement...
+            cnt = 1;
+            for i = trsh.i
+                c = [msh.f.ic{i}]; n = numel(c); elig = zeros(1,n);
                 for j = 1:n, c_j = c(j);
-                    %  > Auxiliary variables.
-                    l       = msh.c.f.if(c_j,:) == i;
-                    lev_j.p = lev(c_j,:)+double(l);
-                    lev_j.v = e(msh.c.f.if(c_j,:));
-                    m       = min(lev_j.p); m_j = lev_j.p == m;
-                    M       = max(lev_j.p); M_j = lev_j.p == M;
+                    %  > Increment/update...
+                    l        = msh.c.f.if(c_j,:) == i;
+                    inc      = zeros(1,numel(l));
+                    inc  (l) = 1;
+                    lev_p    = lev(c_j,:)+inc;
+                    lev_e    = e(msh.c.f.if(c_j,:))';
+                    %  > Minimum/maximum p.
+                    m        = min(lev_p); m_j = lev_p == m;
+                    M        = max(lev_p); M_j = lev_p == M;
                     %  > Check...
-                    if M <= 5%|| (M-m > 1 && all(lev_j.v(m_j) <= inp.p.e_reject))
-                        f(j) = 1;
+                    if M-m <= 1
+                        elig(j) = 1;
                     else
-                        f(j) = 0;
                         break;
                     end
                 end
-                %  > Add face...
-                if all(f)
-                    ir(k,1) = i;
-                    k       = k+1;
-                end
-                %  > Stop(?)
-                if k > 100
-                    break;
+                if all(elig)
+                    fr(cnt,1) = i; cnt = cnt+1;
                 end
             end
         end
