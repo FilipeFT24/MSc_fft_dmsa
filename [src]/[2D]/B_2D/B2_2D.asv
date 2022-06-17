@@ -258,63 +258,40 @@ classdef B2_2D
                     end
                 end
             end
-            %  > ----------------------------------------------------------
+            
             % >> Construct priority list.
-            %  > ----------------------------------------------------------
             %  > 1. Sort by "\tau_f".
             [list.v,list.i] = sort(e,'descend');
             %  > Check...
             for i = 1:Nf
                list.logical(i) = B2_2D.ref_check_1(inp,msh,e,i,lev);
             end
+            %  > Sort by value...
             list.logical = list.logical(list.i);
-            %  > ----------------------------------------------------------
-            %  > 2. Select faces...
-            elig_f = list.logical(list.v > inp.p.trsh(2).*list.v(1));
-            elig_i = list.i      (list.v > inp.p.trsh(2).*list.v(1));
-            %  > Check...
-            if any(~elig_f)
-                j = 1;
-                for i = 1:numel(elig_f)
-                    if ~elig_f(i)
-                        f{j} = RunLength   (sort(reshape(msh.c.f.if(msh.f.ic{elig_i(i)},:),1,[])));
-                        f{j} = func.setdiff(f{j},elig_i);
-                        j    = j+1;
-                    end
-                end
-                f_all = RunLength(sort([f{:}]));
-                for i = 1:numel(f_all)
-                    logical_all(i) = B2_2D.ref_check_1(inp,msh,e,f_all(i),lev);
-                end
-                fr = [list.i(elig_f)',f_all(logical_all)]';
-            else
-                fr = list.i(elig_f);
+            %  > Move ilegible faces to bottom of the list...
+            if ~all(list.logical)
+                list = B2_2D.move_end(list,list.logical);
             end
-            %  > ----------------------------------------------------------
-           
-            
-            
-            
             %  > 2.
-%             if any(~list.logical)
-%                 %  > #1.
-%                 %  > If face "f" is eligible, prioritize the refinement of faces of the stencil cell(s) used to fit the ones w/ greater \tau_f.
-%                 for i = 1:size(s_i,1)
-%                     sc{i,1} = s_i{i,k(1)}{k(2)}(s_logical{i,k(1)}{k(2)});
-%                 end
-%                 f    = list.i   (~list.logical);
-%                 sc_i = RunLength(sort([msh.f.ic{f}]));
-%                 sf_i = RunLength(sort(reshape(msh.c.f.if(sc_i,:),[],1)));
-%                 %  > Exclude...
-%                 sf_i = func.setdiff(sf_i,f);
-%                 %  > Move to top...
-%                 list = B2_2D.move_top(list,sf_i);
-%             end
+            if any(~list.logical)
+                %  > #1.
+                %  > If face "f" is eligible, prioritize the refinement of faces of the stencil cell(s) used to fit the ones w/ greater \tau_f.
+                for i = 1:size(s_i,1)
+                    sc{i,1} = s_i{i,k(1)}{k(2)}(s_logical{i,k(1)}{k(2)});
+                end
+                f    = list.i   (~list.logical);
+                sc_i = RunLength(sort([msh.f.ic{f}]));
+                sf_i = RunLength(sort(reshape(msh.c.f.if(sc_i,:),[],1)));
+                %  > Exclude...
+                sf_i = func.setdiff(sf_i,f);
+                %  > Move to top...
+                list = B2_2D.move_top(list,sf_i);
+            end
             %  > 3. Select faces.
-%             last = find(list.v < inp.p.trsh(2).*list.v(1),1)-1;
-%             fr   = sort(list.i(1:last));
-%             %  > 4. Correct interfaces...
-%             fr   = B2_2D.ref_check_2(msh,fr,lev);
+            last = find(list.v < inp.p.trsh(2).*list.v(1),1)-1;
+            fr   = sort(list.i(1:last));
+            %  > 4. Correct interfaces...
+            fr   = B2_2D.ref_check_2(msh,fr,lev);
         end
         %  > 3.1.2.2. -----------------------------------------------------
         %  > 3.1.2.2.1. ---------------------------------------------------
@@ -347,25 +324,34 @@ classdef B2_2D
         function [fr] = ref_check_2(msh,fr,lev)
             %  > Auxiliary variables.
             Nf      = msh.f.Nf;
-            k       = 1:Nf;
             logical = false(Nf,1);
             
             for i = 1:Nf
                 if msh.f.logical(i)
                     c = msh.f.ic{i};
+                    
+                    
+                    lev(1,:) = [2,1,2,2];
+                    lev(12,:) = [2,1,2,2];
                     for j = 1:numel(c)
-                        %  > Assign logical indexing.
                         f    (j,:) = msh.c.f.if(c(j),:) == i;
-                        lev_f(j,:) = lev(c(j),:) > lev(f(j,:));     
+                        lev_f(j,:) = lev(c(j),:) > lev(f(j,:));
                     end
-                    %  > Check...
-                    if all(f == ~lev_f,'all')
-                        logical(i) = true;
-                    end
+                    if 
+                    
+                    
+                    
+                    f     = msh.c.f.if(c,:);
+                    lev_c = lev(c,:);
+                    
+                    jj = 1;
+                    
                 end
             end
-            disp(k(logical));
-            fr = sort([fr;k(logical)']);
+            
+            
+            
+            
         end
         %  > 3.1.2.3. -----------------------------------------------------
         %  > Auxiliary functions.

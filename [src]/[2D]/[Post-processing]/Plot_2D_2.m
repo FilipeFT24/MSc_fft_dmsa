@@ -104,29 +104,17 @@ classdef Plot_2D_2
                     j         = 1;
                 end
                 for k = j
-                    if e(i) >= inp.p.e_reject
-                        Fig_Tools.Var_2D_2(xy_p{i}(k,:),fig.C(ceil(p(i,k)./2),:),mf(k),ms);
                     
-                        b = num2str(e(i)); c = cellstr(b);
-                        
-                        text(xy_p{i}(k,1)-0.025,xy_p{i}(k,2)+0.025,c,'Fontsize',5);
-                        
-                        lll = 1;
-                    
-                    else
-                        Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k','o',ms);
-                        
-                        
-                        
-                    end
+                    Fig_Tools.Var_2D_2(xy_p{i}(k,:),fig.C(ceil(p(i,k)./2),:),mf(k),ms);
+                    text(xy_p{i}(k,1)-0.015,xy_p{i}(k,2)+0.015,cellstr(num2str(i)),'Fontsize',5);
+              
                 end
             end
-            Plot_2D_2.Set_L(fig,inp,e,p,mf,ms);
+            Plot_2D_2.Set_L(fig,inp,p,mf,ms);
         end
         %  > 2.2.2. -------------------------------------------------------
-        function [] = Set_L(fig,inp,e,p,mf,ms)
-            if ~inp.p.iso
-            else
+        function [] = Set_L(fig,inp,p,mf,ms)
+            if inp.p.iso
                 j = 1;
                 k = ceil(RunLength(sort(p(:,j)))./2);
                 for l = 1:numel(k)

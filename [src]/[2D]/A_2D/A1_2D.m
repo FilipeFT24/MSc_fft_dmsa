@@ -43,10 +43,10 @@ classdef A1_2D
             inp.p.p{2}(2,:) = [1,1];               %  > Diffusion (y): [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
-            inp.p.n         = 2;                   %  > Maximum number of cycles.
+            inp.p.n         = 5;                   %  > Maximum number of cycles.
             inp.p.e         = 1E-10;               %  > Minimum global discretization/truncation error.
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
-            inp.p.e_reject  = 1e-10;               %  > For face's error level (ignore)...
+            inp.p.p_max     = 5;                   %  > Maximum p.
             inp.p.trsh(1)   = 0.25;                %  > Treshold for face selection based on maximum face truncation error (%): coarsening.
             inp.p.trsh(2)   = 0.75;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
             if ~(inp.p.trsh <= 1)
@@ -65,7 +65,7 @@ classdef A1_2D
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [0,0];
+            c(1,:) =  [5,0];
             c(2,:) = -[1,1];
             
             %  > ch.
