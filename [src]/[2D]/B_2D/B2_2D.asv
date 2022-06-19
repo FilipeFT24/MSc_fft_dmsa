@@ -284,21 +284,21 @@ classdef B2_2D
             %  > Select faces...
             cond   = list.logical(:,2) & list.v > inp.p.trsh(2).*list.v(find(list.logical(:,2),1));
             %  > Check whether they can be automatically refined...
-            valid_f = list.logical(cond,1);
-            valid_i = list.i      (cond);
+            elig_f = list.logical(cond,1);
+            elig_i = list.i      (cond);
             %  > ...if (...).
-            if any(~valid_f)
-                %  > Identify valid/invalid faces.
-                fr = valid_i( valid_f);
-                gr = valid_i(~valid_f);
-                %  > Loop through invalid faces...
+            if any(~elig_f)
+                %  > Identify eligible/ilegible faces.
+                fr = elig_i( elig_f);
+                gr = elig_i(~elig_f);
+                %  > Loop through ilegible faces...
                 for i = 1:numel(gr)
                     fr_add = B2_2D.ref_check_2(inp,msh,gr(i),lev_f);
                     fr     = [fr;fr_add'];
                 end
                 fr = RunLength(sort(fr));
             else
-                fr = valid_i(valid_f);
+                fr = elig_i(elig_f);
             end
         end
         %  > 3.2.1.2. -----------------------------------------------------
