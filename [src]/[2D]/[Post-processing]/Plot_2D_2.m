@@ -88,10 +88,11 @@ classdef Plot_2D_2
         %  > 2.2.1. -------------------------------------------------------
         function [] = Plot_2(fig,inp,msh,e,p)
             %  > Auxiliary variables.
-            mf     = ["s","o"];
-            ms     = 7.5;
-            Qp     = A3_2D.Q_1D_1;
-            y.plot = 0;
+            add_text = 1;
+            mf       = ["s","o"];
+            ms       = 7.5;
+            Qp       = A3_2D.Q_1D_1;
+            y.plot   = 0;
                         
             %  > Plot variables.
             Fig_Tools.Map_2D(fig,msh,y);
@@ -104,10 +105,14 @@ classdef Plot_2D_2
                     j         = 1;
                 end
                 for k = j
-                    
                     Fig_Tools.Var_2D_2(xy_p{i}(k,:),fig.C(ceil(p(i,k)./2),:),mf(k),ms);
-                    text(xy_p{i}(k,1)-0.015,xy_p{i}(k,2)+0.015,cellstr(num2str(i)),'Fontsize',5);
-              
+                    if add_text
+                        %  > Auxiliary variables.
+                        c     = cellstr(num2str(i));
+                        shift = [-0.015,0.015];
+                        %  > Plot text...
+                        text(xy_p{i}(k,1)+shift(1),xy_p{i}(k,2)+shift(2),c,'Fontsize',5);
+                    end
                 end
             end
             Plot_2D_2.Set_L(fig,inp,p,mf,ms);

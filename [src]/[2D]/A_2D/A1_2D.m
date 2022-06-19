@@ -43,18 +43,21 @@ classdef A1_2D
             inp.p.p{2}(2,:) = [1,1];               %  > Diffusion (y): [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
-            inp.p.n         = 5;                   %  > Maximum number of cycles.
-            inp.p.e         = 1E-10;               %  > Minimum global discretization/truncation error.
+            %  > Selection criteria.
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
-            inp.p.p_max     = 5;                   %  > Maximum p.
-            inp.p.trsh(1)   = 0.25;                %  > Treshold for face selection based on maximum face truncation error (%): coarsening.
-            inp.p.trsh(2)   = 0.75;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
+            inp.p.p_max     = 9;                   %  > Maximum p.
+            inp.p.trsh(1)   = 0.05;                %  > Treshold for face selection based on maximum face truncation error (%): coarsening.
+            inp.p.trsh(2)   = 0.50;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
+            %  > Stopping criteria.
+            inp.p.e         = 1.0E-06;             %  > Minimum global discretization error.
+            inp.p.N         = 6;                   %  > Maximum number of adaptation cycles.
+            inp.p.n         = 2;                   %  > 
             if ~(inp.p.trsh <= 1)
                 return;
             end
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot{1}     = [0,1];
+            inp.plot{1}     = [0,0];
             inp.plot{2}     = [1,1];
             inp.plot{3}     = 2;
             %  > ----------------------------------------------------------
@@ -65,7 +68,7 @@ classdef A1_2D
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [5,0];
+            c(1,:) =  [1,0];
             c(2,:) = -[1,1];
             
             %  > ch.

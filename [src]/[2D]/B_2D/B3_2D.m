@@ -68,13 +68,12 @@ classdef B3_2D
         end
         % >> 2.3. ---------------------------------------------------------
         function [obj_p] = P_Adaptative(inp,msh,obj)
-            %  > Initialize cycle count.
-            i = 0;
+            %  > Auxiliary variables.
+            i    = 1;
+            stop = false(1,2);
+            
+            %  > While not stopped...
             while 1
-                %  > Update cycle count...
-                i = i+1;
-                fprintf("Loop #%3d\n",i);
-                
                 %  > Update fields "m" and "s".
                 j                   = 1;
                 [obj.m{j},obj.s{j}] = ...
@@ -88,11 +87,24 @@ classdef B3_2D
                 obj_p(i).p        = obj.s{j}.u.p;
                 
                 %   > Stop adaptation(?).
-                if ~B2_2D.Stop(inp,i,obj.e.a.n_abs.c)
+                if i < inp.p.n+1
+                    stop(1) = B2_2D.Stop_1(inp,i,obj.e.a.n_abs.c);
+                else
+                    stop(1) = B2_2D.Stop_1(inp,i,obj.e.a.n_abs.c);
+                    stop(2) = B2_2D.Stop_2(arrayfun(@(x) x.e.a.n_abs.t.f(3,3),obj_p),inp.p.n);
+                end
+                if all(~stop)
                     obj.s{j}.u = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.i,obj.s{j}.logical,obj.s{j}.u);
                 else
                     break;
                 end
+                %  > Update cycle count/print to terminal...
+                if i == 1
+                    fprintf("Loop #%2d\n",i);
+                else
+                    fprintf("Loop #%2d (adaptation cycle #%2d)\n",i,i-1);
+                end
+                i = i+1;
             end
             %  > Plot...
             Plot_2D_1.Plot(inp,msh,obj);
