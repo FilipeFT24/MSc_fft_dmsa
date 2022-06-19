@@ -225,12 +225,12 @@ classdef B2_2D
             f = false;
             if all(e(end-n:end-1) < e(end-n+1:end))
                 f = true;
-                fprintf("Stopping criterion: increasing (face) truncation error (L_infinity norm).\n");
+                fprintf("Stopping criterion: increasing (maximum) tau_f ('n' previous iterations have been removed).\n");
             end
         end
         % >> 3.2. ---------------------------------------------------------
         %  > Select faces for coarsening/refinement.
-        function [s_u] = Update_u(inp,msh,e,s_i,s_logical,s_u)
+        function [s_u,f] = Update_u(inp,msh,e,s_i,s_logical,s_u)
             %  > Auxiliary variables.
             %    NOTE: All terms are discretized in the same manner.
             A    = 2;
@@ -251,6 +251,13 @@ classdef B2_2D
                         s_u.s{i}{j}       = sort(fr);
                     end
                 end
+            end
+            %  > Stop(?).
+            if ~isempty(fr)
+                f = false;
+            else
+                f = true;
+                fprintf("Stopping criterion: couldn't refine any further (no selected faces).\n");
             end
         end
         %  > 3.2.1. -------------------------------------------------------
@@ -275,8 +282,8 @@ classdef B2_2D
                list.logical(i) = B2_2D.ref_check_1(inp,msh,i,lev_f);
             end
             list.logical = list.logical(list.i);
-            % >> 2. Select faces...
-            cond   = list.v > inp.p.trsh(2).*list.v(1);
+            % >> 2. Select faces... 
+            cond   = list.v > inp.p.trsh(2).*list.v(1) & lev_f(list.i) < ceil(inp.p.p_max./2);
             elig_f = list.logical(cond);
             elig_i = list.i      (cond);
             %  > Check...
@@ -291,7 +298,7 @@ classdef B2_2D
                 end
                 fr = RunLength(sort(fr));
             else
-                fr = list.i(elig_f);
+                fr = elig_i(elig_f);
             end
         end
         %  > 3.2.1.2. -----------------------------------------------------
@@ -321,17 +328,18 @@ classdef B2_2D
                 fr_all = add_f.f;
             else
                 g = add_f.f(~add_f.logical);
-                for i = 1:numel(g), h = g(i); fr{i} = [];
+                for i = 1:numel(g), j = g(i); fr{i} = [];
                     while 1
                         %  > Add...
-                        add_g = B2_2D.Add_f(inp,msh,h,lev_f);
+                        add_g = B2_2D.Add_f(inp,msh,j,lev_f);
                         %  > Check...
                         if all([add_g(:).logical])
                             fr{i} = [fr{i},[add_g(:).f]];
                             break;
                         else
-                            fr{i} = add_g.f( [add_g(:).logical]);
-                            h     = add_g.f(~[add_g(:).logical]);
+                            h     =    [add_g(:).f];
+                            fr{i} = h( [add_g(:).logical]);
+                            j     = h(~[add_g(:).logical]);
                         end
                     end
                 end

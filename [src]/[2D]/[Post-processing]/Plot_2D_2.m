@@ -88,9 +88,9 @@ classdef Plot_2D_2
         %  > 2.2.1. -------------------------------------------------------
         function [] = Plot_2(fig,inp,msh,e,p)
             %  > Auxiliary variables.
-            add_text = 1;
+            add_text = false;
             mf       = ["s","o"];
-            ms       = 7.5;
+            ms       = 9.5;
             Qp       = A3_2D.Q_1D_1;
             y.plot   = 0;
                         

@@ -70,9 +70,9 @@ classdef B3_2D
         function [obj_p] = P_Adaptative(inp,msh,obj)
             %  > Auxiliary variables.
             i    = 1;
-            stop = false(1,2);
+            stop = false(1,3);
             
-            %  > While not stopped...
+            %  > While the stopping criteria have not been met...
             while 1
                 %  > Update fields "m" and "s".
                 j                   = 1;
@@ -88,13 +88,22 @@ classdef B3_2D
                 
                 %   > Stop adaptation(?).
                 if i < inp.p.n+1
+                    %  > Check...
                     stop(1) = B2_2D.Stop_1(inp,i,obj.e.a.n_abs.c);
                 else
+                    %  > Check...
                     stop(1) = B2_2D.Stop_1(inp,i,obj.e.a.n_abs.c);
                     stop(2) = B2_2D.Stop_2(arrayfun(@(x) x.e.a.n_abs.t.f(3,3),obj_p),inp.p.n);
+                    %  > Remove...
+                    if stop(2)
+                        obj_p(end-inp.p.n+1:end) = [];
+                    end
                 end
                 if all(~stop)
-                    obj.s{j}.u = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.i,obj.s{j}.logical,obj.s{j}.u);
+                    [obj.s{j}.u,stop(3)] = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.i,obj.s{j}.logical,obj.s{j}.u);
+                    if stop(3)
+                        break;
+                    end
                 else
                     break;
                 end

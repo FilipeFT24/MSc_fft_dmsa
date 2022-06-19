@@ -47,11 +47,11 @@ classdef A1_2D
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
             inp.p.p_max     = 9;                   %  > Maximum p.
             inp.p.trsh(1)   = 0.05;                %  > Treshold for face selection based on maximum face truncation error (%): coarsening.
-            inp.p.trsh(2)   = 0.50;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
+            inp.p.trsh(2)   = 0.75;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
             %  > Stopping criteria.
             inp.p.e         = 1.0E-06;             %  > Minimum global discretization error.
-            inp.p.N         = 6;                   %  > Maximum number of adaptation cycles.
-            inp.p.n         = 2;                   %  > 
+            inp.p.N         = 30;                  %  > Maximum number of adaptation cycles.
+            inp.p.n         = 2;                   %  > Check last 'n' iterations...
             if ~(inp.p.trsh <= 1)
                 return;
             end
