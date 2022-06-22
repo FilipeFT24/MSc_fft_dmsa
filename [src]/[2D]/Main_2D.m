@@ -5,7 +5,7 @@ clear, clc, close all; warning off; beep off;
 %  > Working directories.
 Set_Directories_2D;
 % >> ----------------------------------------------------------------------
-h   = 6.0E-02;
+h   = 5.0E-02;
 inp = A1_2D.Set_inp({[1,1],1},[75,0.5,0.5]); %  > c/f.
 msh = A2_2D.Set_msh(h);                      %  > h.
 obj = B3_2D.Run_p  (inp,msh);                %  > inp/msh.

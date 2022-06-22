@@ -33,9 +33,9 @@ classdef A1_2D
             %  > ----------------------------------------------------------
             %  > Method(s).
             inp.m.cls       = 1;                   %  > 0-ULS: unconstrained least squares.
-                                                   %    1-CLS:   constrained least squares.
+            %    1-CLS:   constrained least squares.
             inp.m.nb        = 0;                   %  > 0-Face   neighbours.
-                                                   %    1-Vertex neighbours.                                   
+            %    1-Vertex neighbours.
             inp.m.wf        = A1_2D.fh_wf(t{2});   %  > Weight function.
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
@@ -48,12 +48,12 @@ classdef A1_2D
             %  > Selection criteria.
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
             inp.p.p_max     = 9;                   %  > Maximum p.
-            inp.p.trsh      = [0.00,0.20];         %  > Treshold for face selection (% of faces): coarsening/refinement.
+            inp.p.trsh      = [0.00,0.95];         %  > Treshold for face selection (%of faces): coarsening/refinement.
             %  > Stopping criteria.
-            inp.p.e         = 1.0E-07;             %  > Minimum global discretization error.
-            inp.p.N         = 7;                   %  > Maximum number of adaptation cycles.
-            inp.p.n         = 7;                   %  > Check last 'n' iterations...
-            if ~(inp.p.trsh <= 1)
+            inp.p.e         = 1.0E-07;             %  > Minimum global discretization error (ec).
+            inp.p.N         = 25;                  %  > Maximum number of adaptation cycles.
+            inp.p.n         = 3;                   %  > Check last 'n' iterations...
+            if any(inp.p.trsh < 0) || any(inp.p.trsh > 1)
                 return;
             end
             %  > ----------------------------------------------------------
@@ -69,7 +69,7 @@ classdef A1_2D
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [0,0];
+            c(1,:) =  [5,0];
             c(2,:) = -[1,1];
             
             %  > ch.
