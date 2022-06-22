@@ -4,27 +4,29 @@ classdef func
         %  > Set "struct" structure (msh).
         % >> 1.1. ---------------------------------------------------------
         function [struct] = Set_struct(inp)
-            %  > ...for x/y-directions.
+            %  > Limits.
             for i = 1:size(inp.Lim,1)
-                %  > Limits.
-                [L(i,1),L(i,2)] = MinMaxElem(inp.Lim(i,:)); Nv(i) = round(diff(L(i,:))./inp.h)+1; Nc = Nv-1;
-                %  > X/Yv.
-                XY_v{i} = linspace(L(i,1),L(i,2),Nv(i));
+                [L(1,i),L(2,i)] = MinMaxElem(inp.Lim(i,:));
             end
-            %  > X/Yt,d.
-            [Xt,Yt] = meshgrid(XY_v{1},XY_v{2});
-            switch inp.t
-                case 0, [Xd,Yd] = func.demo_0(Xt,Yt);
-                case 1, [Xd,Yd] = func.demo_1(Xt,Yt);
-                case 2, [Xd,Yd] = func.demo_2(Xt,Yt,inp.h);
-                otherwise
-                    return;
-            end
-            
             %  > Select cell polyhedral (type)...
             switch inp.p
+                % >> w/ squares.
                 case "s"
-                    % >> w/ squares.
+                    %  > XYv.
+                    for i = 1:size(inp.Lim,1)
+                        Nv (i) = round(diff(L(:,i))./inp.h)+1; 
+                        Nc (i) = Nv(i)-1;
+                        XYv{i} = linspace(L(1,i),L(2,i),Nv(i));
+                    end
+                    %  > XYt,d.
+                    [Xt,Yt] = meshgrid(XYv{1},XYv{2});
+                    switch inp.t
+                        case 0, [Xd,Yd] = func.demo_0(Xt,Yt);
+                        case 1, [Xd,Yd] = func.demo_1(Xt,Yt);
+                        case 2, [Xd,Yd] = func.demo_2(Xt,Yt,inp.h);
+                        otherwise
+                            return;
+                    end
                     %  > Connectivity list.
                     for i = 1:Nc(1)
                         for j = 1:Nc(2)
@@ -36,9 +38,10 @@ classdef func
                     end
                     %  > Points.
                     struct.Points = cat(2,reshape(Xd,[],1),reshape(Yd,[],1));
+                % >> w/ triangles.
                 case "v"
-                    % >> w/ triangles.
-                    struct = delaunayTriangulation(reshape(Xd,[],1),reshape(Yd,[],1));
+                    [struct.Points,struct.ConnectivityList] = ...
+                        distmesh2d(@(p) drectangle(p,L(1,1),L(2,1),L(1,2),L(2,2)),@(p) ones(size(p,1),1),inp.h,L,[L(1,:);diag(L)';diag(fliplr(L'),0)';L(2,:)],[1.0e-3,1.0e-3]);
                 otherwise
                     return;
             end
@@ -146,15 +149,15 @@ classdef func
         %  > 3.4.2. -------------------------------------------------------
         %  > Compute CLS matrices.
         %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
-        function [t] = cls_t(b,C,D,DwTD)
+        function [t] = cls_t(b,C,HTH,HT)
             %  > Auxiliary variables.
-            C_DwTD_CT    = C *func.backlash(DwTD,C');
-            C_DwTD_DT    = C *func.backlash(DwTD,D');
-            X            = C'*func.backlash(C_DwTD_CT,C_DwTD_DT);
-            Y            = C'*func.backlash(C_DwTD_CT,b);
+            C_HTH_CT    = C *func.backlash(HTH,C');
+            C_HTH_HT    = C *func.backlash(HTH,HT);
+            X           = C'*func.backlash(C_HTH_CT,C_HTH_HT);
+            Y           = C'*func.backlash(C_HTH_CT,b);
             %  > CLS terms (cell-dependent matrix/bd_v-dependent vector).
-            t        {1} =    func.backlash(DwTD,D'-X);
-            t        {2} =    func.backlash(DwTD,Y);
+            t       {1} =    func.backlash(HTH,HT-X);
+            t       {2} =    func.backlash(HTH,Y);
         end
         % >> 3.5. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).

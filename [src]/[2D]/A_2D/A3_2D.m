@@ -44,7 +44,8 @@ classdef A3_2D
             %  > "t" and "v".
             for i  = 1:numel(bd.i)
                 c  = msh.f.ic  {bd.i(i,1)};
-                Sf = msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:);
+                nd = 5;
+                Sf = round(msh.c.f.Sf{c}(msh.c.f.if(c,:) == bd.i(i,1),:),nd);
                 %  > Identify boundary type...
                 if     Sf(1) >  0 && Sf(2) == 0, bd.t(i,1) = 1; %  > East (E).
                 elseif Sf(1) == 0 && Sf(2) >  0, bd.t(i,1) = 2; %  > North(N).

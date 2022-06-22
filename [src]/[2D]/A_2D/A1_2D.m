@@ -8,7 +8,9 @@ classdef A1_2D
             inp.Lim(1,:)    = [0,1];               %  > Grid limits (x-direction).
             inp.Lim(2,:)    = [0,1];               %  > Grid limits (y-direction).
             inp.p           = "s";                 %  > Cell polyhedral type.
-            inp.t           = 0;                   %  > #Example.
+            if inp.p == "s"
+                inp.t       = 0;                   %  > #Example.
+            end
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Set up input variables #2.
@@ -46,29 +48,28 @@ classdef A1_2D
             %  > Selection criteria.
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
             inp.p.p_max     = 9;                   %  > Maximum p.
-            inp.p.trsh(1)   = 0.05;                %  > Treshold for face selection based on maximum face truncation error (%): coarsening.
-            inp.p.trsh(2)   = 0.75;                %  > Treshold for face selection based on maximum face truncation error (%): refinement.
+            inp.p.trsh      = [0.00,0.20];         %  > Treshold for face selection (% of faces): coarsening/refinement.
             %  > Stopping criteria.
-            inp.p.e         = 1.0E-06;             %  > Minimum global discretization error.
-            inp.p.N         = 10;                  %  > Maximum number of adaptation cycles.
-            inp.p.n         = 4;                   %  > Check last 'n' iterations...
+            inp.p.e         = 1.0E-07;             %  > Minimum global discretization error.
+            inp.p.N         = 7;                   %  > Maximum number of adaptation cycles.
+            inp.p.n         = 7;                   %  > Check last 'n' iterations...
             if ~(inp.p.trsh <= 1)
                 return;
             end
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot{1}     = [0,1];
+            inp.plot{1}     = [0,0];
             inp.plot{2}     = [1,1];
-            inp.plot{3}     = 2;
+            inp.plot{3}     = 1;
             %  > ----------------------------------------------------------
-            %  > Test#.
+            %  > #Test.
             inp.p.t         = 2;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [5,0];
+            c(1,:) =  [0,0];
             c(2,:) = -[1,1];
             
             %  > ch.
@@ -83,16 +84,7 @@ classdef A1_2D
             end
             %  > fh.
             switch t(2)
-                case 1
-                    fh.f = @(x) exp(-v(1).*((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
-                case 2
-                    if any(c(:,1) == 0)
-                        return;
-                    else
-                        A = i./(2.*pi.*c(2,1));
-                        B = c(1,1)./(2.*i);
-                    end
-                    fh.f = @(x) A.*bessely(0,A.*sqrt((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2)).*exp(B.*x(:,1));
+                case 1, fh.f = @(x) exp(-v(1).*((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
                 otherwise
                     return;
             end
@@ -101,16 +93,8 @@ classdef A1_2D
         function [wf] = fh_wf(t)
             switch t
                 case 1
-                    %  > Auxiliary variables.
-                    e  = 1;
-                    k  = 1./2;
-                    c  = exp(-(1./k).^2);
                     p  = 2;
-                    %  > wf.
-                    a  = @(d) exp(-(d./(k.*(1+e).*max(d))).^2)-c;
-                    b  = 1-c;
-                    g  = @(d) a(d)./b;
-                    wf = @(d) (g(d)./d.^p)./max(d);
+                    wf = @(d) (min(d)./d).^p;
                 otherwise
                     return;
             end

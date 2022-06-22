@@ -64,16 +64,17 @@ classdef B3_2D
             [obj.e] = ...
                 B2_2D.Update_e  (inp,msh,obj.e,obj.m{j},obj.s{j});
             %  > Plot...
-            Plot_2D_1.Plot(inp,msh,obj);
+            Plot_2D_1.Plot(inp,msh,obj(end));
         end
         % >> 2.3. ---------------------------------------------------------
         function [obj_p] = P_Adaptative(inp,msh,obj)
-            %  > Auxiliary variables.
-            i    = 1;
-            stop = false(1,3);
-            
             %  > While the stopping criteria have not been met...
+            i = 0;
             while 1
+                %  > Update cycle count/print to terminal...
+                fprintf("Loop #%2d\n",i);
+                i = i+1;
+                
                 %  > Update fields "m" and "s".
                 j                   = 1;
                 [obj.m{j},obj.s{j}] = ...
@@ -86,34 +87,16 @@ classdef B3_2D
                 obj_p(i).m{j}.nnz = obj.m{j}.nnz;
                 obj_p(i).p        = obj.s{j}.u.p;
                 
-                %   > Stop adaptation(?).
-                if i < inp.p.n+1
-                    %  > Check...
-                    stop(1) = B2_2D.Stop_1(inp,i,obj.e.a.n_abs.c);
-                else
-                    %  > Check...
-                    stop(1) = B2_2D.Stop_1(inp,i,obj.e.a.n_abs.c);
-                    stop(2) = B2_2D.Stop_2(arrayfun(@(x) x.e.a.n_abs.t.f(3,3),obj_p),inp.p.n);
-                    %  > Remove...
-                    if stop(2)
+                %  > Select...
+                [obj.s{j}.u,obj_p(i).s,flag] = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.u);
+                %  > Stop adaptation(?).
+                stop = B2_2D.Stop(inp,flag,obj.e.a.n_abs.c,arrayfun(@(x) x.e.a.n_abs.t.f(1,3),obj_p));
+                if any(stop)
+                    if stop(3)
                         obj_p(end-inp.p.n+1:end) = [];
                     end
-                end
-                if all(~stop)
-                    [obj.s{j}.u,stop(3)] = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.i,obj.s{j}.logical,obj.s{j}.u);
-                    if stop(3)
-                        break;
-                    end
-                else
                     break;
                 end
-                %  > Update cycle count/print to terminal...
-                if i == 1
-                    fprintf("Loop #%2d\n",i);
-                else
-                    fprintf("Loop #%2d (adaptation cycle #%2d)\n",i,i-1);
-                end
-                i = i+1;
             end
             %  > Plot...
             Plot_2D_1.Plot(inp,msh,obj);

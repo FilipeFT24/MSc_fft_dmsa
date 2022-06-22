@@ -32,8 +32,12 @@ classdef Plot_2D_2
                 %    NOTE: for the conducted tests, every term uses the same stencil.
                 j(1) = 2; %  > (:,j).
                 k(1) = 1; %      {k}.
-                e{1} = obj(end).e.a.t.f_abs(:,end);
-                p{1} = obj(end).p{j(1)}{k(1)};
+                e{1} = obj(end-1).e.a.t.f_abs(:,end);
+                p{1} = obj(end-1).p{j(1)}{k(1)};
+                s{1} = obj(end-1).s;
+                e{2} = obj(end)  .e.a.t.f_abs(:,end);
+                p{2} = obj(end)  .p{j(1)}{k(1)};
+                s{2} = obj(end)  .s;
             end
             %  > Plot variables.
             if inp.p.t == 2 && inp.plot{2}(1) 
@@ -48,8 +52,11 @@ classdef Plot_2D_2
             end
             %  > Plot variables.
             if inp.p.t == 2 && inp.plot{2}(2) 
-                figure; set(gcf,'Units','pixels','Position',fig{2}.pos);
-                Plot_2D_2.Plot_2(fig{2},inp,msh,e{1},p{1});
+                figure; set(gcf,'Units','pixels','Position',fig{1}.pos);
+                subplot(1,2,1);
+                Plot_2D_2.Plot_2(fig{2},inp,msh,e{1},p{1},s{1},[0,size(obj,2)-2]);
+                subplot(1,2,2);
+                Plot_2D_2.Plot_2(fig{2},inp,msh,e{2},p{2},s{2},[1,size(obj,2)-1]);
                 if x(2).e
                     Fig_Tools.SubPlot_pdf(fig{2}.dir,'Plot_2D_2(2).pdf');
                 end
@@ -61,9 +68,9 @@ classdef Plot_2D_2
         %  > 2.1.1. -------------------------------------------------------
         function [] = Plot_1(fig,NNZ,V,L)
             %  > Auxiliary variables.
-            y.dY    = [1,0];
-            y.nc    = 1;
-            y.plot  = 1;
+            y.dY   = [1,0];
+            y.nc   = 1;
+            y.plot = 1;
             
             %  > Plot variables.
             [y.L,y.P,y.lim] = Fig_Tools.Var_1D_1(fig,repmat("-o",size(V,2),1),L,NNZ,V);         
@@ -86,16 +93,23 @@ classdef Plot_2D_2
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
-        function [] = Plot_2(fig,inp,msh,e,p)
+        function [] = Plot_2(fig,inp,msh,e,p,s,flag)
             %  > Auxiliary variables.
-            add_text = false;
-            mf       = ["s","o"];
-            ms       = 9.5;
+            add_text = 0;
             Qp       = A3_2D.Q_1D_1;
             y.plot   = 0;
-                        
+            cu       = get(gca,'Units');    set(gca,'Units','Points');
+            ax_p     = get(gca,'Position'); set(gca,'Units',cu);
+
             %  > Plot variables.
             Fig_Tools.Map_2D(fig,msh,y);
+            for i = 1:msh.f.Nf
+                ms_i(i,1) = sqrt(diff(msh.f.xy.v{i}(:,1)).^2+diff(msh.f.xy.v{i}(:,2)).^2)./(1.75.*diff(xlim))*ax_p(3);
+            end
+            ms(1) = mean(ms_i(:,1));
+            ms(2) = 1.75.*ms(1);
+            ms(3) = 1.50.*ms(1);
+            
             for i = 1:msh.f.Nf
                 if ~inp.p.iso
                     xy_p{i,1} = Qp.xu([-1/3;1/3],msh.f.xy.v{i});
@@ -104,18 +118,33 @@ classdef Plot_2D_2
                     xy_p{i,1} = Qp.xu(0,msh.f.xy.v{i});
                     j         = 1;
                 end
+                %  > #1.
                 for k = j
-                    Fig_Tools.Var_2D_2(xy_p{i}(k,:),fig.C(ceil(p(i,k)./2),:),mf(k),ms);
+                    Fig_Tools.Var_2D_2(xy_p{i}(k,:),fig.C(ceil(p(i,k)./2),:),"o",ms(1));
                     if add_text
-                        %  > Auxiliary variables.
-                        c     = cellstr(num2str(i));
-                        shift = [-0.015,0.015];
-                        %  > Plot text...
-                        text(xy_p{i}(k,1)+shift(1),xy_p{i}(k,2)+shift(2),c,'Fontsize',5);
+                        text(xy_p{i}(k,1),xy_p{i}(k,2),cellstr(num2str(i)),'Fontsize',5);
                     end
                 end
+                %  > #2.
+                if ~isempty(s.c)
+                    if ismembc(i,sort(s.c))
+                        for k = j
+                            Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k',fig.lw,"s",ms(2));
+                        end
+                    end
+                end
+                if ~isempty(s.r)
+                    if ismembc(i,sort(s.r))
+                        for k = j
+                            Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k',fig.lw,"o",ms(3));
+                        end
+                    end
+                end 
             end
-            Plot_2D_2.Set_L(fig,inp,p,mf,ms);
+            if flag(1)
+                Plot_2D_2.Set_L(fig,inp,p,"o",ms(1));
+            end
+            title("i = "+flag(2),'Fontsize',fig.fs{5},'Interpreter','latex');
         end
         %  > 2.2.2. -------------------------------------------------------
         function [] = Set_L(fig,inp,p,mf,ms)
@@ -123,12 +152,14 @@ classdef Plot_2D_2
                 j = 1;
                 k = ceil(RunLength(sort(p(:,j)))./2);
                 for l = 1:numel(k)
-                    P{l} = plot(NaN,NaN,mf(j),'Color',fig.C(k(l),:),'MarkerFaceColor',fig.C(k(l),:),'MarkerSize',ms);
+                    P{l} = plot(NaN,NaN,mf,'Color',fig.C(k(l),:),'MarkerFaceColor',fig.C(k(l),:),'MarkerSize',ms);
                     L{l} = num2str(k(l));
                 end
             end
+            ax_kepp = get(gca,'Position');
             legend([P{:}],[L],...
                 'Interpreter','latex','Location','NortheastOutside','FontSize',fig.fs{3},'NumColumns',1);
+            set(gca,'Position',ax_kepp)
         end
     end
 end

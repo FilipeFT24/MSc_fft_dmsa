@@ -7,9 +7,18 @@ classdef B1_2D
             A = [0,2];
             for i = 1:ns
                 %  > Fiels: "i", "logical", "sc", "sf" and "tfV".
+                s{i}.D       = cell(Nf,nc(2));
                 s{i}.i       = cell(Nf,nc(2));
                 s{i}.logical = cell(Nf,nc(2));
                 s{i}.tfV     = cell(Nf,nc(2));
+                for j = 1:Nf
+                    for k = 1:nc(2)
+                        s{i}.D      {j,k} = cell(1,2);
+                        s{i}.i      {j,k} = cell(1,2);
+                        s{i}.logical{j,k} = cell(1,2);
+                        s{i}.tfV    {j,k} = cell(1,2);
+                    end
+                end
                 %  > For plotting...
                 if inp.plot{1}(1)
                     s{i}.sc  = cell(Nf,nc(2));
@@ -159,19 +168,26 @@ classdef B1_2D
                                 bd_c  = B1_2D.Check_bd_t(inp,msh,f,k);
                                 %  > Apply constraints...
                                 cls_m = B1_2D.Assemble_cls_m(inp,msh,bd_c,f.fh.f,p,msh.f.xy.c(k,:),x_ip);
-                                cls_t = func.cls_t(cls_m.b,cls_m.C,D.Dw,D.DwTD);
+                                cls_t = func.cls_t(cls_m.b,cls_m.C,D.DTWD,D.DTW);
                                 %  > tfV.
                                 for i_tfV = 1:numel(cls_t)
                                     tfV{i_tfV} = Q_ip.w'./2*Vdf*cls_t{i_tfV};
                                 end
                             else
                                 %  > Compute structure "D".
-                                D      = B1_2D.Assemble_uls_D(inp,msh,c_Df,f,logical,p,sf_t,xf,xt);
+                                %  > dx.
+                                dx = xt-xf;
+                                %  > W.
+                                dd = sqrt(sum(dx.^2,2)); dd(dd == 0) = min(dd(dd ~= 0));
+                                W  = diag(inp.m.wf(dd));
+                                %  > D.
+                                D  = B1_2D.Assemble_uls_D(inp,msh,c_Df,f,logical,p,sf_t,dx,xt,W);
                                 %  > tfV.
-                                tfV{1} = Q_ip.w'./2*Vdf*func.backlash(D.DwTD,D.Dw'); %  > ...from Cf.
+                                tfV{1} = Q_ip.w'./2*Vdf*func.backlash(D.DTWD,D.DTW); %  > ...from Cf.
                                 tfV{2} = [];                                         %  > ...from kf.
                             end
                             %  > Update field "s".
+                            s.D      {k,i}{j} = D;
                             if nf ~= 0
                                 s.i  {k,i}{j} = [sc_t;sf_t];
                             else
@@ -353,18 +369,15 @@ classdef B1_2D
             dd     = sqrt(sum(dx.^2,2)); dd(dd == 0) = min(dd(dd ~= 0));
             %  > Assemble matrices D and Dw.
             D      = c.c.*dx(:,1).^c.e(1,:).*dx(:,2).^c.e(2,:);
-            Dw     = D.*inp.m.wf(dd);
+            W      = diag(inp.m.wf(dd));
             %  > Assign to structure "M".
-            M.Dw   = Dw;
-            M.DwTD = Dw'*D;
+            M.D    = D;
+            M.DTW  = D'*W;
+            M.DTWD = D'*W*D;
+            M.W    = W;
         end
         %  > 1.3.3.2. -----------------------------------------------------
-        function [M] = Assemble_uls_D(inp,msh,c,f,logical,p,sf_t,xf,xt)
-            %  > dx.
-            dx = xt-xf;
-            %  > dd.
-            dd = sqrt(sum(dx.^2,2)); dd(dd == 0) = min(dd(dd ~= 0));
-            %  > Assemble matrices D and Dw.
+        function [M] = Assemble_uls_D(inp,msh,c,f,logical,p,sf_t,dx,xt,W)
             n  = find(~logical);
             if ~isempty(sf_t)
                 %  > Check boundary type of face(s) "sf_t".
@@ -395,15 +408,15 @@ classdef B1_2D
             else
                 D = c.c.*dx(:,1).^c.e(1,:).*dx(:,2).^c.e(2,:);
             end
-            Dw     = D.*inp.m.wf(dd);
             %  > Assign to structure "M".
-            M.Dw   = Dw;
-            M.DwTD = Dw'*D;
+            M.D    = D;
+            M.DTW  = D'*W;
+            M.DTWD = D'*W*D;
+            M.W    = W;
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Compute polynomial regression coefficients/exponents.
         %  > 1.4.1. -------------------------------------------------------
-        %  > WLS.
         %  > 1.4.1.1. -----------------------------------------------------
         %  > \phi_f.
         function [t] = C1_1(p)
@@ -454,7 +467,5 @@ classdef B1_2D
             t{1} = B1_2D.C2_1(p,1); %  > x.
             t{2} = B1_2D.C2_1(p,2); %  > y.
         end
-        %  > 1.4.2. -------------------------------------------------------
-        %  > Direct.
     end
 end

@@ -20,7 +20,7 @@ classdef B2_2D
         % >> 1.2. ---------------------------------------------------------
         %  > Update matrix A and vector b.
         function [m] = Update_m(msh,f,m,s)
-            %  > Rows (r) to be updated.
+            %  > Rows to be updated (r).
             for i = 1:numel(s.u.s)
                 for j = 1:numel(s.u.s{i})
                     uc{i,j} = RunLength(sort([msh.f.ic{s.u.s{i}{j}}]));
@@ -67,7 +67,7 @@ classdef B2_2D
             end
             %  > nnz (x/y-contribution(s): v(x/y)+g(x/y)).
             for i = 1:numel(m.nnz.Ac)
-                A       {i} = cellfun(@(x) x{:,i},m.Ac,'un',0);
+                A       {i} = cellfun(@(x) x{:,i},m.Ac,'un',false);
                 m.nnz.Ac(i) = nnz(sum(cat(3,A{i}{:}),3));
             end
             m.nnz.At = nnz(m.At);
@@ -105,6 +105,7 @@ classdef B2_2D
                             a = s.i      {l,i}{j}( n);
                             b = s.i      {l,i}{j}(~n);
                             %  > Cell value(s).
+                            s.x.vf.(fn(k)){l,i}{j}      = zeros  (numel(n),1);
                             s.x.vf.(fn(k)){l,i}{j}(n,1) = s.x.nv.(fn(k))(s.i{l,i}{j}(n));
                             %  > Face value(s).
                             if any(~n)
@@ -149,6 +150,8 @@ classdef B2_2D
         function [e] = Update_e(inp,msh,e,m,s)
             %  > #1: Update field "e.a".
             e.a = B2_2D.Update_ea(msh,e.a,m,s);
+            %  > #2: Update field "e.f".
+            e.f = B2_2D.Update_ef(msh,e.f,s);
         end
         %  > 2.2.1. -------------------------------------------------------
         %  > Update 'e.a(...)' field (analytic cell/face truncation error distribution/norms).
@@ -204,130 +207,212 @@ classdef B2_2D
             e.n_abs.c   = func.Set_n(e.c.c_abs,msh.c.Volume);
             e.n_abs.t.c = func.Set_n(e.t.c_abs,msh.c.Volume);
         end
-        
+        %  > 2.2.2. -------------------------------------------------------
+        %  > Update 'e.f(...)' field (fitting error distribution).
+        %  > e = sqrt(W)*[\phi_s-D*b], where b = (DTWD)^{-1}DTW*\phi_s.
+        function [e] = Update_ef(msh,e,s)
+            for i = 1:size(s.D,1)
+                for j = 1:size(s.D,2)
+                    for k = 1:numel(s.D{i,j})
+                        e{i,j}{k} = abs(sqrt(s.D{i,j}{k}.W)*(s.x.vf.x{i,j}{k}-s.D{i,j}{k}.D*(s.D{i,j}{k}.DTWD\s.D{i,j}{k}.DTW*s.x.vf.x{i,j}{k})));
+                    end
+                end
+            end 
+        end
+ 
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
-        %  > Check stopping criteria.
         %  > 3.1.1. -------------------------------------------------------
-        %  > Auxiliary function #1.
-        function [f] = Stop_1(inp,i,e)
-            f = false;
-            if i    >  inp.p.N, f = true;
-                fprintf("Stopping criterion: max. number of cycles.\n");
-            end
-            if e(1) <= inp.p.e, f = true;
-                fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
-            end
-        end
-        %  > 3.1.2. -------------------------------------------------------
-        %  > Auxiliary function #2.
-        function [f] = Stop_2(e,n)
-            f = false;
-            if all(e(end-n:end-1) < e(end-n+1:end))
-                f = true;
-                fprintf("Stopping criterion: increasing (maximum) tau_f (%d previous iterations have been removed).\n",n);
-            end
-        end
-        % >> 3.2. ---------------------------------------------------------
         %  > Select faces for coarsening/refinement.
-        function [s_u,f] = Update_u(inp,msh,e,s_i,s_logical,s_u)
+        function [u,v,flag] = Update_u(inp,msh,e,u)
             %  > Auxiliary variables.
             %    NOTE: All terms are discretized in the same manner.
             A    = 2;
             k(1) = 1; %  > Convection/diffusion term.
             k(2) = 1; %  > x/y term.
-            R    = 1;
-            
-            %  > Set structure "fr" (refinement).
-            fr = B2_2D.Set_fr(inp,msh,e.t.f_abs(:,end),k,s_i,s_logical,s_u.p);
+
+            if inp.p.iso
+                k(3) = 1;
+                for i = 1:msh.f.Nf
+                    lev.f(i,1) = ceil(u.p{k(1)}{k(2)}(i,k(3))./2);
+                    F    {i,1} = B2_2D.find_F(msh,i);
+                    lev.F{i,1} = ceil(u.p{k(1)}{k(2)}(F{i,1},k(3))./2);
+                end
+            end
+            %  > Set structures "f" and "v".
+            [f,v] = B2_2D.Set_fv(inp,msh,e.t.f_abs(:,end),F,lev);
             %  > Set structure "u".
             %  > For each term...
             %    NOTE: Do not change (convection and diffusion treated in a unified manner).
-            for i = 1:numel(s_u.p)
+            for i = 1:numel(u.p)
                 %  > For each direction... (x=y).
                 if inp.p.iso
-                    for j = 1:numel(s_u.p{i})
-                        s_u.p{i}{j}(fr,:) = s_u.p{i}{j}(fr,:)+A;
-                        s_u.s{i}{j}       = sort(fr);
+                    for j = 1:numel(u.p{i})
+                        if ~isempty(f.c)
+                            u.p{i}{j}(f.c,:) = u.p{i}{j}(f.c,:)-A; 
+                        end
+                        if ~isempty(f.r)
+                            u.p{i}{j}(f.r,:) = u.p{i}{j}(f.r,:)+A;
+                        end
+                        u.s{i}{j} = sort([f.c;f.r]);
                     end
                 end
             end
-            %  > Stop(?).
-            if ~isempty(fr)
-                f = false;
+            if ~isempty(f.r) || ~isempty(f.c)
+                flag = false;
             else
-                f = true;
-                fprintf("Stopping criterion: couldn't refine any further (no selected faces).\n");
+                flag = true;
             end
         end
-        %  > 3.2.1. -------------------------------------------------------
-        %  > 3.2.1.1. -----------------------------------------------------
-        %  > ...for refinement.
-        function [fr] = Set_fr(inp,msh,e,k,s_i,s_logical,s_up)
-            %  > Auxiliary variables.
-            Nf           = msh.f.Nf;
-            list.logical = false(Nf,2);
-            if inp.p.iso
-                k(3) = 1;
-                for i = 1:Nf
-                    lev_f(i,1) = ceil(s_up{k(1)}{k(2)}(i,k(3))./2);
-                end
-            end
-            
-            %  > Sort by "\tau_f".
-            [list.v,list.i] = sort(e,'descend');
-            for i = 1:Nf
-               list.logical(i,1) = B2_2D.ref_check_1(inp,msh,i,lev_f); 
-            end
-            list.logical(:,2) = lev_f < ceil(inp.p.p_max./2);
-            list.logical      = list.logical(list.i,:);
-            %  > Select faces...
-            cond   = list.logical(:,2) & list.v > inp.p.trsh(2).*list.v(find(list.logical(:,2),1));
-            %  > Check whether they can be automatically refined...
-            valid_f = list.logical(cond,1);
-            valid_i = list.i      (cond);
-            %  > ...if (...).
-            if any(~valid_f)
-                %  > Identify valid/invalid faces.
-                fr = valid_i( valid_f);
-                gr = valid_i(~valid_f);
-                %  > Loop through invalid faces...
-                for i = 1:numel(gr)
-                    fr_add = B2_2D.ref_check_2(inp,msh,gr(i),lev_f);
-                    fr     = [fr;fr_add'];
-                end
-                fr = RunLength(sort(fr));
-            else
-                fr = valid_i(valid_f);
-            end
+        %  > 3.1.2. -------------------------------------------------------
+        %  > Auxiliary function #1.
+        %  > Face "f" vertex neighbours (layer #1).
+        function [F] = find_F(msh,f)
+            F = RunLength(sort(func.setdiff(cat(1,msh.v.if{msh.f.iv(f,:)})',f)));
         end
-        %  > 3.2.1.2. -----------------------------------------------------
-        %  > ...for refinement (auxiliary function #1).
-        function [logical] = ref_check_1(inp,msh,f,lev_f)
-            %  > Faces that contain face "f"'s vertices.
-            fv = B2_2D.find_fv(msh,f);
-            %  > Check whether face "f" is ilegible for refinement...
-            f_check = lev_f(f) <= lev_f(fv);
+        %  > 3.1.3. -------------------------------------------------------
+        %  > Auxiliary function #2.
+        %  > Check whether face "f" is ilegible for coarsening/refinement...
+        function [logical] = is_elig(ch,lev_f,lev_F)
+            logical = false;
+            switch ch
+                case 'c', f_check = lev_f >= lev_F;
+                case 'r', f_check = lev_f <= lev_F;
+                otherwise
+                    return;
+            end
             if all(f_check)
                 logical = true;
-            else
-                logical = false;
             end
         end
-        %  > 3.2.1.3. -----------------------------------------------------
-        %  > ...for refinement (auxiliary function #2).
-        function [fr_all] = ref_check_2(inp,msh,f,lev_f)
-            %  > Add...
-            add_f = B2_2D.Add_f(inp,msh,f,lev_f);
-            %  > Assign to "fr".
-            if all(add_f.logical)
-                fr_all = add_f.f;
+        %  > 3.1.4. -------------------------------------------------------
+        %  > Auxiliary function #3.
+        %  > Check what faces need to be coarsened/refined to coarsen/refine face "f"...
+        function [add] = add_f(ch,f,F,lev)
+            switch ch
+                case 'c'
+                    for i = 1:numel(f)
+                        add(i).f = F{f(i)}(lev.F{f(i)} > lev.f(f(i)));
+                    end
+                case 'r'
+                    for i = 1:numel(f)
+                        add(i).f = F{f(i)}(lev.F{f(i)} < lev.f(f(i)));
+                    end
+                otherwise
+                    return;
+            end
+            for j = 1:numel(add(i).f)
+                add(i).logical(j) = B2_2D.is_elig(ch,lev.f(add(i).f(j)),lev.F{add(i).f(j)});
+            end
+        end
+        % >> 3.2. ---------------------------------------------------------
+        %  > 3.2.1. -------------------------------------------------------
+        function [f,v] = Set_fv(inp,msh,e,F,lev)
+            % >> Set structure "list" and select faces for coarsening/refinement.
+            %  > "i" and "v".
+            [list.v,list.i] = sort(e,'descend');
+            %  > "logical".
+            for i = 1:numel(lev.f)
+               list.logical.c(i,1) = B2_2D.is_elig('c',lev.f(i),lev.F{i}); 
+               list.logical.r(i,1) = B2_2D.is_elig('r',lev.f(i),lev.F{i});
+            end
+            list.logical.c(:,2) = lev.f > 1;                    %  > Eligible for selection: p(f) > 1.
+            list.logical.r(:,2) = lev.f < ceil(inp.p.p_max./2); %  > Eligible for selection: p(f) < p_max.
+            list.logical.r      = list.logical.r(list.i,:);
+            
+            % >> Select faces and check whether they can be automatically...
+            %  > ...refined.
+            eval.r = B2_2D.f_select(inp,'r',list);
+            if any(~eval.r.logical)
+                %  > Identify valid/invalid faces.
+                i_f.r = eval.r.i(~eval.r.logical);
+                v_f.r = eval.r.i( eval.r.logical); f.r = v_f.r;
+                %  > Loop through invalid faces...
+                for i = 1:numel(i_f.r)
+                    add_r = B2_2D.add_nb('r',i_f.r(i),F,lev);
+                    f.r   = [f.r;add_r'];
+                end
+                f.r = RunLength(sort(f.r));
             else
-                g = add_f.f(~add_f.logical);
+                f.r = eval.r.i;
+            end
+            v.r = eval.r.i;
+            
+            %  > ...coarsened.
+            %  > Select neighbours of ["f.r","v.r"]...
+            tv_r                   = RunLength(sort(reshape(msh.f.iv(RunLength(sort([f.r;v.r])),:),1,[])));
+            tn_r                   = RunLength(sort(cat(1,msh.v.if{tv_r})));
+            list.logical.c(tn_r,2) = false;
+            %  > Update field "F" of structure "lev" (w/ faces to be refined, i.e. "f.r")...
+            for i = 1:numel(f.r)
+                v_r{i,1} = RunLength   (sort(reshape(msh.f.iv(f.r(i),:),1,[])));
+                n_r{i,1} = RunLength   (sort(cat(1,msh.v.if{v_r{i,1}})));
+                n_r{i,1} = func.setdiff(n_r{i,1},f.r(i));
+                for j = 1:numel(n_r{i,1})
+                    lev.F{n_r{i,1}(j)}(F{n_r{i,1}(j)} == f.r(i)) = ...
+                        lev.F{n_r{i,1}(j)}(F{n_r{i,1}(j)} == f.r(i))+1;
+                end
+            end
+            for i = func.setdiff(1:numel(lev.F),tn_r)
+                for j = 1:numel(F{i})
+                    if range(lev.F{F{i}(j)}) > 1
+                        list.logical.c(i,2) = false;
+                        break;
+                    end
+                end
+            end
+            list.logical.c = list.logical.c(list.i,:);
+
+            eval.c = B2_2D.f_select(inp,'c',list);
+            if any(~eval.c.logical)
+                %  > Identify valid/invalid faces.
+                i_f.c = eval.c.i(~eval.c.logical);
+                v_f.c = eval.c.i( eval.c.logical); f.c = v_f.c;
+                %  > Loop through invalid faces...
+                for i = 1:numel(i_f.c)
+                    add_c = B2_2D.add_nb('c',i_f.c(i),F,lev);
+                    f.c   = [f.c;add_c'];
+                end
+                f.c = RunLength(sort(f.c));
+            else
+                f.c = eval.c.i;
+            end
+            v.c = eval.c.i;
+        end
+        %  > 3.2.2. -------------------------------------------------------
+        function [eval] = f_select(inp,ch,list)
+            switch ch
+                case 'c'
+                    %  > ...for coarsening.
+                    n            = numel (list.v);
+                    v            = list.v(n-ceil(inp.p.trsh(1)*n));
+                    cond         = list.logical.c(:,2) & list.v <= round(v,10); %  > Round to 10 digits...
+                    eval.i       = list.i        (cond);
+                    eval.logical = list.logical.c(cond,1);
+                case 'r'
+                    %  > ...for refinement.
+                    n            = numel (list.v);
+                    v            = list.v(n-ceil(inp.p.trsh(2)*n));
+                    cond         = list.logical.r(:,2) & list.v >= round(v,10); %  > Round to 10 digits...
+                    eval.i       = list.i        (cond);
+                    eval.logical = list.logical.r(cond,1);
+                otherwise
+                    return;
+            end
+        end
+        %  > 3.2.3. -------------------------------------------------------
+        function [add_all] = add_nb(ch,f,F,lev)
+            %  > Add...
+            f_add = B2_2D.add_f(ch,f,F,lev);
+            %  > Assign to "add_all".
+            if all(f_add.logical)
+                add_all = f_add.f;
+            else
+                g = f_add.f(~f_add.logical);
                 for i = 1:numel(g), j = g(i); fr{i} = [];
                     while 1
                         %  > Add...
-                        add_g = B2_2D.Add_f(inp,msh,j,lev_f);
+                        add_g = B2_2D.add_f(ch,j,F,lev);
                         %  > Check...
                         if all([add_g(:).logical])
                             fr{i} = [fr{i},[add_g(:).f]];
@@ -339,25 +424,33 @@ classdef B2_2D
                         end
                     end
                 end
-                fr_all = [add_f.f(add_f.logical),[fr{:}]];
+                add_all = [f_add.f(f_add.logical),[fr{:}]];
             end
         end
-        %  > 3.2.1.4. -----------------------------------------------------
-        %  > ...for refinement (auxiliary function #3).
-        function [fv] = find_fv(msh,f)
-            fv = RunLength(sort(func.setdiff(cat(1,msh.v.if{msh.f.iv(f,:)})',f)));
-        end
-        %  > 3.2.1.5. -----------------------------------------------------
-        %  > ...for refinement (auxiliary function #4).
-        function [add] = Add_f(inp,msh,f,lev_f)
-            for i = 1:numel(f)
-                %  > Faces that contain face "f"'s vertices.
-                fv{i} = B2_2D.find_fv(msh,f(i));
-                %  > Check...
-                add(i).f = fv{i}(lev_f(fv{i}) < lev_f(f(i)));
-                for j = 1:numel(add(i).f)
-                    add(i).logical(j) = B2_2D.ref_check_1(inp,msh,add(i).f(j),lev_f);
+        % >> 3.3. ---------------------------------------------------------
+        %  > Check stopping criteria.
+        function [stop] = Stop(inp,flag,ec,tau_f)
+            %  > Auxiliary variables.
+            n    = numel(tau_f);
+            stop = false(1,3);
+            
+            %  > (1).
+            if n     >  inp.p.N, stop(1) = true;
+                fprintf("Stopping criterion: max. number of cycles.\n");
+            end
+            %  > (2).
+            if ec(1) <= inp.p.e, stop(2) = true;
+                fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
+            end
+            %  > (3).
+            if n > inp.p.n
+                if all(tau_f(n-inp.p.n:n-1) < tau_f(n-inp.p.n+1:n)), stop(3) = true;
+                    fprintf("Stopping criterion: increasing tau_f (L1 norm). \n%d previous iterations have been removed).",inp.p.n);
                 end
+            end
+            %  > (4)
+            if flag, stop(4) = true;
+                fprintf("Stopping criterion: couldn't coarsen/refine any further.\n");
             end
         end
     end

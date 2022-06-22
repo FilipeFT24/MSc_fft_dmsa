@@ -89,7 +89,9 @@ classdef Fig_Tools
             else
                 grid on; 
                 grid minor;
-                set(a,'XLim',X_lim);
+                if numel(unique(X_lim)) ~= 1
+                    set(a,'XLim',X_lim);
+                end
                 set(a,'XScale','log'); a.XAxis.Exponent = 3;
                 set(a,'GridLineStyle','-','minorgridlinestyle',':');
             end
@@ -225,13 +227,13 @@ classdef Fig_Tools
             end
         end
         %  > 3.2.3. -------------------------------------------------------
-        function [] = Var_2D_3(V,c,m,ms)
+        function [] = Var_2D_3(V,c,lw,m,ms)
             hold on;
             if numel(ms) ~= size(V,1)
                 ms = ones(size(V,1),1).*ms;
             end
             for i = 1:size(V,1)
-                plot(V(:,1),V(:,2),m,'Color',c,'MarkerFaceColor','w','MarkerSize',ms(i));
+                plot(V(:,1),V(:,2),m,'Color',c,'LineWidth',lw,'MarkerSize',ms(i));
             end
         end
         %  > 3.2.4. -------------------------------------------------------

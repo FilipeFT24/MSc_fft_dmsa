@@ -1,11 +1,11 @@
-function [p,t]=distmesh2d(fd,fh,h0,bbox,pfix,varargin)
+function [p,t]=distmesh2d(fd,fh,h0,bbox,pfix,tol,varargin)
 
-dptol  =.001; 
-ttol   =.1; 
-Fscale =1.2; 
-deltat =.2; 
-geps   =.001*h0; 
-deps   =sqrt(eps)*h0;
+dptol  = tol(1); 
+ttol   = tol(2); 
+Fscale = 1.2; 
+deltat = .2; 
+geps   = .001*h0; 
+deps   = sqrt(eps)*h0;
 densityctrlfreq=30;
 
 % 1. Create initial distribution in bounding box (equilateral triangles)
