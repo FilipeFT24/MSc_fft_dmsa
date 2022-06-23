@@ -11,12 +11,12 @@ classdef Plot_2D_1
             %  > Select variables.
             if inp.plot{1}(1)
                 %  > Diffusive term (x) - face "f".
-                f(1) = 1; %  >    f .
+                f(1) = 22; %  >    f .
                 j(1) = 2; %  > (:,j).
                 k(1) = 1; %      {k}.
                 l(1) = 1; %      {l}.
                 %  > Diffusive term (y) - face "f".
-                f(2) = 2; %  >    f .
+                f(2) = 23; %  >    f .
                 j(2) = 2; %  > (:,j).
                 k(2) = 2; %      {k}.
                 l(2) = 1; %      {l}.

@@ -96,6 +96,7 @@ classdef Plot_2D_2
         function [] = Plot_2(fig,inp,msh,e,p,s,flag)
             %  > Auxiliary variables.
             add_text = 0;
+            add_cr   = 1;
             Qp       = A3_2D.Q_1D_1;
             y.plot   = 0;
             cu       = get(gca,'Units');    set(gca,'Units','Points');
@@ -104,7 +105,7 @@ classdef Plot_2D_2
             %  > Plot variables.
             Fig_Tools.Map_2D(fig,msh,y);
             for i = 1:msh.f.Nf
-                ms_i(i,1) = sqrt(diff(msh.f.xy.v{i}(:,1)).^2+diff(msh.f.xy.v{i}(:,2)).^2)./(1.75.*diff(xlim))*ax_p(3);
+                ms_i(i,1) = sqrt(diff(msh.f.xy.v{i}(:,1)).^2+diff(msh.f.xy.v{i}(:,2)).^2)./(1.50.*diff(xlim))*ax_p(3);
             end
             ms(1) = mean(ms_i(:,1));
             ms(2) = 1.75.*ms(1);
@@ -126,20 +127,22 @@ classdef Plot_2D_2
                     end
                 end
                 %  > #2.
-                if ~isempty(s.c)
-                    if ismembc(i,sort(s.c))
-                        for k = j
-                            Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k',fig.lw,"s",ms(2));
+                if add_cr
+                    if ~isempty(s.c)
+                        if ismembc(i,sort(s.c))
+                            for k = j
+                                Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k',fig.lw,"s",ms(2));
+                            end
+                        end
+                    end
+                    if ~isempty(s.r)
+                        if ismembc(i,sort(s.r))
+                            for k = j
+                                Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k',fig.lw,"o",ms(3));
+                            end
                         end
                     end
                 end
-                if ~isempty(s.r)
-                    if ismembc(i,sort(s.r))
-                        for k = j
-                            Fig_Tools.Var_2D_3(xy_p{i}(k,:),'k',fig.lw,"o",ms(3));
-                        end
-                    end
-                end 
             end
             if flag(1)
                 Plot_2D_2.Set_L(fig,inp,p,"o",ms(1));

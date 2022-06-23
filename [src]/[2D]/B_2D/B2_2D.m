@@ -301,8 +301,10 @@ classdef B2_2D
                 otherwise
                     return;
             end
-            for j = 1:numel(add(i).f)
-                add(i).logical(j) = B2_2D.is_elig(ch,lev.f(add(i).f(j)),lev.F{add(i).f(j)});
+            for i = 1:numel(f)
+                for j = 1:numel(add(i).f)
+                    add(i).logical(j) = B2_2D.is_elig(ch,lev.f(add(i).f(j)),lev.F{add(i).f(j)});
+                end
             end
         end
         % >> 3.2. ---------------------------------------------------------
@@ -386,14 +388,14 @@ classdef B2_2D
                     %  > ...for coarsening.
                     n            = numel (list.v);
                     v            = list.v(n-ceil(inp.p.trsh(1)*n));
-                    cond         = list.logical.c(:,2) & list.v <= round(v,10); %  > Round to 10 digits...
+                    cond         = list.logical.c(:,2) & list.v <= v;
                     eval.i       = list.i        (cond);
                     eval.logical = list.logical.c(cond,1);
                 case 'r'
                     %  > ...for refinement.
                     n            = numel (list.v);
                     v            = list.v(n-ceil(inp.p.trsh(2)*n));
-                    cond         = list.logical.r(:,2) & list.v >= round(v,10); %  > Round to 10 digits...
+                    cond         = list.logical.r(:,2) & list.v >= v;
                     eval.i       = list.i        (cond);
                     eval.logical = list.logical.r(cond,1);
                 otherwise
