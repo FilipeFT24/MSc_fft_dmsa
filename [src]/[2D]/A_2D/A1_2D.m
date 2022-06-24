@@ -51,19 +51,19 @@ classdef A1_2D
             inp.p.trsh      = [0.050,0.975];       %  > Treshold for face selection (%of faces): coarsening/refinement.
             %  > Stopping criteria.
             inp.p.e         = 1.00E-07;            %  > Minimum global discretization error (ec).
-            inp.p.N         = 1;                   %  > Maximum number of adaptation cycles.
+            inp.p.N         = 10;                  %  > Maximum number of adaptation cycles.
             inp.p.n         = 5;                   %  > Check last 'n' iterations...
             if any(inp.p.trsh < 0) || any(inp.p.trsh > 1)
                 return;
             end
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot{1}     = [1,1];
+            inp.plot{1}     = [0,1];
             inp.plot{2}     = [1,1];
             inp.plot{3}     = 1;
             %  > ----------------------------------------------------------
             %  > #Test.
-            inp.p.t         = 1;
+            inp.p.t         = 2;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
@@ -85,7 +85,7 @@ classdef A1_2D
             %  > fh.
             switch t(2)
                 case 1, fh.f = @(x) exp (-v(1).*((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
-                case 2, fh.f = @(x) sqrt( v(1).*((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
+                case 2, fh.f = @(x) sqrt(       ((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
                 otherwise
                     return;
             end
