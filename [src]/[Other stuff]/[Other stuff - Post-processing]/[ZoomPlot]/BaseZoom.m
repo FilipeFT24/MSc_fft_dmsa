@@ -156,16 +156,14 @@ classdef BaseZoom < handle
     end
 
     methods
-        function plot(obj,fig)
+        function plot(obj)
             % main steps
             obj.checkVersion;
             obj.mainAxes         = gca;
             obj.axesScale.XScale = obj.mainAxes.XScale;
             obj.axesScale.YScale = obj.mainAxes.YScale;            
             obj.mainFigure       = gcf;
-            obj.run              = fig.run;
-            obj.exp              = fig.exp;
-
+            
             if size(imhandles(obj.mainAxes),1) ~= 0
                 obj.axesClass = 'image';
                 % information about the image
@@ -483,11 +481,10 @@ classdef BaseZoom < handle
                     end
                     copyobj(children_(numChildren_),obj.subAxes);
                     %  > Tools.
-                    fig = Fig_Tools_1D.Set_fig(obj.run,obj.exp);
                     box on;
                     set(gcf,'color','w');
                     set(gca,'TickLabelInterpreter','latex');
-                    set(gca,'FontSize',fig.FT_4); 
+                    set(gca,'FontSize',11.50); 
             end
         end        
         function creatRectangle(obj)

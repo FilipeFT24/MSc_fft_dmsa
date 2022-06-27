@@ -135,10 +135,21 @@ classdef func
             z    = x(w(x));
         end
         % >> 3.4. ---------------------------------------------------------
-        %  > 3.4.1. -------------------------------------------------------
+        %  > Similar (faster) version of built-in function "meshgrid" (w/o verification(s)).
+        function [a,b] = meshgrid(v)
+            b = v'*ones(1,numel(v));
+            a = b';
+        end
+        % >> 3.5. ---------------------------------------------------------
+        %  > Similar (faster) version of following expression: arrayfun(@(x) find(a == x),b);
+        function [j] = find_c(a,b)
+            i = repmat(a,1,numel(b)) == b'; [j,~] = find(i);
+        end
+        % >> 3.6. ---------------------------------------------------------
+        %  > 3.6.1. -------------------------------------------------------
         %  > Rescaling to Solve a Linear System (Ax=b).
         %  > Reference: https://www.mathworks.com/help/matlab/ref/equilibrate.html#mw_beaf3b94-7114-4652-b483-a36c2acf7b94
-        function [x] = backlash(A,b)
+        function [x] = backslash(A,b)
             %  > Use built-in function "equilibrate".
             [P,R,C] = equilibrate(A);
             %  > Solve linear system...
@@ -146,20 +157,20 @@ classdef func
             d = R*P*b;
             x = C*(B\d);
         end
-        %  > 3.4.2. -------------------------------------------------------
+        %  > 3.6.2. -------------------------------------------------------
         %  > Compute CLS matrices.
         %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
         function [t] = cls_t(b,C,HTH,HT)
             %  > Auxiliary variables.
-            C_HTH_CT    = C *func.backlash(HTH,C');
-            C_HTH_HT    = C *func.backlash(HTH,HT);
-            X           = C'*func.backlash(C_HTH_CT,C_HTH_HT);
-            Y           = C'*func.backlash(C_HTH_CT,b);
+            C_HTH_CT    = C *func.backslash(HTH,C');
+            C_HTH_HT    = C *func.backslash(HTH,HT);
+            X           = C'*func.backslash(C_HTH_CT,C_HTH_HT);
+            Y           = C'*func.backslash(C_HTH_CT,b);
             %  > CLS terms (cell-dependent matrix/bd_v-dependent vector).
-            t       {1} =    func.backlash(HTH,HT-X);
-            t       {2} =    func.backlash(HTH,Y);
+            t       {1} =    func.backslash(HTH,HT-X);
+            t       {2} =    func.backslash(HTH,Y);
         end
-        % >> 3.5. ---------------------------------------------------------
+        % >> 3.7. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = Set_n(E,V)
             if nargin == 1
@@ -172,7 +183,7 @@ classdef func
                 L(3,:) = max(E);
             end
         end
-        % >> 3.6. ---------------------------------------------------------
+        % >> 3.8. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             [m,n]  = size(e);
@@ -180,7 +191,7 @@ classdef func
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j));
         end
-        % >> 3.7. ---------------------------------------------------------
+        % >> 3.9. ---------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(wd,V)
             save(strjoin([wd,".mat"],''),"V");

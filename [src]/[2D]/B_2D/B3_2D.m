@@ -6,19 +6,18 @@ classdef B3_2D
         %                                {2} - error estimator (     ".f",".s",".m").
         function [obj] = Initialize_1(inp,msh)
             %  > Auxiliary variables.
-            nc = size(inp.c);
             ns = 2;
             Nc = msh.c.Nc;
             Nf = msh.f.Nf;
             
             %  > Field: "e" (error).
-            obj.e = B2_2D.Initialize_e(nc,Nc,Nf);
+            obj.e = B2_2D.Initialize_e(Nc,Nf);
             %  > Field: "f" (analytic function(s), 1D/2D quadrature, etc.).
             obj.f = A3_2D.Initialize_f(inp,msh);
             %  > Field: "m" (matrices).
-            obj.m = B2_2D.Initialize_m(nc,ns,Nc);
+            obj.m = B2_2D.Initialize_m(ns,Nc);
             %  > Field: "s" (stencil cell/face indices, coordinates, coefficents, etc.).
-            obj.s = B1_2D.Initialize_s(inp,obj.f,nc,ns,Nc,Nf,msh.c.c.xy.c);
+            obj.s = B1_2D.Initialize_s(inp,obj.f,ns,Nf,msh.c.c.xy.c);
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update all fields from structure "obj".
@@ -90,7 +89,7 @@ classdef B3_2D
                 %  > Select...
                 [obj.s{j}.u,obj_p(i).s,flag] = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.u);
                 %  > Stop adaptation(?).
-                stop = B2_2D.Stop(inp,flag,obj.e.a.n_abs.c,arrayfun(@(x) x.e.a.n_abs.t.f(1,3),obj_p));
+                stop = B2_2D.Stop(inp,flag,obj.e.a.n_abs.c,arrayfun(@(x) x.e.a.n_abs.t.f(1),obj_p));
                 if any(stop)
                     if stop(3)
                         obj_p(end-inp.p.n+1:end) = [];

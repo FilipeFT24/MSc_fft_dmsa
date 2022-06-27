@@ -32,44 +32,40 @@ classdef A1_2D
             inp.f           = fh.f;                %  > f.
             %  > ----------------------------------------------------------
             %  > Method(s).
-            inp.m.cls       = 1;                   %  > 0-ULS: unconstrained least squares.
-            %                                           1-CLS:   constrained least squares.
-            inp.m.nb        = 0;                   %  > 0-Face   neighbours.
-            %                                           1-Vertex neighbours.
+            inp.m.cls       = 1;
+            inp.m.nb        = 0;
             inp.m.wf        = A1_2D.fh_wf(t{2});   %  > Weight function.
+            inp.m.wls       = 1;
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
-            inp.p.p{1}(1,:) = [1,1];               %  > Convection(x): [x,y].
-            inp.p.p{1}(2,:) = [1,1];               %  > Convection(y): [x,y].
-            inp.p.p{2}(1,:) = [1,1];               %  > Diffusion (x): [x,y].
-            inp.p.p{2}(2,:) = [1,1];               %  > Diffusion (y): [x,y].
+            inp.p.p         = [1,1];               %  > [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
             %  > Selection criteria.
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
             inp.p.p_max     = 9;                   %  > Maximum p.
-            inp.p.trsh      = [0.050,0.975];       %  > Treshold for face selection (%of faces): coarsening/refinement.
+            inp.p.trsh      = [0.00,0.975];        %  > Treshold for face selection (%of faces): coarsening/refinement.
             %  > Stopping criteria.
             inp.p.e         = 1.00E-07;            %  > Minimum global discretization error (ec).
-            inp.p.N         = 10;                  %  > Maximum number of adaptation cycles.
-            inp.p.n         = 5;                   %  > Check last 'n' iterations...
+            inp.p.N         = 50;                  %  > Maximum number of adaptation cycles.
+            inp.p.n         = 3;                   %  > Check...
             if any(inp.p.trsh < 0) || any(inp.p.trsh > 1)
                 return;
             end
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.plot{1}     = [0,1];
+            inp.plot{1}     = [0,0];
             inp.plot{2}     = [1,1];
             inp.plot{3}     = 1;
             %  > ----------------------------------------------------------
             %  > #Test.
-            inp.p.t         = 2;
+            inp.p.t         = 1;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [0,0];
+            c(1,:) =  [1,0];
             c(2,:) = -[1,1];
             
             %  > ch.
@@ -85,7 +81,7 @@ classdef A1_2D
             %  > fh.
             switch t(2)
                 case 1, fh.f = @(x) exp (-v(1).*((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
-                case 2, fh.f = @(x) sqrt(       ((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
+                case 2, fh.f = @(x) sqrt( v(1).*((x(:,1)-v(2)).^2+(x(:,2)-v(3)).^2));
                 otherwise
                     return;
             end
@@ -93,9 +89,7 @@ classdef A1_2D
         %  > 1.3.2. -------------------------------------------------------
         function [wf] = fh_wf(t)
             switch t
-                case 1
-                    p  = 2;
-                    wf = @(d) (min(d)./d).^p;
+                case 1, wf = @(d) (min(d)./d).^2;
                 otherwise
                     return;
             end

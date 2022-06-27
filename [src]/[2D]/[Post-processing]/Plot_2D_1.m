@@ -10,16 +10,12 @@ classdef Plot_2D_1
             
             %  > Select variables.
             if inp.plot{1}(1)
-                %  > Diffusive term (x) - face "f".
-                f(1) = 22; %  >    f .
-                j(1) = 2; %  > (:,j).
-                k(1) = 1; %      {k}.
-                l(1) = 1; %      {l}.
-                %  > Diffusive term (y) - face "f".
-                f(2) = 23; %  >    f .
-                j(2) = 2; %  > (:,j).
-                k(2) = 2; %      {k}.
-                l(2) = 1; %      {l}.
+                %  > Face "f" #1.
+                f(1) = 1;
+                j(1) = 1;
+                %  > Face "f" #2.
+                f(2) = 2;
+                j(2) = 1;
             end
             if inp.plot{1}(2)
                 V = [obj.e.a.t.c_abs,obj.e.a.c.c_abs];
@@ -30,10 +26,16 @@ classdef Plot_2D_1
                 figure; set(gcf,'Units','pixels','Position',fig.pos);
                 subplot(1,2,1);
                 Plot_2D_1.Plot_1(fig,inp,msh,...
-                    f(1),obj.s{l(1)}.u.p{j(1)}{k(1)}(f(1),:),obj.s{l(1)}.sc{f(1),j(1)}{k(1)},obj.s{l(1)}.sf{f(1),j(1)}{k(1)},obj.f.qd.xu);
+                    f(1),obj.s{j(1)}.u.p(f(1),:),obj.s{j(1)}.sc{f(1)},obj.s{j(1)}.sf{f(1)},obj.f.qd.xu);
+                if x.z
+                    zp = BaseZoom(); zp.plot;
+                end
                 subplot(1,2,2);
                 Plot_2D_1.Plot_1(fig,inp,msh,...
-                    f(2),obj.s{l(2)}.u.p{j(2)}{k(2)}(f(2),:),obj.s{l(2)}.sc{f(2),j(2)}{k(2)},obj.s{l(2)}.sf{f(2),j(2)}{k(2)},obj.f.qd.xu);
+                    f(2),obj.s{j(2)}.u.p(f(2),:),obj.s{j(2)}.sc{f(2)},obj.s{j(2)}.sf{f(2)},obj.f.qd.xu);
+                if x.z
+                    zp = BaseZoom(); zp.plot;
+                end
                 if x.e
                     Fig_Tools.SubPlot_pdf(fig.dir,'Plot_2D_1(1).pdf');
                 end
@@ -42,8 +44,14 @@ classdef Plot_2D_1
                 figure; set(gcf,'Units','pixels','Position',fig.pos);
                 subplot(1,2,1);
                 Plot_2D_1.Plot_2(fig,msh,V(:,1),y{1});
+                if x.z
+                    zp = BaseZoom(); zp.plot;
+                end
                 subplot(1,2,2);
                 Plot_2D_1.Plot_2(fig,msh,V(:,2),y{2});
+                if x.z
+                    zp = BaseZoom(); zp.plot;
+                end
                 if x.e
                     Fig_Tools.SubPlot_pdf(fig.dir,'Plot_2D_1(2).pdf');
                 end

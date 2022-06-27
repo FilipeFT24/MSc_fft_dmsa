@@ -16,27 +16,23 @@ classdef Plot_2D_2
             if inp.p.t == 2 && inp.plot{2}(1)
                 n = 1;
                 for i = 1:size(obj,2)
-                    V  {1}(i,1) = obj(i).e.a.n_abs.t.f(1,3); %  > \tau_f.
-                    V  {1}(i,2) = obj(i).e.a.n_abs.t.c  (1); %  > \tau_c.
-                    V  {1}(i,3) = obj(i).e.a.n_abs.c    (1); %  >    e_c.
-                    V  {2}(i,1) = obj(i).e.a.n_abs.t.f(3,3); %  > \tau_f.
-                    V  {2}(i,2) = obj(i).e.a.n_abs.t.c  (3); %  > \tau_c.
-                    V  {2}(i,3) = obj(i).e.a.n_abs.c    (3); %  >    e_c.
-                    NNZ   (i,1) = obj(i).m{n}.nnz.At;
+                    V  {1}(i,1) = obj(i).e.a.n_abs.t.f(1); %  > \tau_f.
+                    V  {1}(i,2) = obj(i).e.a.n_abs.t.c(1); %  > \tau_c.
+                    V  {1}(i,3) = obj(i).e.a.n_abs.c  (1); %  >    e_c.
+                    V  {2}(i,1) = obj(i).e.a.n_abs.t.f(3); %  > \tau_f.
+                    V  {2}(i,2) = obj(i).e.a.n_abs.t.c(3); %  > \tau_c.
+                    V  {2}(i,3) = obj(i).e.a.n_abs.c  (3); %  >    e_c.
+                    NNZ   (i,1) = obj(i).m{n}.nnz.A;
                 end
                 L1 = Plot_2D_2.Set_Y([0,1]);
                 L3 = Plot_2D_2.Set_Y([0,3]);
             end
             if inp.p.t == 2 && inp.plot{2}(2)
-                %  > Diffusive term (x) (for example).
-                %    NOTE: for the conducted tests, every term uses the same stencil.
-                j(1) = 2; %  > (:,j).
-                k(1) = 1; %      {k}.
-                e{1} = obj(end-1).e.a.t.f_abs(:,end);
-                p{1} = obj(end-1).p{j(1)}{k(1)};
+                e{1} = obj(end-1).e.a.t.f_abs;
+                p{1} = obj(end-1).p;
                 s{1} = obj(end-1).s;
-                e{2} = obj(end)  .e.a.t.f_abs(:,end);
-                p{2} = obj(end)  .p{j(1)}{k(1)};
+                e{2} = obj(end)  .e.a.t.f_abs;
+                p{2} = obj(end)  .p;
                 s{2} = obj(end)  .s;
             end
             %  > Plot variables.
@@ -44,8 +40,14 @@ classdef Plot_2D_2
                 figure; set(gcf,'Units','pixels','Position',fig{1}.pos);
                 subplot(1,2,1);
                 Plot_2D_2.Plot_1(fig{1},NNZ,V{1},L1);
+                if x(1).z
+                    zp = BaseZoom(); zp.plot;
+                end
                 subplot(1,2,2);
                 Plot_2D_2.Plot_1(fig{1},NNZ,V{2},L3);
+                if x(1).z
+                    zp = BaseZoom(); zp.plot;
+                end
                 if x(1).e
                     Fig_Tools.SubPlot_pdf(fig{1}.dir,'Plot_2D_2(1).pdf');
                 end
@@ -55,8 +57,16 @@ classdef Plot_2D_2
                 figure; set(gcf,'Units','pixels','Position',fig{1}.pos);
                 subplot(1,2,1);
                 Plot_2D_2.Plot_2(fig{2},inp,msh,e{1},p{1},s{1},[0,size(obj,2)-2]);
+                if x(2).z
+                    zp = BaseZoom();
+                    zp.plot;
+                end
                 subplot(1,2,2);
                 Plot_2D_2.Plot_2(fig{2},inp,msh,e{2},p{2},s{2},[1,size(obj,2)-1]);
+                if x(2).z
+                    zp = BaseZoom();
+                    zp.plot;
+                end
                 if x(2).e
                     Fig_Tools.SubPlot_pdf(fig{2}.dir,'Plot_2D_2(2).pdf');
                 end
