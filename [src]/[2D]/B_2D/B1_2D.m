@@ -17,17 +17,22 @@ classdef B1_2D
                 s{i}.u.p      = repelem(inp.p.p+A(i),Nf,1);
                 s{i}.u.s      = (1:Nf)';
                 %  > Field: "x".
+                s{i}.x.s.c_df = cell(Nf,2); %  > Convection/diffusion.
                 s{i}.x.s.tfV  = cell(Nf,2); %  > Convection/diffusion.
                 s{i}.x.s.wVdf = cell(Nf,2); %  > Convection/diffusion.
                 for j = ["a","x"]
-                    s{i}.x.x.cf .(j)    = cell (Nf,1);
+                    s{i}.x.x.cf .(j) = cell (Nf,1);
                     switch j
                         case "a", s{i}.x.x.nv.(j) = f.fh.f.f(XYc);
                         case "x", s{i}.x.x.nv.(j) = zeros   (size(XYc,1),1);
                     end
-                    s{i}.x.x.vf. (j)    = cell (Nf,1);
-                    s{i}.x.x.xfV.(j){1} = zeros(Nf,2); %  > \phi.
-                    s{i}.x.x.xfV.(j){2} = zeros(Nf,2); %  > \nabla\phi.
+                    s{i}.x.x.vf .(j)      = cell (Nf,1);
+                    s{i}.x.x.xfT.(j){1,1} = zeros(Nf,3); %  >   \phi      (x).
+                    s{i}.x.x.xfT.(j){1,2} = zeros(Nf,3); %  >   \phi      (y).
+                    s{i}.x.x.xfT.(j){2,1} = zeros(Nf,3); %  >   \nabla\phi(x).
+                    s{i}.x.x.xfT.(j){2,2} = zeros(Nf,3); %  >   \nabla\phi(y).
+                    s{i}.x.x.xfV.(j){1}   = zeros(Nf,2); %  > V*\phi      ([x,y]).
+                    s{i}.x.x.xfV.(j){2}   = zeros(Nf,2); %  > V*\nabla\phi([x,y]).
                 end
             end
         end
@@ -43,7 +48,9 @@ classdef B1_2D
                 q      =  ceil(max(p)./2);
                 sc     =  cell(1,q);
                 sf     =  cell(1,q);
-                wVdf   =  cell(1,2);
+                c_df   =  cell(1,size(s.u.p,2));
+                tfV    =  cell(1,size(s.u.p,2));
+                wVdf   =  cell(1,size(s.u.p,2));
                 
                 %  > Loop through levels...
                 while n <= ceil(q)
@@ -137,43 +144,43 @@ classdef B1_2D
                     switch j
                         case 1
                             %  > \phi([x,y]).
-                            c_df  = c_Df;
-                            x_df  = c_df.c.*dx_g(:,1).^c_df.e(1,:).*dx_g(:,2).^c_df.e(2,:);
+                            c_df{1} = c_Df;
+                            x_df    = c_df{1}.c.*dx_g(:,1).^c_df{1}.e(1,:).*dx_g(:,2).^c_df{1}.e(2,:);
                             for k = 1:size(inp.c,2)
                                 wVdf{j}(k,:) = Q.w'./2*(inp.c{j,k}(xg).*x_df);
                             end
                         case 2
                             %  > \nabla\phi([x,y]).
-                            c_df  = B1_2D.C(p,j);
+                            c_df{2} = B1_2D.C(p,j);
                             for k = 1:size(inp.c,2)
-                                wVdf{j}(k,:) = Q.w'./2*(inp.c{j,k}(xg).*c_df{k}.c.*dx_g(:,1).^c_df{k}.e(1,:).*dx_g(:,2).^c_df{k}.e(2,:));
+                                wVdf{j}(k,:) = Q.w'./2*(inp.c{j,k}(xg).*c_df{2}{k}.c.*dx_g(:,1).^c_df{2}{k}.e(1,:).*dx_g(:,2).^c_df{2}{k}.e(2,:));
                             end
                     end
                 end
                 %  > tfV.
                 if inp.m.cls && is_bnd
                     % >> w/  constraint(s).
-                    %  > #1.
+                    %  > Apply constraints...
                     cls_m = B1_2D.Assemble_cls_m(inp,msh,f,i,p,xf,xg);
-                    cls_t = func.cls_t(cls_m.b,cls_m.C,D.DTWD,D.DTW);
-                    %  > #2.
+                    cls_t = func.cls_t(cls_m.b,cls_m.C,D.DTWD,D.DTW,D.DTWD_DTW);
+                    %  > tfV.
                     for j = 1:size(s.x.s.wVdf,2)
                         for k = 1:numel(cls_t)
                             tfV{j}{k} = wVdf{j}*cls_t{k};
                         end
                     end
+                    %  > Assign matrices "cls_t{:}" to structure "D"...
+                    D.Cf = cls_t;
                 else
-                    % >> w/o constraint(s).
-                    %  > #1.
-                    DTWD_DTW = func.backslash(D.DTWD,D.DTW);
-                    %  > #2.
+                    %  > tfV.
                     for j = 1:size(s.x.s.wVdf,2)
-                        tfV{j}{1} = wVdf{j}*DTWD_DTW; %  > ...from Cf.
-                        tfV{j}{2} = [];               %  > ...from kf.
+                        tfV{j}{1} = wVdf{j}*D.DTWD_DTW; %  > ...from Cf.
+                        tfV{j}{2} = [];                 %  > ...from kf.
                     end
                 end
                 %  > Update field "s".
                 s.D       {i}   = D;
+                s.x.s.c_df(i,:) = c_df;
                 s.x.s.tfV (i,:) = tfV;
                 s.x.s.wVdf(i,:) = wVdf;
             end
@@ -392,10 +399,11 @@ classdef B1_2D
                 D = c.c.*dx(:,1).^c.e(1,:).*dx(:,2).^c.e(2,:);
             end
             %  > Assign to structure "M".
-            M.D    = D;
-            M.DTW  = bsxfun(@times,diag(W),D)';    %  > D'*W.
-            M.DTWD = D.'*bsxfun(@times,D,diag(W)); %  > D'*W*D.
-            M.W    = W;
+            M.D        = D;
+            M.DTW      = bsxfun(@times,diag(W),D)';    %  > D'*W.
+            M.DTWD     = D.'*bsxfun(@times,D,diag(W)); %  > D'*W*D.
+            M.DTWD_DTW = func.backslash(M.DTWD,M.DTW); %  >(D'*W*D)\(D'W).
+            M.W        = W;
         end
         % >> 1.4. ---------------------------------------------------------
         %  > Compute polynomial regression coefficients/exponents.
@@ -404,13 +412,16 @@ classdef B1_2D
                 case 1
                     % >> \phi: x^n*y^n.
                     %  > Auxiliary variables.
-                    [n{2},n{1}]  = func.meshgrid(0:max(p));
+                    [n{2},n{1}] = func.meshgrid(0:max(p));
                     %  > Assign to structure "t".
-                    c            = ones(size(n{1}));
-                    logical      = sum (cat(3,n{:}),3) <= max(p);
-                    t.c    (1,:) = c   (logical); %  > c.
-                    t.e    (1,:) = n{1}(logical); %  > x.
-                    t.e    (2,:) = n{2}(logical); %  > y.
+                    l        = n{1} <= p(1) & n{2} <= p(2) & sum(cat(3,n{:}),3) <= max(p); 
+                    c        = ones(max(p)+1);
+                    t.c(1,:) = c   (l);                 %  > c.                    
+                    t.e(1,:) = n{1}(l);                 %  > x.
+                    t.e(2,:) = n{2}(l);                 %  > y.
+                    m        = 1:size(t.c,2);
+                    t.t{1}   = m(t.e(1,:) >= t.e(2,:)); %  > x.
+                    t.t{2}   = m(t.e(2,:) >= t.e(1,:)); %  > y.
                 case 2
                     % >> \nabla\phi([x,y]): (dx)^n*y^n or x^n*(dy)^n.
                     %  > Auxiliary variables.
@@ -419,16 +430,25 @@ classdef B1_2D
                     [n{2,2},n{1,1}] = func.meshgrid(i);
                     [n{1,2},n{2,1}] = func.meshgrid(j); c{1} = n{1,2}'; c{2} = n{2,1}';
                     %  > Assign to structure "t".
-                    for l = 1:size(n,1)
-                        v{l} = c{l}; v{l}(c{l} ~= 0) = 1;
-                        switch l
+                    for k = 1:size(n,1)
+                        v{k} = c{k}; v{k}(c{k} ~= 0) = 1;
+                        switch k
                             case 1, a = p(1)-1; b = p(2);
                             case 2, a = p(1);   b = p(2)-1;
                         end
-                        logical{l}        = n{l,1} <= a & n{l,2} <= b & v{l}.*sum(cat(3,n{l,:}),3) <= max(p)-1;
-                        t      {l}.c(1,:) = c{l}  (logical{l}); % > c.
-                        t      {l}.e(1,:) = n{l,1}(logical{l}); % > x.
-                        t      {l}.e(2,:) = n{l,2}(logical{l}); % > y.
+                        l{k}        = n{k,1} <= a & n{k,2} <= b & v{k}.*sum(cat(3,n{k,:}),3) <= max(p)-1;
+                        t{k}.c(1,:) = c{k}  (l{k});     %  > c.
+                        t{k}.e(1,:) = n{k,1}(l{k});     %  > x.
+                        t{k}.e(2,:) = n{k,2}(l{k});     %  > y.
+                        m{k}        = 1:size(t{k}.c,2);
+                        switch k
+                            case 1, o{k}(1,:) = t{k}.e(1,:)+1 >= t{k}.e(2,:) &  t{k}.c ~= 0 | [true,false(1,numel(t{k}.c)-1)];
+                                    o{k}(2,:) = t{k}.e(2,:)   >  t{k}.e(1,:)                | [true,false(1,numel(t{k}.c)-1)];
+                            case 2, o{k}(2,:) = t{k}.e(2,:)+1 >= t{k}.e(1,:) &  t{k}.c ~= 0 | [true,false(1,numel(t{k}.c)-1)];
+                                    o{k}(1,:) = t{k}.e(1,:)   >  t{k}.e(2,:)                | [true,false(1,numel(t{k}.c)-1)];
+                        end
+                        t{k}.t{1} = m{k}(o{k}(1,:));    %  > x.
+                        t{k}.t{2} = m{k}(o{k}(2,:));    %  > y.
                     end
                 otherwise
                     return;

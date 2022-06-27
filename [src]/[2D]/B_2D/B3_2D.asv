@@ -22,10 +22,11 @@ classdef B3_2D
         % >> 1.2. ---------------------------------------------------------
         %  > Update all fields from structure "obj".
         function [e,m,s] = Update_all(inp,msh,e,f,m,s)
-            s            = B1_2D.Update_ss(inp,msh,f,s);
-            m            = B2_2D.Update_m (msh,f,m,s);
-            s            = B2_2D.Update_sx(inp,msh,f,m,s);
-            e            = B2_2D.Update_e (inp,msh,e,m,s);
+            s          = B1_2D.Update_ss(inp,msh,f,s);
+            m          = B2_2D.Update_m (msh,f,m,s);
+            s          = B2_2D.Update_sx(inp,msh,f,m,s);
+            e =         B2_2D.Update_e  (inp,msh,e,m,s);
+            
         end
         
         %% > 2. -----------------------------------------------------------
@@ -72,10 +73,13 @@ classdef B3_2D
                 fprintf("Loop #%2d\n",i);
                 i = i+1;
                 
-                %  > Update fields "e", "m" and "s".
-                j                         = 1;
-                [obj.e,obj.m{j},obj.s{j}] = ...
-                    B3_2D.Update_all(inp,msh,obj.e,obj.f,obj.m{j},obj.s{j});
+                %  > Update fields "m" and "s".
+                j                   = 1;
+                [obj.m{j},obj.s{j}] = ...
+                    B3_2D.Update_all(inp,msh,obj.f,obj.m{j},obj.s{j});
+                %  > Update field  "e".
+                [obj.e] = ...
+                    B2_2D.Update_e  (inp,msh,obj.e,obj.m{j},obj.s{j});
                 %  > Assign fields to structure "obj_p".
                 obj_p(i).e        = obj.e;
                 obj_p(i).m{j}.nnz = obj.m{j}.nnz;
@@ -84,7 +88,7 @@ classdef B3_2D
                 %  > Select...
                 [obj.s{j}.u,obj_p(i).s,flag] = B2_2D.Update_u(inp,msh,obj.e.a,obj.s{j}.u);
                 %  > Stop adaptation(?).
-                stop = B2_2D.Stop(inp,flag,obj.e.a.n_abs.c,arrayfun(@(x) x.e.a.n_abs.t.f(1,end),obj_p));
+                stop = B2_2D.Stop(inp,flag,obj.e.a.n_abs.c,arrayfun(@(x) x.e.a.n_abs.t.f(1),obj_p));
                 if any(stop)
                     if stop(3)
                         obj_p(end-inp.p.n+1:end) = [];

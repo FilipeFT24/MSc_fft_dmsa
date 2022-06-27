@@ -80,13 +80,12 @@ classdef B2_2D
                 for j = cc
                     %  > cf.
                     s.x.x.cf.(fn(i)){j} = s.D{j}.Cf{1}*s.x.x.vf.(fn(i)){j};
+                    %  > xf.
                     %  > xfV.
                     for k = 1:size(s.x.s.tfV,2)
                         s.x.x.xfV.(fn(i)){k}(j,:) = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j}+s.x.s.tfV{j,k}{2};
                         %                         = s.x.s.wVdf{j,k}   *s.x.x.cf.(fn(i)){j}+s.x.s.tfV{j,k}{2};
                     end
-                    %  > xfT.
-                    
                 end
                 % -> w/o constraint(s).
                 for j = cu
@@ -108,7 +107,7 @@ classdef B2_2D
                             for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)
                                 if o ~= size(s.x.x.xfT.(fn(i)){k,l},2), p = c_df{j,k}{l}.t{o};
                                     s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
-                                        s.x.s.wVdf{j,k}(l,p)*((s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:))*s.x.x.vf.(fn(i)){j});
+                                        s.x.s.wVdf{j,k}(l,p)*(s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:)*s.x.x.vf.(fn(i)){j});
                                 else
                                     s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
                                         s.x.s.wVdf{j,k}(l,:)*(s.D{j}.DTWD_DTW*s.x.x.vf.(fn(i)){j});
@@ -130,7 +129,7 @@ classdef B2_2D
                     e.(i).c.c_abs = zeros(Nc,1);
                     e.(i).t.c     = zeros(Nc,1);
                     e.(i).t.c_abs = zeros(Nc,1);
-                    e.(i).t.f_abs = zeros(Nf,3);
+                    e.(i).t.f_abs = zeros(Nf,1);
                 else
                     e.(i) = cell(Nf,1);
                 end
@@ -139,7 +138,7 @@ classdef B2_2D
             for i = ["a","p"]
                 e.(i).n_abs.c   = zeros(3,1);
                 e.(i).n_abs.t.c = zeros(3,1);
-                e.(i).n_abs.t.f = zeros(3,3);
+                e.(i).n_abs.t.f = zeros(3,1);
             end
         end
         % >> 2.2. ---------------------------------------------------------
@@ -162,30 +161,33 @@ classdef B2_2D
             %  > \tau_f: {1}-\tau_f(\phi).
             %            {2}-\tau_f(\nabla\phi).
             %            {3}-\tau_f.
+            [n,o] = size(s.x.x.xfT.a);
+            for i = 1:n
+                %  > et_fV.
+                et_fV{i} = s.x.x.xfV.a{i}-s.x.x.xfV.x{i};
+                %  > et_fT.
+                for i = 1:n
+                    et_fT{i,j} = s.x.x.xfT.a{i,j}-s.x.x.xfT.x{i,j};
+                end
+                et_fTS = sum(cat(3,et_fT{1:n,1:o}),3);
+            end
+            et_fVS = sum(cat(3,et_fV{1:o}),3);
+          
+            
+            %  > \tau_f_abs.
             k = 1;
             for i = 1:msh.f.Nf
-                c       = msh.f.ic  {i}(k);
-                Sf(i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == i,:);
+                c              = msh.f.ic  {i}(k);
+                Sf       (i,:) = msh.c.f.Sf{c}(msh.c.f.if(c,:) == i,:);
+                e.t.f_abs(i,1) = abs(et_fV{n+1}(i,:)*Sf(i,:)');
             end
-            [n,o] = size(s.x.x.xfT.a);
-            for j = 1:o
-                for i = 1:n
-                    etf_ij{i,j} = s.x.x.xfT.a{i,j}-s.x.x.xfT.x{i,j};
-                end
-                etf_j {j} = sum(cat(3,etf_ij{1:n,j}),3);
-                etf_jS{j} = etf_j{j}.*Sf(:,j);
-            end
-            e.t.f_abs = abs(sum(cat(3,etf_jS{:}),3));
             %  > Error norms.
             e.n_abs.t.f = func.Set_n(e.t.f_abs);
-
+            
             % >> c.
             %  > \tau_c.
-            for j = 1:o
-                etf_jl(:,j) = etf_j{j}(:,o+1);
-            end
             for i = 1:msh.c.Nc
-                e.t.c(i,1) = sum(sum(msh.c.f.Sf{i}'.*etf_jl(msh.c.f.if(i,:),:)',1),2);
+                e.t.c(i,1) = sum(sum(msh.c.f.Sf{i}'.*et_fV{n+1}(msh.c.f.if(i,:),:)',1),2);
             end
             %  > \tau_c_abs.
             e.t.c_abs   = abs(e.t.c);
@@ -220,7 +222,7 @@ classdef B2_2D
                     lev.F{i,1} = ceil(u.p(F{i,1},j)./2);
                 end
             end
-            [f,v] = B2_2D.Set_fv(inp,msh,e.t.f_abs(:,end),F,lev);
+            [f,v] = B2_2D.Set_fv(inp,msh,e.t.f_abs,F,lev);
             %  > Set structure "u".
             if isempty(f.r) && isempty(f.c)
                 flag       = true;

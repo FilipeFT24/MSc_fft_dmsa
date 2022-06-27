@@ -24,6 +24,7 @@ classdef func
                         case 0, [Xd,Yd] = func.demo_0(Xt,Yt);
                         case 1, [Xd,Yd] = func.demo_1(Xt,Yt);
                         case 2, [Xd,Yd] = func.demo_2(Xt,Yt,inp.h);
+                        case 3, [Xd,Yd] = func.demo_3(Xt,Yt);
                         otherwise
                             return;
                     end
@@ -70,6 +71,7 @@ classdef func
             Xd      = f{1}(it,jt);
             Yd      = f{2}(it,jt);
         end
+        %  > 1.1.3. -------------------------------------------------------
         function [Xd,Yd] = demo_2(Xt,Yt,h)
             %  > Auxiliary variables.
             k       = 0.1;
@@ -79,7 +81,17 @@ classdef func
             Xt(i,j) = Xt(i,j)+randn(m,n).*k.*h; Xd = Xt;
             Yt(i,j) = Yt(i,j)+randn(m,n).*k.*h; Yd = Yt;
         end
-               
+        %  > 1.1.4. -------------------------------------------------------
+        function [Xd,Yd] = demo_3(Xt,Yt)
+            %  > f.
+            c     = 0.75;
+            f {1} = @(u,v) u;
+            f {2} = @(u,v) v-c./pi.*sin(pi.*v);
+            %  > X/Yd.
+            Xd    = f{1}(Xt,Yt);
+            Yd    = f{2}(Xt,Yt);
+        end
+        
         %% > 2. -----------------------------------------------------------
         % >> Sort structures "msh" (1D/2D).
         % >> 2.1. ---------------------------------------------------------
@@ -160,10 +172,10 @@ classdef func
         %  > 3.6.2. -------------------------------------------------------
         %  > Compute CLS matrices.
         %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
-        function [t] = cls_t(b,C,HTH,HT)
+        function [t] = cls_t(b,C,HTH,HT,HTH_HT)
             %  > Auxiliary variables.
             C_HTH_CT    = C *func.backslash(HTH,C');
-            C_HTH_HT    = C *func.backslash(HTH,HT);
+            C_HTH_HT    = C *HTH_HT;
             X           = C'*func.backslash(C_HTH_CT,C_HTH_HT);
             Y           = C'*func.backslash(C_HTH_CT,b);
             %  > CLS terms (cell-dependent matrix/bd_v-dependent vector).

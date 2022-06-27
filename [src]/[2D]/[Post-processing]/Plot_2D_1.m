@@ -23,6 +23,7 @@ classdef Plot_2D_1
             end
             %  > Plot variables.
             if inp.plot{1}(1)
+                fprintf("Plotting (1/1)...\n");
                 figure; set(gcf,'Units','pixels','Position',fig.pos);
                 subplot(1,2,1);
                 Plot_2D_1.Plot_1(fig,inp,msh,...
@@ -41,6 +42,7 @@ classdef Plot_2D_1
                 end
             end
             if inp.plot{1}(2)
+                fprintf("Plotting (1/2)...\n");
                 figure; set(gcf,'Units','pixels','Position',fig.pos);
                 subplot(1,2,1);
                 Plot_2D_1.Plot_2(fig,msh,V(:,1),y{1});

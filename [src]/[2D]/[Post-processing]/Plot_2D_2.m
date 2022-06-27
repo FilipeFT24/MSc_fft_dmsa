@@ -28,15 +28,16 @@ classdef Plot_2D_2
                 L3 = Plot_2D_2.Set_Y([0,3]);
             end
             if inp.p.t == 2 && inp.plot{2}(2)
-                e{1} = obj(end-1).e.a.t.f_abs;
+                e{1} = obj(end-1).e.a.t.f_abs(:,end);
                 p{1} = obj(end-1).p;
                 s{1} = obj(end-1).s;
-                e{2} = obj(end)  .e.a.t.f_abs;
+                e{2} = obj(end)  .e.a.t.f_abs(:,end);
                 p{2} = obj(end)  .p;
                 s{2} = obj(end)  .s;
             end
             %  > Plot variables.
-            if inp.p.t == 2 && inp.plot{2}(1) 
+            if inp.p.t == 2 && inp.plot{2}(1)
+                fprintf("Plotting (2/1)...\n");
                 figure; set(gcf,'Units','pixels','Position',fig{1}.pos);
                 subplot(1,2,1);
                 Plot_2D_2.Plot_1(fig{1},NNZ,V{1},L1);
@@ -53,7 +54,8 @@ classdef Plot_2D_2
                 end
             end
             %  > Plot variables.
-            if inp.p.t == 2 && inp.plot{2}(2) 
+            if inp.p.t == 2 && inp.plot{2}(2)
+                fprintf("Plotting (2/2)...\n");
                 figure; set(gcf,'Units','pixels','Position',fig{1}.pos);
                 subplot(1,2,1);
                 Plot_2D_2.Plot_2(fig{2},inp,msh,e{1},p{1},s{1},[0,size(obj,2)-2]);

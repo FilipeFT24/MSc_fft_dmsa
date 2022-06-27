@@ -32,22 +32,22 @@ classdef A1_2D
             inp.f           = fh.f;                %  > f.
             %  > ----------------------------------------------------------
             %  > Method(s).
-            inp.m.cls       = 1;
+            inp.m.cls       = 0;
             inp.m.nb        = 0;
             inp.m.wf        = A1_2D.fh_wf(t{2});   %  > Weight function.
             inp.m.wls       = 1;
             %  > ----------------------------------------------------------
             %  > Polynomial fit.
-            inp.p.p         = [1,1];               %  > [x,y].
+            inp.p.p         = [3,1];               %  > [x,y].
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
             %  > Selection criteria.
             inp.p.iso       = 1;                   %  > Isotropic coarsening/refinement.
             inp.p.p_max     = 9;                   %  > Maximum p.
-            inp.p.trsh      = [0.00,0.975];        %  > Treshold for face selection (%of faces): coarsening/refinement.
+            inp.p.trsh      = [0.00,0.90];         %  > Treshold for face selection (%of faces): coarsening/refinement.
             %  > Stopping criteria.
             inp.p.e         = 1.00E-07;            %  > Minimum global discretization error (ec).
-            inp.p.N         = 50;                  %  > Maximum number of adaptation cycles.
+            inp.p.N         = 1;                   %  > Maximum number of adaptation cycles.
             inp.p.n         = 3;                   %  > Check...
             if any(inp.p.trsh < 0) || any(inp.p.trsh > 1)
                 return;
@@ -59,13 +59,13 @@ classdef A1_2D
             inp.plot{3}     = 1;
             %  > ----------------------------------------------------------
             %  > #Test.
-            inp.p.t         = 1;
+            inp.p.t         = 2;
         end
         % >> 1.3. ---------------------------------------------------------
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [1,0];
+            c(1,:) =  [0,0];
             c(2,:) = -[1,1];
             
             %  > ch.
