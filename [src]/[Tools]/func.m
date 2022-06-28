@@ -158,7 +158,20 @@ classdef func
             i = repmat(a,1,numel(b)) == b'; [j,~] = find(i);
         end
         % >> 3.6. ---------------------------------------------------------
-        %  > 3.6.1. -------------------------------------------------------
+        %  > Evaluate "==", "<=" and ">= " w/ tolerance.
+        function [flag] = eq(a,b,tol,op)
+            flag = false( numel(a),1);
+            n    = ceil (-log10(tol));
+            switch op
+                case '==', flag = round(a,n) == round(b,n);
+                case '<=', flag = round(a,n) <= round(b,n);
+                case '>=', flag = round(a,n) >= round(b,n);
+                otherwise
+                    return;
+            end
+        end
+        % >> 3.7. ---------------------------------------------------------
+        %  > 3.7.1. -------------------------------------------------------
         %  > Rescaling to Solve a Linear System (Ax=b).
         %  > Reference: https://www.mathworks.com/help/matlab/ref/equilibrate.html#mw_beaf3b94-7114-4652-b483-a36c2acf7b94
         function [x] = backslash(A,b)
@@ -169,10 +182,10 @@ classdef func
             d = R*P*b;
             x = C*(B\d);
         end
-        %  > 3.6.2. -------------------------------------------------------
+        %  > 3.7.2. -------------------------------------------------------
         %  > Compute CLS matrices.
         %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
-        function [t] = cls_t(b,C,HTH,HT,HTH_HT)
+        function [t] = cls_t(b,C,HT,HTH,HTH_HT)
             %  > Auxiliary variables.
             C_HTH_CT    = C *func.backslash(HTH,C');
             C_HTH_HT    = C *HTH_HT;
@@ -182,7 +195,7 @@ classdef func
             t       {1} =    func.backslash(HTH,HT-X);
             t       {2} =    func.backslash(HTH,Y);
         end
-        % >> 3.7. ---------------------------------------------------------
+        % >> 3.8. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = Set_n(E,V)
             if nargin == 1
@@ -195,7 +208,7 @@ classdef func
                 L(3,:) = max(E);
             end
         end
-        % >> 3.8. ---------------------------------------------------------
+        % >> 3.9. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             [m,n]  = size(e);
@@ -203,7 +216,7 @@ classdef func
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j));
         end
-        % >> 3.9. ---------------------------------------------------------
+        % >> 3.10. --------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(wd,V)
             save(strjoin([wd,".mat"],''),"V");

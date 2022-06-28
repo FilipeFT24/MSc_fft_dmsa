@@ -11,10 +11,10 @@ classdef Plot_2D_1
             %  > Select variables.
             if inp.plot{1}(1)
                 %  > Face "f" #1.
-                f(1) = 12;
+                f(1) = 1;
                 j(1) = 1;
                 %  > Face "f" #2.
-                f(2) = 13;
+                f(2) = 2;
                 j(2) = 1;
             end
             if inp.plot{1}(2)

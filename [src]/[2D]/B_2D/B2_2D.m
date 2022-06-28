@@ -28,16 +28,16 @@ classdef B2_2D
                     b  = s.i       {k}(~o);
                     Sf = msh.c.f.Sf{i}( j,:);
                     %  > For each term...
-                    for l = 1:size(s.x.s.tfV,2)
+                    for l = 1:size(s.x.s.wVtf,2)
                         %  > A.
-                        m.A(i,a) = m.A(i,a)+Sf*s.x.s.tfV{k,l}{1}(:,o);
+                        m.A(i,a) = m.A(i,a)+Sf*s.x.s.wVtf{k,l}{1}(:,o);
                         %  > b.
                         if any(~o)
-                            m.b(i,1) = m.b(i,1)-Sf*s.x.s.tfV{k,l}{1}(:,~o)*f.bd.v(func.find_c(f.bd.i,b));
+                            m.b(i,1) = m.b(i,1)-Sf*s.x.s.wVtf{k,l}{1}(:,~o)*f.bd.v(func.find_c(f.bd.i,b));
                         end
                         %  > Add kf (scalar) to the RHS...
-                        if ~isempty(s.x.s.tfV{k,l}{2})
-                            m.b(i,1) = m.b(i,1)-Sf*s.x.s.tfV{k,l}{2};
+                        if ~isempty(s.x.s.wVtf{k,l}{2})
+                            m.b(i,1) = m.b(i,1)-Sf*s.x.s.wVtf{k,l}{2};
                         end
                     end
                 end
@@ -87,18 +87,20 @@ classdef B2_2D
                 for j = c
                     for k = 1:size(s.x.s.wVdf,2)
                         s.x.x.xfV.(fn(i)){k}(j,:) = s.x.s.wVdf{j,k}   *s.x.x.cf.(fn(i)){j};
-                        %                         = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j};                   > w/o constraint(s).
-                        %                         = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j}+s.x.s.tfV{j,k}{2}; > w/  constraint(s).
+                        %                         = s.x.s.wVtf{j,k}{1}*s.x.x.vf.(fn(i)){j};                     > w/o constraint(s).
+                        %                         = s.x.s.wVtf{j,k}{1}*s.x.x.vf.(fn(i)){j}+s.x.s.wVtf{j,k}{2};  > w/  constraint(s).
                     end
                 end
-                %  > xfT (check "a posteriori" contribution of the polynomial terms in the x and y-directions).
+                %  > xfT (check "a posteriori" contribution of the polynomial terms in the x and y-directions w/ linear profile).
                 for j = cc
+                    for k = 1:numel(s.pf{j}), p{k} = s.pf{j}{k};
+                        t{k} = func.cls_t(s.D{j}.bf,s.D{j}.Cf(:,p{k}),s.D{j}.DTW(p{k},:),s.D{j}.DTWD(p{k},p{k}),s.D{j}.DTWD(p{k},p{k})\s.D{j}.DTW(p{k},:));
+                    end
                     for k = 1:size(s.x.x.xfT.(fn(i)),1)
                         for l = 1:size(s.x.x.xfT.(fn(i)),2)
-                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)-1, p =  s.x.s.c_df{j,k}{l}.t{o};
-                                cls_t                       = func.cls_t(s.D{j}.bf,s.D{j}.Cf(:,p),s.D{j}.DTWD(p,p),s.D{j}.DTW(p,:),s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:));
+                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)-1
                                 s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
-                                    s.x.s.wVdf{j,k}(l,p)*(cls_t{1}*s.x.x.vf.(fn(i)){j}+cls_t{2});
+                                    s.x.s.wVdf{j,k}(l,p{o})*(t{o}{1}*s.x.x.vf.(fn(i)){j}+t{o}{2});
                             end
                             s.x.x.xfT.(fn(i)){k,l}(j,size(s.x.x.xfT.(fn(i)){k,l},2)) = ...
                                 s.x.x.xfV.(fn(i)){k}(j,l);
@@ -106,11 +108,14 @@ classdef B2_2D
                     end
                 end
                 for j = cu
+                    for k = 1:numel(s.pf{j}), p{k} = s.pf{j}{k};
+                        t{k} = func.backslash(s.D{j}.DTWD(p{k},p{k}),s.D{j}.DTW(p{k},:));
+                    end
                     for k = 1:size(s.x.x.xfT.(fn(i)),1)
                         for l = 1:size(s.x.x.xfT.(fn(i)),2)
-                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)-1, p =  s.x.s.c_df{j,k}{l}.t{o};
+                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)-1
                                 s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
-                                    s.x.s.wVdf{j,k}(l,p)*(s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:)*s.x.x.vf.(fn(i)){j});
+                                    s.x.s.wVdf{j,k}(l,p{o})*(t{o}*s.x.x.vf.(fn(i)){j});
                             end
                             s.x.x.xfT.(fn(i)){k,l}(j,size(s.x.x.xfT.(fn(i)){k,l},2)) = ...
                                 s.x.x.xfV.(fn(i)){k}(j,l);
@@ -173,15 +178,15 @@ classdef B2_2D
             e.t.f_abs = abs(sum(cat(3,etf_jS{:}),3));
             %  > Error norms.
             e.n_abs.t.f = func.Set_n(e.t.f_abs);
-
+            
             % >> c.
             %  > \tau_c.
+            for j = 1:o
+                etf_jl(:,j) = etf_j{j}(:,o+1);
+            end
             %  > Reset...
             if any(e.t.c)
                 e.t.c = zeros(msh.c.Nc,1);
-            end
-            for j = 1:o
-                etf_jl(:,j) = etf_j{j}(:,o+1);
             end
             for i = 1:msh.c.Nc
                 e.t.c(i,1) = sum(sum(msh.c.f.Sf{i}'.*etf_jl(msh.c.f.if(i,:),:)',1),2);

@@ -11,14 +11,14 @@ classdef B1_2D
                 s{i}.D        = cell(Nf,1);
                 s{i}.i        = cell(Nf,1);
                 s{i}.logical  = cell(Nf,1);
-                s{i}.pf       = cell(Nf,1);
                 s{i}.sc       = cell(Nf,1);
                 s{i}.sf       = cell(Nf,1);
                 %  > Field: "u".
                 s{i}.u.p      = repelem(inp.p.p+A(i),Nf,1);
                 s{i}.u.s      = (1:Nf)';
                 %  > Field: "x".
-                s{i}.x.s.wVtf  = cell(Nf,2); %  > Convection/diffusion.
+                s{i}.x.s.c_df = cell(Nf,2); %  > Convection/diffusion.
+                s{i}.x.s.tfV  = cell(Nf,2); %  > Convection/diffusion.
                 s{i}.x.s.wVdf = cell(Nf,2); %  > Convection/diffusion.
                 for j = ["a","x"]
                     s{i}.x.x.cf .(j) = cell (Nf,1);
@@ -49,7 +49,7 @@ classdef B1_2D
                 sc     =  cell(1,q);
                 sf     =  cell(1,q);
                 c_df   =  cell(1,size(s.u.p,2));
-                wVtf    =  cell(1,size(s.u.p,2));
+                tfV    =  cell(1,size(s.u.p,2));
                 wVdf   =  cell(1,size(s.u.p,2));
                 
                 %  > Loop through levels...
@@ -157,24 +157,25 @@ classdef B1_2D
                     cls_m = B1_2D.Assemble_cls_m(inp,msh,f,i,p,xf,xg);
                     cls_t = func.cls_t(cls_m.b,cls_m.C,D.DTW,D.DTWD,D.DTWD_DTW);
                     for j = 1:size(s.x.s.wVdf,2)
-                        wVtf{j}{1} = wVdf{j}*cls_t{1};   %  > Pf.
-                        wVtf{j}{2} = wVdf{j}*cls_t{2};   %  > kf (add to the RHS).
+                        tfV{j}{1} = wVdf{j}*cls_t{1};   %  > Pf.
+                        tfV{j}{2} = wVdf{j}*cls_t{2};   %  > kf (add to the RHS).
                     end
                     %  > Assign matrices "cls_m{:}" and "cls_t{:}" to structure "D"...
                     D.Cf = cls_m.C;
-                    D.bf = cls_m.b;
                     D.Pf = cls_t  {1};
-                    D.kf = cls_t  {2};
+                    D.Pf = cls_t  {1};
+                    D.bf = cls_m.b;
+                    
                 else
                     for j = 1:size(s.x.s.wVdf,2)
-                        wVtf{j}{1} = wVdf{j}*D.DTWD_DTW; %  > Pf.
-                        wVtf{j}{2} = [];
+                        tfV{j}{1} = wVdf{j}*D.DTWD_DTW; %  > Pf.
+                        tfV{j}{2} = [];
                     end
                 end
                 %  > Update field "s".
                 s.D       {i}   = D;
-                s.pf      {i}   = c_Df.t;
-                s.x.s.wVtf(i,:) = wVtf;
+                s.x.s.c_df(i,:) = c_df;
+                s.x.s.tfV (i,:) = tfV;
                 s.x.s.wVdf(i,:) = wVdf;
             end
         end
@@ -431,6 +432,15 @@ classdef B1_2D
                         t{k}.c(1,:) = c{k}  (l{k}); %  > c.
                         t{k}.e(1,:) = n{k,1}(l{k}); %  > x.
                         t{k}.e(2,:) = n{k,2}(l{k}); %  > y.
+                        m{k}        = 1:size(t{k}.c,2);
+                        switch k
+                            case 1, o{k}(1,:) = t{k}.e(1,:)+1 >= t{k}.e(2,:) &  t{k}.c ~= 0 | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 0 & t{k}.e(2,:) == 1); %  > x (w/ linear profile).
+                                    o{k}(2,:) = t{k}.e(2,:)   >  t{k}.e(1,:)                | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 0 & t{k}.e(2,:) == 1); %  > y (w/ linear profile).
+                            case 2, o{k}(2,:) = t{k}.e(2,:)+1 >= t{k}.e(1,:) &  t{k}.c ~= 0 | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 1 & t{k}.e(2,:) == 0); %  > x (w/ linear profile).
+                                    o{k}(1,:) = t{k}.e(1,:)   >  t{k}.e(2,:)                | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 1 & t{k}.e(2,:) == 0); %  > y (w/ linear profile).
+                        end
+                        t{k}.t{1} = m{k}(o{k}(1,:));
+                        t{k}.t{2} = m{k}(o{k}(2,:));
                     end
                 otherwise
                     return;
