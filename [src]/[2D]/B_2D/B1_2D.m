@@ -139,22 +139,17 @@ classdef B1_2D
                 Q     = A3_2D.Q_1D_2(q);
                 xg    = f.qd.xu(Q.x,xv);
                 dx_g  = xg-xf;
-                %  > wVdf.
+                %  > c_df and wVdf.
                 for j = 1:size(s.x.s.wVdf,2)
+                    %  > c_df.
                     switch j
-                        case 1
-                            %  > \phi([x,y]).
-                            c_df{1} = c_Df;
-                            x_df    = c_df{1}.c.*dx_g(:,1).^c_df{1}.e(1,:).*dx_g(:,2).^c_df{1}.e(2,:);
-                            for k = 1:size(inp.c,2)
-                                wVdf{j}(k,:) = Q.w'./2*(inp.c{j,k}(xg).*x_df);
-                            end
-                        case 2
-                            %  > \nabla\phi([x,y]).
-                            c_df{2} = B1_2D.C(p,j);
-                            for k = 1:size(inp.c,2)
-                                wVdf{j}(k,:) = Q.w'./2*(inp.c{j,k}(xg).*c_df{2}{k}.c.*dx_g(:,1).^c_df{2}{k}.e(1,:).*dx_g(:,2).^c_df{2}{k}.e(2,:));
-                            end
+                        case 1, c_df{1}{1} = c_Df;
+                                c_df{1}{2} = c_Df;
+                        case 2, c_df{2}    = B1_2D.C(p,j);
+                    end
+                    %  > wVdf.
+                    for k = 1:size(inp.c,2)
+                        wVdf{j}(k,:) = Q.w'./2*(inp.c{j,k}(xg).*c_df{j}{k}.c.*dx_g(:,1).^c_df{j}{k}.e(1,:).*dx_g(:,2).^c_df{j}{k}.e(2,:));
                     end
                 end
                 %  > tfV.
@@ -163,16 +158,17 @@ classdef B1_2D
                     %  > Apply constraints...
                     cls_m = B1_2D.Assemble_cls_m(inp,msh,f,i,p,xf,xg);
                     cls_t = func.cls_t(cls_m.b,cls_m.C,D.DTWD,D.DTW,D.DTWD_DTW);
-                    %  > tfV.
                     for j = 1:size(s.x.s.wVdf,2)
                         for k = 1:numel(cls_t)
                             tfV{j}{k} = wVdf{j}*cls_t{k};
                         end
                     end
                     %  > Assign matrices "cls_t{:}" to structure "D"...
-                    D.Cf = cls_t;
+                    D.Cf = cls_m.C;
+                    D.bf = cls_m.b;
+                    D.Pf = cls_t  {1};
+                    D.kf = cls_t  {2};
                 else
-                    %  > tfV.
                     for j = 1:size(s.x.s.wVdf,2)
                         tfV{j}{1} = wVdf{j}*D.DTWD_DTW; %  > ...from Cf.
                         tfV{j}{2} = [];                 %  > ...from kf.
@@ -416,12 +412,12 @@ classdef B1_2D
                     %  > Assign to structure "t".
                     l        = n{1} <= p(1) & n{2} <= p(2) & sum(cat(3,n{:}),3) <= max(p); 
                     c        = ones(max(p)+1);
-                    t.c(1,:) = c   (l);                 %  > c.                    
-                    t.e(1,:) = n{1}(l);                 %  > x.
-                    t.e(2,:) = n{2}(l);                 %  > y.
+                    t.c(1,:) = c   (l); %  > c.                    
+                    t.e(1,:) = n{1}(l); %  > x.
+                    t.e(2,:) = n{2}(l); %  > y.
                     m        = 1:size(t.c,2);
-                    t.t{1}   = m(t.e(1,:) >= t.e(2,:)); %  > x.
-                    t.t{2}   = m(t.e(2,:) >= t.e(1,:)); %  > y.
+                    t.t{1}   = m(t.e(1,:) >= t.e(2,:) | (t.e(1,:) == 1 & t.e(2,:) == 0 | t.e(1,:) == 0 & t.e(2,:) == 1)); %  > x (w/ linear profile).
+                    t.t{2}   = m(t.e(2,:) >= t.e(1,:) | (t.e(1,:) == 1 & t.e(2,:) == 0 | t.e(1,:) == 0 & t.e(2,:) == 1)); %  > y (w/ linear profile).
                 case 2
                     % >> \nabla\phi([x,y]): (dx)^n*y^n or x^n*(dy)^n.
                     %  > Auxiliary variables.
@@ -437,18 +433,18 @@ classdef B1_2D
                             case 2, a = p(1);   b = p(2)-1;
                         end
                         l{k}        = n{k,1} <= a & n{k,2} <= b & v{k}.*sum(cat(3,n{k,:}),3) <= max(p)-1;
-                        t{k}.c(1,:) = c{k}  (l{k});     %  > c.
-                        t{k}.e(1,:) = n{k,1}(l{k});     %  > x.
-                        t{k}.e(2,:) = n{k,2}(l{k});     %  > y.
+                        t{k}.c(1,:) = c{k}  (l{k}); %  > c.
+                        t{k}.e(1,:) = n{k,1}(l{k}); %  > x.
+                        t{k}.e(2,:) = n{k,2}(l{k}); %  > y.
                         m{k}        = 1:size(t{k}.c,2);
                         switch k
-                            case 1, o{k}(1,:) = t{k}.e(1,:)+1 >= t{k}.e(2,:) &  t{k}.c ~= 0 | [true,false(1,numel(t{k}.c)-1)];
-                                    o{k}(2,:) = t{k}.e(2,:)   >  t{k}.e(1,:)                | [true,false(1,numel(t{k}.c)-1)];
-                            case 2, o{k}(2,:) = t{k}.e(2,:)+1 >= t{k}.e(1,:) &  t{k}.c ~= 0 | [true,false(1,numel(t{k}.c)-1)];
-                                    o{k}(1,:) = t{k}.e(1,:)   >  t{k}.e(2,:)                | [true,false(1,numel(t{k}.c)-1)];
+                            case 1, o{k}(1,:) = t{k}.e(1,:)+1 >= t{k}.e(2,:) &  t{k}.c ~= 0 | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 0 & t{k}.e(2,:) == 1); %  > x (w/ linear profile).
+                                    o{k}(2,:) = t{k}.e(2,:)   >  t{k}.e(1,:)                | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 0 & t{k}.e(2,:) == 1); %  > y (w/ linear profile).
+                            case 2, o{k}(2,:) = t{k}.e(2,:)+1 >= t{k}.e(1,:) &  t{k}.c ~= 0 | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 1 & t{k}.e(2,:) == 0); %  > x (w/ linear profile).
+                                    o{k}(1,:) = t{k}.e(1,:)   >  t{k}.e(2,:)                | (t{k}.e(1,:) == 0 & t{k}.e(2,:) == 0 | t{k}.e(1,:) == 1 & t{k}.e(2,:) == 0); %  > y (w/ linear profile).
                         end
-                        t{k}.t{1} = m{k}(o{k}(1,:));    %  > x.
-                        t{k}.t{2} = m{k}(o{k}(2,:));    %  > y.
+                        t{k}.t{1} = m{k}(o{k}(1,:));
+                        t{k}.t{2} = m{k}(o{k}(2,:));
                     end
                 otherwise
                     return;

@@ -76,44 +76,44 @@ classdef B2_2D
                 % >> Update coefficients/face values...
                 cc = c( inp.m.cls & ~msh.f.logical(c));
                 cu = c(~inp.m.cls | (inp.m.cls & msh.f.logical(c)));
-                % -> w/  constraint(s).
+                %  > cf.
                 for j = cc
-                    %  > cf.
-                    s.x.x.cf.(fn(i)){j} = s.D{j}.Cf{1}*s.x.x.vf.(fn(i)){j};
-                    %  > xfV.
-                    for k = 1:size(s.x.s.tfV,2)
-                        s.x.x.xfV.(fn(i)){k}(j,:) = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j}+s.x.s.tfV{j,k}{2};
-                        %                         = s.x.s.wVdf{j,k}   *s.x.x.cf.(fn(i)){j}+s.x.s.tfV{j,k}{2};
-                    end
-                    %  > xfT.
-                    
+                    s.x.x.cf.(fn(i)){j} = s.D{j}.Pf*s.x.x.vf.(fn(i)){j}+s.D{j}.kf;
                 end
-                % -> w/o constraint(s).
                 for j = cu
-                    %  > cf.
                     s.x.x.cf.(fn(i)){j} = s.D{j}.DTWD_DTW*s.x.x.vf.(fn(i)){j};
-                    %  > xfV.
-                    for k = 1:numel(s.x.x.xfV.(fn(i)))
-                        s.x.x.xfV.(fn(i)){k}(j,:) = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j};
-                        %                         = s.x.s.wVdf{j,k}   *s.x.x.cf.(fn(i)){j};
+                end
+                %  > xfV.
+                for j = c
+                    for k = 1:size(s.x.s.wVdf,2)
+                        s.x.x.xfV.(fn(i)){k}(j,:) = s.x.s.wVdf{j,k}   *s.x.x.cf.(fn(i)){j};
+                        %                         = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j};                   > w/o constraint(s).
+                        %                         = s.x.s.tfV {j,k}{1}*s.x.x.vf.(fn(i)){j}+s.x.s.tfV{j,k}{2}; > w/  constraint(s).
                     end
-                    %  > xfT (check "a posteriori" contribution of the polynomial terms in the x and y-directions).
+                end
+                %  > xfT (check "a posteriori" contribution of the polynomial terms in the x and y-directions).
+                for j = cc
                     for k = 1:size(s.x.x.xfT.(fn(i)),1)
-                        switch k
-                            case 1, c_df{j,k}{1} = s.x.s.c_df{j};
-                                    c_df{j,k}{2} = c_df      {j,k}{1};
-                            case 2, c_df{j,k}    = s.x.s.c_df{j,k};
-                        end
                         for l = 1:size(s.x.x.xfT.(fn(i)),2)
-                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)
-                                if o ~= size(s.x.x.xfT.(fn(i)){k,l},2), p = c_df{j,k}{l}.t{o};
-                                    s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
-                                        s.x.s.wVdf{j,k}(l,p)*((s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:))*s.x.x.vf.(fn(i)){j});
-                                else
-                                    s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
-                                        s.x.s.wVdf{j,k}(l,:)*(s.D{j}.DTWD_DTW*s.x.x.vf.(fn(i)){j});
-                                end
+                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)-1, p =  s.x.s.c_df{j,k}{l}.t{o};
+                                cls_t                       = func.cls_t(s.D{j}.bf,s.D{j}.Cf(:,p),s.D{j}.DTWD(p,p),s.D{j}.DTW(p,:),s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:));
+                                s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
+                                    s.x.s.wVdf{j,k}(l,p)*(cls_t{1}*s.x.x.vf.(fn(i)){j}+cls_t{2});
                             end
+                            s.x.x.xfT.(fn(i)){k,l}(j,size(s.x.x.xfT.(fn(i)){k,l},2)) = ...
+                                s.x.x.xfV.(fn(i)){k}(j,l);
+                        end
+                    end
+                end
+                for j = cu
+                    for k = 1:size(s.x.x.xfT.(fn(i)),1)
+                        for l = 1:size(s.x.x.xfT.(fn(i)),2)
+                            for o = 1:size(s.x.x.xfT.(fn(i)){k,l},2)-1, p =  s.x.s.c_df{j,k}{l}.t{o};
+                                s.x.x.xfT.(fn(i)){k,l}(j,o) = ...
+                                    s.x.s.wVdf{j,k}(l,p)*(s.D{j}.DTWD(p,p)\s.D{j}.DTW(p,:)*s.x.x.vf.(fn(i)){j});
+                            end
+                            s.x.x.xfT.(fn(i)){k,l}(j,size(s.x.x.xfT.(fn(i)){k,l},2)) = ...
+                                s.x.x.xfV.(fn(i)){k}(j,l);
                         end
                     end
                 end
@@ -153,11 +153,6 @@ classdef B2_2D
         %  > 2.2.1. -------------------------------------------------------
         %  > Update "e.a(...)" field (analytic cell/face truncation error distribution/norms).
         function [e] = Update_ea(msh,e,m,s)
-            %  > Reset...
-            if any(e.t.c)
-                e.t.c = zeros(msh.c.Nc,1);
-            end
-            
             % >> f.
             %  > \tau_f: {1}-\tau_f(\phi).
             %            {2}-\tau_f(\nabla\phi).
@@ -181,6 +176,10 @@ classdef B2_2D
 
             % >> c.
             %  > \tau_c.
+            %  > Reset...
+            if any(e.t.c)
+                e.t.c = zeros(msh.c.Nc,1);
+            end
             for j = 1:o
                 etf_jl(:,j) = etf_j{j}(:,o+1);
             end
