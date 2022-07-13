@@ -3,12 +3,11 @@ classdef B2_2D
         %% > 1. -----------------------------------------------------------
         % >> 1.1. ---------------------------------------------------------
         %  > Initialize field "m" (matrices).
-        function [m] = Initialize_m(ns,Nc)
-            for i = 1:ns
-                m{i}.A     = zeros(Nc);
-                m{i}.b     = zeros(Nc,1);
-                m{i}.nnz.A = 0;
-            end
+        function [m] = Initialize_m(Nc)
+            m.A      = zeros(Nc);
+            m.b      = zeros(Nc,1);
+            m.nnz.A  = zeros(Nc,1);
+            m.nnz.At = 0;
         end
         % >> 1.2. ---------------------------------------------------------
         %  > Update matrix A and vector b.
@@ -41,8 +40,9 @@ classdef B2_2D
                         end
                     end
                 end
+                m.nnz.A(i) = nnz(m.A(i,:));
             end
-            m.nnz.A = nnz(m.A);
+            m.nnz.At = nnz(m.A);
         end
         % >> 1.3. ---------------------------------------------------------
         %  > Update nodal solution/face values (multiplied by V).
@@ -50,17 +50,18 @@ classdef B2_2D
             %  > Auxiliary variables.
             fn = convertCharsToStrings(fieldnames(s.x.x.vf));
             if any(~cellfun(@isempty,s.x.x.vf.a))
-                c = s.u.s';
+                c.a = s.u.s';
             else
-                c = 1:size(s.x.x.vf.a,1);
+                c.a = 1:size(s.x.x.vf.a,1);
             end
+            c.x = 1:size(s.x.x.vf.x,1);
             
             %  > Update nodal solution.
             s.x.x.nv.x = m.A\m.b;
             %  > Update face coefficients/face values.
             for i = 1:numel(fn)
                 % >> Update nodal values used to fit face "j"...
-                for j = c
+                for j = c.(fn(i))
                     %  > Auxiliary variables.
                     n = s.logical{j};
                     a = s.i      {j}( n);
@@ -74,8 +75,8 @@ classdef B2_2D
                     end
                 end
                 % >> Update coefficients/face values...
-                cc = c( inp.m.cls & ~msh.f.logical(c));
-                cu = c(~inp.m.cls | (inp.m.cls & msh.f.logical(c)));
+                cc = c.(fn(i))( inp.M.Cls & ~msh.f.logical(c.(fn(i))));
+                cu = c.(fn(i))(~inp.M.Cls | (inp.M.Cls & msh.f.logical(c.(fn(i)))));
                 %  > cf.
                 for j = cc
                     s.x.x.cf.(fn(i)){j} = s.D{j}.Pf*s.x.x.vf.(fn(i)){j}+s.D{j}.kf;
@@ -84,7 +85,7 @@ classdef B2_2D
                     s.x.x.cf.(fn(i)){j} = s.D{j}.DTWD_DTW*s.x.x.vf.(fn(i)){j};
                 end
                 %  > xfV.
-                for j = c
+                for j = c.(fn(i))
                     for k = 1:size(s.x.s.wVdf,2)
                         s.x.x.xfV.(fn(i)){k}(j,:) = s.x.s.wVdf{j,k}   *s.x.x.cf.(fn(i)){j};
                         %                         = s.x.s.wVtf{j,k}{1}*s.x.x.vf.(fn(i)){j};                     > w/o constraint(s).
@@ -152,8 +153,6 @@ classdef B2_2D
         function [e] = Update_e(inp,msh,e,m,s)
             %  > #1: Update field "e.a".
             e.a = B2_2D.Update_ea(msh,e.a,m,s);
-            %  > #2: Update field "e.f".
-            e.f = B2_2D.Update_ef(msh,e.f,s);
         end
         %  > 2.2.1. -------------------------------------------------------
         %  > Update "e.a(...)" field (analytic cell/face truncation error distribution/norms).
@@ -212,219 +211,351 @@ classdef B2_2D
         
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
-        %  > 3.1.1. -------------------------------------------------------
-        %  > Select faces for coarsening/refinement.
-        function [u,v,flag] = Update_u(inp,msh,e,u)
-            %  > Set structures "f" and "v".
-            if inp.p.iso
-                j = 1;
-                for i = 1:size(u.p,1)
-                    lev.f(i,1) = ceil(u.p(i,j)./2);
-                    F    {i,1} = B2_2D.find_F(msh,i);
-                    lev.F{i,1} = ceil(u.p(F{i,1},j)./2);
-                end
-            end
-            [f,v] = B2_2D.Set_fv(inp,msh,e.t.f_abs(:,end),F,lev);
-            %  > Set structure "u".
-            if isempty(f.r) && isempty(f.c)
-                flag       = true;
+        %  > Update structure "u".
+        function [s,v,flag] = Update_u(inp,msh,e,s,block)
+            %  > Select variables.
+            p = ceil(s.u.p./2);
+            if inp.P_Ad.Isotropic
+                x = e(:,3);
+                y = p(:,1);
             else
-                A          = 2;
-                u.p(f.c,:) = u.p(f.c,:)-A;
-                u.p(f.r,:) = u.p(f.r,:)+A;
-                u.s        = sort([f.c;f.r]);
-                flag       = false;
+                x = e(:,1:2);
+                y = p(:,1:2);
             end
-        end
-        %  > 3.1.2. -------------------------------------------------------
-        %  > Auxiliary function #1.
-        %  > Face "f" vertex neighbours (layer #1).
-        function [F] = find_F(msh,f)
-            F = RunLength(sort(func.setdiff(cat(1,msh.v.if{msh.f.iv(f,:)})',f)));
-        end
-        %  > 3.1.3. -------------------------------------------------------
-        %  > Auxiliary function #2.
-        %  > Check whether face "f" is ilegible for coarsening/refinement...
-        function [logical] = is_elig(ch,lev_f,lev_F)
-            logical = false;
-            switch ch
-                case 'c', f_check = lev_f >= lev_F;
-                case 'r', f_check = lev_f <= lev_F;
-                otherwise
-                    return;
-            end
-            if all(f_check)
-                logical = true;
-            end
-        end
-        %  > 3.1.4. -------------------------------------------------------
-        %  > Auxiliary function #3.
-        %  > Check what faces need to be coarsened/refined to coarsen/refine face "f"...
-        function [add] = add_f(ch,f,F,lev)
-            switch ch
-                case 'c'
-                    for i = 1:numel(f)
-                        add(i).f = F{f(i)}(lev.F{f(i)} > lev.f(f(i)));
-                    end
-                case 'r'
-                    for i = 1:numel(f)
-                        add(i).f = F{f(i)}(lev.F{f(i)} < lev.f(f(i)));
-                    end
-                otherwise
-                    return;
-            end
-            for i = 1:numel(f)
-                for j = 1:numel(add(i).f)
-                    add(i).logical(j) = B2_2D.is_elig(ch,lev.f(add(i).f(j)),lev.F{add(i).f(j)});
+            %  > Set structures "f" and "v".
+            for i = 1:msh.f.Nf
+                F{i,1} = B2_2D.find_F(inp,msh,i);
+                for j  = 1:size(x,2)
+                    P(j).f(i,1) = y(i,j);    %  > Face "f".
+                    P(j).F{i,1} = y(F{i},j); %  > Face "f" neighbours (depends on choosen configuration).
                 end
+            end
+            [f,v] = B2_2D.Set_fv(inp,msh,block,F,P,x);
+            
+            %  > Update structure "u".
+            if ~all(cellfun(@isempty,{f(:).c}) & cellfun(@isempty,{f(:).r}))
+                flag = false;
+                A    = 2;
+                if inp.P_Ad.Isotropic
+                    s.u.p(f.c,:) = s.u.p(f.c,:)-A;
+                    s.u.p(f.r,:) = s.u.p(f.r,:)+A;
+                else
+                    for i = 1:size(f,2)
+                        s.u.p(f(i).c,i) = s.u.p(f(i).c,i)-A;
+                        s.u.p(f(i).r,i) = s.u.p(f(i).r,i)+A;
+                    end
+                end
+                s.u.s = RunLength(sort([cat(1,f(:).r);cat(1,f(:).c)]));
+            else
+                flag = true;
+                fprintf("Stopping criterion: couldn't coarsen/refine any further.\n");
+            end
+        end
+        %  > 3.1.1. -------------------------------------------------------
+        %  > Find face "f" neighbours (depends on choosen configuration).
+        function [F] = find_F(inp,msh,f)
+            if inp.P_Ad.Config == 1 || 3
+                F1 = RunLength(sort(func.setdiff(cat(1,msh.v.if{msh.f.iv(f,:)})',f)));
+            end
+            if inp.P_Ad.Config == 2 || 3
+                F2 = RunLength(sort(func.setdiff(reshape(msh.c.f.if(msh.f.ic{f},:),1,[]),f)));
+            end
+            switch inp.P_Ad.Config
+                case 1, F = F1;
+                case 2, F = F2;
+                case 3, F = RunLength(sort(cat(2,F1,F2)));
+                otherwise
+                    return;
             end
         end
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
-        function [f,v] = Set_fv(inp,msh,e,F,lev)
-            % >> Set structure "list" and select faces for coarsening/refinement.
-            %  > "i" and "v".
-            [list.v,list.i] = sort(e,'descend');
-            %  > "logical".
-            for i = 1:numel(lev.f)
-                list.logical.c(i,1) = B2_2D.is_elig('c',lev.f(i),lev.F{i});
-                list.logical.r(i,1) = B2_2D.is_elig('r',lev.f(i),lev.F{i});
+        %  > Select faces for coarsening/refinement.
+        function [f,v] = Set_fv(inp,msh,block,F,P,x)
+            %  > Auxiliary variables.
+            m = numel(F);
+            n = size (P,2);
+            
+            % >> Set structure "list".
+            for i = 1:n
+                %  > "i" and "v".
+                [list(i).v,list(i).i] = sort(x(:,i),'ascend');
+                %  > "logical".
+                for j = 1:m
+                    list(i).logical.c(j,1) = B2_2D.is_elig(0,P(i).f(j,1),P(i).F{j,1});
+                    list(i).logical.r(j,1) = B2_2D.is_elig(1,P(i).f(j,1),P(i).F{j,1});
+                end
+                list(i).logical.c = list(i).logical.c(list(i).i);
+                list(i).logical.r = list(i).logical.r(list(i).i);
             end
-            list.logical.c(:,2) = lev.f > 1;                    %  > Eligible for selection: p(f) > 1.
-            list.logical.r(:,2) = lev.f < ceil(inp.p.p_max./2); %  > Eligible for selection: p(f) < p_max.
-            list.logical.r      = list.logical.r(list.i,:);
             
             % >> Select faces and check whether they can be automatically...
+            flag = B2_2D.f_select(block,list,P,inp.P_Ad.Qrt,inp.P_Ad.Qrt_PT);
             %  > ...refined.
-            eval.r = B2_2D.f_select(inp,'r',list);
-            if any(~eval.r.logical)
-                %  > Identify valid/invalid faces.
-                i_f.r = eval.r.i(~eval.r.logical);
-                v_f.r = eval.r.i( eval.r.logical); f.r = v_f.r;
-                %  > Loop through invalid faces...
-                for i = 1:numel(i_f.r)
-                    add_r = B2_2D.add_nb('r',i_f.r(i),F,lev);
-                    f.r   = [f.r;add_r'];
-                end
-                f.r = RunLength(sort(f.r));
-            else
-                f.r = eval.r.i;
-            end
-            v.r = eval.r.i;
-            
-            %  > ...coarsened.
-            %  > Select neighbours of ["f.r","v.r"]...
-            tv_r                   = RunLength(sort(reshape(msh.f.iv(RunLength(sort([f.r;v.r])),:),1,[])));
-            tn_r                   = RunLength(sort(cat(1,msh.v.if{tv_r})));
-            list.logical.c(tn_r,2) = false;
-            %  > Update field "F" of structure "lev" (w/ faces to be refined, i.e. "f.r")...
-            for i = 1:numel(f.r)
-                v_r{i,1} = RunLength   (sort(reshape(msh.f.iv(f.r(i),:),1,[])));
-                n_r{i,1} = RunLength   (sort(cat(1,msh.v.if{v_r{i,1}})));
-                n_r{i,1} = func.setdiff(n_r{i,1},f.r(i));
-                for j = 1:numel(n_r{i,1})
-                    lev.F{n_r{i,1}(j)}(F{n_r{i,1}(j)} == f.r(i)) = ...
-                        lev.F{n_r{i,1}(j)}(F{n_r{i,1}(j)} == f.r(i))+1;
-                end
-            end
-            for i = func.setdiff(1:numel(lev.F),tn_r)
-                for j = 1:numel(F{i})
-                    if range(lev.F{F{i}(j)}) > 1
-                        list.logical.c(i,2) = false;
-                        break;
+            for i = 1:n
+                if all(flag(i).r.logical)
+                    %  > Identify valid faces for refinement...
+                    f(i).r = flag(i).r.i;
+                    %  > Keep track of flagged/selected faces (for refinement).
+                    for j = 1:numel(f(i).r)
+                        v(i).r.list{j}{1} = [f(i).r(j),true];
                     end
+                else
+                    %  > Identify invalid faces for refinement...
+                    f_i(i).r      = flag(i).r.i(~flag(i).r.logical);
+                    %  > Add neighbour(s)/append to structure "f".
+                    f_v(i).r      = B2_2D.Add_nb_r(f_i(i).r,F,P(i));
+                    f  (i).r      = RunLength(sort(cat(1,flag(i).r.i(flag(i).r.logical),f_v(i).r.i)));
+                    %  > Keep track of flagged/selected faces (for refinement).
+                    v  (i).r.list = f_v (i).r.list;
                 end
+                v(i).r.f = flag(i).r.i; %  > ...flagged  for refinement.
+                v(i).r.s = f   (i).r;   %  > ...selected for refinement.
             end
-            list.logical.c = list.logical.c(list.i,:);
-            
-            eval.c = B2_2D.f_select(inp,'c',list);
-            if any(~eval.c.logical)
-                %  > Identify valid/invalid faces.
-                i_f.c = eval.c.i(~eval.c.logical);
-                v_f.c = eval.c.i( eval.c.logical); f.c = v_f.c;
-                %  > Loop through invalid faces...
-                for i = 1:numel(i_f.c)
-                    add_c = B2_2D.add_nb('c',i_f.c(i),F,lev);
-                    f.c   = [f.c;add_c'];
+            %  > ...coarsened.
+            for i = 1:n
+                if all(flag(i).c.logical)
+                    f(i).c = flag(i).c.i;
                 end
-                f.c = RunLength(sort(f.c));
-            else
-                f.c = eval.c.i;
+                v(i).c.f = flag(i).c.i; %  > ...flagged  for coarsening.
             end
-            v.c = eval.c.i;
         end
         %  > 3.2.2. -------------------------------------------------------
-        function [eval] = f_select(inp,ch,list)
-            switch ch
-                case 'c'
-                    %  > ...for coarsening.
-                    n            = numel (list.v);
-                    v            = list.v(n-ceil(inp.p.trsh(1)*n));
-                    cond         = list.logical.c(:,2) & list.v <= round(v,10);
-                    eval.i       = list.i        (cond);
-                    eval.logical = list.logical.c(cond,1);
-                case 'r'
-                    %  > ...for refinement.
-                    n            = numel (list.v);
-                    v            = list.v(n-ceil(inp.p.trsh(2)*n));
-                    cond         = list.logical.r(:,2) & list.v >= round(v,10);
-                    eval.i       = list.i        (cond);
-                    eval.logical = list.logical.r(cond,1);
-                otherwise
-                    return;
+        %  > 3.2.2.1. -----------------------------------------------------
+        %  > Check whether face "f" is eligible for coarsening/refinement...
+        function [logical] = is_elig(k,Pf,PF)
+            if ~k
+                logical = all(Pf >= PF); %  > ...for coarsening.
+            else
+                logical = all(Pf <= PF); %  > ...for refinement.
             end
         end
-        %  > 3.2.3. -------------------------------------------------------
-        function [add_all] = add_nb(ch,f,F,lev)
-            %  > Add...
-            f_add = B2_2D.add_f(ch,f,F,lev);
-            %  > Assign to "add_all".
-            if all(f_add.logical)
-                add_all = f_add.f;
+        %  > 3.2.2.2. -----------------------------------------------------
+        %  > Select faces for coarsening/refinement...
+        function [flag] = f_select(block,list,P,Qrt,Qrt_PT)
+            %  > Auxiliary variables.
+            [~,j] = sort(cat(1,list.v),1,'ascend');
+            for i = 1:size(list,2)
+                list_i(:,i) = list(i).i;
+                list_v(:,i) = list(i).v;
+            end
+            f(:,1) = list_i(j);
+            f(:,2) = list_v(j);
+
+            %  > Sort...
+            [~,a]  = unique(f(:,1)); f = f(sort(a),:);
+            %  > Exclude blocked faces...
+            if all(~block.r)
+                k = f(:,2);
             else
-                g = f_add.f(~f_add.logical);
-                for i = 1:numel(g), j = g(i); fr{i} = [];
-                    while 1
-                        %  > Add...
-                        add_g = B2_2D.add_f(ch,j,F,lev);
-                        %  > Check...
-                        if all([add_g(:).logical])
-                            fr{i} = [fr{i},[add_g(:).f]];
-                            break;
-                        else
-                            h     =    [add_g(:).f];
-                            fr{i} = h( [add_g(:).logical]);
-                            j     = h(~[add_g(:).logical]);
+                [~,b] = func.find_c(f(:,1),find(block.r)); k = f(~b,2);
+            end
+            n = ceil(size(k,1).*Qrt);
+            
+            %  > Check...
+            if n(2) < Qrt_PT.*size(f,1)
+                % >> Terminate...
+                s.c = false(size(list_v));
+                s.r = false(size(list_v));
+            else
+                % >> Select faces...
+                %  > ...for coarsening.
+                if Qrt(1) == 0
+                    v (1)  = 0;
+                else
+                    v (1)  = B2_2D.VT(0,3,k(n(1))); % > w/ tolerance.
+                end
+                s.c = list_v < v(1) & ~block.c(f(:,1),:);
+                %  > ...for refinement.
+                if Qrt(2) == 1
+                    v (2)  = k(end);
+                else
+                    v (2)  = B2_2D.VT(1,3,k(n(2))); % > w/ tolerance.
+                end
+                s.r = list_v > v(2) & ~block.r(f(:,1),:);
+            end
+            %  > ...for each direction.
+            for i = 1:size(list,2)
+                %  > "i".
+                flag(i).c.i      (:,1) = list(i).i(s.c(:,i) & P(i).f > 1); %  > Indices to coarsen.
+                flag(i).r.i      (:,1) = list(i).i(s.r(:,i));              %  > Indices to refine.
+                %  > "logical".
+                flag(i).c.logical(:,1) = list(i).logical.c(s.c);           %  > Can it be automatically coarsened?
+                flag(i).r.logical(:,1) = list(i).logical.r(s.r);           %  > Can it be automatically refined?
+            end
+        end
+        %  > 3.2.2.3. -----------------------------------------------------
+        %  > Add neighbours (depends on the selected configuration)...
+        function [nb_f] = Add_nb_r(f,F,P)
+            %  > Find neighbours and assign to "nb_f".
+            nb     = B2_2D.Find_nb(1,f,F,P);
+            nb_f.i = nb.i(nb.logical);
+            %  > Keep track of flagged/selected faces (for refinement).
+            o = 1;
+            for i = 1:numel(f)
+                nb_f.list{i}{o}   = [f(i),true];
+                nb_f.list{i}{o+1} = [nb.list(i).i,nb.list(i).logical];
+            end
+            o = o+1;
+            
+            %  > Until all faces are valid or no more faces can be added...
+            while ~all(nb.logical)
+                %  > Find neighbours and assign to "nb_f".
+                g      = nb.i(~nb.logical);
+                nb     = B2_2D.Find_nb(1,g,F,P);
+                nb_f.i = [nb_f.i;nb.i(nb.logical)];
+                %  > Keep track of flagged/selected faces (for refinement).
+                for i = 1:numel(f)
+                    nb_f.list{i}{o+1} = [];
+                end
+                for i = 1:numel(g)
+                    for j = 1:numel(f)
+                        if ~isempty(nb_f.list{j}{o})
+                            if ismembc(g(i),sort(nb_f.list{j}{o}(:,1)))
+                                nb_f.list{j}{o+1} = cat(1,nb_f.list{j}{o+1},[nb.list(i).i,nb.list(i).logical]);
+                            end
                         end
                     end
                 end
-                add_all = [f_add.f(f_add.logical),[fr{:}]];
+                o = o+1;
+            end
+            for i = 1:numel(f)
+                for j = 1:numel(nb_f.list{i})
+                    nb_f.list{i}{j} = unique(nb_f.list{i}{j},'rows');
+                end
+            end
+            nb_f.i = RunLength(sort(nb_f.i));
+        end
+        %  > 3.2.2.3.1. ---------------------------------------------------
+        %  > Auxiliary function (to be used recursively in while loop).
+        function [nb] = Find_nb(k,f,F,P)
+            %  > Check what faces need to be coarsened/refined to coarsen/refine face "f"...
+            if ~k
+                for i = 1:numel(f)
+                    nb_f(i).i = F{f(i)}(P.F{f(i)} > P.f(f(i))); %  > ...for coarsening.
+                end
+            else
+                for i = 1:numel(f)
+                    nb_f(i).i = F{f(i)}(P.F{f(i)} < P.f(f(i))); %  > ...for refinement.
+                end
+            end
+            %  > Can its neighbour(s) be coarsened/refined(?).
+            for i = 1:numel(f)
+                for j = 1:numel(nb_f(i).i)
+                    nb_f(i).logical(j) = B2_2D.is_elig(k,P.f(nb_f(i).i(j)),P.F{nb_f(i).i(j)});
+                end
+            end
+            for i = ["i","logical"]
+                %  > Sort.
+                if i == "i"
+                    [~,a] = sort([nb_f(:).i]);
+                end
+                nb.(i) = [nb_f(:).(i)]; nb.(i) = nb.(i)(a);
+                %  > Exclude duplicates.
+                if i == "i"
+                    b = [true,nb.i(2:end)-nb.i(1:end-1)>0];
+                end
+                nb.(i) = nb.(i)(b)';
+            end
+            for i = 1:numel(f)
+                for j = ["i","logical"]
+                    nb.list(i).(j) = nb_f(i).(j)';
+                end
             end
         end
         % >> 3.3. ---------------------------------------------------------
+        %  > 3.3.1. -------------------------------------------------------
         %  > Check stopping criteria.
-        function [stop] = Stop(inp,flag,ec,tau_f)
+        function [flag] = Stop(inp,obj)
             %  > Auxiliary variables.
-            n    = numel(tau_f);
-            stop = false(1,3);
+            flag = false;
             
-            %  > (1).
-            if n     >  inp.p.N, stop(1) = true;
-                fprintf("Stopping criterion: max. number of cycles.\n");
-            end
-            %  > (2).
-            if ec(1) <= inp.p.e, stop(2) = true;
+            if inp.P_Ad.ec  >= obj(end).e.a.n_abs.c(1)
+                flag = true;
                 fprintf("Stopping criterion: min. error treshold (L1 norm).\n");
             end
-            %  > (3).
-            if n > inp.p.n
-                if all(tau_f(n-inp.p.n:n-1) < tau_f(n-inp.p.n+1:n)), stop(3) = true;
-                    fprintf("Stopping criterion: increasing tau_f (L1 norm). \n%d previous iterations have been removed).",inp.p.n);
+            if inp.P_Ad.Nc  <  numel(obj)
+                flag = true;
+                fprintf("Stopping criterion: max. number of cycles.\n");
+            end
+            if inp.P_Ad.NNZ <= obj(end).m.nnz.At
+                flag = true;
+                fprintf("Stopping criterion: max. nnz(A).\n");
+            end
+        end
+        %  > 3.3.2. -------------------------------------------------------
+        %  > Monitor \tau_f.
+        function [block] = rst(inp,msh,block,obj_e,v)
+            %  > Auxiliary variables.
+            x  = arrayfun(@(x) x.a.t.f_abs  (:,3),obj_e,'un',0);
+            e  = x(end-1:end);
+            y  = arrayfun(@(x) x.a.n_abs.t.f(1,3),obj_e);
+            z  = arrayfun(@(x) x.a.n_abs.t.f(3,3),obj_e);
+            nm = y(end-1:end);
+            nM = z(end-1:end);
+            
+            %  > L1.
+            f(1) = nm(1) < B2_2D.VT(1,3,nm(2));
+            g{1} = v.r.s(e{2}(v.r.s) > e{1}(v.r.s) & e{1}(v.r.s) > 1E-10);
+            if f(1) && isempty(g{1})
+                g{1} = v.r.s;
+            end
+            %  > L3.
+            f(2) = nM(1) < B2_2D.VT(1,3,nM(2));
+            if f(2)
+                g{2} = find(e{2} > B2_2D.VT(1,3,max(e{2})));
+                if all(~ismembc(g{2},g{1}))
+                    f(2) = false;
                 end
             end
-            %  > (4)
-            if flag, stop(4) = true;
-                fprintf("Stopping criterion: couldn't coarsen/refine any further.\n");
+            %  > Select/reset...
+            if all(~f)
+                for j = ["c","r"]
+                    block.(j)(:) = false;
+                end
+            else
+                if f(1)
+                    block = B2_2D.Block_f(inp,msh,block,g{1},v.r.list); %  > "f" (flagged).
+                    block = B2_2D.Block_s(inp,msh,block,g{1});          %  > "s" (selected).
+                end
+                if f(2)
+                    block = B2_2D.Block_s(inp,msh,block,g{2});          %  > "s" (selected).
+                end
+            end
+        end
+        %  > 3.3.2.1. -----------------------------------------------------
+        function [block] = Block_f(inp,msh,block,k,list)
+            for i = 1:numel(list)
+                flag  = false;
+                for j = 1:numel(list{i})
+                    if ~isempty(list{i}{j})
+                        if any(ismembc(k,list{i}{j}(:,1)))
+                            flag = true;
+                            break;
+                        end
+                    end
+                end
+                if flag
+                    a          = cat   (1,list{i}{:});
+                    b          = a     (:,1);
+                    c          = unique(cat(1,b,B2_2D.find_F(inp,msh,list{i}{1}(1))'));
+                    block.r(c) = true;
+                end
+            end
+        end
+        %  > 3.3.2.2. -----------------------------------------------------
+        function [block] = Block_s(inp,msh,block,k)
+            for i = 1:numel(k)
+                block.r([k(i),B2_2D.find_F(inp,msh,k(i))]) = true;
+            end
+        end
+        % >> 3.4. ---------------------------------------------------------
+        %  > Add tolerance to value "v".
+        function [v] = VT(k,l,v)
+            if ~k
+                v = v+10.^(ceil(log10(v)-1)-l); % > v* > v.
+            else
+                v = v-10.^(ceil(log10(v)-1)-l); % > v* < v.
             end
         end
     end

@@ -5,15 +5,15 @@ clear, clc, close all; warning off; beep off;
 %  > Working directories.
 Set_Directories_2D;
 % >> ----------------------------------------------------------------------
-h   = 2.5E-02;
-inp = A1_2D.Set_inp({[1,1],1},[50,0.5,0.5]); %  > c/f.
-msh = A2_2D.Set_msh(h);                      %  > h.
-obj = B3_2D.Run_p  (inp,msh);                %  > inp/msh.
+h   = 3.5E-02;
+inp = A1_2D.Set_inp({[1,0,1],1},{[5,3.*pi],[0.50;0.50]}); %  > ch/fh(t,f),wf.
+msh = A2_2D.Set_msh(h);                                    %  > h.
+obj = B3_2D.Run_p  (inp,msh);                              %  > inp/msh.
 
-tc  = obj(end).e.a.n_abs.t.c
-tf  = obj(end).e.a.n_abs.t.f
-ec  = obj(end).e.a.n_abs.c
-NNZ = obj(end).m{1}.nnz.A
+tau_c  = obj(end).e.a.n_abs.t.c
+tau_f  = obj(end).e.a.n_abs.t.f
+e_c    = obj(end).e.a.n_abs.c
+nnz_At = obj(end).m.nnz.At
 
 % >> ----------------------------------------------------------------------
 function [] = Set_Directories_2D()

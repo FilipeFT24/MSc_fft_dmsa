@@ -60,7 +60,7 @@ classdef A2_2D
             %  > ----------------------------------------------------------
             % >> d.
             %  #1: Domain reference length.
-            msh.d.h             = func.mean(msh.c.h.h,1);
+            msh.d.h             = func.mean(msh.c.h,1);
             %  > ----------------------------------------------------------
             %  > Sort fields...
             msh                 = func.Sort_2D_msh(msh);
@@ -126,57 +126,19 @@ classdef A2_2D
         end
         %  > 2.1.4. -------------------------------------------------------
         %  > #4: Cell "i": reference length.
-        %  > 2.1.4.1. -----------------------------------------------------
         function [h] = c_h(xy,Volume)
             %  > Auxiliary variables.
-            d (1,:) = [1,0]; %  > x.
-            d (2,:) = [0,1]; %  > y.
-            sz      = size(Volume);
+            sz = size(Volume);
             
             for i = 1:sz(1)
                 j = size(xy.v{i});
-                %  > h.
                 k = [1:j(1);circshift(1:j,j(1)-1)]';
                 for l = 1:j(1)
                     Length{i,1}(l,1) = func.dist(xy.v{i}(k(l,:),:));
                 end
-                h.h (i,1) = 4.*Volume(i)./sum(Length{i});
-                %  > h(x,y).
-                for l = 1:j(2)
-                    h.xy(i,l) = A2_2D.hd(xy.v{i},xy.c(i,:),d(l,:));
-                end
+                P(i,1) = sum(Length{i});
             end
-        end
-        %  > 2.1.4.2. -----------------------------------------------------
-        %  > Auxiliary function: compute reference length (direction: d).
-        function [h] = hd(v,c,d)
-            %  > Select face indices...
-            [n,o] = size(v);
-            
-            %  > t.
-            k = [1:n;circshift(1:n,n-1)]';
-            m = d(2)./d(1);
-            if ~isinf(m)
-                %  > t = (b-y(1)+mx(1))/(y(2)-y(1)-m(x(2)-x(1))).
-                b = c(2)-m.*c(1);
-                for i = 1:n
-                    t(i) = (b-v(k(i,1),2)+m.*v(k(i,1),1))./(v(k(i,2),2)-v(k(i,1),2)-m.*(v(k(i,2),1)-v(k(i,1),1)));
-                end
-            else
-                %  > t = (b-x(1))/(x(2)-x(1)).
-                b = c(1);
-                for i = 1:n
-                    t(i) = (b-v(k(i,1),1))./(v(k(i,2),1)-v(k(i,1),1));
-                end
-            end
-            % > Check intersections...
-            f = 0 <= t & t <= 1 & t ~= Inf;
-            if nnz(f) ~= 2
-                return;
-            else
-                XY = v(k(f,1),:)+t(f)'.*(v(k(f,2),:)-v(k(f,1),:));
-                h  = func.dist(XY);
-            end
+            h = 4.*Volume./P;
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %  > 2.1.5. -------------------------------------------------------
@@ -292,8 +254,8 @@ classdef A2_2D
             
             for i = 1:sz(1)
                 j              = 1:sz(2);
-                xy.v{i,1}(j,:) = struct.Points(f(i,j),:);        %  > Vertex #j(x,y).
-                xy.c     (i,j) = func.mean(xy.v{i,1}(:,j),1); %  > Face   #j(x,y).
+                xy.v{i,1}(j,:) = struct.Points(f(i,j),:);
+                xy.c     (i,j) = func.mean(xy.v{i,1}(:,j),1); 
             end
         end
         %  > %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

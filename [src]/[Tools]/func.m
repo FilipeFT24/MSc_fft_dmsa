@@ -63,7 +63,7 @@ classdef func
             [Y(1),Y(2)] = MinMaxElem(Yt); H = Y(2)-Y(1); Nv(2) = size(Yt,1); Nc(2) = Nv(2)-1;
             %  > f.
             c (1)   = 0.1;
-            c (2)   = 10.*pi;
+            c (2)   = 25.*pi;
             f {1}   = @(i,j) L.*(i-1)./Nc(1).*(c(1).*(Nv(1)-i)./Nc(1).*sin(c(2).*H./L.*(j-1)./Nc(2))+1);
             f {2}   = @(i,j) H.*(j-1)./Nc(2).*(c(1).*(Nv(2)-j)./Nc(2).*sin(c(2).*H./L.*(i-1)./Nc(1))+1);
             %  > X/Yd.
@@ -116,7 +116,6 @@ classdef func
             msh.c.c.nb = orderfields(msh.c.c.nb,{'f','v'});
             msh.c.c.xy = orderfields(msh.c.c.xy,{'c','v'});
             msh.c.f    = orderfields(msh.c.f   ,{'if','Sf'});
-            msh.c.h    = orderfields(msh.c.h   ,{'h','xy'});
             %  > d.
             msh.d      = orderfields(msh.d     ,{'h'});
             %  > f.
@@ -154,24 +153,12 @@ classdef func
         end
         % >> 3.5. ---------------------------------------------------------
         %  > Similar (faster) version of following expression: arrayfun(@(x) find(a == x),b);
-        function [j] = find_c(a,b)
-            i = repmat(a,1,numel(b)) == b'; [j,~] = find(i);
+        function [j,k] = find_c(a,b)
+            i = repmat(reshape(a,[],1),1,numel(b)) == reshape(b,1,[]); [j,~] = find(i);
+            k = any(i,2);
         end
         % >> 3.6. ---------------------------------------------------------
-        %  > Evaluate "==", "<=" and ">= " w/ tolerance.
-        function [flag] = eq(a,b,tol,op)
-            flag = false( numel(a),1);
-            n    = ceil (-log10(tol));
-            switch op
-                case '==', flag = round(a,n) == round(b,n);
-                case '<=', flag = round(a,n) <= round(b,n);
-                case '>=', flag = round(a,n) >= round(b,n);
-                otherwise
-                    return;
-            end
-        end
-        % >> 3.7. ---------------------------------------------------------
-        %  > 3.7.1. -------------------------------------------------------
+        %  > 3.6.1. -------------------------------------------------------
         %  > Rescaling to Solve a Linear System (Ax=b).
         %  > Reference: https://www.mathworks.com/help/matlab/ref/equilibrate.html#mw_beaf3b94-7114-4652-b483-a36c2acf7b94
         function [x] = backslash(A,b)
@@ -182,7 +169,7 @@ classdef func
             d = R*P*b;
             x = C*(B\d);
         end
-        %  > 3.7.2. -------------------------------------------------------
+        %  > 3.6.2. -------------------------------------------------------
         %  > Compute CLS matrices.
         %  > x = (H'H)^{-1}*(H'y-C'*(C*(H'H)^{-1}*C')^{-1}*(C*(H'*H)^{-1}H'y-b)).
         function [t] = cls_t(b,C,HT,HTH,HTH_HT)
@@ -195,7 +182,7 @@ classdef func
             t       {1} =    func.backslash(HTH,HT-X);
             t       {2} =    func.backslash(HTH,Y);
         end
-        % >> 3.8. ---------------------------------------------------------
+        % >> 3.7. ---------------------------------------------------------
         %  > Compute error norms (cell/face L1,L2 and L_infinity norms).
         function [L] = Set_n(E,V)
             if nargin == 1
@@ -208,7 +195,7 @@ classdef func
                 L(3,:) = max(E);
             end
         end
-        % >> 3.9. ---------------------------------------------------------
+        % >> 3.8. ---------------------------------------------------------
         %  > Compute error slope.
         function [s] = Slope(h,e)
             [m,n]  = size(e);
@@ -216,7 +203,7 @@ classdef func
             j      = 1:m-1;
             s(j,i) = log(e(j+1,i)./e(j,i))./log(h(j+1)./h(j));
         end
-        % >> 3.10. --------------------------------------------------------
+        % >> 3.9. ---------------------------------------------------------
         %  > Save .mat file.
         function [] = Save_mat(wd,V)
             save(strjoin([wd,".mat"],''),"V");

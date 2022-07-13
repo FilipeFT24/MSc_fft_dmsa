@@ -56,7 +56,7 @@ classdef A3_2D
                 end
                 %  > Compute boundary value.
                 xf_c = msh.f.xy.c(bd.i(i),:);
-                switch inp.b.t(bd.t(i))
+                switch inp.B.T(bd.t(i))
                     case "Dirichlet"
                         bd.v(i,1) = fh.f(xf_c);
                     case "Neumann"
@@ -136,12 +136,12 @@ classdef A3_2D
         %  > Auxiliary function #5.2.
         function [Q] = Q_1D_2(n)
             %  > From "quadGaussLegendre(n,varargin)"...
-            A       = zeros(1,n);
-            B       = sqrt (((1:n-1)./(2:n))./((2*(0:n-2)+1)./((0:n-2)+1).*(2*(1:n-1)+1)./((1:n-1)+1)));
-            J       = diag(B,1)+diag(A)+diag(B,-1);
+            A        = zeros(1,n);
+            B        = sqrt (((1:n-1)./(2:n))./((2*(0:n-2)+1)./((0:n-2)+1).*(2*(1:n-1)+1)./((1:n-1)+1)));
+            J        = diag(B,1)+diag(A)+diag(B,-1);
             %  > Weights/points.
-            [V,D]   = eig(J,'vector');
-            [Q.x,I] = sort(D); Q.w = (2*V(1,I).^2)';
+            [V,D]    = eig(J,'vector');
+            [Q.x,I]  = sort(D); Q.w = (2*V(1,I).^2)';
         end
     end
 end

@@ -5,25 +5,21 @@ classdef Fig_Tools
         function [fig] = Set_fig(opt,x)
             fig.x            = x;
             fig.C            = linspecer(9,'qualitative');       %  > Colors.
-            fig.lw           =  1.75;                            %  > Line width.
-            fig.ms           =  5.00;                            %  > Marker size.
-            fig.fa           =  0.25;                            %  > FaceAlpha.
+            fig.LW           =  2.25;                            %  > Line width.
+            fig.MS           =  8.50;                            %  > Marker size.
+            fig.FA           =  0.25;                            %  > FaceAlpha.
             if ~opt
-                fig.fs{1}(1) = 30.00;                            %  > x-label.
-                fig.fs{1}(2) = 30.00;                            %  > y-label.
+                fig.FS{1}(1) = 35.00;                            %  > x-label.        (*)
+                fig.FS{1}(2) = 35.00;                            %  > y-label.        (*)
             else
-                fig.fs{1}(1) = 22.50;                            %  > x-label.
-                fig.fs{1}(2) = 22.50;                            %  > y-label.
+                fig.FS{1}(1) = 22.50;                            %  > x-label.        (*)
+                fig.FS{1}(2) = 22.50;                            %  > y-label.        (*)
             end
-            fig.fs    {2}    = 15.00;                            %  > Axis.
-            fig.fs    {3}    = 15.00;                            %  > Legend.
-            fig.fs    {4}    = 11.50;                            %  > Colormap label.
-            fig.fs    {5}    = 20.00;                            %  > Colormap title.
-            fig.pos          = [150,100,1250,600];               %  > Position.
-            fig.dir          = '[Post-processing]/[.pdf Files]'; %  > Destination folder.
-            fig.fn           = 'Times New Roman';                %  > Font name.
-            fig.trsh.n       = 0;                                %  > Error treshold: number of elements.
-            fig.trsh.v       = 1.0e-16;                          %  > Error treshold: value.
+            fig.FS    {2}    = 15.00;                            %  > Axis.           (*)
+            fig.FS    {3}    = 20.00;                            %  > Legend.
+            fig.FS    {4}    = 13.50;                            %  > Colormap label. (*)
+            fig.FS    {5}    = 20.00;                            %  > Colormap title. (*)
+            fig.TrshV        = 1E-16;                            %  > Error treshold value.
             switch x.l
                 case 1, fig.L{1} = "$x$";                        %  > x-axis label.
                         fig.L{2} = "$\textrm{Error magnitude}$"; %  > y-axis label.
@@ -40,27 +36,21 @@ classdef Fig_Tools
         end
         % >> 1.2. ---------------------------------------------------------
         %  > 1.2.1. -------------------------------------------------------
-        function [str] = Set_str_1(i)
+        function [S] = S1(i)
             switch i
-                case 1
-                    str = "\phi\scriptscriptstyle{,C}";
-                case 2
-                    str = "\phi\scriptscriptstyle{,D}";
-                case 3
-                    str = "\phi";
+                case 1, S = "\phi\scriptscriptstyle{,C}";
+                case 2, S = "\phi\scriptscriptstyle{,D}";
+                case 3, S = "\phi";
                 otherwise
                     return;
             end
         end
         %  > 1.2.2. -------------------------------------------------------
-        function [str] = Set_str_2(i)
+        function [S] = S2(i)
             switch i
-                case 1
-                    str = "1";
-                case 2
-                    str = "2";
-                case 3
-                    str = "\infty";
+                case 1, S = "1";
+                case 2, S = "2";
+                case 3, S = "\infty";
                 otherwise
                     return;
             end
@@ -69,39 +59,33 @@ classdef Fig_Tools
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
-        function [] = Map_1D(fig,x,y)
-            %  > Other parameters.
-            a = gca;
-            f = gcf;
-            box on;
-            set(a,'Fontname',fig.fn)
-            set(a,'Fontsize',fig.fs{2});
-            set(a,'TickLabelInterpreter','Latex');
-            set(a,'YScale','log');
-            set(f,'Color','w');
-            set(f,'Windowstate','maximized');
-            %  > Axis.
-            [X_lim(1),X_lim(2)] = MinMaxElem(x);
-            if ~y.plot
-                n  = 10;
-                dX = diff(X_lim)./n; X_label = X_lim(1)-dX:dX:X_lim(2)+dX;
-                set(a,'XLim',X_lim,'XTick',X_label);
+        function [] = Map_1D(fig,X,Z)
+            %  > Axes.
+            [XY.Lim(1,1),XY.Lim(1,2)] = MinMaxElem(X);
+            [XY.Lim(2,1),XY.Lim(2,2)] = ...
+                deal(10.^(ceil(log10(Z.lim(1)))-Z.DY(1)),10.^(ceil(log10(Z.lim(2)))+Z.DY(2)));
+            set(get(gca,'XAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on'); xlabel(fig.L{1},'Fontsize',fig.FS{1}(1));
+            set(get(gca,'YAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on'); ylabel(fig.L{2},'Fontsize',fig.FS{1}(2));
+            if ~Z.Plot
+                set(gca,'box','on','XLim',XY.Lim(1,:),'XTick',linspace(XY.Lim(1,1),XY.Lim(1,2),11));
             else
-                grid on; 
-                grid minor;
-                if numel(unique(X_lim)) ~= 1
-                    set(a,'XLim',X_lim);
+                if numel(unique(XY.Lim(1,:))) ~= 1
+                    set(get(gca,'XAxis'),'Exponent',3); set(gca,'XLim',XY.Lim(1,:),'XScale','Log');
                 end
-                set(a,'XScale','log'); a.XAxis.Exponent = 3;
-                set(a,'GridLineStyle','-','minorgridlinestyle',':');
+                %  > Grid.
+                grid(gca,'on');
+                set (gca,'GridLineStyle','-','MinorGridLinestyle',':');
             end
-            Y_lim (1) = 10.^(ceil(log10(y.lim(1)))-y.dY(1));
-            Y_lim (2) = 10.^(ceil(log10(y.lim(2)))+y.dY(2)); ylim(Y_lim);
-            xlabel(fig.L{1},'Fontsize',fig.fs{1}(1),'Interpreter','latex');
-            ylabel(fig.L{2},'Fontsize',fig.fs{1}(2),'Interpreter','latex');
+            set(gca,'YLim',XY.Lim(2,:),'YScale','Log');
+            %  > Figure.
+            set(gcf,'Color','w','Windowstate','Maximized');
+            %  > Interpreter.
+            set(0,'DefaultAxesTickLabelInterpreter','Latex');
+            set(0,'DefaultLegendInterpreter','Latex');
             %  > Legend.
-            legend([y.P{:}],[y.L{:}],...
-                'Interpreter','latex','Location','Northeast','FontSize',fig.fs{3},'NumColumns',y.nc);
+            legend([Z.P{:}],[Z.L{:}],'Location','Northeast','FontSize',fig.FS{3},'NumColumns',Z.NC);
+            %  > Maximize...
+            pbaspect([1,1,1]);
         end
         % >> 2.2. ---------------------------------------------------------
         %  > 2.2.1. -------------------------------------------------------
@@ -116,11 +100,11 @@ classdef Fig_Tools
             k = 0;
             hold on;
             for i = 1:b
-                j{i} = Y(:,i) > fig.trsh.n; Y(~j{i},i) = 0;
-                if nnz(j{i})  > fig.trsh.v
+                j{i} = Y(:,i) > 0; Y(~j{i},i) = 0;
+                if nnz(j{i})  > fig.TrshV
                     k                 = k+1;
                     LY{k}             = LX{i};
-                    P {k}             = plot(X(:,i),Y(:,i),m(i),'Color',fig.C(k,:),'LineWidth',fig.lw,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.ms);
+                    P {k}             = plot(X(:,i),Y(:,i),m(i),'Color',fig.C(k,:),'LineWidth',fig.LW,'MarkerFaceColor',fig.C(k,:),'MarkerSize',fig.MS);
                     [YV(k,1),YV(k,2)] = MinMaxElem(Y(j{i},i));
                 end
             end
@@ -158,121 +142,106 @@ classdef Fig_Tools
         
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
-        function [] = Map_2D(fig,msh,y)
-            %  > Other parameters.
-            a = gca;
-            f = gcf;
-            axis equal;
-            set(a,'Fontname',fig.fn)
-            set(a,'Fontsize',fig.fs{2});
-            set(a,'Layer','Top')
-            set(a,'TickLabelinterpreter','Latex');
-            set(f,'Color','w');
-            set(f,'Windowstate','maximized');
-            pbaspect([1,1,1]);
-            %  > Axis.
-            n = [10,10];
-            X = cat(1,msh.f.xy.v{:});
-            for i = 1:size(X,2)
-                [X_lim(i,1),X_lim(i,2)] = MinMaxElem(X(:,i)); dX(i) = diff(X_lim(i,:))./n(i); X_label(i,:) = X_lim(i,1)-dX(i):dX(i):X_lim(i,2)+dX(i);
+        function [] = Map_2D(fig,msh,Z)
+            %  > Axes.
+            BBOX  = get(gca,'Position');
+            XY.V  = cat(1,msh.f.xy.v{:});
+            for i = 1:size(XY.V,2)
+                [XY.Lim(i,1),XY.Lim(i,2)] = MinMaxElem(XY.V(:,i));
             end
-            set(a,'XLim',X_lim(1,:),'XTick',X_label(1,:));
-            a.XRuler.Axle.Visible = 'off';
-            a.XAxis.TickLength    = [0,0];
-            set(a,'YLim',X_lim(2,:),'YTick',X_label(2,:));
-            a.YRuler.Axle.Visible = 'off';
-            a.YAxis.TickLength    = [0,0];
-            xlabel(fig.L{1},'Fontsize',fig.fs{1}(1),'Interpreter','latex');
-            ylabel(fig.L{2},'Fontsize',fig.fs{1}(2),'Interpreter','latex');
+            set(get(gca,'XAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on','XLim',XY.Lim(1,:),'XTick',[]); xlabel(fig.L{1},'Fontsize',fig.FS{1}(1));
+            set(get(gca,'YAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on','YLim',XY.Lim(2,:),'YTick',[]); ylabel(fig.L{2},'Fontsize',fig.FS{1}(2));
             %  > Colormap.
-            if y.plot
-                p                      = a.Position;
-                of_p                   = 0.035;
-                c                      = colorbar(a,'Location','east');
-                c.FontSize             = fig.fs{4};
-                c.Label.Interpreter    = 'latex';
-                c.TickLabelInterpreter = 'latex';
-                AdvancedColormap('thermal');
-                if y.lim (1) >= fig.trsh.v
-                    Y_lim(1)  = 10.^(ceil(log10(y.lim(1)))-1);
-                    Y_lim(2)  = 10.^(ceil(log10(y.lim(2)))+0);
-                else
-                    Y_lim(1)  = fig.trsh.v;
-                    Y_lim(2)  = 10.^(ceil(log10(y.lim(2)))+0);
+            if exist('P','Var')
+                colorbar (gca,'box','on','Fontsize',fig.FS{4},'Position',[BBOX(1)+BBOX(3)+0.0075,0.1755,0.0225,0.6855]); AdvancedColormap('thermal');
+                set      (gca,'ColorScale','Log');
+                caxis    (Z.Lim);
+                if ~Z.e
+                    title(Z.Title,'Fontsize',fig.FS{5});
                 end
-                caxis(Y_lim);
-                set  (a,'colorscale','log');
-                set  (c,'position',[p(1)+p(3)+of_p,0.165,of_p./2.5,0.705]);
-                title(y.title,'Fontsize',fig.fs{5},'Interpreter','latex');
             end
+            %  > Figure.
+            set(gcf,'Color','w','Windowstate','Maximized');
             %  > Grid.
-            Fig_Tools.Var_2D_1(msh.f.xy.v,"k","-",0.01);
+            Fig_Tools.Var_2D_1(msh.f.xy.v,"k",1E-3,"-");
+            %  > Interpreter.
+            set(0,'DefaultAxesTickLabelInterpreter','Latex');
+            set(0,'DefaultLegendInterpreter','Latex');
+            %  > Maximize...
+            pbaspect([1,1,1]);
         end
         % >> 3.2. ---------------------------------------------------------
         %  > 3.2.1. -------------------------------------------------------
-        function [] = Var_2D_1(V,C,m,lw)
+        function [] = Var_2D_1(V,C,LW,M)
             hold on;
             for i = 1:size(V,1)
-                plot(V{i}(:,1),V{i}(:,2),m,'Color',C,'LineWidth',lw);
+                plot(V{i}(:,1),V{i}(:,2),M,'Color',C,'LineWidth',LW);
             end
         end
         %  > 3.2.2. -------------------------------------------------------
-        function [] = Var_2D_2(V,c,m,ms)
-            hold on;
-            if numel(ms) ~= size(V,1)
-                ms = ones(size(V,1),1).*ms;
+        function [] = Var_2D_2(V,C,M,MS)
+            if numel(MS) ~= size(V,1)
+                MS = ones(size(V,1),1).*MS;
             end
+            hold on;
             for i = 1:size(V,1)
-                plot(V(:,1),V(:,2),m,'Color',c,'MarkerFaceColor',c,'MarkerSize',ms(i));
+                plot(V(:,1),V(:,2),M,'Color',C,'MarkerFaceColor',C,'MarkerSize',MS(i));
             end
         end
         %  > 3.2.3. -------------------------------------------------------
-        function [] = Var_2D_3(V,c,lw,m,ms)
-            hold on;
-            if numel(ms) ~= size(V,1)
-                ms = ones(size(V,1),1).*ms;
+        function [] = Var_2D_3(V,C,LW,M,MS)
+            if numel(MS) ~= size(V,1)
+                MS = ones(size(V,1),1).*MS;
             end
+            hold on;
             for i = 1:size(V,1)
-                plot(V(:,1),V(:,2),m,'Color',c,'LineWidth',lw,'MarkerSize',ms(i));
+                plot(V(:,1),V(:,2),M,'Color',C,'LineWidth',LW,'MarkerSize',MS(i));
             end
         end
         %  > 3.2.4. -------------------------------------------------------
-        function [] = Var_2D_4(V1,V2,fa)
+        function [] = Var_2D_4(V1,V2,FA)
             hold on;
             [sz(1),sz(2)] = deal(size(V1,1),size(V2,1));
             if sz(1) > sz(2)
                 V2 = repelem(V2,sz(1),1);
             end
             for i = 1:sz(1)
-                patch(V1{i}(:,1),V1{i}(:,2),V2(i,:),'FaceAlpha',fa,'Linestyle','None');
+                patch(V1{i}(:,1),V1{i}(:,2),V2(i,:),'FaceAlpha',FA,'Linestyle','None');
             end
         end
         %  > 3.2.5. -------------------------------------------------------
-        function [] = Var_2D_5(V1,V2,length,c)
+        function [] = Var_2D_5(V1,V2,C,Length)
             hold on;
             for i = 1:size(V1,1)
                 for j = 1:size(V1{i},1)
-                    quiver(V1{i}(j,1),V1{i}(j,2),V2{i}(j,1)./length,V2{i}(j,2)./length,'AutoScale','off','Color',c);
+                    quiver(V1{i}(j,1),V1{i}(j,2),V2{i}(j,1)./Length,V2{i}(j,2)./Length,'AutoScale','off','Color',C);
                 end
             end
         end
-        % >> 3.3. ---------------------------------------------------------
-        %  > 3.3.1. -------------------------------------------------------
-        function [f] = Set_f(msh,ft)
-            switch ft
-                case "bnd"
-                    v = find(~msh.f.logical);
-                case "blk"
-                    v = find( msh.f.logical);
-                otherwise
-                    return;
+        %  > 3.2.6. -------------------------------------------------------
+        function [] = Var_2D_6(V1,V2,V3,V4,sc,sf,x,w,C,FA,LW,M,MS)
+            %  > "c".
+            Fig_Tools.Var_2D_2(V1,"k",M(1),MS(1));
+            for i = 1:numel(sc)
+                Fig_Tools.Var_2D_2(V1(sc{i},:),C(i,:),M(2),MS(2));
+                Fig_Tools.Var_2D_4(V2(sc{i})  ,C(i,:)     ,FA);
             end
-            f = v(randperm(numel(v),1));
+            %  > "f".
+            Fig_Tools.Var_2D_1(V3,C(1,:),LW,"-");
+            Fig_Tools.Var_2D_2(x ,C(1,:),M(1),MS(2).*w);
+            for i = 1:numel(sf)
+                Fig_Tools.Var_2D_2(V4(sf{i},:),C(i,:),M(2),MS(2));
+            end
         end
-        %  > 3.3.2. -------------------------------------------------------
-        function [] = SubPlot_pdf(dir,fid)
-            exportgraphics(gcf,fid,'ContentType','vector');
-            movefile(fid,dir);
+        %  > 3.2.7. -------------------------------------------------------
+        function [MS] = Convert_MS(Length)
+            A         = gca;
+            B         = A.Units;
+            A.Units   = 'Points';
+            C         = A.Position(3:4);
+            A.Units   = B;
+            MS_V      = C.*Length./[range(xlim(A)),range(ylim(A))];
+            MS        = MS_V(2);
         end
     end
 end
