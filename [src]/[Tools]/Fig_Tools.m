@@ -80,8 +80,9 @@ classdef Fig_Tools
             %  > Figure.
             set(gcf,'Color','w','Windowstate','Maximized');
             %  > Interpreter.
-            set(0,'DefaultAxesTickLabelInterpreter','Latex');
-            set(0,'DefaultLegendInterpreter','Latex');
+            set(groot,'DefaultAxesTickLabelInterpreter','Latex');
+            set(groot,'DefaultTextInterpreter','Latex');
+            set(groot,'DefaultLegendInterpreter','Latex');
             %  > Legend.
             legend([Z.P{:}],[Z.L{:}],'Location','Northeast','FontSize',fig.FS{3},'NumColumns',Z.NC);
             %  > Maximize...
@@ -165,8 +166,9 @@ classdef Fig_Tools
             %  > Grid.
             Fig_Tools.Var_2D_1(msh.f.xy.v,"k",1E-3,"-");
             %  > Interpreter.
-            set(0,'DefaultAxesTickLabelInterpreter','Latex');
-            set(0,'DefaultLegendInterpreter','Latex');
+            set(groot,'DefaultAxesTickLabelInterpreter','Latex');
+            set(groot,'DefaultTextInterpreter','Latex');
+            set(groot,'DefaultLegendInterpreter','Latex');
             %  > Maximize...
             pbaspect([1,1,1]);
         end

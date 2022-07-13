@@ -56,7 +56,7 @@ classdef A1_2D
             end
             %  > Stopping criteria.
             inp.P_Ad.ec        = 1.00E-07;            %  > Minimum global discretization error.
-            inp.P_Ad.Nc        = 10;                  %  > Maximum number of cycles.
+            inp.P_Ad.Nc        = 1;                  %  > Maximum number of cycles.
             inp.P_Ad.NNZ       = 50E3;                %  > Maximum nnz(A).
             %  > ----------------------------------------------------------
             %  > Plot.
