@@ -31,7 +31,7 @@ classdef Plot_2D_1
                 figure;
                 Z = Plot_2D_1.Set_Z(fig,1,V);
                 for i = 1:2
-                    subplot(1,2,i); Plot_2D_1.Plot_2(fig,msh,x.e,V(:,i),Z{i});
+                    subplot(1,2,i); Plot_2D_1.Plot_2(fig,msh,~x.e,V(:,i),Z{i});
                 end
                 if x.e
                     exportgraphics(gcf,'Plot_2D_1(2).pdf','ContentType','Vector');

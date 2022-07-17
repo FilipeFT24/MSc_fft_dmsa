@@ -33,10 +33,10 @@ classdef B3_2D
             switch inp.T
                 %  > "P-Standard" run.
                 case 1, obj = B3_2D.Initialize_1(inp,msh);
-                    obj = B3_2D.P_Standard  (inp,msh,obj);
+                        obj = B3_2D.P_Standard  (inp,msh,obj);
                     %  > "P-Adaptative" run.
                 case 2, obj = B3_2D.Initialize_1(inp,msh);
-                    obj = B3_2D.P_Adaptative(inp,msh,obj);
+                        obj = B3_2D.P_Adaptative(inp,msh,obj);
             end
         end
         % >> 2.2. ---------------------------------------------------------
@@ -94,9 +94,21 @@ classdef B3_2D
                     end
                 end
             end
+            if inp.P_Ad.Isotropic
+                pU = [1;3;5;7];%RunLength(sort(reshape(obj(end).s.u.p,[],1)));
+                for i = 1:numel(pU)
+                    %  > Structures "inp" and "obj".
+                    inp_U    = inp;
+                    inp_U.P  = repelem(pU(i),2);
+                    obj_U(i) = B3_2D.Initialize_1(inp_U,msh);
+                    %  > Fields "e", "f", "m" and "s".
+                    [obj_U(i).e,obj_U(i).f,obj_U(i).m,obj_U(i).s] = ...
+                        B3_2D.Update_all(inp_U,msh,obj_U(i).e,obj_U(i).f,obj_U(i).m,obj_U(i).s);
+                end
+            end
             %  > Plot...
             Plot_2D_1.Plot(inp,msh,obj);
-            Plot_2D_2.Plot(inp,msh,obj,v);
+            Plot_2D_2.Plot(inp,msh,obj,obj_U,v);
         end
     end
 end

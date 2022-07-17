@@ -343,18 +343,16 @@ classdef B2_2D
             f(:,2) = list_v(j);
 
             %  > Sort...
-            [~,a]  = unique(f(:,1)); f = f(sort(a),:);
+            [~,a] = unique(f(:,1)); f = f(sort(a),:);
             %  > Exclude blocked faces...
             if all(~block.r)
                 k = f(:,2);
             else
                 [~,b] = func.find_c(f(:,1),find(block.r)); k = f(~b,2);
             end
-            n = ceil(size(k,1).*Qrt);
-            
+
             %  > Check...
-            if n(2) < Qrt_PT.*size(f,1)
-                % >> Terminate...
+            if size(k,1) < Qrt_PT.*size(f,1)
                 s.c = false(size(list_v));
                 s.r = false(size(list_v));
             else
@@ -363,17 +361,34 @@ classdef B2_2D
                 if Qrt(1) == 0
                     v (1)  = 0;
                 else
-                    v (1)  = B2_2D.VT(0,3,k(n(1))); % > w/ tolerance.
+                    v (1)  = B2_2D.VT(0,5,quantile(k,Qrt(1))); % > w/ tolerance.
                 end
                 s.c = list_v < v(1) & ~block.c(f(:,1),:);
                 %  > ...for refinement.
                 if Qrt(2) == 1
                     v (2)  = k(end);
                 else
-                    v (2)  = B2_2D.VT(1,3,k(n(2))); % > w/ tolerance.
+                    v (2)  = 0.35.*max(k);%+sqrt(var(k)); % > w/ tolerance.
                 end
-                s.r = list_v > v(2) & ~block.r(f(:,1),:);
+                s.r = list_v >= B2_2D.VT(0,3,v(2)) & ~block.r(f(:,1),:);
             end
+
+%             quantile(k,Qrt(2));
+%             figure(1);
+%             plot(list_i(list_v>10e-10),list_v(list_v>10e-10),'ok');
+%             yline(mean(k),'r');
+%             yline(median(k),'y');
+%             yline(max(k).*0.9,'b');
+%             %yline(mean(k)+sqrt(var(k)),'b');
+%             %yline(abs(mean(k)-sqrt(var(k))),'g');
+%            
+%             %yline(mean(list_v)+sqrt(var(k)),'b');
+%             %yline(quantile(k,0.90),'b');
+%             %yline(B2_2D.VT(0,3,0.5.*max(k)),'g');
+%             grid(gca,'on');
+%             set (gca,'GridLineStyle','-','MinorGridLinestyle',':','GridAlpha',0.15,'MinorGridAlpha',0.30);
+%             set(gca,'YScale','Log');
+%             
             %  > ...for each direction.
             for i = 1:size(list,2)
                 %  > "i".
@@ -494,33 +509,43 @@ classdef B2_2D
             nm = y(end-1:end);
             nM = z(end-1:end);
             
-            %  > L1.
-            f(1) = nm(1) < B2_2D.VT(1,3,nm(2));
+            %  > Check...
+            f(1) = nm(1) < B2_2D.VT(1,5,nm(2)); %  > L1.
+            f(2) = nM(1) < B2_2D.VT(1,5,nM(2)); %  > L3.
+            
+            
+            
+            
             g{1} = v.r.s(e{2}(v.r.s) > e{1}(v.r.s) & e{1}(v.r.s) > 1E-10);
+            g{2} = g{1}(e{2}(g{1}) >= B2_2D.VT(1,5,max(e{2}(g{1}))));
+            
+            %  > L1.
+            f(1) = nm(1) < B2_2D.VT(1,5,nm(2));
+            
+            
+            
             if f(1) && isempty(g{1})
                 g{1} = v.r.s;
             end
-            %  > L3.
-            f(2) = nM(1) < B2_2D.VT(1,3,nM(2));
-            if f(2)
-                g{2} = find(e{2} > B2_2D.VT(1,3,max(e{2})));
-                if all(~ismembc(g{2},g{1}))
-                    f(2) = false;
-                end
-            end
-            %  > Select/reset...
-            if all(~f)
+%             if f(2) && isempty(g{2})
+%                 f(2) = false;
+%             end
+%             %  > Select/reset...
+%             if      f(1) && ~f(2), h = g{1};
+%             elseif ~f(1) &&  f(2), h = g{2};
+%             elseif  f(1) &&  f(2), h = RunLength(sort(cat(1,g{:})));
+%             end
+
+            if all(~f) || isempty(g{1})
                 for j = ["c","r"]
                     block.(j)(:) = false;
                 end
             else
-                if f(1)
-                    block = B2_2D.Block_f(inp,msh,block,g{1},v.r.list); %  > "f" (flagged).
-                    block = B2_2D.Block_s(inp,msh,block,g{1});          %  > "s" (selected).
-                end
-                if f(2)
-                    block = B2_2D.Block_s(inp,msh,block,g{2});          %  > "s" (selected).
-                end
+                h = g{1};
+                %disp(h);
+                
+                block = B2_2D.Block_f(inp,msh,block,h,v.r.list); %  > "f" (flagged).
+                block = B2_2D.Block_s(inp,msh,block,h);          %  > "s" (selected).
             end
         end
         %  > 3.3.2.1. -----------------------------------------------------

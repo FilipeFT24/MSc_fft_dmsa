@@ -4,8 +4,8 @@ classdef Fig_Tools
         % >> 1.1. ---------------------------------------------------------
         function [fig] = Set_fig(opt,x)
             fig.x            = x;
-            fig.C            = linspecer(9,'qualitative');       %  > Colors.
-            fig.LW           =  2.25;                            %  > Line width.
+            fig.C            = linspecer(9,'Qualitative');       %  > Colors.
+            fig.LW           =  2.50;                            %  > Line width.
             fig.MS           =  8.50;                            %  > Marker size.
             fig.FA           =  0.25;                            %  > FaceAlpha.
             if ~opt
@@ -16,8 +16,8 @@ classdef Fig_Tools
                 fig.FS{1}(2) = 22.50;                            %  > y-label.        (*)
             end
             fig.FS    {2}    = 15.00;                            %  > Axis.           (*)
-            fig.FS    {3}    = 20.00;                            %  > Legend.
-            fig.FS    {4}    = 13.50;                            %  > Colormap label. (*)
+            fig.FS    {3}    = 17.50;                            %  > Legend.
+            fig.FS    {4}    = 13.00;                            %  > Colormap label. (*)
             fig.FS    {5}    = 20.00;                            %  > Colormap title. (*)
             fig.TrshV        = 1E-16;                            %  > Error treshold value.
             switch x.l
@@ -59,14 +59,19 @@ classdef Fig_Tools
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
-        function [] = Map_1D(fig,X,Z)
+        function [] = Map_1D(fig,A,B,C)
+            %  > Interpreter.
+            set(0,'DefaultAxesTickLabelInterpreter','Latex');
+            set(0,'DefaultColorbarTickLabelInterpreter','Latex');
+            set(0,'DefaultLegendInterpreter','Latex');
+            set(0,'DefaultTextInterpreter','Latex');
             %  > Axes.
-            [XY.Lim(1,1),XY.Lim(1,2)] = MinMaxElem(X);
+            [XY.Lim(1,1),XY.Lim(1,2)] = MinMaxElem(cat(1,A{:}));
             [XY.Lim(2,1),XY.Lim(2,2)] = ...
-                deal(10.^(ceil(log10(Z.lim(1)))-Z.DY(1)),10.^(ceil(log10(Z.lim(2)))+Z.DY(2)));
+                deal(10.^(ceil(log10(C.Lim(1)))-C.DY(1)),10.^(ceil(log10(C.Lim(2)))+C.DY(2)));
             set(get(gca,'XAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on'); xlabel(fig.L{1},'Fontsize',fig.FS{1}(1));
             set(get(gca,'YAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on'); ylabel(fig.L{2},'Fontsize',fig.FS{1}(2));
-            if ~Z.Plot
+            if ~C.Plot
                 set(gca,'box','on','XLim',XY.Lim(1,:),'XTick',linspace(XY.Lim(1,1),XY.Lim(1,2),11));
             else
                 if numel(unique(XY.Lim(1,:))) ~= 1
@@ -74,17 +79,15 @@ classdef Fig_Tools
                 end
                 %  > Grid.
                 grid(gca,'on');
-                set (gca,'GridLineStyle','-','MinorGridLinestyle',':');
+                set (gca,'GridLineStyle','-','MinorGridLinestyle',':','GridAlpha',0.15,'MinorGridAlpha',0.30);
             end
             set(gca,'YLim',XY.Lim(2,:),'YScale','Log');
             %  > Figure.
             set(gcf,'Color','w','Windowstate','Maximized');
-            %  > Interpreter.
-            set(groot,'DefaultAxesTickLabelInterpreter','Latex');
-            set(groot,'DefaultTextInterpreter','Latex');
-            set(groot,'DefaultLegendInterpreter','Latex');
             %  > Legend.
-            legend([Z.P{:}],[Z.L{:}],'Location','Northeast','FontSize',fig.FS{3},'NumColumns',Z.NC);
+            L = cat(2,B(:).L);
+            P = cat(2,B(:).P);
+            legend([P{:}],[L{:}],'Location','Northeast','FontSize',fig.FS{3},'NumColumns',C.NC);
             %  > Maximize...
             pbaspect([1,1,1]);
         end
@@ -144,6 +147,11 @@ classdef Fig_Tools
         %% > 3. -----------------------------------------------------------
         % >> 3.1. ---------------------------------------------------------
         function [] = Map_2D(fig,msh,Z)
+            %  > Interpreter.
+            set(0,'DefaultAxesTickLabelInterpreter','Latex');
+            set(0,'DefaultColorbarTickLabelInterpreter','Latex');
+            set(0,'DefaultLegendInterpreter','Latex');
+            set(0,'DefaultTextInterpreter','Latex');
             %  > Axes.
             BBOX  = get(gca,'Position');
             XY.V  = cat(1,msh.f.xy.v{:});
@@ -153,8 +161,8 @@ classdef Fig_Tools
             set(get(gca,'XAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on','XLim',XY.Lim(1,:),'XTick',[]); xlabel(fig.L{1},'Fontsize',fig.FS{1}(1));
             set(get(gca,'YAxis'),'Fontsize',fig.FS{2}); set(gca,'box','on','YLim',XY.Lim(2,:),'YTick',[]); ylabel(fig.L{2},'Fontsize',fig.FS{1}(2));
             %  > Colormap.
-            if exist('P','Var')
-                colorbar (gca,'box','on','Fontsize',fig.FS{4},'Position',[BBOX(1)+BBOX(3)+0.0075,0.1755,0.0225,0.6855]); AdvancedColormap('thermal');
+            if exist('Z','Var')
+                colorbar (gca,'box','on','Fontsize',fig.FS{4},'Position',[BBOX(1)+BBOX(3)+0.0075,0.1755,0.0205,0.6855]); AdvancedColormap('thermal');
                 set      (gca,'ColorScale','Log');
                 caxis    (Z.Lim);
                 if ~Z.e
@@ -165,10 +173,7 @@ classdef Fig_Tools
             set(gcf,'Color','w','Windowstate','Maximized');
             %  > Grid.
             Fig_Tools.Var_2D_1(msh.f.xy.v,"k",1E-3,"-");
-            %  > Interpreter.
-            set(groot,'DefaultAxesTickLabelInterpreter','Latex');
-            set(groot,'DefaultTextInterpreter','Latex');
-            set(groot,'DefaultLegendInterpreter','Latex');
+            
             %  > Maximize...
             pbaspect([1,1,1]);
         end

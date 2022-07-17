@@ -1,13 +1,13 @@
 classdef Plot_2D_2
     methods (Static)
         %% > 1. -----------------------------------------------------------
-        function [] = Plot(inp,msh,obj,v)
+        function [] = Plot(inp,msh,obj,obj_U,v)
             %  > Auxiliary variables.
-            x  (1).e = 0;
+            x  (1).e = 1;
             x  (1).l = 2;
             x  (1).z = 0;
             fig{1}   = Fig_Tools.Set_fig(1,x(1));
-            x  (2).e = 0;
+            x  (2).e = 1;
             x  (2).l = 3;
             x  (2).z = 0;
             fig{2}   = Fig_Tools.Set_fig(0,x(2));
@@ -15,13 +15,22 @@ classdef Plot_2D_2
             %  > Select variables.
             if inp.T == 2 && inp.Plot{2}(1)
                 for i = 1:size(obj,2)
-                    Y{1}(i,1) = obj(i).e.a.n_abs.t.f(1,3); %  > \tau_f.
-                    Y{1}(i,2) = obj(i).e.a.n_abs.t.c(1);   %  > \tau_c.
-                    Y{1}(i,3) = obj(i).e.a.n_abs.c  (1);   %  >     ec.
-                    Y{2}(i,1) = obj(i).e.a.n_abs.t.f(3,3); %  > \tau_f.
-                    Y{2}(i,2) = obj(i).e.a.n_abs.t.c(3);   %  > \tau_c.
-                    Y{2}(i,3) = obj(i).e.a.n_abs.c  (3);   %  >     ec.
-                    X   (i,1) = obj(i).m.nnz.At;
+                    X{1}(i,1) = obj  (i).m.nnz.At;
+                    Y{1}(i,1) = obj  (i).e.a.n_abs.t.f(1,3); %  > \tau_f.
+                    Y{1}(i,2) = obj  (i).e.a.n_abs.t.c(1);   %  > \tau_c.
+                    Y{1}(i,3) = obj  (i).e.a.n_abs.c  (1);   %  >     ec.
+                    Y{2}(i,1) = obj  (i).e.a.n_abs.t.f(3,3); %  > \tau_f.
+                    Y{2}(i,2) = obj  (i).e.a.n_abs.t.c(3);   %  > \tau_c.
+                    Y{2}(i,3) = obj  (i).e.a.n_abs.c  (3);   %  >     ec.
+                end
+                for i = 1:size(obj_U,2)
+                    X{2}(i,1) = obj_U(i).m.nnz.At;
+                    Z{1}(i,1) = obj_U(i).e.a.n_abs.t.f(1,3); %  > \tau_f.
+                    Z{1}(i,2) = obj_U(i).e.a.n_abs.t.c(1);   %  > \tau_c.
+                    Z{1}(i,3) = obj_U(i).e.a.n_abs.c  (1);   %  >     ec.
+                    Z{2}(i,1) = obj_U(i).e.a.n_abs.t.f(3,3); %  > \tau_f.
+                    Z{2}(i,2) = obj_U(i).e.a.n_abs.t.c(3);   %  > \tau_c.
+                    Z{2}(i,3) = obj_U(i).e.a.n_abs.c  (3);   %  >     ec.
                 end
                 L{1} = Plot_2D_2.Set_Y([0,1]);
                 L{2} = Plot_2D_2.Set_Y([0,3]);
@@ -40,7 +49,7 @@ classdef Plot_2D_2
                 fprintf("Plotting (2/1)...\n");
                 figure;
                 for i = 1:2
-                    subplot(1,2,i); Plot_2D_2.Plot_1(fig{1},X,Y{i},L{i});
+                    subplot(1,2,i); Plot_2D_2.Plot_1(fig{1},X,Y{i},Z{i},L{i});
                 end
                 if x(1).e
                     exportgraphics(gcf,'Plot_2D_2(1).pdf','ContentType','Vector');
@@ -68,27 +77,34 @@ classdef Plot_2D_2
         %% > 2. -----------------------------------------------------------
         % >> 2.1. ---------------------------------------------------------
         %  > 2.1.1. -------------------------------------------------------
-        function [] = Plot_1(fig,X,Y,L)
-            %  > Auxiliary variables.
-            Z.DY   = [1,0];
-            Z.NC   = 1;
-            Z.Plot = 1;
-            
+        function [] = Plot_1(fig,X,Y,Z,L)
             %  > Plot variables.
-            [Z.L,Z.P,Z.lim] = Fig_Tools.Var_1D_1(fig,["-v","-s","-o"],L,X,Y);         
-            if Z.lim (1) < fig.TrshV
-                Z.lim(1) = fig.TrshV;
+            [B(1).L,B(1).P,B(1).Lim] = Fig_Tools.Var_1D_1(fig,["-v","-s","-o"],L{1},X{1},Y);
+            [B(2).L,B(2).P,B(2).Lim] = Fig_Tools.Var_1D_1(fig,[":v",":s",":o"],L{2},X{2},Z);
+            %  > Assign...
+            for i = 1:numel(B)
+                if B(i).Lim(1) < fig.TrshV
+                    B(i).Lim(1) = fig.TrshV;
+                end 
             end
-            Fig_Tools.Map_1D(fig,X,Z);        
+            C.DY     = [1,0];
+            C.Lim(1) = min(arrayfun(@(x) x.Lim(1),B));
+            C.Lim(2) = max(arrayfun(@(x) x.Lim(2),B));
+            C.NC     = 2;
+            C.Plot   = 1;
+            Fig_Tools.Map_1D(fig,X,B,C);
         end
         %  > 2.1.2. -------------------------------------------------------
         function [L] = Set_Y(opt)
             S(1) = Fig_Tools.S2(opt(2));
             switch opt(1)
                 %  > w/o predicted.
-                case 0, L{1} = join(["$\|\bar{\tau}_{f_{\left(a\right)}}^{\phi}\|_{_{",S(1),"}}$"]);
-                        L{2} = join(["$\|\bar{\tau}_{c_{\left(a\right)}}\|_{_{",S(1),"}}$"]);
-                        L{3} = join(["$\|e_{c_{\left(a\right)}}\|_{_{",S(1),"}}$"]);
+                case 0, L{1}{1} = join(["$\|\bar{\tau}_{f_{\left(a\right)}}^{\phi}\|_{_{",S(1),"}}$"]);
+                        L{1}{2} = join(["$\|\bar{\tau}_{c_{\left(a\right)}}\|_{_{",S(1),"}}$"]);
+                        L{1}{3} = join(["$\|e_{c_{\left(a\right)}}\|_{_{",S(1),"}}$"]);
+                        L{2}{1} = join(["$\|\bar{\tau}_{f_{\left(a\right)}}^{\phi}\|_{_{",S(1),"\phantom{:}\left(\mathrm{uniform}\right)}}$"]);
+                        L{2}{2} = join(["$\|\bar{\tau}_{c_{\left(a\right)}}\|_{_{",S(1),"\phantom{:}\left(\mathrm{uniform}\right)}}$"]);
+                        L{2}{3} = join(["$\|e_{c_{\left(a\right)}}\|_{_{",S(1),"\phantom{:}\left(\mathrm{uniform}\right)}}$"]);
                 otherwise
                     return;
             end
@@ -128,8 +144,8 @@ classdef Plot_2D_2
             end
             A = get(gca,'Position');
             L = legend([P{:}],[L],'Location','NortheastOutside','FontSize',fig.FS{3},'NumColumns',1);
-            set  (get(L,'title'),'String','Level','FontSize',fig.FS{3});
-            set  (gca,'Position',A);
+            set(get(L,'title'),'String','Level','FontSize',fig.FS{3});
+            set(gca,'Position',A);
         end
     end
 end

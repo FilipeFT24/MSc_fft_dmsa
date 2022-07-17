@@ -18,7 +18,7 @@ classdef A1_2D
             %  > ----------------------------------------------------------
             %  > Boundary conditions.
             %  > NOTE: hard coded for square domain (boundaries are identified by outher face normals (Sf)).
-            inp.B.T(1)         = "Neumann";           %  > East (E).
+            inp.B.T(1)         = "Dirichlet";         %  > East (E).
             inp.B.T(2)         = "Dirichlet";         %  > North(N).
             inp.B.T(3)         = "Dirichlet";         %  > West (W).
             inp.B.T(4)         = "Dirichlet";         %  > South(S).
@@ -44,23 +44,23 @@ classdef A1_2D
             %  > ----------------------------------------------------------
             %  > P-Adaptation.
             %  > Selection criteria.
-            inp.P_Ad.Config    = 3;                   %  > Neighbouring configuration type.
+            inp.P_Ad.Config    = 1;                   %  > Neighbouring configuration type.
             inp.P_Ad.Isotropic = 1;                   %  > Isotropic coarsening/refinement.
             if inp.T == 2 && (inp.P_Ad.Isotropic && range(inp.P) ~= 0)
                 return;
             end
-            inp.P_Ad.Qrt       = [0.000,0.950];       %  > Treshold for face selection (%of faces): coarsening/refinement.
-            inp.P_Ad.Qrt_PT    = 0.50;                %  > Treshold for face selection (%of faces): premature termination.
+            inp.P_Ad.Qrt       = [0.000,0.95];        %  > Treshold for face selection (%of faces): coarsening/refinement.
+            inp.P_Ad.Qrt_PT    = 0.25;                %  > Treshold for face selection (%of faces): premature termination.
             if any(inp.P_Ad.Qrt < 0 | inp.P_Ad.Qrt > 1) || any(inp.P_Ad.Qrt_PT < 0 | inp.P_Ad.Qrt_PT > 1)
                 return;
             end
             %  > Stopping criteria.
-            inp.P_Ad.ec        = 1.00E-07;            %  > Minimum global discretization error.
-            inp.P_Ad.Nc        = 1;                  %  > Maximum number of cycles.
-            inp.P_Ad.NNZ       = 50E3;                %  > Maximum nnz(A).
+            inp.P_Ad.ec        = 1.00E-06;            %  > Minimum global discretization error.
+            inp.P_Ad.Nc        = 12;                  %  > Maximum number of cycles.
+            inp.P_Ad.NNZ       = 10E3;                %  > Maximum nnz(A).
             %  > ----------------------------------------------------------
             %  > Plot.
-            inp.Plot{1}        = [0,0];
+            inp.Plot{1}        = [0,1];
             inp.Plot{2}        = [1,1];
             inp.Plot{3}        = 1;
         end
@@ -68,7 +68,7 @@ classdef A1_2D
         %  > 1.3.1. -------------------------------------------------------
         function [fh] = fh_cf(t,v)
             %  > Auxiliary variables.
-            c(1,:) =  [5,0];
+            c(1,:) =  [0,0];
             c(2,:) = -[1,1];
             
             % >> ch.
